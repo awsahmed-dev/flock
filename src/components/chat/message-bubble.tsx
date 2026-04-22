@@ -104,7 +104,9 @@ function ReactionBar({
     fd.set("tripId", tripId);
     fd.set("messageId", messageId);
     fd.set("emoji", emoji);
-    startTransition(() => toggleReaction(fd).catch(() => toast.error("Failed")));
+    startTransition(async () => {
+      try { await toggleReaction(fd); } catch { toast.error("Failed"); }
+    });
   }
 
   return (
@@ -178,11 +180,10 @@ function LinkCard({
       fd.set("title", itineraryTitle);
       fd.set("dayDate", "");
       fd.set("itemType", meta.siteType === "hotel" ? "accommodation" : "activity");
-      startTransition(() =>
-        confirmLinkToItinerary(fd)
-          .then(() => { toast.success("Added to itinerary"); onActionDone?.(); })
-          .catch(() => toast.error("Failed"))
-      );
+      startTransition(async () => {
+        try { await confirmLinkToItinerary(fd); toast.success("Added to itinerary"); onActionDone?.(); }
+        catch { toast.error("Failed"); }
+      });
     } else {
       setShowItineraryForm(true);
       setShowVoteForm(false);
@@ -195,11 +196,10 @@ function LinkCard({
       fd.set("tripId", tripId);
       fd.set("messageId", messageId);
       fd.set("question", voteQuestion);
-      startTransition(() =>
-        confirmLinkToVote(fd)
-          .then(() => { toast.success("Vote created!"); onActionDone?.(); })
-          .catch(() => toast.error("Failed"))
-      );
+      startTransition(async () => {
+        try { await confirmLinkToVote(fd); toast.success("Vote created!"); onActionDone?.(); }
+        catch { toast.error("Failed"); }
+      });
     } else {
       setShowVoteForm(true);
       setShowItineraryForm(false);
@@ -315,11 +315,10 @@ function ExpenseCard({
     const fd = new FormData();
     fd.set("tripId", tripId);
     fd.set("messageId", messageId);
-    startTransition(() =>
-      confirmExpenseCard(fd)
-        .then(() => { toast.success("Expense logged!"); onActionDone?.(); })
-        .catch((e) => toast.error(e.message || "Failed"))
-    );
+    startTransition(async () => {
+      try { await confirmExpenseCard(fd); toast.success("Expense logged!"); onActionDone?.(); }
+      catch (e: any) { toast.error(e?.message || "Failed"); }
+    });
   }
 
   return (
@@ -386,11 +385,10 @@ function VoteCardMessage({
     fd.set("tripId", tripId);
     fd.set("messageId", messageId);
     fd.set("options", JSON.stringify(options.filter((o) => o.trim())));
-    startTransition(() =>
-      confirmVoteCard(fd)
-        .then(() => { toast.success("Vote created!"); onActionDone?.(); })
-        .catch((e) => toast.error(e.message || "Failed"))
-    );
+    startTransition(async () => {
+      try { await confirmVoteCard(fd); toast.success("Vote created!"); onActionDone?.(); }
+      catch (e: any) { toast.error(e?.message || "Failed"); }
+    });
   }
 
   return (
@@ -522,18 +520,18 @@ export function MessageBubble({ message, userId, isOwner, onReply, onActionDone 
     const fd = new FormData();
     fd.set("tripId", message.tripId);
     fd.set("messageId", message.id);
-    startTransition(() =>
-      deleteMessage(fd).catch(() => toast.error("Failed to delete"))
-    );
+    startTransition(async () => {
+      try { await deleteMessage(fd); } catch { toast.error("Failed to delete"); }
+    });
   }
 
   function handlePin() {
     const fd = new FormData();
     fd.set("tripId", message.tripId);
     fd.set("messageId", message.id);
-    startTransition(() =>
-      togglePin(fd).catch(() => toast.error("Failed"))
-    );
+    startTransition(async () => {
+      try { await togglePin(fd); } catch { toast.error("Failed"); }
+    });
   }
 
   function handleReply() {
