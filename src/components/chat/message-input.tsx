@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, useCallback } from "react";
 import { sendMessage } from "@/lib/actions/chat";
 import { toast } from "sonner";
 import {
@@ -294,14 +294,26 @@ interface Props {
   replyTo?: ReplyTarget | null;
   onClearReply?: () => void;
   onAfterSend?: () => void;
+  onTyping?: () => void;
   compact?: boolean; // true when inside sidebar
 }
 
-export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, compact }: Props) {
+export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyping, compact }: Props) {
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced typing broadcast — fires at most once per 2s while typing
+  const handleTypingBroadcast = useCallback(() => {
+    if (!onTyping) return;
+    if (typingTimeoutRef.current) return; // already scheduled
+    onTyping();
+    typingTimeoutRef.current = setTimeout(() => {
+      typingTimeoutRef.current = null;
+    }, 2000);
+  }, [onTyping]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -386,6 +398,8 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, compa
             // auto-height
             e.target.style.height = "auto";
             e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
+            // broadcast typing
+            if (e.target.value) handleTypingBroadcast();
           }}
           onKeyDown={handleKeyDown}
           placeholder="Message…"

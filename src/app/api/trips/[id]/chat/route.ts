@@ -31,5 +31,10 @@ export async function GET(
     orderBy: [asc(chatMessages.createdAt)],
   });
 
-  return NextResponse.json({ messages, userId: user.id, isOwner });
+  const displayName =
+    (user as any).user_metadata?.display_name ||
+    (user as any).email?.split("@")[0] ||
+    "Traveler";
+
+  return NextResponse.json({ messages, userId: user.id, isOwner, displayName });
 }
