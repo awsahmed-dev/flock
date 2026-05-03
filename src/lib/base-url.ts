@@ -11,24 +11,27 @@
  * Why this exists: NEXT_PUBLIC_APP_URL was missing from the deployed env,
  * so generated invite URLs were rendering as "undefined/invite/<token>".
  */
-/** Hard-coded production URL used as the last-resort fallback. */
-const FALLBACK_URL = "https://flock-pi-six.vercel.app";
+/**
+ * Always-known production URL. Hard-coded because env-var-based resolution
+ * proved unreliable (NEXT_PUBLIC_APP_URL was either unset or literally the
+ * string "undefined" on the deployed Vercel project, which produced broken
+ * "undefined/invite/<token>" links).
+ */
+const PRODUCTION_URL = "https://flock-pi-six.vercel.app";
 
 function isValidUrl(value: string | undefined | null): value is string {
   if (!value) return false;
-  // Defensive: reject the literal strings "undefined" / "null" which can
-  // sneak in if someone typed them into the Vercel env var UI by mistake.
   const v = value.trim().toLowerCase();
   if (v === "undefined" || v === "null" || v === "") return false;
   return true;
 }
 
 export function getBaseUrl(): string {
+  // Prefer the explicit env var if it's a real, valid value (lets staging
+  // builds override). But default to the known production URL — never to
+  // an env-var-derived fallback that might be missing or malformed.
   if (isValidUrl(process.env.NEXT_PUBLIC_APP_URL)) {
     return process.env.NEXT_PUBLIC_APP_URL!.replace(/\/$/, "");
   }
-  if (isValidUrl(process.env.VERCEL_URL)) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return FALLBACK_URL;
+  return PRODUCTION_URL;
 }
