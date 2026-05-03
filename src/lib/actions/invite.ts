@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { randomBytes } from "crypto";
+import { getBaseUrl } from "@/lib/base-url";
 
 export async function joinTripAsGuest(formData: FormData) {
   const token = formData.get("token") as string;
@@ -28,7 +29,7 @@ export async function joinTripAsGuest(formData: FormData) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/trips/${tripId}`,
+        emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/trips/${tripId}`,
         data: { display_name: displayName },
       },
     });
