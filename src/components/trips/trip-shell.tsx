@@ -176,8 +176,9 @@ export function TripShell({ trip, children }: Props) {
           </div>
         </div>
 
-        {/* Sub-nav tabs */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto pb-0 scrollbar-none">
+        {/* Sub-nav tabs — hidden on mobile (the bottom MobileNav already
+            covers navigation, so the duplicate top tabs are noise). */}
+        <div className="hidden sm:flex max-w-6xl mx-auto px-4 sm:px-6 gap-1 overflow-x-auto pb-0 scrollbar-none">
           {NAV_TABS.map((tab) => {
             const href = `/trips/${trip.id}${tab.href}`;
             const isActive =
@@ -245,12 +246,16 @@ export function TripShell({ trip, children }: Props) {
         )}
       </div>
 
-      {/* Mobile bottom nav — hidden on desktop */}
-      <MobileNav
-        tripId={trip.id}
-        onChatToggle={() => setChatOpen((o) => !o)}
-        chatOpen={chatOpen}
-      />
+      {/* Mobile bottom nav — hidden on desktop, also hidden when the chat
+          fullscreen overlay is open (otherwise the input bar gets covered
+          by the nav and the user can't see what they're typing). */}
+      {!chatOpen && (
+        <MobileNav
+          tripId={trip.id}
+          onChatToggle={() => setChatOpen((o) => !o)}
+          chatOpen={chatOpen}
+        />
+      )}
 
       {/* PWA install prompt */}
       <InstallPrompt />
