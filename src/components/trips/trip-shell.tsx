@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -23,12 +23,18 @@ import {
   Settings,
   ChevronLeft,
   MessageSquare,
+  Share2,
+  Check,
+  Copy,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { MobileNav } from "@/components/pwa/mobile-nav";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 
 interface Trip {
   id: string;
@@ -36,6 +42,7 @@ interface Trip {
   destination: string;
   startDate: string;
   endDate: string;
+  shareToken?: string | null;
 }
 
 interface Props {
@@ -58,6 +65,25 @@ export function TripShell({ trip, children }: Props) {
   const pathname = usePathname();
   const supabase = createClient();
   const [chatOpen, setChatOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  // On mobile, the chat is a fullscreen overlay (`fixed inset-0 z-40`). When
+  // the user taps a different bottom-nav tab the URL changes but `chatOpen`
+  // state persists, leaving the chat stuck on top of the new page. Close it
+  // automatically whenever the route changes.
+  useEffect(() => {
+    setChatOpen(false);
+  }, [pathname]);
+
+  function handleShareCopy() {
+    if (!trip.shareToken) return;
+    const appUrl = window.location.origin;
+    const url = `${appUrl}/share/${trip.shareToken}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    });
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -89,6 +115,17 @@ export function TripShell({ trip, children }: Props) {
           </div>
 
           <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            {/* Share button — only shown when sharing is enabled */}
+            {trip.shareToken && (
+              <button
+                onClick={handleShareCopy}
+                className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                title="Copy share link"
+              >
+                {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+              </button>
+            )}
             <button
               onClick={() => setChatOpen((o) => !o)}
               className={cn(
@@ -169,19 +206,18 @@ export function TripShell({ trip, children }: Props) {
 
       {/* Body row — content + chat side by side */}
       <div className="flex flex-1 overflow-hidden">
-        <main className="flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-6">
+        <main className="flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-6 pb-24 sm:pb-6">
           <div className="max-w-5xl mx-auto">
             {children}
           </div>
         </main>
 
-        {/* Chat panel — pushes content, never overlays */}
+        {/* Chat panel — pushes content on desktop, overlay on mobile */}
         <div
-          className={`shrink-0 border-l bg-background overflow-hidden transition-[width] duration-300 ease-out ${
+          className={`shrink-0 border-l bg-background overflow-hidden transition-[width] duration-300 ease-out hidden sm:block ${
             chatOpen ? "w-[360px]" : "w-0"
           }`}
         >
-          {/* Inner div keeps fixed width so content doesn't squish during animation */}
           <div className="w-[360px] h-full">
             <ChatSidebar
               tripId={trip.id}
@@ -191,7 +227,33 @@ export function TripShell({ trip, children }: Props) {
             />
           </div>
         </div>
+
+        {/* Mobile chat — full screen overlay.
+            Uses h-[100dvh] (dynamic viewport height) so the layout shrinks
+            when the soft keyboard opens, keeping the message input visible
+            above it. With plain `inset-0` the overlay would extend behind
+            the keyboard and the input would be hidden. */}
+        {chatOpen && (
+          <div className="sm:hidden fixed inset-x-0 top-0 z-40 bg-background flex flex-col h-[100dvh]">
+            <ChatSidebar
+              tripId={trip.id}
+              tripName={trip.name}
+              isOpen={chatOpen}
+              onClose={() => setChatOpen(false)}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Mobile bottom nav — hidden on desktop */}
+      <MobileNav
+        tripId={trip.id}
+        onChatToggle={() => setChatOpen((o) => !o)}
+        chatOpen={chatOpen}
+      />
+
+      {/* PWA install prompt */}
+      <InstallPrompt />
     </div>
   );
 }
