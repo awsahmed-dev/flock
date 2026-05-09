@@ -76,6 +76,7 @@ export const trips = pgTable("trips", {
   budgetTotal: real("budget_total"),
   currency: text("currency").default("USD").notNull(),
   coverImage: text("cover_image"),
+  shareToken: text("share_token").unique(), // non-null = public share enabled
   createdBy: uuid("created_by")
     .notNull()
     .references(() => profiles.id),

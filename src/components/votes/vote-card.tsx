@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { castVote, closeVote, deleteVote } from "@/lib/actions/votes";
 import { toast } from "sonner";
-import { CheckCircle2, Clock, MoreHorizontal, Lock, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, MoreHorizontal, Lock, Trash2, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface VoteOption {
   id: string;
@@ -59,23 +58,15 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
   const canModify = vote.createdBy === userId || isOwner;
   const showResults = vote.status === "closed" || hasVoted;
 
-  // Tally counts per option
-  const countsByOption = vote.options.reduce<Record<string, number>>(
-    (acc, opt) => {
-      acc[opt.id] = vote.responses.filter(
-        (r) => r.selectedOptionId === opt.id
-      ).length;
-      return acc;
-    },
-    {}
-  );
+  const countsByOption = vote.options.reduce<Record<string, number>>((acc, opt) => {
+    acc[opt.id] = vote.responses.filter((r) => r.selectedOptionId === opt.id).length;
+    return acc;
+  }, {});
 
   const winningOptionId =
     vote.status === "closed"
       ? vote.options.reduce((best, opt) =>
-          (countsByOption[opt.id] ?? 0) > (countsByOption[best.id] ?? 0)
-            ? opt
-            : best
+          (countsByOption[opt.id] ?? 0) > (countsByOption[best.id] ?? 0) ? opt : best
         ).id
       : null;
 
@@ -86,9 +77,8 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
     fd.set("selectedOptionId", optionId);
     fd.set("tripId", vote.tripId);
     startTransition(async () => {
-      try {
-        await castVote(fd);
-      } catch {
+      try { await castVote(fd); }
+      catch {
         setOptimisticSelected(myResponse?.selectedOptionId ?? null);
         toast.error("Failed to cast vote");
       }
@@ -100,12 +90,8 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
     fd.set("voteId", vote.id);
     fd.set("tripId", vote.tripId);
     startTransition(async () => {
-      try {
-        await closeVote(fd);
-        toast.success("Vote closed");
-      } catch {
-        toast.error("Failed to close vote");
-      }
+      try { await closeVote(fd); toast.success("Vote closed"); }
+      catch { toast.error("Failed to close vote"); }
     });
   }
 
@@ -114,156 +100,161 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
     fd.set("voteId", vote.id);
     fd.set("tripId", vote.tripId);
     startTransition(async () => {
-      try {
-        await deleteVote(fd);
-        toast.success("Vote deleted");
-      } catch {
-        toast.error("Failed to delete vote");
-      }
+      try { await deleteVote(fd); toast.success("Vote deleted"); }
+      catch { toast.error("Failed to delete vote"); }
     });
   }
 
+  const isOpen = vote.status === "open";
+
   return (
-    <div className="rounded-xl border bg-card p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge
-              variant={vote.status === "open" ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {vote.status === "open" ? (
-                <Clock className="w-3 h-3 mr-1" />
-              ) : (
-                <Lock className="w-3 h-3 mr-1" />
-              )}
-              {vote.status === "open" ? "Open" : "Closed"}
-            </Badge>
-            {vote.deadline && vote.status === "open" && (
-              <span className="text-xs text-muted-foreground">
-                Closes {formatDistanceToNow(new Date(vote.deadline), { addSuffix: true })}
+    <div className={cn(
+      "rounded-2xl border bg-card overflow-hidden transition-all",
+      isOpen ? "border-border/60" : "border-border/40 opacity-80"
+    )}>
+      {/* Status bar */}
+      <div className={cn(
+        "h-1 w-full",
+        isOpen ? "bg-gradient-to-r from-blue-500 to-violet-500" : "bg-muted"
+      )} />
+
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                isOpen
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {isOpen
+                  ? <><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />Open</>
+                  : <><Lock className="w-3 h-3" />Closed</>
+                }
               </span>
-            )}
+              {vote.deadline && isOpen && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Closes {formatDistanceToNow(new Date(vote.deadline), { addSuffix: true })}
+                </span>
+              )}
+            </div>
+            <p className="font-semibold leading-snug">{vote.question}</p>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Users className="w-3 h-3" />
+              {totalResponses} {totalResponses === 1 ? "response" : "responses"}
+            </div>
           </div>
-          <p className="font-medium leading-snug">{vote.question}</p>
-          <p className="text-xs text-muted-foreground">
-            {totalResponses} {totalResponses === 1 ? "response" : "responses"}
-          </p>
+
+          {canModify && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button className="rounded-lg p-1.5 hover:bg-muted transition-colors text-muted-foreground shrink-0">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-40">
+                {isOpen && (
+                  <DropdownMenuItem onClick={handleClose} disabled={isPending} className="gap-2">
+                    <Lock className="w-3.5 h-3.5" /> Close vote
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="gap-2 text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
-        {canModify && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button className="rounded-md p-1.5 hover:bg-muted transition-colors text-muted-foreground">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+        {/* Options */}
+        <div className="space-y-2">
+          {vote.options
+            .slice()
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((opt) => {
+              const count = countsByOption[opt.id] ?? 0;
+              const pct = totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0;
+              const isSelected = (optimisticSelected ?? myResponse?.selectedOptionId) === opt.id;
+              const isWinner = winningOptionId === opt.id;
+
+              if (isOpen && !hasVoted) {
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleCast(opt.id)}
+                    disabled={isPending}
+                    className="w-full text-left rounded-xl border border-border/60 px-4 py-3 hover:bg-muted/60 hover:border-primary/40 hover:-translate-y-px transition-all flex items-center justify-between group"
+                  >
+                    <span className="font-medium text-sm">{opt.label}</span>
+                    {opt.costEstimate != null && (
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {currency} {opt.costEstimate.toLocaleString()}
+                      </span>
+                    )}
+                  </button>
+                );
               }
-            />
-            <DropdownMenuContent align="end">
-              {vote.status === "open" && (
-                <DropdownMenuItem
-                  render={<button className="w-full text-left" />}
-                  onClick={handleClose}
-                  disabled={isPending}
+
+              return (
+                <div
+                  key={opt.id}
+                  onClick={isOpen && hasVoted ? () => handleCast(opt.id) : undefined}
+                  className={cn(
+                    "rounded-xl border px-4 py-3 space-y-2 transition-all",
+                    isOpen && hasVoted && "cursor-pointer hover:border-primary/30",
+                    isSelected && !isWinner && "border-primary/40 bg-primary/5",
+                    isWinner && "border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/20",
+                    !isSelected && !isWinner && "border-border/40"
+                  )}
                 >
-                  <Lock className="w-3.5 h-3.5 mr-2" />
-                  Close vote
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                render={<button className="w-full text-left text-destructive" />}
-                onClick={handleDelete}
-                disabled={isPending}
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      {isWinner && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}
+                      <span className={cn("font-medium", isWinner && "text-emerald-700 dark:text-emerald-300")}>
+                        {opt.label}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded-full">
+                          your vote
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {opt.costEstimate != null && (
+                        <span className="tabular-nums">{currency} {opt.costEstimate.toLocaleString()}</span>
+                      )}
+                      <span className="tabular-nums font-semibold text-foreground">{pct}%</span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        isWinner ? "bg-emerald-500" : isSelected ? "bg-primary" : "bg-muted-foreground/30"
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+
+        {isOpen && hasVoted && (
+          <p className="text-xs text-muted-foreground text-center">
+            Tap any option to change your vote
+          </p>
         )}
       </div>
-
-      {/* Options */}
-      <div className="space-y-2">
-        {vote.options
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((opt) => {
-            const count = countsByOption[opt.id] ?? 0;
-            const pct = totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0;
-            const isSelected =
-              (optimisticSelected ?? myResponse?.selectedOptionId) === opt.id;
-            const isWinner = winningOptionId === opt.id;
-
-            if (vote.status === "open" && !hasVoted) {
-              // Voting state — clickable options
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => handleCast(opt.id)}
-                  disabled={isPending}
-                  className="w-full text-left rounded-lg border px-4 py-3 hover:bg-muted/60 hover:border-foreground/30 transition-all flex items-center justify-between group"
-                >
-                  <span className="font-medium text-sm">{opt.label}</span>
-                  {opt.costEstimate != null && (
-                    <span className="text-xs text-muted-foreground">
-                      {currency} {opt.costEstimate.toLocaleString()}
-                    </span>
-                  )}
-                </button>
-              );
-            }
-
-            // Results state — show bar
-            return (
-              <div
-                key={opt.id}
-                className={`rounded-lg border px-4 py-3 space-y-1.5 ${
-                  isSelected ? "border-foreground bg-muted/40" : ""
-                } ${isWinner ? "border-green-500/60 bg-green-50 dark:bg-green-950/20" : ""}`}
-              >
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    {isWinner && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                    )}
-                    <span className={`font-medium ${isWinner ? "text-green-700 dark:text-green-400" : ""}`}>
-                      {opt.label}
-                    </span>
-                    {isSelected && (
-                      <span className="text-xs text-muted-foreground">(your vote)</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-muted-foreground text-xs">
-                    {opt.costEstimate != null && (
-                      <span>{currency} {opt.costEstimate.toLocaleString()}</span>
-                    )}
-                    <span className="tabular-nums font-medium text-foreground">
-                      {pct}%
-                    </span>
-                  </div>
-                </div>
-                {/* Progress bar */}
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      isWinner ? "bg-green-500" : "bg-foreground/30"
-                    }`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-      </div>
-
-      {/* Cast / change vote prompt */}
-      {vote.status === "open" && hasVoted && (
-        <p className="text-xs text-muted-foreground">
-          Click any option above to change your vote.
-        </p>
-      )}
     </div>
   );
 }

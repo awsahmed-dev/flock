@@ -11,7 +11,7 @@ export default async function NewTripPage() {
   if (!user) redirect("/auth/login");
 
   return (
-    <DashboardShell userId={user.id}>
+    <DashboardShell>
       <div className="max-w-xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Create a new trip</h1>

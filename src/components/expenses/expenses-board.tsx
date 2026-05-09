@@ -2,30 +2,34 @@
 
 import { useTransition } from "react";
 import { AddExpenseDialog } from "./add-expense-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { settleSplit, deleteExpense } from "@/lib/actions/expenses";
 import { toast } from "sonner";
-import { Receipt, CheckCircle2, Trash2 } from "lucide-react";
+import {
+  Receipt, CheckCircle2, Trash2, TrendingUp,
+  Plane, Utensils, Bed, ShoppingBag, Ticket, MoreHorizontal,
+  ArrowUpRight, ArrowDownRight,
+} from "lucide-react";
 import { format } from "date-fns";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  accommodation: "Accommodation",
-  transport: "Transport",
-  food: "Food & drinks",
-  activity: "Activity",
-  shopping: "Shopping",
-  other: "Other",
+const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; bg: string; text: string; dot: string }> = {
+  accommodation: { label: "Stay", icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
+  transport:     { label: "Transport", icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },
+  food:          { label: "Food", icon: Utensils, bg: "bg-green-100 dark:bg-green-950/40", text: "text-green-700 dark:text-green-300", dot: "bg-green-500" },
+  activity:      { label: "Activity", icon: Ticket, bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
+  shopping:      { label: "Shopping", icon: ShoppingBag, bg: "bg-pink-100 dark:bg-pink-950/40", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
+  other:         { label: "Other", icon: MoreHorizontal, bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-slate-400" },
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  accommodation: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  transport: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
-  food: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-  activity: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
-  shopping: "bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300",
-  other: "bg-muted text-muted-foreground",
-};
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-violet-500", "bg-emerald-500",
+  "bg-amber-500", "bg-rose-500", "bg-cyan-500",
+];
+
+function getAvatarColor(str: string) {
+  const h = str.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
 
 interface Split {
   id: string;
@@ -55,7 +59,7 @@ interface BalanceSummary {
   displayName: string;
   totalPaid: number;
   totalOwed: number;
-  net: number; // positive = owed money, negative = owes money
+  net: number;
 }
 
 interface Props {
@@ -66,26 +70,14 @@ interface Props {
   members: { userId: string; displayName: string }[];
 }
 
-function computeBalances(
-  expenses: Expense[],
-  members: { userId: string; displayName: string }[]
-): BalanceSummary[] {
+function computeBalances(expenses: Expense[], members: { userId: string; displayName: string }[]): BalanceSummary[] {
   const map = new Map<string, BalanceSummary>();
-
   for (const m of members) {
-    map.set(m.userId, {
-      userId: m.userId,
-      displayName: m.displayName,
-      totalPaid: 0,
-      totalOwed: 0,
-      net: 0,
-    });
+    map.set(m.userId, { userId: m.userId, displayName: m.displayName, totalPaid: 0, totalOwed: 0, net: 0 });
   }
-
   for (const exp of expenses) {
     const payer = map.get(exp.paidBy);
     if (payer) payer.totalPaid += exp.amount;
-
     for (const split of exp.splits) {
       if (!split.settled) {
         const debtor = map.get(split.userId);
@@ -93,36 +85,26 @@ function computeBalances(
       }
     }
   }
-
-  for (const summary of map.values()) {
-    summary.net = summary.totalPaid - summary.totalOwed;
-  }
-
+  for (const s of map.values()) s.net = s.totalPaid - s.totalOwed;
   return [...map.values()];
 }
 
-function ExpenseRow({
-  expense,
-  userId,
-  isOwner,
-}: {
-  expense: Expense;
-  userId: string;
-  isOwner: boolean;
-}) {
+function fmt(n: number) {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function ExpenseRow({ expense, userId, isOwner }: { expense: Expense; userId: string; isOwner: boolean }) {
   const [isPending, startTransition] = useTransition();
+  const cat = CATEGORY_CONFIG[expense.category] ?? CATEGORY_CONFIG.other;
+  const CatIcon = cat.icon;
 
   function handleSettle(splitId: string) {
     const fd = new FormData();
     fd.set("splitId", splitId);
     fd.set("tripId", expense.tripId);
     startTransition(async () => {
-      try {
-        await settleSplit(fd);
-        toast.success("Marked as settled");
-      } catch {
-        toast.error("Failed to settle");
-      }
+      try { await settleSplit(fd); toast.success("Marked as settled"); }
+      catch { toast.error("Failed to settle"); }
     });
   }
 
@@ -131,91 +113,90 @@ function ExpenseRow({
     fd.set("expenseId", expense.id);
     fd.set("tripId", expense.tripId);
     startTransition(async () => {
-      try {
-        await deleteExpense(fd);
-        toast.success("Expense deleted");
-      } catch {
-        toast.error("Failed to delete expense");
-      }
+      try { await deleteExpense(fd); toast.success("Expense deleted"); }
+      catch { toast.error("Failed to delete"); }
     });
   }
 
-  const myOwedSplit = expense.splits.find((s) => s.userId === userId && !s.settled && expense.paidBy !== userId);
+  const payerName = expense.paidBy === userId ? "You" : (expense.payer?.displayName ?? "Someone");
+  const avatarColor = getAvatarColor(expense.paidBy);
 
   return (
-    <div className="rounded-xl border bg-card p-4 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                CATEGORY_COLORS[expense.category] || CATEGORY_COLORS.other
-              }`}
-            >
-              {CATEGORY_LABELS[expense.category] || expense.category}
-            </span>
+    <div className="group rounded-2xl border border-border/60 bg-card hover:border-border transition-all p-4">
+      <div className="flex items-start gap-3">
+        {/* Category icon */}
+        <div className={`w-10 h-10 rounded-xl ${cat.bg} flex items-center justify-center shrink-0`}>
+          <CatIcon className={`w-4.5 h-4.5 ${cat.text}`} />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-semibold text-sm truncate">{expense.title}</p>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${cat.bg} ${cat.text}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
+                  {cat.label}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(expense.expenseDate), "MMM d")}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <p className="text-base font-bold tabular-nums">
+                {expense.currency} {fmt(expense.amount)}
+              </p>
+              {(expense.paidBy === userId || isOwner) && (
+                <button
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 rounded"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Paid by */}
+          <div className="flex items-center gap-2 mt-2">
+            <div className={`w-5 h-5 rounded-full ${avatarColor} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
+              {payerName.slice(0, 2).toUpperCase()}
+            </div>
             <span className="text-xs text-muted-foreground">
-              {format(new Date(expense.expenseDate), "MMM d, yyyy")}
+              Paid by <span className="font-medium text-foreground">{payerName}</span>
             </span>
           </div>
-          <p className="font-medium">{expense.title}</p>
-          <p className="text-sm text-muted-foreground">
-            Paid by{" "}
-            <span className="font-medium text-foreground">
-              {expense.paidBy === userId
-                ? "you"
-                : expense.payer?.displayName ?? "Unknown"}
-            </span>
-          </p>
+
           {expense.notes && (
-            <p className="text-xs text-muted-foreground">{expense.notes}</p>
-          )}
-        </div>
-        <div className="text-right space-y-1">
-          <p className="text-lg font-bold tabular-nums">
-            {expense.currency}{" "}
-            {expense.amount.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </p>
-          {(expense.paidBy === userId || isOwner) && (
-            <button
-              onClick={handleDelete}
-              disabled={isPending}
-              className="text-muted-foreground hover:text-destructive transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed italic">{expense.notes}</p>
           )}
         </div>
       </div>
 
       {/* Splits */}
       {expense.splits.length > 0 && (
-        <div className="border-t pt-3 space-y-1.5">
+        <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 sm:grid-cols-3 gap-2">
           {expense.splits.map((split) => (
-            <div key={split.id} className="flex items-center justify-between text-sm">
-              <span className={split.settled ? "text-muted-foreground line-through" : ""}>
-                {split.userId === userId ? "You" : split.user?.displayName ?? "Unknown"}
+            <div key={split.id} className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs ${split.settled ? "bg-muted/30" : "bg-muted/60"}`}>
+              <span className={split.settled ? "text-muted-foreground line-through" : "font-medium"}>
+                {split.userId === userId ? "You" : (split.user?.displayName ?? "?")}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <span className={`tabular-nums ${split.settled ? "text-muted-foreground" : ""}`}>
-                  {expense.currency}{" "}
-                  {split.amountOwed.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {expense.currency} {fmt(split.amountOwed)}
                 </span>
                 {split.settled ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 ) : split.userId === userId && expense.paidBy !== userId ? (
                   <button
                     onClick={() => handleSettle(split.id)}
                     disabled={isPending}
-                    className="text-xs text-primary hover:underline"
+                    className="text-primary hover:underline text-[10px] font-semibold shrink-0"
                   >
-                    Mark settled
+                    Settle
                   </button>
                 ) : null}
               </div>
@@ -227,108 +208,169 @@ function ExpenseRow({
   );
 }
 
-export function ExpensesBoard({
-  tripId,
-  userId,
-  currency,
-  expenses: expenseList,
-  members,
-}: Props) {
-  const isOwner = members.some(
-    (m) => m.userId === userId
-  );
-
+export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList, members }: Props) {
+  const isOwner = members.some((m) => m.userId === userId);
   const totalSpend = expenseList.reduce((sum, e) => sum + e.amount, 0);
   const balances = computeBalances(expenseList, members);
   const myBalance = balances.find((b) => b.userId === userId);
 
+  // Per-category breakdown
+  const categoryTotals = expenseList.reduce<Record<string, number>>((acc, e) => {
+    acc[e.category] = (acc[e.category] ?? 0) + e.amount;
+    return acc;
+  }, {});
+  const topCategories = Object.entries(categoryTotals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Expenses</h2>
-          <p className="text-sm text-muted-foreground">
-            Track spending and who owes what
-          </p>
+          <h2 className="text-xl font-bold tracking-tight">Expenses</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Track spending and who owes what</p>
         </div>
         <AddExpenseDialog tripId={tripId} />
       </div>
 
-      {/* Summary cards */}
       {expenseList.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Total spent</p>
-            <p className="text-xl font-bold tabular-nums mt-1">
-              {currency}{" "}
-              {totalSpend.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </p>
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl border border-border/60 bg-card p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">Total spent</span>
+              </div>
+              <p className="text-xl font-bold tabular-nums">{currency} {fmt(totalSpend)}</p>
+            </div>
+
+            {myBalance && (
+              <>
+                <div className="rounded-2xl border border-border/60 bg-card p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                      <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-medium">You paid</span>
+                  </div>
+                  <p className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                    {currency} {fmt(myBalance.totalPaid)}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border/60 bg-card p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-7 h-7 rounded-lg ${myBalance.totalOwed > 0 ? "bg-orange-100 dark:bg-orange-950/40" : "bg-muted/60"} flex items-center justify-center`}>
+                      <ArrowDownRight className={`w-3.5 h-3.5 ${myBalance.totalOwed > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`} />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-medium">You owe</span>
+                  </div>
+                  <p className={`text-xl font-bold tabular-nums ${myBalance.totalOwed > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}>
+                    {currency} {fmt(myBalance.totalOwed)}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
-          {myBalance && (
-            <>
-              <div className="rounded-xl border bg-card p-4">
-                <p className="text-xs text-muted-foreground">You paid</p>
-                <p className="text-xl font-bold tabular-nums mt-1">
-                  {currency}{" "}
-                  {myBalance.totalPaid.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
+
+          {/* Category breakdown */}
+          {topCategories.length > 0 && (
+            <div className="rounded-2xl border border-border/60 bg-card p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Spending breakdown</p>
+              <div className="space-y-2.5">
+                {topCategories.map(([cat, amount]) => {
+                  const cfg = CATEGORY_CONFIG[cat] ?? CATEGORY_CONFIG.other;
+                  const pct = totalSpend > 0 ? (amount / totalSpend) * 100 : 0;
+                  const CatIcon = cfg.icon;
+                  return (
+                    <div key={cat} className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-lg ${cfg.bg} flex items-center justify-center shrink-0`}>
+                        <CatIcon className={`w-3.5 h-3.5 ${cfg.text}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium">{cfg.label}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">{currency} {fmt(amount)}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${cfg.dot}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">{Math.round(pct)}%</span>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="rounded-xl border bg-card p-4">
-                <p className="text-xs text-muted-foreground">You owe</p>
-                <p
-                  className={`text-xl font-bold tabular-nums mt-1 ${
-                    myBalance.totalOwed > 0 ? "text-orange-600" : "text-green-600"
-                  }`}
-                >
-                  {currency}{" "}
-                  {myBalance.totalOwed.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-            </>
+            </div>
           )}
-        </div>
+
+          {/* Balances */}
+          {balances.length > 1 && (
+            <div className="rounded-2xl border border-border/60 bg-card p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Balances</p>
+              <div className="space-y-2">
+                {balances.map((b) => {
+                  const isMe = b.userId === userId;
+                  const avatarColor = getAvatarColor(b.userId);
+                  return (
+                    <div key={b.userId} className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full ${avatarColor} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
+                        {b.displayName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="text-sm font-medium flex-1 truncate">{isMe ? "You" : b.displayName}</span>
+                      <div className="text-right">
+                        <p className={`text-sm font-bold tabular-nums ${b.net > 0 ? "text-emerald-600 dark:text-emerald-400" : b.net < 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}>
+                          {b.net > 0 ? "+" : ""}{currency} {fmt(b.net)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {b.net > 0 ? "gets back" : b.net < 0 ? "owes" : "settled"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Expense list */}
-      <section className="space-y-3">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          All expenses · {expenseList.length}
-        </h3>
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+            All expenses · {expenseList.length}
+          </h3>
+          <div className="flex-1 h-px bg-border/60" />
+        </div>
+
         {expenseList.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-            <Receipt className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No expenses yet</p>
-            <p className="text-xs mt-1">Log the first one to start tracking</p>
+          <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
+              <Receipt className="w-7 h-7 text-muted-foreground/50" />
+            </div>
+            <p className="font-semibold text-sm mb-1">No expenses yet</p>
+            <p className="text-xs text-muted-foreground mb-5">Log the first expense to start tracking the group spend</p>
+            <AddExpenseDialog tripId={tripId} />
           </div>
         ) : (
           <div className="space-y-3">
             {expenseList
-              .sort(
-                (a, b) =>
-                  new Date(b.expenseDate).getTime() -
-                  new Date(a.expenseDate).getTime()
-              )
+              .slice()
+              .sort((a, b) => new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime())
               .map((exp) => (
-                <ExpenseRow
-                  key={exp.id}
-                  expense={exp}
-                  userId={userId}
-                  isOwner={isOwner}
-                />
+                <ExpenseRow key={exp.id} expense={exp} userId={userId} isOwner={isOwner} />
               ))}
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { chatMessages } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, isNull, and } from "drizzle-orm";
 
 export async function GET(
   _request: Request,
@@ -22,7 +22,7 @@ export async function GET(
   );
 
   const messages = await db.query.chatMessages.findMany({
-    where: eq(chatMessages.tripId, id),
+    where: and(eq(chatMessages.tripId, id), isNull(chatMessages.deletedAt)),
     with: {
       author: true,
       reactions: true,

@@ -18,6 +18,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
 import { detectSiteType, extractUrls, parseExpenseArgs } from "@/lib/chat-utils";
+import {
+  notifyNewChatMessage,
+  notifyNewVote,
+  notifyNewExpense,
+} from "@/lib/notifications";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,7 +108,7 @@ export async function sendMessage(formData: FormData) {
 
   if (!body) return;
 
-  const { user } = await getAuthedMember(tripId);
+  const { user, trip } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
   const slash = parseSlashCommand(body);
@@ -185,6 +190,16 @@ export async function sendMessage(formData: FormData) {
   }
 
   revalidatePath(`/trips/${tripId}/chat`);
+
+  // Push notification — fire-and-forget (non-blocking)
+  if (slash.type === null && body) {
+    const memberIds = trip.members.map((m: any) => m.userId);
+    const senderProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id),
+    });
+    const senderName = senderProfile?.displayName ?? "Someone";
+    notifyNewChatMessage(memberIds, user.id, senderName, body, tripId, trip.name).catch(() => {});
+  }
 }
 
 // ─── Delete message (soft) ────────────────────────────────────────────────────
@@ -269,7 +284,7 @@ export async function confirmExpenseCard(formData: FormData) {
   const tripId = formData.get("tripId") as string;
   const messageId = formData.get("messageId") as string;
 
-  const { user } = await getAuthedMember(tripId);
+  const { user, trip } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
   const message = await db.query.chatMessages.findFirst({
@@ -321,6 +336,15 @@ export async function confirmExpenseCard(formData: FormData) {
 
   revalidatePath(`/trips/${tripId}/chat`);
   revalidatePath(`/trips/${tripId}/expenses`);
+
+  // Notify members of the new expense
+  const expMemberIds = trip.members.map((m: any) => m.userId);
+  notifyNewExpense(
+    expMemberIds, user.id,
+    meta.description || "Expense",
+    meta.amount, "USD",
+    tripId, trip.name
+  ).catch(() => {});
 }
 
 // ─── Confirm vote card → create real vote ─────────────────────────────────────
@@ -330,7 +354,7 @@ export async function confirmVoteCard(formData: FormData) {
   const messageId = formData.get("messageId") as string;
   const optionsRaw = formData.get("options") as string; // JSON array of strings
 
-  const { user } = await getAuthedMember(tripId);
+  const { user, trip } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
   const message = await db.query.chatMessages.findFirst({
@@ -360,6 +384,10 @@ export async function confirmVoteCard(formData: FormData) {
 
   revalidatePath(`/trips/${tripId}/chat`);
   revalidatePath(`/trips/${tripId}/votes`);
+
+  // Notify members of the new vote
+  const memberIds = trip.members.map((m: any) => m.userId);
+  notifyNewVote(memberIds, user.id, meta.question, tripId, trip.name).catch(() => {});
 }
 
 // ─── Confirm link → add to itinerary ─────────────────────────────────────────

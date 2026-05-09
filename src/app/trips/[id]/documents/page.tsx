@@ -6,7 +6,6 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { documents } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { TripShell } from "@/components/trips/trip-shell";
 import { DocumentsBoard } from "@/components/documents/documents-board";
 
 interface Props {
@@ -16,7 +15,6 @@ interface Props {
 export default async function DocumentsPage({ params }: Props) {
   const { id } = await params;
   const user = await getCurrentUser();
-
   if (!user) redirect("/auth/login");
 
   const trip = await getTripWithMembership(id, user.id);
@@ -33,13 +31,11 @@ export default async function DocumentsPage({ params }: Props) {
   });
 
   return (
-    <TripShell trip={trip} userId={user.id}>
-      <DocumentsBoard
-        tripId={id}
-        userId={user.id}
-        isOwner={isOwner}
-        documents={docs as any}
-      />
-    </TripShell>
+    <DocumentsBoard
+      tripId={id}
+      userId={user.id}
+      isOwner={isOwner}
+      documents={docs as any}
+    />
   );
 }

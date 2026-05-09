@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput, type ReplyTarget } from "./message-input";
 import { X, MessageSquare, RefreshCw, Circle } from "lucide-react";
@@ -52,7 +52,11 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCount = useRef(0);
   const typingTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const supabase = createClient();
+  // Keep displayName in a ref so presence effect doesn't re-run when it changes
+  const displayNameRef = useRef(displayName);
+  useEffect(() => { displayNameRef.current = displayName; }, [displayName]);
+  // Stable client — createClient() must NOT be called on every render
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -76,70 +80,90 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
     setLoading(true);
     fetchMessages().finally(() => setLoading(false));
 
-    // 1. Data channel — react to any INSERT/UPDATE/DELETE on chat tables
-    const dataChannel = supabase
-      .channel(`chat-data-${tripId}`)
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "chat_messages",
-        filter: `trip_id=eq.${tripId}`,
-      }, () => { fetchMessages(); })
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "message_reactions",
-      }, () => { fetchMessages(); })
-      .subscribe();
+    // Data channel — react to INSERT/UPDATE/DELETE on chat tables
+    // Wrapped in try/catch: if realtime isn't enabled the 10s poll handles it
+    let dataChannel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      dataChannel = supabase
+        .channel(`chat-data-${tripId}`)
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "chat_messages",
+          filter: `trip_id=eq.${tripId}`,
+        }, () => { fetchMessages(); })
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "message_reactions",
+        }, () => { fetchMessages(); })
+        .subscribe((status, err) => {
+          if (err) console.debug("[chat] realtime subscription error — polling fallback active", err);
+        });
+    } catch (e) {
+      console.debug("[chat] realtime unavailable — polling fallback active", e);
+    }
 
     return () => {
-      supabase.removeChannel(dataChannel);
+      if (dataChannel) supabase.removeChannel(dataChannel).catch(() => {});
     };
-  }, [isOpen, tripId, fetchMessages, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, tripId, fetchMessages]); // supabase is stable (useMemo), omit from deps
 
-  // 2. Presence + typing channel — depends on userId being set
+  // Fallback poll every 10s — catches realtime misses
+  useEffect(() => {
+    if (!isOpen) return;
+    const interval = setInterval(fetchMessages, 10_000);
+    return () => clearInterval(interval);
+  }, [isOpen, fetchMessages]);
+
+  // 2. Presence + typing channel — only re-runs when userId or tripId changes
+  // displayName is read via ref to avoid re-running the effect on every fetch
   useEffect(() => {
     if (!isOpen || !userId) return;
 
-    const presenceChannel = supabase.channel(`chat-presence-${tripId}`, {
-      config: { presence: { key: userId } },
-    });
-
-    presenceChannel
-      .on("presence", { event: "sync" }, () => {
-        const state = presenceChannel.presenceState<PresenceUser>();
-        const users = Object.values(state)
-          .flat()
-          .filter((u) => u.userId !== userId);
-        setOnlineUsers(users);
-      })
-      .on("broadcast", { event: "typing" }, ({ payload }) => {
-        const { senderId, senderName } = payload as { senderId: string; senderName: string };
-        if (senderId === userId) return;
-
-        setTypingUsers((prev) => ({ ...prev, [senderId]: senderName }));
-
-        // Auto-clear after 3s of silence
-        clearTimeout(typingTimers.current[senderId]);
-        typingTimers.current[senderId] = setTimeout(() => {
-          setTypingUsers((prev) => {
-            const next = { ...prev };
-            delete next[senderId];
-            return next;
-          });
-        }, 3000);
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await presenceChannel.track({ userId, displayName });
-        }
+    let presenceChannel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      presenceChannel = supabase.channel(`chat-presence-${tripId}`, {
+        config: { presence: { key: userId } },
       });
 
+      presenceChannel
+        .on("presence", { event: "sync" }, () => {
+          const state = presenceChannel!.presenceState<PresenceUser>();
+          const users = Object.values(state)
+            .flat()
+            .filter((u) => u.userId !== userId);
+          setOnlineUsers(users);
+        })
+        .on("broadcast", { event: "typing" }, ({ payload }) => {
+          const { senderId, senderName } = payload as { senderId: string; senderName: string };
+          if (senderId === userId) return;
+          setTypingUsers((prev) => ({ ...prev, [senderId]: senderName }));
+          clearTimeout(typingTimers.current[senderId]);
+          typingTimers.current[senderId] = setTimeout(() => {
+            setTypingUsers((prev) => {
+              const next = { ...prev };
+              delete next[senderId];
+              return next;
+            });
+          }, 3000);
+        })
+        .subscribe(async (status) => {
+          if (status === "SUBSCRIBED" && presenceChannel) {
+            await presenceChannel.track({ userId, displayName: displayNameRef.current });
+          }
+        });
+    } catch (e) {
+      console.debug("[chat] presence unavailable", e);
+    }
+
     return () => {
-      supabase.removeChannel(presenceChannel);
+      if (presenceChannel) supabase.removeChannel(presenceChannel).catch(() => {});
       Object.values(typingTimers.current).forEach(clearTimeout);
     };
-  }, [isOpen, userId, displayName, tripId, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, userId, tripId]); // displayName via ref — supabase is stable
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -157,7 +181,8 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
       event: "typing",
       payload: { senderId: userId, senderName: displayName },
     });
-  }, [userId, displayName, tripId, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, displayName, tripId]); // supabase is stable
 
   // Close on Escape
   useEffect(() => {

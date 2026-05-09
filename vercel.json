@@ -1,0 +1,17 @@
+{
+  "regions": ["hnd1"],
+  "functions": {
+    "src/app/**": {
+      "maxDuration": 30
+    },
+    "src/app/api/ai/**": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/pre-trip-nudge",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}

@@ -14,12 +14,19 @@ import type { itineraryItems } from "@/lib/db/schema";
 
 type Item = InferSelectModel<typeof itineraryItems>;
 
+interface DefaultValues {
+  title?: string;
+  locationName?: string;
+  type?: string;
+}
+
 interface Props {
   tripId: string;
   dayDate: string;
   sortOrder: number;
   onClose: () => void;
   onAdded: (item: Item) => void;
+  defaultValues?: DefaultValues;
 }
 
 const TYPES = [
@@ -30,7 +37,7 @@ const TYPES = [
   { value: "other", label: "Other" },
 ];
 
-export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded }: Props) {
+export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, defaultValues }: Props) {
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -84,7 +91,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded }: 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="title">Title *</Label>
-            <Input id="title" name="title" placeholder="e.g. Visit the Colosseum" required autoFocus />
+            <Input id="title" name="title" placeholder="e.g. Visit the Colosseum" required autoFocus defaultValue={defaultValues?.title} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -93,7 +100,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded }: 
               <select
                 id="type"
                 name="type"
-                defaultValue="activity"
+                defaultValue={defaultValues?.type ?? "activity"}
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 {TYPES.map((t) => (
@@ -109,7 +116,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded }: 
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="locationName">Location</Label>
-            <Input id="locationName" name="locationName" placeholder="e.g. Rome, Italy" />
+            <Input id="locationName" name="locationName" placeholder="e.g. Rome, Italy" defaultValue={defaultValues?.locationName} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

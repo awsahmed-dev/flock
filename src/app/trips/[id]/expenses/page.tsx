@@ -6,7 +6,6 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { expenses } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { TripShell } from "@/components/trips/trip-shell";
 import { ExpensesBoard } from "@/components/expenses/expenses-board";
 
 interface Props {
@@ -16,7 +15,6 @@ interface Props {
 export default async function ExpensesPage({ params }: Props) {
   const { id } = await params;
   const user = await getCurrentUser();
-
   if (!user) redirect("/auth/login");
 
   const trip = await getTripWithMembership(id, user.id);
@@ -37,14 +35,12 @@ export default async function ExpensesPage({ params }: Props) {
   }));
 
   return (
-    <TripShell trip={trip} userId={user.id}>
-      <ExpensesBoard
-        tripId={id}
-        userId={user.id}
-        currency={trip.currency}
-        expenses={expenseList as any}
-        members={members}
-      />
-    </TripShell>
+    <ExpensesBoard
+      tripId={id}
+      userId={user.id}
+      currency={trip.currency}
+      expenses={expenseList as any}
+      members={members}
+    />
   );
 }

@@ -3,10 +3,14 @@ export const dynamic = "force-dynamic";
 import { SignupForm } from "@/components/auth/signup-form";
 import { Users } from "lucide-react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function SignupPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-muted/20">
+      <div className="fixed top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-2 mb-8">
           <Link href="/" className="flex items-center gap-2">

@@ -6,7 +6,6 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { itineraryItems } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { TripShell } from "@/components/trips/trip-shell";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO, format } from "date-fns";
 
@@ -17,7 +16,6 @@ interface Props {
 export default async function ItineraryPage({ params }: Props) {
   const { id } = await params;
   const user = await getCurrentUser();
-
   if (!user) redirect("/auth/login");
 
   const trip = await getTripWithMembership(id, user.id);
@@ -34,14 +32,20 @@ export default async function ItineraryPage({ params }: Props) {
     end: parseISO(trip.endDate),
   }).map((d) => format(d, "yyyy-MM-dd"));
 
+  // Serialize Date fields so Next.js can safely pass them to the client component
+  const serializedItems = items.map((item) => ({
+    ...item,
+    createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
+    updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt,
+  }));
+
   return (
-    <TripShell trip={trip} userId={user.id}>
-      <ItineraryBoard
-        tripId={id}
-        days={days}
-        items={items}
-        currency={trip.currency}
-      />
-    </TripShell>
+    <ItineraryBoard
+      tripId={id}
+      days={days}
+      items={serializedItems as any}
+      currency={trip.currency}
+      destination={trip.destination}
+    />
   );
 }

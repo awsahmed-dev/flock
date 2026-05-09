@@ -6,7 +6,6 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { votes, voteOptions, voteResponses } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { TripShell } from "@/components/trips/trip-shell";
 import { VotesBoard } from "@/components/votes/votes-board";
 
 interface Props {
@@ -16,7 +15,6 @@ interface Props {
 export default async function VotesPage({ params }: Props) {
   const { id } = await params;
   const user = await getCurrentUser();
-
   if (!user) redirect("/auth/login");
 
   const trip = await getTripWithMembership(id, user.id);
@@ -26,7 +24,6 @@ export default async function VotesPage({ params }: Props) {
     (m) => m.userId === user.id && m.role === "owner"
   );
 
-  // Fetch votes with options and responses
   const rawVotes = await db.query.votes.findMany({
     where: eq(votes.tripId, id),
     with: {
@@ -37,14 +34,12 @@ export default async function VotesPage({ params }: Props) {
   });
 
   return (
-    <TripShell trip={trip} userId={user.id}>
-      <VotesBoard
-        tripId={id}
-        userId={user.id}
-        isOwner={isOwner}
-        currency={trip.currency}
-        votes={rawVotes as any}
-      />
-    </TripShell>
+    <VotesBoard
+      tripId={id}
+      userId={user.id}
+      isOwner={isOwner}
+      currency={trip.currency}
+      votes={rawVotes as any}
+    />
   );
 }

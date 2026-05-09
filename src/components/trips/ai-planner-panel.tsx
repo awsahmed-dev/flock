@@ -1,0 +1,491 @@
+"use client";
+
+import { useState, useTransition, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Sparkles,
+  Loader2,
+  CheckCircle2,
+  MapPin,
+  Clock,
+  Utensils,
+  Hotel,
+  Bus,
+  Ticket,
+  Plus,
+  Vote,
+  CheckSquare,
+  Square,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SidePanel } from "@/components/ui/side-panel";
+import { toast } from "sonner";
+import { addPlannedItems, voteOnPlannedItems, type PlannedActivity } from "@/lib/actions/ai-planner";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  tripId: string;
+  destination: string;
+}
+
+interface AiPlannerResult {
+  summary: string;
+  tips: string[];
+  activities: PlannedActivity[];
+}
+
+const TRAVEL_STYLES = [
+  { value: "adventure", label: "🏔️ Adventure", desc: "Outdoors & thrills" },
+  { value: "relaxed", label: "🌴 Relaxed", desc: "Chill & scenic" },
+  { value: "cultural", label: "🏛️ Cultural", desc: "History & art" },
+  { value: "foodie", label: "🍜 Foodie", desc: "Eat everything" },
+  { value: "budget", label: "💸 Budget", desc: "Smart spending" },
+  { value: "luxury", label: "✨ Luxury", desc: "Premium vibes" },
+] as const;
+
+type TravelStyle = typeof TRAVEL_STYLES[number]["value"];
+
+const TYPE_ICON: Record<string, React.ReactNode> = {
+  activity: <Ticket className="w-3 h-3" />,
+  accommodation: <Hotel className="w-3 h-3" />,
+  transport: <Bus className="w-3 h-3" />,
+  meal: <Utensils className="w-3 h-3" />,
+};
+
+const TYPE_COLOR: Record<string, string> = {
+  activity: "text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/30",
+  accommodation: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30",
+  transport: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30",
+  meal: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30",
+};
+
+const LOADING_MESSAGES = [
+  "Scouting the best spots…",
+  "Balancing adventures & downtime…",
+  "Finding hidden gems…",
+  "Checking local favorites…",
+  "Crafting your perfect days…",
+];
+
+export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
+  const router = useRouter();
+
+  const [travelStyle, setTravelStyle] = useState<TravelStyle>("cultural");
+  const [interests, setInterests] = useState("");
+  const [notes, setNotes] = useState("");
+  const [plan, setPlan] = useState<AiPlannerResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set()); // keys are "day-index"
+  const [busy, setBusy] = useState<string | null>(null); // which action is running
+  const [, startTransition] = useTransition();
+
+  // Group by day
+  const byDay = useMemo(() => {
+    const map: Record<number, PlannedActivity[]> = {};
+    plan?.activities.forEach((a) => {
+      (map[a.day] ??= []).push(a);
+    });
+    return map;
+  }, [plan]);
+
+  const days = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  const allKeys = plan?.activities.map((_, i) => `k-${i}`) ?? [];
+  const allSelected = allKeys.length > 0 && allKeys.every((k) => selected.has(k));
+  const selectedItems: PlannedActivity[] = plan
+    ? plan.activities.filter((_, i) => selected.has(`k-${i}`))
+    : [];
+
+  async function generate() {
+    setPlan(null);
+    setSelected(new Set());
+    setLoading(true);
+    let msgIdx = 0;
+    setLoadingMsg(0);
+    const interval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
+      setLoadingMsg(msgIdx);
+    }, 2200);
+
+    try {
+      const res = await fetch("/api/ai/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tripId, travelStyle, interests, notes }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to generate plan");
+        return;
+      }
+      setPlan(data);
+      // Select all by default
+      setSelected(new Set(data.activities.map((_: any, i: number) => `k-${i}`)));
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to generate plan");
+    } finally {
+      clearInterval(interval);
+      setLoading(false);
+    }
+  }
+
+  function toggleOne(idx: number) {
+    const key = `k-${idx}`;
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(allKeys));
+  }
+
+  function handleAddSingle(idx: number) {
+    if (!plan) return;
+    setBusy(`add-${idx}`);
+    startTransition(async () => {
+      try {
+        await addPlannedItems(tripId, [plan.activities[idx]]);
+        toast.success("Added to itinerary");
+        router.refresh();
+      } catch (err: any) {
+        toast.error(err?.message ?? "Failed to add");
+      } finally {
+        setBusy(null);
+      }
+    });
+  }
+
+  function handleVoteSingle(idx: number) {
+    if (!plan) return;
+    setBusy(`vote-${idx}`);
+    startTransition(async () => {
+      try {
+        await voteOnPlannedItems(tripId, [plan.activities[idx]]);
+        toast.success("Vote posted to chat!");
+        router.refresh();
+      } catch (err: any) {
+        toast.error(err?.message ?? "Failed to create vote");
+      } finally {
+        setBusy(null);
+      }
+    });
+  }
+
+  function handleAddSelected() {
+    if (selectedItems.length === 0) return;
+    setBusy("add-bulk");
+    startTransition(async () => {
+      try {
+        const { count } = await addPlannedItems(tripId, selectedItems);
+        toast.success(`Added ${count} ${count === 1 ? "item" : "items"} to itinerary`);
+        onClose();
+        router.refresh();
+      } catch (err: any) {
+        toast.error(err?.message ?? "Failed to add");
+      } finally {
+        setBusy(null);
+      }
+    });
+  }
+
+  function handleVoteSelected() {
+    if (selectedItems.length === 0) return;
+    setBusy("vote-bulk");
+    startTransition(async () => {
+      try {
+        await voteOnPlannedItems(tripId, selectedItems);
+        toast.success("Vote posted to chat!");
+        onClose();
+        router.refresh();
+      } catch (err: any) {
+        toast.error(err?.message ?? "Failed to create vote");
+      } finally {
+        setBusy(null);
+      }
+    });
+  }
+
+  return (
+    <SidePanel
+      open={open}
+      onClose={onClose}
+      title="AI Trip Planner"
+      subtitle={`Smart itinerary for ${destination}`}
+      icon={<Sparkles className="w-4 h-4 text-white" />}
+      accentGradient="from-primary to-violet-600"
+      width="md"
+    >
+      {/* Input form */}
+      {!plan && (
+        <div className="p-4 space-y-4">
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Travel Style
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {TRAVEL_STYLES.map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => setTravelStyle(s.value)}
+                  className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
+                    travelStyle === s.value
+                      ? "border-primary bg-primary/8 shadow-sm"
+                      : "border-border/60 hover:border-border hover:bg-muted/40"
+                  }`}
+                >
+                  <span className="text-sm">{s.label}</span>
+                  <span className="text-[10px] text-muted-foreground">{s.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Interests <span className="normal-case font-normal">(optional)</span>
+            </label>
+            <input
+              value={interests}
+              onChange={(e) => setInterests(e.target.value)}
+              placeholder="e.g. anime, street food, temples, nightlife"
+              className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Special notes <span className="normal-case font-normal">(optional)</span>
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. vegetarian friendly, early mornings free"
+              rows={3}
+              className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          <Button
+            onClick={generate}
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/20"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {LOADING_MESSAGES[loadingMsg]}
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Itinerary
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Loading (first-time) */}
+      {loading && !plan && (
+        <div className="px-4 pb-4">
+          <div className="rounded-xl bg-muted/40 border px-3 py-4 flex flex-col items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <p className="text-xs text-muted-foreground">{LOADING_MESSAGES[loadingMsg]}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {plan && (
+        <div className="flex flex-col">
+          {/* Summary + tips */}
+          <div className="p-4 space-y-3 border-b bg-muted/30">
+            <p className="text-xs text-muted-foreground leading-relaxed">{plan.summary}</p>
+            {plan.tips.length > 0 && (
+              <div className="space-y-1">
+                {plan.tips.map((tip, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <span className="text-amber-500 mt-0.5">💡</span>
+                    <span>{tip}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bulk toolbar */}
+          <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur">
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              {allSelected ? (
+                <CheckSquare className="w-3.5 h-3.5 text-primary" />
+              ) : (
+                <Square className="w-3.5 h-3.5" />
+              )}
+              {selectedItems.length} of {plan.activities.length} selected
+            </button>
+            <button
+              type="button"
+              onClick={generate}
+              disabled={loading}
+              className="text-xs text-primary hover:underline"
+            >
+              {loading ? "Regenerating…" : "Regenerate"}
+            </button>
+          </div>
+
+          {/* Day-by-day items */}
+          <div className="p-4 space-y-4">
+            {days.map((day) => (
+              <div key={day} className="space-y-2">
+                <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                  Day {day}
+                </p>
+                <div className="space-y-1.5">
+                  {byDay[day].map((act) => {
+                    const idx = plan.activities.indexOf(act);
+                    const key = `k-${idx}`;
+                    const isSelected = selected.has(key);
+                    const addBusy = busy === `add-${idx}`;
+                    const voteBusy = busy === `vote-${idx}`;
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`rounded-xl border bg-background p-2.5 space-y-1.5 transition-colors ${
+                          isSelected ? "border-primary/50 bg-primary/[0.02]" : "border-border/60"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleOne(idx)}
+                            className="shrink-0 mt-0.5"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-primary" />
+                            ) : (
+                              <Square className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </button>
+                          <span
+                            className={`shrink-0 rounded-md p-1 mt-0.5 ${
+                              TYPE_COLOR[act.type] ?? ""
+                            }`}
+                          >
+                            {TYPE_ICON[act.type]}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium leading-snug">{act.title}</p>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {act.startTime && (
+                                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  {act.startTime}
+                                </span>
+                              )}
+                              {act.locationName && (
+                                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground truncate max-w-[180px]">
+                                  <MapPin className="w-2.5 h-2.5 shrink-0" />
+                                  {act.locationName}
+                                </span>
+                              )}
+                              {act.costEstimate !== undefined && act.costEstimate > 0 && (
+                                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                  ~${act.costEstimate}
+                                </span>
+                              )}
+                            </div>
+                            {act.notes && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
+                                {act.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Per-item actions */}
+                        <div className="flex items-center gap-1.5 pl-[26px]">
+                          <button
+                            type="button"
+                            onClick={() => handleAddSingle(idx)}
+                            disabled={addBusy || voteBusy}
+                            className="inline-flex items-center gap-1 rounded-md border bg-muted/40 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 dark:hover:bg-emerald-950/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors disabled:opacity-50"
+                          >
+                            {addBusy ? (
+                              <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            ) : (
+                              <Plus className="w-2.5 h-2.5" />
+                            )}
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleVoteSingle(idx)}
+                            disabled={addBusy || voteBusy}
+                            className="inline-flex items-center gap-1 rounded-md border bg-muted/40 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 dark:hover:bg-violet-950/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors disabled:opacity-50"
+                          >
+                            {voteBusy ? (
+                              <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            ) : (
+                              <Vote className="w-2.5 h-2.5" />
+                            )}
+                            Vote
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Sticky bulk action bar */}
+          <div className="sticky bottom-0 border-t bg-background/95 backdrop-blur p-3 flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleVoteSelected}
+              disabled={selectedItems.length === 0 || busy !== null}
+              className="flex-1"
+            >
+              {busy === "vote-bulk" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Vote className="w-3.5 h-3.5 mr-1.5" />
+                  Vote on {selectedItems.length}
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleAddSelected}
+              disabled={selectedItems.length === 0 || busy !== null}
+              className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
+            >
+              {busy === "add-bulk" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                  Add {selectedItems.length} to plan
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </SidePanel>
+  );
+}

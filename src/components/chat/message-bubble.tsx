@@ -41,6 +41,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SmartActionChips } from "./smart-action-chips";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "🙌", "✈️"];
 
@@ -571,15 +572,28 @@ export function MessageBubble({ message, userId, isOwner, onReply, onActionDone 
 
         {/* Message content */}
         {message.type === "text" && message.body && (
-          <div
-            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              isMine
-                ? "bg-gradient-to-br from-primary to-violet-600 text-white rounded-tr-sm shadow-sm shadow-primary/20"
-                : "bg-muted rounded-tl-sm"
-            }`}
-          >
-            {message.body}
-          </div>
+          <>
+            <div
+              className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                isMine
+                  ? "bg-gradient-to-br from-primary to-violet-600 text-white rounded-tr-sm shadow-sm shadow-primary/20"
+                  : "bg-muted rounded-tl-sm"
+              }`}
+            >
+              {message.body}
+            </div>
+            {/* AI smart-action chips: only on the user's own freshly-sent
+                messages — Claude Haiku detects intent and offers 1-tap
+                "Add to plan / Log expense / Open vote" actions. */}
+            {isMine && (
+              <SmartActionChips
+                tripId={message.tripId}
+                messageId={message.id}
+                body={message.body}
+                createdAt={message.createdAt}
+              />
+            )}
+          </>
         )}
 
         {message.type === "link_card" && message.metadata && (

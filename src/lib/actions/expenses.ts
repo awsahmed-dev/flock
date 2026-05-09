@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
+import { maybePostBudgetAlert } from "@/lib/ai/budget-watcher";
 
 async function getAuthenticatedUser() {
   const user = await getCurrentUser();
@@ -92,6 +93,9 @@ export async function createExpense(formData: FormData) {
       paidBy: user.id, splitCount: members.length,
     },
   }).catch(() => {});
+
+  // Budget watcher — soft-fails, never throws back into this flow
+  await maybePostBudgetAlert(tripId, trip.budgetTotal, trip.currency, user.id);
 
   revalidatePath(`/trips/${tripId}/expenses`);
   revalidatePath(`/trips/${tripId}`);
