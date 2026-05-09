@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { votes, voteOptions, voteResponses, profiles } from "@/lib/db/schema";
+import { votes, voteOptions, voteResponses, profiles, chatMessages } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -77,7 +77,21 @@ export async function createVote(formData: FormData) {
     }))
   );
 
+  // Auto-post the vote to chat (mirrors mobile)
+  await db.insert(chatMessages).values({
+    tripId,
+    userId: user.id,
+    body: `📊 New vote: ${question.trim()}`,
+    type: "vote_card",
+    metadata: {
+      voteId: vote.id,
+      question: question.trim(),
+      options: optionLabels,
+    },
+  }).catch(() => {});
+
   revalidatePath(`/trips/${tripId}/votes`);
+  revalidatePath(`/trips/${tripId}`);
 }
 
 // ─── Cast vote ────────────────────────────────────────────────────────────────

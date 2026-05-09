@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { expenses, expenseSplits, profiles, tripMembers } from "@/lib/db/schema";
+import { expenses, expenseSplits, profiles, tripMembers, chatMessages } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -80,7 +80,21 @@ export async function createExpense(formData: FormData) {
   }
   // Custom splits are handled separately via updateExpenseSplits
 
+  // Auto-post the expense to chat (mirrors mobile app)
+  await db.insert(chatMessages).values({
+    tripId,
+    userId: user.id,
+    body: `💸 ${title} — ${trip.currency} ${amount.toLocaleString()}`,
+    type: "expense_card",
+    metadata: {
+      expenseId: expense.id,
+      amount, currency: trip.currency, category, title,
+      paidBy: user.id, splitCount: members.length,
+    },
+  }).catch(() => {});
+
   revalidatePath(`/trips/${tripId}/expenses`);
+  revalidatePath(`/trips/${tripId}`);
 }
 
 // ─── Delete expense ───────────────────────────────────────────────────────────

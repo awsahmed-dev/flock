@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Copy,
   Check,
@@ -15,10 +12,17 @@ import {
   MapPin,
   Clock,
   Link2,
+  Sparkles,
+  Hotel,
+  FileText,
+  Vote,
 } from "lucide-react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
+import { AiPlannerPanel } from "./ai-planner-panel";
+import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
+import { ActivityFeed } from "./activity-feed";
 
 interface Member {
   id: string;
@@ -43,24 +47,57 @@ interface Props {
   userId: string;
 }
 
-const AVATAR_GRADIENTS = [
-  "from-blue-400 to-indigo-500",
-  "from-violet-400 to-purple-500",
-  "from-emerald-400 to-teal-500",
-  "from-amber-400 to-orange-500",
-  "from-rose-400 to-pink-500",
-  "from-cyan-400 to-blue-500",
+const AVATAR_COLORS = [
+  { bg: "bg-blue-500", text: "text-white" },
+  { bg: "bg-violet-500", text: "text-white" },
+  { bg: "bg-emerald-500", text: "text-white" },
+  { bg: "bg-amber-500", text: "text-white" },
+  { bg: "bg-rose-500", text: "text-white" },
+  { bg: "bg-cyan-500", text: "text-white" },
 ];
 
-function getMemberGradient(id: string) {
+const CARD_GRADIENTS = [
+  "from-blue-500 to-indigo-600",
+  "from-violet-500 to-purple-600",
+  "from-emerald-500 to-teal-600",
+  "from-amber-500 to-orange-500",
+  "from-rose-500 to-pink-600",
+  "from-cyan-500 to-blue-500",
+  "from-fuchsia-500 to-violet-600",
+  "from-teal-500 to-emerald-600",
+];
+
+function getGradient(id: string) {
   const hash = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
+  return CARD_GRADIENTS[hash % CARD_GRADIENTS.length];
+}
+
+function getMemberColor(id: string) {
+  const hash = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getTripStatus(startDate: string, endDate: string) {
+  const now = new Date();
+  const start = parseISO(startDate);
+  const end = parseISO(endDate);
+  if (now >= start && now <= end) return { label: "Ongoing now", color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" };
+  if (isPast(end)) return { label: "Completed", color: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
+  const days = differenceInCalendarDays(start, now);
+  return {
+    label: days === 0 ? "Starts today!" : days === 1 ? "Starts tomorrow" : `In ${days} days`,
+    color: "bg-blue-500/20 text-blue-200 border-blue-500/30",
+  };
 }
 
 export function TripOverview({ trip, inviteUrl }: Props) {
   const [copied, setCopied] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [hotelOpen, setHotelOpen] = useState(false);
 
   const nights = differenceInDays(parseISO(trip.endDate), parseISO(trip.startDate));
+  const gradient = getGradient(trip.id);
+  const tripStatus = getTripStatus(trip.startDate, trip.endDate);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -70,198 +107,259 @@ export function TripOverview({ trip, inviteUrl }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const quickLinks = [
+  const navLinks = [
     {
       label: "Itinerary",
       href: `/trips/${trip.id}/itinerary`,
       icon: MapPin,
-      description: "View and edit the day-by-day plan",
-      gradient: "from-blue-500 to-indigo-600",
-      bg: "bg-blue-50 dark:bg-blue-950/30",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      hoverBorder: "hover:border-blue-200 dark:hover:border-blue-800",
+      description: "Day-by-day plan",
+      gradient: "from-blue-500 to-indigo-500",
+      glow: "shadow-blue-500/20",
     },
     {
       label: "Votes",
       href: `/trips/${trip.id}/votes`,
-      icon: Users,
-      description: "Active decisions waiting for the group",
-      gradient: "from-violet-500 to-purple-600",
-      bg: "bg-violet-50 dark:bg-violet-950/30",
-      iconColor: "text-violet-600 dark:text-violet-400",
-      hoverBorder: "hover:border-violet-200 dark:hover:border-violet-800",
+      icon: Vote,
+      description: "Group decisions",
+      gradient: "from-violet-500 to-purple-500",
+      glow: "shadow-violet-500/20",
     },
     {
       label: "Expenses",
       href: `/trips/${trip.id}/expenses`,
       icon: Wallet,
-      description: "Track spending and who owes what",
-      gradient: "from-emerald-500 to-teal-600",
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-      hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-800",
-    },
-  ];
-
-  const stats = [
-    {
-      label: "Destination",
-      value: trip.destination,
-      icon: MapPin,
-      bg: "bg-blue-50 dark:bg-blue-950/30",
-      iconColor: "text-blue-500",
+      description: "Track spending",
+      gradient: "from-emerald-500 to-teal-500",
+      glow: "shadow-emerald-500/20",
     },
     {
-      label: "Duration",
-      value: `${nights} night${nights !== 1 ? "s" : ""}`,
-      icon: Clock,
-      bg: "bg-violet-50 dark:bg-violet-950/30",
-      iconColor: "text-violet-500",
-    },
-    {
-      label: "Travelers",
-      value: `${trip.members.length} people`,
-      icon: Users,
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
-      iconColor: "text-emerald-500",
-    },
-    {
-      label: "Budget",
-      value: trip.budgetTotal
-        ? `${trip.currency} ${trip.budgetTotal.toLocaleString()}`
-        : "Not set",
-      icon: Wallet,
-      bg: "bg-amber-50 dark:bg-amber-950/30",
-      iconColor: "text-amber-500",
+      label: "Documents",
+      href: `/trips/${trip.id}/documents`,
+      icon: FileText,
+      description: "Files & links",
+      gradient: "from-amber-500 to-orange-500",
+      glow: "shadow-amber-500/20",
     },
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="border-border/60 hover:border-border transition-colors">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center shrink-0`}>
-                <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
+    <div className="space-y-6">
+      {/* ── Hero card ──────────────────────────────────────────────────────── */}
+      <div className={`relative rounded-2xl bg-gradient-to-br ${gradient} overflow-hidden`}>
+        {/* Decorative orbs */}
+        <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/10 pointer-events-none" />
+        <div className="absolute right-20 -bottom-8 w-32 h-32 rounded-full bg-white/8 pointer-events-none" />
+        <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-black/8 pointer-events-none" />
+
+        <div className="relative z-10 p-6 sm:p-8">
+          {/* Status badge */}
+          <div className="mb-4">
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${tripStatus.color}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+              {tripStatus.label}
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <p className="text-white/60 text-xs font-medium uppercase tracking-widest mb-1">
+                {trip.destination}
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+                {trip.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4 mt-3">
+                <span className="flex items-center gap-1.5 text-white/80 text-sm">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d, yyyy")}
+                </span>
+                <span className="flex items-center gap-1.5 text-white/80 text-sm">
+                  <Clock className="w-3.5 h-3.5" />
+                  {nights} night{nights !== 1 ? "s" : ""}
+                </span>
+                <span className="flex items-center gap-1.5 text-white/80 text-sm">
+                  <Users className="w-3.5 h-3.5" />
+                  {trip.members.length} traveler{trip.members.length !== 1 ? "s" : ""}
+                </span>
+                {trip.budgetTotal && (
+                  <span className="flex items-center gap-1.5 text-white/80 text-sm">
+                    <Wallet className="w-3.5 h-3.5" />
+                    {trip.currency} {trip.budgetTotal.toLocaleString()} budget
+                  </span>
+                )}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground mb-0.5">{stat.label}</p>
-                <p className="font-semibold text-sm truncate">{stat.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+
+            {/* Member stack */}
+            <div className="flex items-center -space-x-2 shrink-0">
+              {trip.members.slice(0, 5).map((m) => {
+                const c = getMemberColor(m.id);
+                return (
+                  <div
+                    key={m.id}
+                    title={m.displayName}
+                    className={`w-8 h-8 rounded-full ${c.bg} ${c.text} border-2 border-white/30 flex items-center justify-center text-xs font-bold shrink-0`}
+                  >
+                    {m.displayName.slice(0, 2).toUpperCase()}
+                  </div>
+                );
+              })}
+              {trip.members.length > 5 && (
+                <div className="w-8 h-8 rounded-full bg-black/25 text-white border-2 border-white/30 flex items-center justify-center text-xs font-bold shrink-0">
+                  +{trip.members.length - 5}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Quick links */}
-      <div className="grid sm:grid-cols-3 gap-4">
-        {quickLinks.map((link) => (
+      {/* ── Activity Feed — chronological event stream from across the trip.
+          Mirrors the mobile app's Home view: every action (plan added,
+          expense logged, vote opened, member joined, recent chats) shows up
+          here in time order, each row deep-linking to the relevant tab.
+          Makes the cross-tab relationship feel cohesive instead of siloed. */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold tracking-tight">Activity</h2>
+        </div>
+        <ActivityFeed tripId={trip.id} />
+      </div>
+
+      {/* ── Navigation grid ────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {navLinks.map((link) => (
           <Link key={link.href} href={link.href}>
-            <Card className={`h-full hover:shadow-md transition-all cursor-pointer group border-border/60 ${link.hoverBorder}`}>
-              <CardContent className="p-5 flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl ${link.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                  <link.icon className={`w-4.5 h-4.5 ${link.iconColor}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">{link.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                    {link.description}
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
-              </CardContent>
-            </Card>
+            <div className="group relative rounded-2xl border border-border/60 bg-card hover:border-border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer p-4 flex flex-col items-center gap-2 text-center">
+              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${link.gradient} flex items-center justify-center shadow-lg ${link.glow} group-hover:scale-110 transition-transform duration-200`}>
+                <link.icon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">{link.label}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{link.description}</p>
+              </div>
+              <ArrowRight className="absolute top-3 right-3 w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+            </div>
           </Link>
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* Members */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Members</CardTitle>
-              <Link href={`/trips/${trip.id}/members`}>
-                <Button variant="ghost" size="sm" className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/8">
-                  Manage
-                </Button>
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2.5">
-            {trip.members.map((member) => (
-              <div key={member.id} className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getMemberGradient(member.id)} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                  {member.displayName.slice(0, 2).toUpperCase()}
-                </div>
-                <span className="text-sm flex-1 truncate font-medium">{member.displayName}</span>
-                {member.role === "owner" && (
-                  <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 hover:bg-amber-100">
-                    Owner
-                  </Badge>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Invite */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Link2 className="w-4 h-4 text-primary" />
-              </div>
-              <CardTitle className="text-base">Invite your crew</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Share this link to invite friends. They can join with just their
-              name — no account needed.
+      {/* ── Smart tools ────────────────────────────────────────────────────── */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setAiOpen(true)}
+          className="group text-left rounded-2xl border border-border/60 hover:border-primary/40 bg-gradient-to-br from-primary/5 via-violet-500/5 to-background hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 p-5 flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0 shadow-md shadow-primary/30 group-hover:scale-110 transition-transform duration-200">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">AI Trip Planner</p>
+            <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
+              Generate a smart itinerary for {trip.destination}
             </p>
-            {inviteUrl && (
-              <div className="flex gap-2">
-                <code className="flex-1 text-xs bg-muted/60 rounded-lg px-3 py-2 truncate border border-border/50">
-                  {inviteUrl}
-                </code>
-                <Button
-                  size="sm"
-                  onClick={copyInviteLink}
-                  className={`shrink-0 gap-1.5 transition-all ${copied ? "bg-emerald-600 hover:bg-emerald-600" : "bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"}`}
-                >
-                  {copied ? (
-                    <Check className="w-3.5 h-3.5" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                  {copied ? "Copied!" : "Copy"}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHotelOpen(true)}
+          className="group text-left rounded-2xl border border-border/60 hover:border-blue-400/40 bg-gradient-to-br from-blue-500/5 via-cyan-500/5 to-background hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 p-5 flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/30 group-hover:scale-110 transition-transform duration-200">
+            <Hotel className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">Find a Stay</p>
+            <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
+              Search hotels, hostels, apartments — filter by budget
+            </p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0" />
+        </button>
       </div>
 
-      {/* Dates */}
-      <Card className="border-border/60">
-        <CardContent className="p-5 flex items-center gap-4">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/15 to-violet-400/15 flex items-center justify-center shrink-0">
-            <Calendar className="w-5 h-5 text-primary" />
+      {/* ── Members + Invite ───────────────────────────────────────────────── */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        {/* Members */}
+        <div className="rounded-2xl border border-border/60 bg-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-sm">Crew ({trip.members.length})</h3>
+            <Link href={`/trips/${trip.id}/members`}>
+              <button className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+                Manage →
+              </button>
+            </Link>
           </div>
-          <div>
-            <p className="text-sm font-semibold">
-              {format(parseISO(trip.startDate), "EEEE, MMMM d, yyyy")} →{" "}
-              {format(parseISO(trip.endDate), "EEEE, MMMM d, yyyy")}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {nights} night{nights !== 1 ? "s" : ""} · {trip.destination}
-            </p>
+          <div className="space-y-3">
+            {trip.members.map((member) => {
+              const c = getMemberColor(member.id);
+              return (
+                <div key={member.id} className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full ${c.bg} ${c.text} flex items-center justify-center text-xs font-bold shrink-0`}>
+                    {member.displayName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium flex-1 truncate">{member.displayName}</span>
+                  {member.role === "owner" && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                      Owner
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Invite */}
+        <div className="rounded-2xl border border-border/60 bg-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Link2 className="w-4 h-4 text-primary" />
+            </div>
+            <h3 className="font-semibold text-sm">Invite your crew</h3>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+            Share this link to invite friends. They can join with just their name — no account needed.
+          </p>
+          {inviteUrl ? (
+            <div className="space-y-2">
+              <div className="text-xs bg-muted/60 rounded-lg px-3 py-2.5 truncate border border-border/50 font-mono text-muted-foreground">
+                {inviteUrl}
+              </div>
+              <button
+                onClick={copyInviteLink}
+                className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
+                  copied
+                    ? "bg-emerald-600 text-white"
+                    : "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90 shadow-md shadow-primary/20"
+                }`}
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? "Copied!" : "Copy invite link"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No invite token set.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Panels */}
+      <AiPlannerPanel
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+      />
+      <HotelSearchPanel
+        open={hotelOpen}
+        onClose={() => setHotelOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+      />
     </div>
   );
 }

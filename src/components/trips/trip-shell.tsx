@@ -35,6 +35,7 @@ import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { SidePanel } from "@/components/ui/side-panel";
 
 interface Trip {
   id: string;
@@ -51,13 +52,14 @@ interface Props {
   children: React.ReactNode;
 }
 
+// Desktop top tabs — Members moved out (now a top-right "Users" icon
+// that opens a side panel, mirroring WhatsApp's group-info pattern).
 const NAV_TABS = [
   { label: "Overview", href: "", icon: LayoutDashboard },
   { label: "Itinerary", href: "/itinerary", icon: MapPin },
   { label: "Votes", href: "/votes", icon: Vote },
   { label: "Expenses", href: "/expenses", icon: Wallet },
   { label: "Documents", href: "/documents", icon: FileText },
-  { label: "Members", href: "/members", icon: Users },
 ];
 
 export function TripShell({ trip, children }: Props) {
@@ -65,14 +67,82 @@ export function TripShell({ trip, children }: Props) {
   const pathname = usePathname();
   const supabase = createClient();
   const [chatOpen, setChatOpen] = useState(false);
+  const [crewOpen, setCrewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // ── Live badge counts ────────────────────────────────────────────────────
+  // Mirrors the mobile app: small red pill on each tab in the floating nav
+  // showing unread / pending / unsettled counts.
+  const [badges, setBadges] = useState<{
+    chat: number; itinerary: number; expenses: number;
+  }>({ chat: 0, itinerary: 0, expenses: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function refresh() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
+        if (!userId || !trip.id) return;
+
+        const lastReadKey = `chat-last-read:${userId}:${trip.id}`;
+        const lastRead = parseInt(localStorage.getItem(lastReadKey) ?? "0", 10);
+
+        const [chatRes, itinRes, splitsRes] = await Promise.all([
+          supabase
+            .from("chat_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("trip_id", trip.id)
+            .neq("user_id", userId)
+            .gt("created_at", new Date(lastRead).toISOString()),
+          supabase
+            .from("itinerary_items")
+            .select("id", { count: "exact", head: true })
+            .eq("trip_id", trip.id)
+            .eq("status", "proposed"),
+          supabase
+            .from("expense_splits")
+            .select("id, expense:expenses!inner(trip_id, paid_by)", { count: "exact", head: false })
+            .eq("user_id", userId)
+            .eq("settled", false)
+            .filter("expense.trip_id", "eq", trip.id)
+            .neq("expense.paid_by", userId),
+        ]);
+
+        if (cancelled) return;
+        setBadges({
+          chat:      chatRes.count ?? 0,
+          itinerary: itinRes.count ?? 0,
+          expenses:  splitsRes.data?.length ?? 0,
+        });
+      } catch (e) {
+        console.log("[TripShell] badge refresh failed", e);
+      }
+    }
+    refresh();
+    const t = setInterval(refresh, 15_000); // re-poll every 15s
+    return () => { cancelled = true; clearInterval(t); };
+  }, [trip.id, pathname, chatOpen, supabase]);
+
+  // When the user opens chat, mark all messages as read locally
+  useEffect(() => {
+    if (!chatOpen) return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const key = `chat-last-read:${user.id}:${trip.id}`;
+      localStorage.setItem(key, String(Date.now()));
+      setBadges((b) => ({ ...b, chat: 0 }));
+    })();
+  }, [chatOpen, trip.id, supabase]);
 
   // On mobile, the chat is a fullscreen overlay (`fixed inset-0 z-40`). When
   // the user taps a different bottom-nav tab the URL changes but `chatOpen`
   // state persists, leaving the chat stuck on top of the new page. Close it
-  // automatically whenever the route changes.
+  // automatically whenever the route changes. Same for the crew sheet.
   useEffect(() => {
     setChatOpen(false);
+    setCrewOpen(false);
   }, [pathname]);
 
   function handleShareCopy() {
@@ -126,10 +196,20 @@ export function TripShell({ trip, children }: Props) {
                 {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
               </button>
             )}
+            {/* Crew / members — top-right "group info" button (Telegram-style).
+                Replaces the old "Members" tab in the top + bottom nav. */}
+            <button
+              onClick={() => setCrewOpen(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Crew"
+            >
+              <Users className="w-4 h-4" />
+            </button>
+
             <button
               onClick={() => setChatOpen((o) => !o)}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "p-2 rounded-lg transition-colors relative",
                 chatOpen
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -137,6 +217,11 @@ export function TripShell({ trip, children }: Props) {
               title={chatOpen ? "Close chat" : "Open chat"}
             >
               <MessageSquare className="w-4 h-4" />
+              {badges.chat > 0 && !chatOpen && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[9px] font-black flex items-center justify-center leading-none border-[1.5px] border-background">
+                  {badges.chat > 99 ? "99+" : badges.chat}
+                </span>
+              )}
             </button>
 
           <DropdownMenu>
@@ -254,11 +339,142 @@ export function TripShell({ trip, children }: Props) {
           tripId={trip.id}
           onChatToggle={() => setChatOpen((o) => !o)}
           chatOpen={chatOpen}
+          badges={badges}
         />
       )}
 
+      {/* Crew side panel — opened from the Users icon in the toolbar.
+          Telegram/WhatsApp-style "group info" pattern: members, invite
+          link, leave/remove controls. Replaces the old Members tab. */}
+      <SidePanel
+        open={crewOpen}
+        onClose={() => setCrewOpen(false)}
+        title="Trip crew"
+        subtitle={`${trip.name}`}
+        icon={<Users className="w-4 h-4 text-white" />}
+        accentGradient="from-primary to-violet-600"
+        width="md"
+      >
+        <CrewSheetContent tripId={trip.id} shareToken={trip.shareToken ?? null} />
+      </SidePanel>
+
       {/* PWA install prompt */}
       <InstallPrompt />
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * CrewSheetContent — content of the top-right Users-icon side panel.
+ * Telegram-style: invite link at top, members list below with role badges.
+ * Self-fetches members so the panel opens fast without prop-drilling.
+ * ──────────────────────────────────────────────────────────────────────── */
+function CrewSheetContent({ tripId, shareToken }: { tripId: string; shareToken: string | null }) {
+  const supabase = createClient();
+  const [members, setMembers] = useState<Array<{
+    userId: string; displayName: string; role: string;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("trip_members")
+        .select("user_id, display_name, role")
+        .eq("trip_id", tripId);
+      if (cancelled) return;
+      setMembers(
+        (data ?? []).map((m: any) => ({
+          userId: m.user_id, displayName: m.display_name, role: m.role,
+        })),
+      );
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [tripId, supabase]);
+
+  const inviteUrl =
+    typeof window !== "undefined" && shareToken
+      ? `${window.location.origin}/invite/${shareToken}`
+      : null;
+
+  function handleCopy() {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function handleShare() {
+    if (!inviteUrl) return;
+    if (navigator.share) {
+      navigator.share({ url: inviteUrl, title: "Join my trip" }).catch(() => {});
+    } else {
+      handleCopy();
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-5 p-5">
+      {/* Invite link card */}
+      {inviteUrl && (
+        <div className="rounded-xl bg-gradient-to-br from-primary to-violet-600 p-4 text-white">
+          <p className="text-sm font-bold mb-1">Invite your crew</p>
+          <p className="text-xs text-white/80 mb-3">Anyone with this link can join — no account needed.</p>
+          <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 mb-3">
+            <p className="text-xs font-mono truncate flex-1">{inviteUrl}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopy}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors py-2 text-sm font-bold"
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? "Copied!" : "Copy"}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white text-primary hover:bg-white/90 transition-colors py-2 text-sm font-bold"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              Share
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Members list */}
+      <div>
+        <p className="text-[11px] font-extrabold tracking-wider text-muted-foreground mb-2">
+          {loading ? "LOADING…" : `${members.length} TRAVELER${members.length !== 1 ? "S" : ""}`}
+        </p>
+        <div className="flex flex-col gap-1.5">
+          {members.map((m) => (
+            <div
+              key={m.userId}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold">
+                {m.displayName.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{m.displayName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {m.role === "owner" ? "Trip owner" : "Member"}
+                </p>
+              </div>
+              {m.role === "owner" && (
+                <span className="text-[10px] font-extrabold tracking-wide text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  OWNER
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

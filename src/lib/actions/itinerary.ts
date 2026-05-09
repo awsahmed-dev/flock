@@ -2,11 +2,16 @@
 
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { itineraryItems, profiles } from "@/lib/db/schema";
+import { itineraryItems, profiles, chatMessages } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
+import { geocode } from "@/lib/geocode";
+
+const TYPE_EMOJI: Record<string, string> = {
+  activity: "✨", accommodation: "🏨", transport: "✈️", meal: "🍽️", other: "📍",
+};
 
 async function getAuthenticatedUser() {
   const user = await getCurrentUser();
@@ -28,23 +33,53 @@ export async function createItineraryItem(formData: FormData) {
   }).onConflictDoNothing();
 
   const costRaw = formData.get("costEstimate") as string;
+  const locationName = (formData.get("locationName") as string) || null;
 
-  await db.insert(itineraryItems).values({
+  // Auto-geocode location name → coordinates (non-blocking, best effort)
+  let lat: number | null = null;
+  let lng: number | null = null;
+  if (locationName) {
+    const geo = await geocode(locationName, trip.destination).catch(() => null);
+    if (geo) { lat = geo.lat; lng = geo.lng; }
+  }
+
+  const [newItem] = await db.insert(itineraryItems).values({
     tripId,
     dayDate: formData.get("dayDate") as string,
     title: formData.get("title") as string,
     type: (formData.get("type") as "activity" | "accommodation" | "transport" | "meal" | "other") || "activity",
     startTime: (formData.get("startTime") as string) || null,
-    locationName: (formData.get("locationName") as string) || null,
+    locationName,
+    locationLat: lat,
+    locationLng: lng,
     costEstimate: costRaw ? parseFloat(costRaw) : null,
     bookingUrl: (formData.get("bookingUrl") as string) || null,
     notes: (formData.get("notes") as string) || null,
     status: "proposed",
     sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
     createdBy: user.id,
-  });
+  }).returning();
+
+  // Auto-post to chat so the rest of the crew sees the new plan in their
+  // shared timeline. Mirrors what the mobile app does on the same action.
+  const itemType = (formData.get("type") as string) || "activity";
+  const itemTitle = formData.get("title") as string;
+  await db.insert(chatMessages).values({
+    tripId,
+    userId: user.id,
+    body: `${TYPE_EMOJI[itemType] ?? "✨"} New plan: ${itemTitle}`,
+    type: "itinerary_card",
+    metadata: {
+      itineraryItemId: newItem.id,
+      title: itemTitle,
+      type: itemType,
+      dayDate: formData.get("dayDate") as string,
+      locationName,
+    },
+  }).catch(() => {});
 
   revalidatePath(`/trips/${tripId}/itinerary`);
+  revalidatePath(`/trips/${tripId}`);
 }
 
 export async function updateItineraryItem(formData: FormData) {
@@ -56,13 +91,27 @@ export async function updateItineraryItem(formData: FormData) {
   if (!trip) throw new Error("Access denied");
 
   const costRaw = formData.get("costEstimate") as string;
+  const locationName = (formData.get("locationName") as string) || null;
+
+  // Re-geocode if location name changed
+  let lat: number | null | undefined = undefined;
+  let lng: number | null | undefined = undefined;
+  if (locationName) {
+    const geo = await geocode(locationName, trip.destination).catch(() => null);
+    lat = geo?.lat ?? null;
+    lng = geo?.lng ?? null;
+  } else {
+    lat = null; lng = null; // cleared location
+  }
 
   await db.update(itineraryItems)
     .set({
       title: formData.get("title") as string,
       type: (formData.get("type") as "activity" | "accommodation" | "transport" | "meal" | "other"),
       startTime: (formData.get("startTime") as string) || null,
-      locationName: (formData.get("locationName") as string) || null,
+      locationName,
+      locationLat: lat,
+      locationLng: lng,
       costEstimate: costRaw ? parseFloat(costRaw) : null,
       bookingUrl: (formData.get("bookingUrl") as string) || null,
       notes: (formData.get("notes") as string) || null,
