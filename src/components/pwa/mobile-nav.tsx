@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, Calendar, Wallet, MessageSquare } from "lucide-react";
+import { Sparkles, Calendar, Wallet, MessageSquare, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
     itinerary?: number;
     expenses?: number;
     chat?: number;
+    documents?: number;
   };
 }
 
@@ -30,9 +31,10 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
   const pathname = usePathname();
 
   const tabs = [
-    { id: "home" as const,      label: "Home",      href: `/trips/${tripId}`,           icon: Sparkles,      exact: true },
-    { id: "itinerary" as const, label: "Plan",      href: `/trips/${tripId}/itinerary`, icon: Calendar,      exact: false },
-    { id: "expenses" as const,  label: "Money",     href: `/trips/${tripId}/expenses`,  icon: Wallet,        exact: false },
+    { id: "home" as const,      label: "Home",  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },
+    { id: "itinerary" as const, label: "Plan",  href: `/trips/${tripId}/itinerary`, icon: Calendar, exact: false },
+    { id: "expenses" as const,  label: "Money", href: `/trips/${tripId}/expenses`,  icon: Wallet,   exact: false },
+    { id: "documents" as const, label: "Docs",  href: `/trips/${tripId}/documents`, icon: FileText, exact: false },
   ];
 
   return (

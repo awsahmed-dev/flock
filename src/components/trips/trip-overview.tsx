@@ -107,40 +107,10 @@ export function TripOverview({ trip, inviteUrl }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const navLinks = [
-    {
-      label: "Itinerary",
-      href: `/trips/${trip.id}/itinerary`,
-      icon: MapPin,
-      description: "Day-by-day plan",
-      gradient: "from-blue-500 to-indigo-500",
-      glow: "shadow-blue-500/20",
-    },
-    {
-      label: "Votes",
-      href: `/trips/${trip.id}/votes`,
-      icon: Vote,
-      description: "Group decisions",
-      gradient: "from-violet-500 to-purple-500",
-      glow: "shadow-violet-500/20",
-    },
-    {
-      label: "Expenses",
-      href: `/trips/${trip.id}/expenses`,
-      icon: Wallet,
-      description: "Track spending",
-      gradient: "from-emerald-500 to-teal-500",
-      glow: "shadow-emerald-500/20",
-    },
-    {
-      label: "Documents",
-      href: `/trips/${trip.id}/documents`,
-      icon: FileText,
-      description: "Files & links",
-      gradient: "from-amber-500 to-orange-500",
-      glow: "shadow-amber-500/20",
-    },
-  ];
+  // navLinks removed — the previous 4-tile grid duplicated the bottom-nav
+  // tabs. High-frequency tabs live in the bottom nav; less-frequent views
+  // (Crew / Docs / Map / Photos) are reachable via the pill row under
+  // the hero card.
 
   return (
     <div className="space-y-6">
@@ -214,34 +184,49 @@ export function TripOverview({ trip, inviteUrl }: Props) {
         </div>
       </div>
 
-      {/* ── Activity Feed — chronological event stream from across the trip.
-          Mirrors the mobile app's Home view: every action (plan added,
-          expense logged, vote opened, member joined, recent chats) shows up
-          here in time order, each row deep-linking to the relevant tab.
-          Makes the cross-tab relationship feel cohesive instead of siloed. */}
+      {/* ── Quick-access pills under the hero — fast jumps to less-frequent
+          views (Members / Documents / Map / Photos). The high-frequency
+          tabs already live in the bottom nav; these pills cover everything
+          else without spending screen space on a tile grid. */}
+      <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none">
+        <Link
+          href={`/trips/${trip.id}/members`}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
+        >
+          <Users className="w-3.5 h-3.5 text-cyan-500" />
+          Crew
+        </Link>
+        <Link
+          href={`/trips/${trip.id}/documents`}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
+        >
+          <FileText className="w-3.5 h-3.5 text-amber-500" />
+          Docs
+        </Link>
+        <Link
+          href={`/trips/${trip.id}/itinerary?view=map`}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
+        >
+          <MapPin className="w-3.5 h-3.5 text-blue-500" />
+          Map
+        </Link>
+        <Link
+          href={`/trips/${trip.id}/documents?type=image`}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+          Photos
+        </Link>
+      </div>
+
+      {/* ── Activity Feed — capped at 5 most-recent events with summary
+          chips on top. Total scale lives in the chips; the feed shows
+          "what just happened" so the page stays scannable. */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold tracking-tight">Activity</h2>
         </div>
         <ActivityFeed tripId={trip.id} />
-      </div>
-
-      {/* ── Navigation grid ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {navLinks.map((link) => (
-          <Link key={link.href} href={link.href}>
-            <div className="group relative rounded-2xl border border-border/60 bg-card hover:border-border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer p-4 flex flex-col items-center gap-2 text-center">
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${link.gradient} flex items-center justify-center shadow-lg ${link.glow} group-hover:scale-110 transition-transform duration-200`}>
-                <link.icon className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{link.label}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{link.description}</p>
-              </div>
-              <ArrowRight className="absolute top-3 right-3 w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </Link>
-        ))}
       </div>
 
       {/* ── Smart tools ────────────────────────────────────────────────────── */}

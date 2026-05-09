@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Sparkles, Plane, Utensils, MapPin, BarChart3, Bed,
+  Sparkles, Plane, Utensils, MapPin, BarChart3, Bed, Calendar,
   DollarSign, MessageSquare, UserPlus, FileText, ChevronRight,
 } from "lucide-react";
 import { format, parseISO, formatDistanceToNow, isToday, isYesterday } from "date-fns";
@@ -26,19 +26,31 @@ interface ActivityEvent {
 }
 
 /**
- * Trip activity feed — chronological timeline of every event in this trip.
- * Mirrors the mobile app's ActivityFeed: itinerary items, expenses, votes,
- * members joining, recent chat messages all interleaved by time.
+ * Trip activity feed — recent events at a glance.
  *
- * Why: "feels connected" UX. The crew described the old tab-based UX as
- * disconnected — separate views with no sense of "what happened recently."
- * This timeline gives them a single place to see all activity at a glance,
- * with each row deep-linking to the relevant tab.
+ * Capped at the most recent 5 events so the home page stays scannable. A
+ * summary header at top shows total counts per category (e.g. "16 plans ·
+ * 5 expenses · 2 votes") — total scale lives there, the feed below shows
+ * "what just happened." Each row deep-links to the relevant tab so the
+ * user can drill in for the full list when they want it.
  */
-export function ActivityFeed({ tripId }: { tripId: string }) {
+const MAX_EVENTS = 5;
+
+export function ActivityFeed({
+  tripId,
+  tripHref,
+}: {
+  tripId: string;
+  /** Base href for "see all" links. Defaults to /trips/[id]. */
+  tripHref?: string;
+}) {
   const supabase = useMemo(() => createClient(), []);
   const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [counts, setCounts] = useState<{ items: number; expenses: number; votes: number }>({
+    items: 0, expenses: 0, votes: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const baseHref = tripHref ?? `/trips/${tripId}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -150,7 +162,12 @@ export function ActivityFeed({ tripId }: { tripId: string }) {
         );
 
         if (!cancelled) {
-          setEvents(list.slice(0, 30));
+          setEvents(list.slice(0, MAX_EVENTS));
+          setCounts({
+            items:    (itinRes.data ?? []).length,
+            expenses: (expRes.data ?? []).length,
+            votes:    (voteRes.data ?? []).length,
+          });
           setLoading(false);
         }
       } catch (err) {
@@ -205,7 +222,33 @@ export function ActivityFeed({ tripId }: { tripId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      {/* Summary chips — total scale at a glance, click → drill into the
+          full list. The feed below is capped at MAX_EVENTS to stay scannable. */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <SummaryChip
+          icon={<Calendar className="w-3.5 h-3.5" />}
+          count={counts.items}
+          label={`plan${counts.items === 1 ? "" : "s"}`}
+          href={`${baseHref}/itinerary`}
+          color="primary"
+        />
+        <SummaryChip
+          icon={<DollarSign className="w-3.5 h-3.5" />}
+          count={counts.expenses}
+          label={`expense${counts.expenses === 1 ? "" : "s"}`}
+          href={`${baseHref}/expenses`}
+          color="emerald"
+        />
+        <SummaryChip
+          icon={<BarChart3 className="w-3.5 h-3.5" />}
+          count={counts.votes}
+          label={`vote${counts.votes === 1 ? "" : "s"}`}
+          href={`${baseHref}/votes`}
+          color="violet"
+        />
+      </div>
+
       {groups.map((g) => (
         <div key={g.label}>
           <p className="text-[11px] font-extrabold tracking-wider text-muted-foreground uppercase mb-2 px-1">
@@ -219,6 +262,39 @@ export function ActivityFeed({ tripId }: { tripId: string }) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Compact pill at the top of the feed: icon + count + label, linked to
+ * the relevant tab. Replaces the "list everything" feed of yesterday.
+ */
+function SummaryChip({
+  icon, count, label, href, color,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  label: string;
+  href: string;
+  color: "primary" | "emerald" | "violet";
+}) {
+  const colorMap: Record<string, string> = {
+    primary: "bg-primary/10 text-primary hover:bg-primary/15",
+    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15",
+    violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/15",
+  };
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
+        colorMap[color],
+      )}
+    >
+      {icon}
+      <span className="text-sm font-bold tabular-nums">{count}</span>
+      <span className="text-xs font-medium opacity-80">{label}</span>
+    </Link>
   );
 }
 
