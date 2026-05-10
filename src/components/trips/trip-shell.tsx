@@ -28,6 +28,7 @@ import {
   Check,
   Copy,
   Keyboard,
+  CalendarPlus,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -226,6 +227,14 @@ export function TripShell({ trip, children }: Props) {
               <Keyboard className="w-4 h-4" />
             </button>
             <ThemeToggle />
+            {/* Calendar export — downloads a .ics with every itinerary item */}
+            <a
+              href={`/api/trips/${trip.id}/calendar.ics`}
+              className="hidden sm:inline-flex p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Download trip as calendar (.ics)"
+            >
+              <CalendarPlus className="w-4 h-4" />
+            </a>
             {/* Share button — only shown when sharing is enabled */}
             {trip.shareToken && (
               <button
