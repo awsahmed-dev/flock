@@ -130,12 +130,12 @@ export function TripOverview({ trip, inviteUrl }: Props) {
             </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <p className="text-white/60 text-xs font-medium uppercase tracking-widest mb-1">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 min-w-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-white/60 text-xs font-medium uppercase tracking-widest mb-1 break-words">
                 {trip.destination}
               </p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight break-words">
                 {trip.name}
               </h1>
               <div className="flex flex-wrap items-center gap-4 mt-3">

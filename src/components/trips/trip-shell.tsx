@@ -329,9 +329,9 @@ export function TripShell({ trip, children }: Props) {
       </header>
 
       {/* Body row — content + chat side by side */}
-      <div className="flex flex-1 overflow-hidden">
-        <main className="flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-6 pb-24 sm:pb-6">
-          <div className="max-w-5xl mx-auto">
+      <div className="flex flex-1 overflow-hidden w-full max-w-full">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 pb-24 sm:pb-6">
+          <div className="max-w-5xl mx-auto w-full">
             {children}
           </div>
         </main>

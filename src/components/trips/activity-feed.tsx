@@ -70,6 +70,19 @@ export function ActivityFeed({
             .limit(5),
         ]);
 
+        // Surface RLS / API errors instead of silently rendering empty.
+        // Saved us once already — when RLS helpers had EXECUTE revoked,
+        // every query came back with `permission denied` and the empty
+        // state hid the real cause.
+        for (const [name, res] of [
+          ["itinerary_items", itinRes], ["expenses", expRes], ["votes", voteRes],
+          ["trip_members", memberRes], ["chat_messages", msgRes],
+        ] as const) {
+          if ((res as any).error) {
+            console.warn(`[ActivityFeed] ${name} query failed:`, (res as any).error);
+          }
+        }
+
         const list: ActivityEvent[] = [];
 
         const typeIconName: Record<string, string> = {
