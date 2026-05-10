@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { checkLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 15;
 export const dynamic = "force-dynamic";
@@ -57,6 +58,20 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Per-user rate limit: ~30 detections/min sustained, burst of 30.
+    // detect-actions fires on every sent message; legit usage is well under
+    // this, but a hammering script gets cut off fast.
+    const limit = checkLimit(`ai:detect:${user.id}`, {
+      capacity: 30,
+      refillPerSec: 0.5,
+    });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Rate limit — slow down", actions: [] },
+        { status: 429, headers: { "retry-after": String(limit.retryAfter) } },
+      );
+    }
 
     const { tripId, body } = (await request.json()) as { tripId?: string; body?: string };
     if (!tripId || !body) {

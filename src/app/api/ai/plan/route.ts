@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
+import { checkLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
@@ -82,6 +83,20 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Plan generation is expensive (multiple Haiku calls). Cap at ~3
+    // generations every 5 minutes per user — plenty for legit re-runs,
+    // hard ceiling for scripted abuse.
+    const limit = checkLimit(`ai:plan:${user.id}`, {
+      capacity: 3,
+      refillPerSec: 1 / 100, // ~1 token every 100s → full bucket in 5 min
+    });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: `Slow down — try again in ${limit.retryAfter}s` },
+        { status: 429, headers: { "retry-after": String(limit.retryAfter) } },
+      );
+    }
 
     const body = await request.json();
     const { tripId, travelStyle = "cultural", interests = "", notes = "" } = body;
