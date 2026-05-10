@@ -392,6 +392,7 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
       <form onSubmit={handleSubmit} className="flex items-end gap-1.5">
         <textarea
           ref={textareaRef}
+          data-chat-input
           value={body}
           onChange={(e) => {
             setBody(e.target.value);

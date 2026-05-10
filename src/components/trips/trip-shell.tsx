@@ -26,6 +26,7 @@ import {
   Share2,
   Check,
   Copy,
+  Keyboard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { SidePanel } from "@/components/ui/side-panel";
+import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
 
 interface Trip {
   id: string;
@@ -69,6 +71,31 @@ export function TripShell({ trip, children }: Props) {
   const [chatOpen, setChatOpen] = useState(false);
   const [crewOpen, setCrewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // Persist desktop chat-open state per trip. Mobile is always closed
+  // by default (it's a fullscreen overlay so opening on landing is jarring).
+  const chatPrefKey = `flock:chat-open:${trip.id}`;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(max-width: 639px)").matches) return;
+    try {
+      const v = localStorage.getItem(chatPrefKey);
+      if (v === "1") setChatOpen(true);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.id]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(max-width: 639px)").matches) return;
+    try {
+      localStorage.setItem(chatPrefKey, chatOpen ? "1" : "0");
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatOpen, trip.id]);
 
   // ── Live badge counts ────────────────────────────────────────────────────
   // Mirrors the mobile app: small red pill on each tab in the floating nav
@@ -185,6 +212,17 @@ export function TripShell({ trip, children }: Props) {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Keyboard shortcuts trigger — desktop only.
+                Dispatches a synthetic '?' so we reuse the same overlay logic. */}
+            <button
+              onClick={() =>
+                document.dispatchEvent(new CustomEvent("flock:shortcuts:show"))
+              }
+              className="hidden sm:inline-flex p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Keyboard shortcuts (?)"
+            >
+              <Keyboard className="w-4 h-4" />
+            </button>
             <ThemeToggle />
             {/* Share button — only shown when sharing is enabled */}
             {trip.shareToken && (
@@ -360,6 +398,12 @@ export function TripShell({ trip, children }: Props) {
 
       {/* PWA install prompt */}
       <InstallPrompt />
+
+      {/* Trip-scoped keyboard shortcuts (?, c, /, g+i/v/e/d/s/h) */}
+      <KeyboardShortcuts
+        tripId={trip.id}
+        onToggleChat={() => setChatOpen((o) => !o)}
+      />
     </div>
   );
 }
