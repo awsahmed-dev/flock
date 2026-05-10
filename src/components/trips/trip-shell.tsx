@@ -20,6 +20,7 @@ import {
   Vote,
   Wallet,
   FileText,
+  Backpack,
   Settings,
   ChevronLeft,
   MessageSquare,
@@ -62,6 +63,7 @@ const NAV_TABS = [
   { label: "Votes", href: "/votes", icon: Vote },
   { label: "Expenses", href: "/expenses", icon: Wallet },
   { label: "Documents", href: "/documents", icon: FileText },
+  { label: "Packing", href: "/packing", icon: Backpack },
 ];
 
 export function TripShell({ trip, children }: Props) {

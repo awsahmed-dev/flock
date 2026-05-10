@@ -36,6 +36,7 @@ const NAV_TARGETS: Record<string, string> = {
   v: "/votes",
   e: "/expenses",
   d: "/documents",
+  p: "/packing",
   s: "/settings",
 };
 
@@ -48,6 +49,7 @@ const SHORTCUTS: Array<{ keys: string; label: string }> = [
   { keys: "g v", label: "Go to votes" },
   { keys: "g e", label: "Go to expenses" },
   { keys: "g d", label: "Go to documents" },
+  { keys: "g p", label: "Go to packing" },
   { keys: "g s", label: "Go to settings" },
   { keys: "Esc", label: "Close chat / dialog" },
 ];

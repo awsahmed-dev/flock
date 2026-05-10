@@ -298,6 +298,29 @@ export const messageReactions = pgTable("message_reactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ─── Packing list ────────────────────────────────────────────────────────────
+//
+// `user_id` NULL means a shared/group item (tent, first-aid kit); a uuid
+// means it belongs to that traveler's personal checklist. `created_by` tracks
+// who added it (for delete authorization).
+export const packingItems = pgTable("packing_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => profiles.id, { onDelete: "set null" }),
+  label: text("label").notNull(),
+  category: text("category").default("general").notNull(),
+  packed: boolean("packed").default(false).notNull(),
+  notes: text("notes"),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => profiles.id),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({

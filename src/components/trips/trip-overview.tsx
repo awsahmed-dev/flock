@@ -16,6 +16,7 @@ import {
   Hotel,
   FileText,
   Vote,
+  Backpack,
 } from "lucide-react";
 import { format, parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
@@ -216,6 +217,13 @@ export function TripOverview({ trip, inviteUrl }: Props) {
         >
           <Sparkles className="w-3.5 h-3.5 text-violet-500" />
           Photos
+        </Link>
+        <Link
+          href={`/trips/${trip.id}/packing`}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
+        >
+          <Backpack className="w-3.5 h-3.5 text-emerald-500" />
+          Packing
         </Link>
       </div>
 
