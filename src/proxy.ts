@@ -38,11 +38,17 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
-  const isInviteRoute = request.nextUrl.pathname.startsWith("/invite");
-  const isPublicRoute = request.nextUrl.pathname === "/";
+  const path = request.nextUrl.pathname;
+  const isAuthRoute = path.startsWith("/auth");
+  const isInviteRoute = path.startsWith("/invite");
+  // Public landing + public share view + public guest accept routes.
+  const isPublicPage = path === "/" || path.startsWith("/share/");
+  // Internal endpoints that gate themselves (cron secret, health probe).
+  // These must be reachable without a session.
+  const isPublicApi =
+    path === "/api/health" || path.startsWith("/api/cron/");
 
-  if (!user && !isAuthRoute && !isInviteRoute && !isPublicRoute) {
+  if (!user && !isAuthRoute && !isInviteRoute && !isPublicPage && !isPublicApi) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
