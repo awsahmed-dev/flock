@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput, type ReplyTarget } from "./message-input";
-import { X, MessageSquare, RefreshCw, Circle } from "lucide-react";
+import { X, MessageSquare, RefreshCw, Circle, Pin, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 interface Reaction {
@@ -49,7 +49,10 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([]);
   const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
+  const [pinnedIdx, setPinnedIdx] = useState(0);
+  const [readReceipts, setReadReceipts] = useState<Record<string, string | null>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevMessageCount = useRef(0);
   const typingTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   // Keep displayName in a ref so presence effect doesn't re-run when it changes
@@ -67,6 +70,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
       setUserId(data.userId ?? "");
       setDisplayName(data.displayName ?? "");
       setIsOwner(data.isOwner ?? false);
+      setReadReceipts(data.readReceipts ?? {});
     } catch {
       // silent
     }
@@ -173,6 +177,17 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
     prevMessageCount.current = messages.length;
   }, [messages.length]);
 
+  // Read-receipt bump — fire when chat is open + has messages, debounced.
+  // Cheap POST that updates `trip_members.last_read_chat_at`. The other
+  // members' next chat fetch then sees ✓✓ on the messages they read.
+  useEffect(() => {
+    if (!isOpen || messages.length === 0) return;
+    const timer = setTimeout(() => {
+      fetch(`/api/trips/${tripId}/chat/read`, { method: "POST" }).catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isOpen, tripId, messages.length]);
+
   // Broadcast typing — called from MessageInput
   const handleTyping = useCallback(() => {
     if (!userId) return;
@@ -248,23 +263,69 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
         </div>
       </div>
 
-      {/* Pinned bar */}
-      {pinnedMessages.length > 0 && (
-        <div className="border-b bg-amber-50 dark:bg-amber-950/20 px-4 py-2 shrink-0">
-          <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">
-            📌 Pinned ({pinnedMessages.length})
-          </p>
-          {pinnedMessages.slice(0, 1).map((m) => (
-            <p key={m.id} className="text-xs text-muted-foreground truncate">
-              <span className="font-medium">{m.author?.displayName ?? "?"}: </span>
-              {m.body ?? `[${m.type.replace("_", " ")}]`}
-            </p>
-          ))}
-        </div>
-      )}
+      {/* Pinned bar — Telegram-style. Click anywhere on the row to scroll
+          to that message. Click the chevron to cycle when there's more
+          than one pin. */}
+      {pinnedMessages.length > 0 && (() => {
+        const idx = Math.min(pinnedIdx, pinnedMessages.length - 1);
+        const current = pinnedMessages[idx];
+        const cycle = () =>
+          setPinnedIdx((i) => (i + 1) % pinnedMessages.length);
+        const jumpTo = () => {
+          const el = messagesContainerRef.current?.querySelector<HTMLElement>(
+            `[data-message-id="${current.id}"]`,
+          );
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Brief flash to draw the eye
+            el.classList.add("ring-2", "ring-amber-400/70", "ring-offset-2");
+            setTimeout(
+              () => el.classList.remove("ring-2", "ring-amber-400/70", "ring-offset-2"),
+              1200,
+            );
+          }
+        };
+        return (
+          <button
+            type="button"
+            onClick={jumpTo}
+            className="flex items-center gap-2 w-full border-b bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/30 px-4 py-2 shrink-0 transition-colors text-left"
+            title="Jump to pinned message"
+          >
+            <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold tracking-wider text-amber-700 dark:text-amber-400 uppercase">
+                Pinned {pinnedMessages.length > 1 && `· ${idx + 1}/${pinnedMessages.length}`}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                <span className="font-medium text-foreground">
+                  {current.author?.displayName ?? "?"}:
+                </span>{" "}
+                {current.body ?? `[${current.type.replace("_", " ")}]`}
+              </p>
+            </div>
+            {pinnedMessages.length > 1 && (
+              <span
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cycle();
+                }}
+                className="p-1 rounded-md text-amber-700 dark:text-amber-400 hover:bg-amber-200/50 dark:hover:bg-amber-900/30 shrink-0"
+                title="Next pinned"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            )}
+          </button>
+        );
+      })()}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+      >
         {loading && messages.length === 0 && (
           <div className="flex justify-center py-8">
             <div className="text-sm text-muted-foreground animate-pulse">Loading…</div>
@@ -287,7 +348,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
           lastDateLabel = dateLabel;
 
           return (
-            <div key={msg.id}>
+            <div key={msg.id} data-message-id={msg.id} className="rounded-xl transition-shadow">
               {showLabel && (
                 <div className="flex items-center gap-2 my-3">
                   <div className="flex-1 h-px bg-border" />
@@ -301,6 +362,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
                 isOwner={isOwner}
                 onReply={setReplyTo}
                 onActionDone={fetchMessages}
+                readReceipts={readReceipts}
               />
             </div>
           );

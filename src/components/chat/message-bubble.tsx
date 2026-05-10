@@ -485,6 +485,8 @@ interface Props {
   isOwner: boolean;
   onReply: (target: { id: string; body: string; authorName: string }) => void;
   onActionDone?: () => void;
+  /** Map of userId → last_read_chat_at ISO. Used to render ✓/✓✓ on outgoing. */
+  readReceipts?: Record<string, string | null>;
 }
 
 const CARD_TYPES = ["link_card", "expense_card", "vote_card", "itinerary_card", "decision_card"];
@@ -504,10 +506,29 @@ function getAvatarGradient(userId: string) {
   return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
 }
 
-export function MessageBubble({ message, userId, isOwner, onReply, onActionDone }: Props) {
+export function MessageBubble({
+  message,
+  userId,
+  isOwner,
+  onReply,
+  onActionDone,
+  readReceipts,
+}: Props) {
   const [isPending, startTransition] = useTransition();
   const isMine = message.userId === userId;
   const isCard = CARD_TYPES.includes(message.type);
+
+  // Read-receipt: ✓✓ if any *other* member's last_read_chat_at is at or
+  // after this message's createdAt. ✓ otherwise (sent but not yet read).
+  const readByOther = (() => {
+    if (!isMine || !readReceipts) return false;
+    const created = new Date(message.createdAt).getTime();
+    for (const [uid, iso] of Object.entries(readReceipts)) {
+      if (uid === userId || !iso) continue;
+      if (new Date(iso).getTime() >= created) return true;
+    }
+    return false;
+  })();
 
   if (message.deletedAt) {
     return (
@@ -559,6 +580,18 @@ export function MessageBubble({ message, userId, isOwner, onReply, onActionDone 
           <span>{formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}</span>
           {message.pinned && (
             <span className="text-amber-500">📌</span>
+          )}
+          {/* Read receipt: ✓ sent / ✓✓ read by at least one other member.
+              Only shown on the user's own messages. */}
+          {isMine && (
+            <span
+              className={`text-[10px] font-bold leading-none tracking-tighter ${
+                readByOther ? "text-sky-500" : "text-muted-foreground/60"
+              }`}
+              title={readByOther ? "Read" : "Sent"}
+            >
+              {readByOther ? "✓✓" : "✓"}
+            </span>
           )}
         </div>
 

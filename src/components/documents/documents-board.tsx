@@ -1,10 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { AddDocumentDialog } from "./add-document-dialog";
 import { deleteDocument } from "@/lib/actions/documents";
 import { toast } from "sonner";
-import { FolderOpen, Link2, ExternalLink, Trash2, FileText } from "lucide-react";
+import {
+  FolderOpen,
+  Link2,
+  ExternalLink,
+  Trash2,
+  FileText,
+  Image as ImageIcon,
+  Files,
+  X,
+} from "lucide-react";
 import { format } from "date-fns";
 
 interface Document {
@@ -101,27 +111,134 @@ function DocumentCard({
   );
 }
 
-export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Props) {
-  // Group by dayDate
-  const pinned = docs.filter((d) => d.dayDate);
-  const general = docs.filter((d) => !d.dayDate);
+function PhotoGrid({
+  photos,
+  onOpen,
+}: {
+  photos: Document[];
+  onOpen: (photo: Document) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+      {photos.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => onOpen(p)}
+          className="aspect-square rounded-xl overflow-hidden bg-muted relative group"
+          title={p.title}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={p.url}
+            alt={p.title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+          />
+          {p.dayDate && (
+            <span className="absolute bottom-1 left-1 text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">
+              {format(new Date(p.dayDate + "T00:00:00"), "MMM d")}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
 
-  // Sort pinned by dayDate
+function Lightbox({ photo, onClose }: { photo: Document; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+        aria-label="Close"
+      >
+        <X className="w-5 h-5" />
+      </button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photo.url}
+        alt={photo.title}
+        className="max-w-full max-h-full object-contain rounded-xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+}
+
+export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Props) {
+  const searchParams = useSearchParams();
+  const initialView =
+    searchParams?.get("type") === "image" ? "photos" : "all";
+  const [view, setView] = useState<"all" | "photos" | "files">(
+    initialView as "all" | "photos",
+  );
+  const [lightbox, setLightbox] = useState<Document | null>(null);
+
+  const photos = docs.filter((d) => d.type === "image");
+  const files = docs.filter((d) => d.type !== "image");
+
+  const pinned = files.filter((d) => d.dayDate);
+  const general = files.filter((d) => !d.dayDate);
   const pinnedSorted = [...pinned].sort(
-    (a, b) => new Date(a.dayDate!).getTime() - new Date(b.dayDate!).getTime()
+    (a, b) => new Date(a.dayDate!).getTime() - new Date(b.dayDate!).getTime(),
   );
 
+  const tabs: Array<{ id: "all" | "photos" | "files"; label: string; count: number; icon: React.ComponentType<{ className?: string }> }> = [
+    { id: "all", label: "All", count: docs.length, icon: Files },
+    { id: "photos", label: "Photos", count: photos.length, icon: ImageIcon },
+    { id: "files", label: "Files", count: files.length, icon: FileText },
+  ];
+
+  const showPhotos = view === "all" || view === "photos";
+  const showFiles = view === "all" || view === "files";
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-semibold">Documents</h2>
           <p className="text-sm text-muted-foreground">
-            Links, booking confirmations, and reference docs
+            Photos, links, bookings, and reference docs
           </p>
         </div>
         <AddDocumentDialog tripId={tripId} />
+      </div>
+
+      {/* View tabs */}
+      <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = view === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setView(t.id)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                active
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {t.label}
+              <span
+                className={`text-[10px] tabular-nums px-1.5 rounded-full ${
+                  active ? "bg-primary/15 text-primary" : "bg-muted-foreground/15"
+                }`}
+              >
+                {t.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {docs.length === 0 ? (
@@ -129,13 +246,23 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Pro
           <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">No documents yet</p>
           <p className="text-xs mt-1">
-            Add Google Docs, booking links, visa info, anything useful
+            Add photos, Google Docs, booking links, visa info — anything useful
           </p>
         </div>
       ) : (
         <>
-          {/* General docs */}
-          {general.length > 0 && (
+          {showPhotos && photos.length > 0 && (
+            <section className="space-y-2.5">
+              {view === "all" && (
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  Photos · {photos.length}
+                </h3>
+              )}
+              <PhotoGrid photos={photos} onOpen={setLightbox} />
+            </section>
+          )}
+
+          {showFiles && general.length > 0 && (
             <section className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 General · {general.length}
@@ -151,8 +278,7 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Pro
             </section>
           )}
 
-          {/* Day-pinned docs */}
-          {pinnedSorted.length > 0 && (
+          {showFiles && pinnedSorted.length > 0 && (
             <section className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 Pinned to days · {pinnedSorted.length}
@@ -167,8 +293,27 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Pro
               ))}
             </section>
           )}
+
+          {/* Empty state for a tab with nothing in it */}
+          {view === "photos" && photos.length === 0 && (
+            <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+              <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No photos yet</p>
+              <p className="text-xs mt-1">
+                Add image links and they'll show up here as a gallery
+              </p>
+            </div>
+          )}
+          {view === "files" && files.length === 0 && (
+            <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+              <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No files yet</p>
+            </div>
+          )}
         </>
       )}
+
+      {lightbox && <Lightbox photo={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

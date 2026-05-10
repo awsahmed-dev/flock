@@ -97,6 +97,9 @@ export const tripMembers = pgTable("trip_members", {
   displayName: text("display_name").notNull(), // cached for guests
   role: tripMemberRoleEnum("role").default("member").notNull(),
   balanceNet: real("balance_net").default(0).notNull(), // positive = owed money, negative = owes money
+  // Bumped each time the user views the chat at the bottom — drives the
+  // ✓✓ read-receipt indicator on outgoing messages and unread badges.
+  lastReadChatAt: timestamp("last_read_chat_at", { withTimezone: true }),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
 });
 

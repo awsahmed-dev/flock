@@ -57,6 +57,13 @@ export async function createVote(formData: FormData) {
   }
 
   if (optionLabels.length < 2) throw new Error("At least 2 options are required");
+  // Hard cap — anything more than 5 turns into an unreadable list. The dialog
+  // already enforces this on the client; this is the belt-and-braces backup.
+  const MAX_OPTIONS = 5;
+  if (optionLabels.length > MAX_OPTIONS) {
+    optionLabels.length = MAX_OPTIONS;
+    optionCosts.length = MAX_OPTIONS;
+  }
 
   const [vote] = await db
     .insert(votes)

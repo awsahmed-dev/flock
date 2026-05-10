@@ -190,7 +190,7 @@ export async function applyDetectedAction(formData: FormData) {
       ? payload.options
           .map((o: any) => String(o ?? "").trim())
           .filter((o: string) => o.length > 0)
-          .slice(0, 4)
+          .slice(0, 5)
       : [];
 
     if (!question || opts.length < 2) throw new Error("Invalid vote");

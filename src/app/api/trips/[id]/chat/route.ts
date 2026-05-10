@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { chatMessages } from "@/lib/db/schema";
+import { chatMessages, tripMembers } from "@/lib/db/schema";
 import { eq, asc, isNull, and } from "drizzle-orm";
 
 export async function GET(
@@ -36,5 +36,24 @@ export async function GET(
     (user as any).email?.split("@")[0] ||
     "Traveler";
 
-  return NextResponse.json({ messages, userId: user.id, isOwner, displayName });
+  // Read-receipt cursors per member (userId → ISO timestamp). Used by the
+  // client to render ✓ vs ✓✓ on the current user's outgoing messages.
+  const memberRows = await db
+    .select({ userId: tripMembers.userId, lastReadChatAt: tripMembers.lastReadChatAt })
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, id));
+  const readReceipts: Record<string, string | null> = {};
+  for (const m of memberRows) {
+    readReceipts[m.userId] = m.lastReadChatAt
+      ? new Date(m.lastReadChatAt).toISOString()
+      : null;
+  }
+
+  return NextResponse.json({
+    messages,
+    userId: user.id,
+    isOwner,
+    displayName,
+    readReceipts,
+  });
 }

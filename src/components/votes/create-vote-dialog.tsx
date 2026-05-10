@@ -27,8 +27,15 @@ export function CreateVoteDialog({ tripId }: Props) {
     { label: "", cost: "" },
   ]);
 
+  // Cap at MAX_OPTIONS so a vote stays scannable. Two is the floor (a vote
+  // needs a choice), five is the ceiling (anything more is usually really
+  // a planning thread, not a single decision).
+  const MAX_OPTIONS = 5;
+
   function addOption() {
-    setOptions((prev) => [...prev, { label: "", cost: "" }]);
+    setOptions((prev) =>
+      prev.length >= MAX_OPTIONS ? prev : [...prev, { label: "", cost: "" }],
+    );
   }
 
   function removeOption(idx: number) {
@@ -120,16 +127,22 @@ export function CreateVoteDialog({ tripId }: Props) {
                 )}
               </div>
             ))}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={addOption}
-              className="w-full border border-dashed"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add option
-            </Button>
+            {options.length < MAX_OPTIONS ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={addOption}
+                className="w-full border border-dashed"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Add option ({options.length}/{MAX_OPTIONS})
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center pt-1">
+                Max {MAX_OPTIONS} options — keep votes scannable.
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2 pt-1">
