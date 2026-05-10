@@ -24,11 +24,26 @@ const CATEGORIES = [
   { value: "other", label: "Other" },
 ];
 
+// Shown in the currency dropdown — popular travel-relevant currencies
+// first, the rest of the world's majors after. Users can also type a
+// 3-letter ISO code manually if theirs isn't in the list.
+const COMMON_CURRENCIES = [
+  "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF",
+  "CNY", "AED", "SAR", "INR", "THB", "IDR", "MYR",
+  "SGD", "HKD", "KRW", "TWD", "TRY", "MXN", "BRL",
+  "ZAR", "EGP", "NZD", "NOK", "SEK", "DKK", "PLN",
+];
+
 interface Props {
   tripId: string;
+  /** Trip's base currency — used as the default for the currency picker. */
+  baseCurrency: string;
 }
 
-export function AddExpenseDialog({ tripId }: Props) {
+export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
+  const currencyOptions = Array.from(
+    new Set([baseCurrency, ...COMMON_CURRENCIES]),
+  );
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -81,10 +96,26 @@ export function AddExpenseDialog({ tripId }: Props) {
                 required
               />
             </div>
-            <div className="space-y-1.5 w-40">
-              <Label htmlFor="expenseDate">Date</Label>
-              <Input id="expenseDate" name="expenseDate" type="date" required />
+            <div className="space-y-1.5 w-24">
+              <Label htmlFor="currency">Currency</Label>
+              <select
+                id="currency"
+                name="currency"
+                defaultValue={baseCurrency}
+                className="w-full rounded-md border bg-background px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {currencyOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="expenseDate">Date</Label>
+            <Input id="expenseDate" name="expenseDate" type="date" required />
           </div>
 
           <div className="space-y-1.5">

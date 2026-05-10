@@ -48,13 +48,19 @@ export async function createExpense(formData: FormData) {
     throw new Error("Missing required fields");
   }
 
+  // Currency picker is optional — fall back to trip.currency. We trust the
+  // input only if it's a 3-letter alpha code (ISO 4217 format); anything
+  // else silently falls back to the trip base.
+  const currencyRaw = (formData.get("currency") as string)?.trim().toUpperCase();
+  const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : trip.currency;
+
   const [expense] = await db
     .insert(expenses)
     .values({
       tripId,
       title,
       amount,
-      currency: trip.currency,
+      currency,
       paidBy: user.id,
       category: category as any,
       expenseDate,

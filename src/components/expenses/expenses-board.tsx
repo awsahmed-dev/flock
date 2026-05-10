@@ -210,18 +210,56 @@ function ExpenseRow({ expense, userId, isOwner }: { expense: Expense; userId: st
 
 export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList, members }: Props) {
   const isOwner = members.some((m) => m.userId === userId);
-  const totalSpend = expenseList.reduce((sum, e) => sum + e.amount, 0);
+
+  // Multi-currency totals: group everything by ISO code, render either a
+  // single value (when all expenses share a currency) or a stacked list
+  // (e.g. "USD 1500 / EUR 240"). Summing across currencies would lie.
+  const totalsByCurrency = expenseList.reduce<Record<string, number>>(
+    (acc, e) => {
+      acc[e.currency] = (acc[e.currency] ?? 0) + e.amount;
+      return acc;
+    },
+    {},
+  );
+  const currencyKeys = Object.keys(totalsByCurrency).sort();
+  const isMultiCurrency = currencyKeys.length > 1;
+
   const balances = computeBalances(expenseList, members);
   const myBalance = balances.find((b) => b.userId === userId);
 
-  // Per-category breakdown
-  const categoryTotals = expenseList.reduce<Record<string, number>>((acc, e) => {
-    acc[e.category] = (acc[e.category] ?? 0) + e.amount;
+  // Per-person totals grouped by currency for the "You paid / You owe" cards.
+  const myPaidByCurrency = expenseList
+    .filter((e) => e.paidBy === userId)
+    .reduce<Record<string, number>>((acc, e) => {
+      acc[e.currency] = (acc[e.currency] ?? 0) + e.amount;
+      return acc;
+    }, {});
+  const myOwedByCurrency = expenseList.reduce<Record<string, number>>((acc, e) => {
+    for (const s of e.splits) {
+      if (s.userId === userId && !s.settled) {
+        acc[e.currency] = (acc[e.currency] ?? 0) + s.amountOwed;
+      }
+    }
     return acc;
   }, {});
+
+  // Per-category breakdown (still uses the user's primary currency only —
+  // category percentages need a single denominator to be meaningful).
+  const primary = isMultiCurrency
+    ? currencyKeys.reduce((a, b) =>
+        totalsByCurrency[a] >= totalsByCurrency[b] ? a : b,
+      )
+    : currencyKeys[0] ?? currency;
+  const categoryTotals = expenseList
+    .filter((e) => e.currency === primary)
+    .reduce<Record<string, number>>((acc, e) => {
+      acc[e.category] = (acc[e.category] ?? 0) + e.amount;
+      return acc;
+    }, {});
   const topCategories = Object.entries(categoryTotals)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
+  const totalSpend = totalsByCurrency[primary] ?? 0;
 
   return (
     <div className="space-y-6">
@@ -231,7 +269,7 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
           <h2 className="text-xl font-bold tracking-tight">Expenses</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Track spending and who owes what</p>
         </div>
-        <AddExpenseDialog tripId={tripId} />
+        <AddExpenseDialog tripId={tripId} baseCurrency={currency} />
       </div>
 
       {expenseList.length > 0 && (
@@ -245,7 +283,19 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
                 </div>
                 <span className="text-xs text-muted-foreground font-medium">Total spent</span>
               </div>
-              <p className="text-xl font-bold tabular-nums">{currency} {fmt(totalSpend)}</p>
+              {isMultiCurrency ? (
+                <div className="flex flex-col gap-0.5">
+                  {currencyKeys.map((c) => (
+                    <p key={c} className="text-base font-bold tabular-nums">
+                      {c} {fmt(totalsByCurrency[c])}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xl font-bold tabular-nums">
+                  {currencyKeys[0] ?? currency} {fmt(totalSpend)}
+                </p>
+              )}
             </div>
 
             {myBalance && (
@@ -257,9 +307,25 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
                     </div>
                     <span className="text-xs text-muted-foreground font-medium">You paid</span>
                   </div>
-                  <p className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                    {currency} {fmt(myBalance.totalPaid)}
-                  </p>
+                  {Object.keys(myPaidByCurrency).length > 1 ? (
+                    <div className="flex flex-col gap-0.5">
+                      {Object.entries(myPaidByCurrency)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([c, v]) => (
+                          <p
+                            key={c}
+                            className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400"
+                          >
+                            {c} {fmt(v)}
+                          </p>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                      {Object.keys(myPaidByCurrency)[0] ?? currency}{" "}
+                      {fmt(Object.values(myPaidByCurrency)[0] ?? 0)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="rounded-2xl border border-border/60 bg-card p-4">
@@ -269,9 +335,27 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
                     </div>
                     <span className="text-xs text-muted-foreground font-medium">You owe</span>
                   </div>
-                  <p className={`text-xl font-bold tabular-nums ${myBalance.totalOwed > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}>
-                    {currency} {fmt(myBalance.totalOwed)}
-                  </p>
+                  {Object.keys(myOwedByCurrency).length > 1 ? (
+                    <div className="flex flex-col gap-0.5">
+                      {Object.entries(myOwedByCurrency)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([c, v]) => (
+                          <p
+                            key={c}
+                            className={`text-base font-bold tabular-nums ${v > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}
+                          >
+                            {c} {fmt(v)}
+                          </p>
+                        ))}
+                    </div>
+                  ) : (
+                    <p
+                      className={`text-xl font-bold tabular-nums ${myBalance.totalOwed > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}
+                    >
+                      {Object.keys(myOwedByCurrency)[0] ?? currency}{" "}
+                      {fmt(Object.values(myOwedByCurrency)[0] ?? 0)}
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -280,7 +364,16 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
           {/* Category breakdown */}
           {topCategories.length > 0 && (
             <div className="rounded-2xl border border-border/60 bg-card p-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Spending breakdown</p>
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Spending breakdown
+                </p>
+                {isMultiCurrency && (
+                  <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    {primary} only
+                  </span>
+                )}
+              </div>
               <div className="space-y-2.5">
                 {topCategories.map(([cat, amount]) => {
                   const cfg = CATEGORY_CONFIG[cat] ?? CATEGORY_CONFIG.other;
@@ -358,7 +451,7 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
             </div>
             <p className="font-semibold text-sm mb-1">No expenses yet</p>
             <p className="text-xs text-muted-foreground mb-5">Log the first expense to start tracking the group spend</p>
-            <AddExpenseDialog tripId={tripId} />
+            <AddExpenseDialog tripId={tripId} baseCurrency={currency} />
           </div>
         ) : (
           <div className="space-y-3">
