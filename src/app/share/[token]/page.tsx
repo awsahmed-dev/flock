@@ -1,12 +1,20 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { trips, itineraryItems } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import {
+  trips,
+  itineraryItems,
+  documents,
+  votes,
+  voteOptions,
+  voteResponses,
+  expenses,
+} from "@/lib/db/schema";
+import { eq, and, asc, desc } from "drizzle-orm";
 import { format, parseISO, differenceInDays } from "date-fns";
 import {
   MapPin, Calendar, Clock, DollarSign,
   Ticket, Hotel, Bus, Utensils, Star,
-  ExternalLink, Users, Globe,
+  ExternalLink, Users, Globe, CheckCircle2, BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -69,6 +77,83 @@ export default async function SharePage({ params }: Props) {
     .orderBy(itineraryItems.dayDate, itineraryItems.sortOrder);
 
   const confirmedItems = items.filter((i) => i.status !== "rejected");
+
+  // ── Photo strip — last 12 uploaded image documents (top-of-page gallery)
+  const photoDocs = await db
+    .select({ id: documents.id, url: documents.url, title: documents.title })
+    .from(documents)
+    .where(and(eq(documents.tripId, trip.id), eq(documents.type, "image")))
+    .orderBy(desc(documents.createdAt))
+    .limit(12);
+
+  // ── Decisions — resolved votes with their winning option (most-voted).
+  //    Pulls the full vote list, options, and responses in 3 round-trips.
+  const tripVotes = await db
+    .select()
+    .from(votes)
+    .where(eq(votes.tripId, trip.id))
+    .orderBy(desc(votes.createdAt));
+  const voteIds = tripVotes.map((v) => v.id);
+  // Load all options + responses, then bucket by voteId in JS. Cheaper than
+  // an IN-clause for a recap that typically has fewer than 10 votes.
+  type OptRow = {
+    id: string;
+    voteId: string;
+    label: string;
+    costEstimate: number | null;
+  };
+  const optsByVote = new Map<string, OptRow[]>();
+  const responseCounts = new Map<string, Map<string, number>>();
+  if (voteIds.length > 0) {
+    const optsAll = await db
+      .select({
+        id: voteOptions.id,
+        voteId: voteOptions.voteId,
+        label: voteOptions.label,
+        costEstimate: voteOptions.costEstimate,
+      })
+      .from(voteOptions);
+    const respsAll = await db.select().from(voteResponses);
+    for (const o of optsAll) {
+      if (!voteIds.includes(o.voteId)) continue;
+      const list = optsByVote.get(o.voteId) ?? [];
+      list.push(o);
+      optsByVote.set(o.voteId, list);
+    }
+    for (const r of respsAll) {
+      if (!voteIds.includes(r.voteId)) continue;
+      const inner = responseCounts.get(r.voteId) ?? new Map();
+      inner.set(r.selectedOptionId, (inner.get(r.selectedOptionId) ?? 0) + 1);
+      responseCounts.set(r.voteId, inner);
+    }
+  }
+
+  const decisions = tripVotes
+    .map((v) => {
+      const opts = optsByVote.get(v.id) ?? [];
+      const tallies = responseCounts.get(v.id) ?? new Map<string, number>();
+      const ranked = opts
+        .map((o) => ({ option: o, votes: tallies.get(o.id) ?? 0 }))
+        .sort((a, b) => b.votes - a.votes);
+      return { vote: v, ranked };
+    })
+    // Skip empty/no-response votes from the public recap.
+    .filter((d) => d.ranked[0]?.votes > 0)
+    .slice(0, 6);
+
+  // ── Real spend — group expenses by currency for an honest "trip cost"
+  //    figure on the recap. Won't FX-convert until we wire daily rates.
+  const tripExpenses = await db
+    .select({ amount: expenses.amount, currency: expenses.currency })
+    .from(expenses)
+    .where(eq(expenses.tripId, trip.id));
+  const spendByCurrency = tripExpenses.reduce<Record<string, number>>(
+    (acc, e) => {
+      acc[e.currency] = (acc[e.currency] ?? 0) + e.amount;
+      return acc;
+    },
+    {},
+  );
 
   // Build ordered day list
   const start = parseISO(trip.startDate);
@@ -153,6 +238,141 @@ export default async function SharePage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── Photo strip ──────────────────────────────────────────── */}
+      {photoDocs.length > 0 && (
+        <div className="border-t border-white/10">
+          <div className="max-w-5xl mx-auto px-6 py-8">
+            <p className="text-xs font-bold tracking-wider text-white/40 uppercase mb-3">
+              Photos · {photoDocs.length}
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 snap-x snap-mandatory">
+              {photoDocs.map((p) => (
+                <a
+                  key={p.id}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 snap-start w-44 h-44 sm:w-56 sm:h-56 rounded-2xl overflow-hidden bg-white/5 border border-white/10 relative group"
+                  title={p.title}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.url}
+                    alt={p.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Decisions made (resolved votes) ─────────────────────── */}
+      {decisions.length > 0 && (
+        <div className="border-t border-white/10">
+          <div className="max-w-3xl mx-auto px-6 py-10">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-violet-400" />
+              </div>
+              <h2 className="text-xl font-bold">What the crew decided</h2>
+            </div>
+            <div className="space-y-3">
+              {decisions.map(({ vote, ranked }) => {
+                const winner = ranked[0];
+                const totalResponses = ranked.reduce(
+                  (s, r) => s + r.votes,
+                  0,
+                );
+                const winPct = totalResponses
+                  ? Math.round((winner.votes / totalResponses) * 100)
+                  : 0;
+                const isClosed = vote.status === "closed";
+                return (
+                  <div
+                    key={vote.id}
+                    className="rounded-2xl bg-white/5 border border-white/10 p-4 backdrop-blur"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <p className="text-sm font-semibold leading-snug">
+                        {vote.question}
+                      </p>
+                      {isClosed && (
+                        <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Closed
+                        </span>
+                      )}
+                    </div>
+                    <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-sm font-bold text-emerald-300">
+                          🏆 {winner.option.label}
+                        </p>
+                        <span className="text-xs font-bold text-emerald-300/80 tabular-nums">
+                          {winner.votes} vote{winner.votes !== 1 ? "s" : ""}
+                          {totalResponses > 1 && ` · ${winPct}%`}
+                        </span>
+                      </div>
+                      {winner.option.costEstimate != null && (
+                        <p className="text-xs text-white/60">
+                          ~{trip.currency} {winner.option.costEstimate}
+                        </p>
+                      )}
+                    </div>
+                    {ranked.length > 1 && (
+                      <p className="text-[11px] text-white/40 mt-2 truncate">
+                        Other options:{" "}
+                        {ranked
+                          .slice(1)
+                          .map((r) => r.option.label)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Trip cost (real spend) ──────────────────────────────── */}
+      {Object.keys(spendByCurrency).length > 0 && (
+        <div className="border-t border-white/10">
+          <div className="max-w-3xl mx-auto px-6 py-10">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-bold">What the trip actually cost</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {Object.entries(spendByCurrency)
+                .sort(([, a], [, b]) => b - a)
+                .map(([curr, total]) => (
+                  <div
+                    key={curr}
+                    className="rounded-2xl bg-white/5 border border-white/10 p-4 backdrop-blur"
+                  >
+                    <p className="text-[10px] font-bold tracking-wider text-white/40 uppercase">
+                      {curr}
+                    </p>
+                    <p className="text-xl font-bold tabular-nums mt-0.5">
+                      {total.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Divider ──────────────────────────────────────────────── */}
       <div className="border-t border-white/10" />
