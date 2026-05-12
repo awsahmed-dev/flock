@@ -1,12 +1,15 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { tripInvites, tripMembers, profiles } from "@/lib/db/schema";
+import { tripInvites, tripMembers, profiles, trips } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { randomBytes } from "crypto";
 import { getBaseUrl } from "@/lib/base-url";
+import { sendEmail } from "@/lib/email/send";
+import { renderInviteAccepted } from "@/lib/email/templates";
+import { sendPush } from "@/lib/push/send";
 
 export async function joinTripAsGuest(formData: FormData) {
   const token = formData.get("token") as string;
@@ -58,14 +61,69 @@ export async function joinTripAsGuest(formData: FormData) {
     });
 
     if (!existing) {
-      await db.insert(tripMembers).values({
+      const [newMember] = await db
+        .insert(tripMembers)
+        .values({
+          tripId,
+          userId,
+          displayName,
+          role: "member",
+        })
+        .returning();
+
+      // Notify the rest of the crew that a new member just joined.
+      notifyInviteAccepted({
         tripId,
-        userId,
-        displayName,
-        role: "member",
-      });
+        memberId: newMember.id,
+        joinerName: displayName,
+        joinerUserId: userId,
+      }).catch((e) => console.error("[invite/notify] failed:", e));
     }
 
     redirect(`/trips/${tripId}`);
   }
+}
+
+async function notifyInviteAccepted(args: {
+  tripId: string;
+  memberId: string;
+  joinerName: string;
+  joinerUserId: string;
+}): Promise<void> {
+  const trip = await db.query.trips.findFirst({
+    where: eq(trips.id, args.tripId),
+  });
+  if (!trip) return;
+  const members = await db
+    .select({ userId: tripMembers.userId, displayName: tripMembers.displayName })
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, args.tripId));
+  const recipientUserIds: string[] = [];
+  for (const m of members) {
+    if (m.userId === args.joinerUserId) continue;
+    recipientUserIds.push(m.userId);
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, m.userId),
+    });
+    if (!profile?.email) continue;
+    const rendered = await renderInviteAccepted({
+      recipientName: m.displayName || profile.displayName || "there",
+      joinerName: args.joinerName,
+      tripName: trip.name,
+      destination: trip.destination,
+      tripId: args.tripId,
+      memberId: args.memberId,
+    });
+    await sendEmail({ to: profile.email, ...rendered, kind: "invite_accepted" });
+  }
+
+  await sendPush({
+    toUserIds: recipientUserIds,
+    payload: {
+      title: `🎉 ${args.joinerName} joined ${trip.name}`,
+      body: `The crew for ${trip.destination} is coming together.`,
+      url: `/trips/${args.tripId}`,
+      tag: `invite:${args.tripId}`,
+    },
+  });
 }

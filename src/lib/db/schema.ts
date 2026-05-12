@@ -298,6 +298,25 @@ export const messageReactions = pgTable("message_reactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ─── Push subscriptions ──────────────────────────────────────────────────────
+//
+// One row per device subscribed to web push (phone + laptop + tablet ok).
+// `endpoint` is the Web Push service URL (FCM / APNs gateway / Mozilla) and
+// p256dh+auth are the encryption keys for payload delivery. Last_seen_at is
+// bumped on every successful push so we can prune dead endpoints.
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Packing list ────────────────────────────────────────────────────────────
 //
 // `user_id` NULL means a shared/group item (tent, first-aid kit); a uuid

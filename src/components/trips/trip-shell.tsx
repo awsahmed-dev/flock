@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { MobileNav } from "@/components/pwa/mobile-nav";
+import { EnablePushButton } from "@/components/pwa/enable-push";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { SidePanel } from "@/components/ui/side-panel";
 import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
@@ -338,6 +339,13 @@ export function TripShell({ trip, children }: Props) {
                 >
                   <Keyboard className="w-4 h-4" /> Keyboard shortcuts
                 </DropdownMenuItem>
+
+                {/* Web push enrollment — renders nothing if VAPID isn't
+                    configured server-side (NEXT_PUBLIC_VAPID_PUBLIC_KEY). */}
+                <DropdownMenuItem
+                  render={<EnablePushButton className="w-full inline-flex items-center gap-2 px-2 py-1.5 text-sm" />}
+                  className="gap-2 p-0"
+                />
 
                 <DropdownMenuSeparator />
 

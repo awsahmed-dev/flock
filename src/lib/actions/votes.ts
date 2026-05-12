@@ -7,6 +7,10 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
+import { sendEmail } from "@/lib/email/send";
+import { renderVoteOpened } from "@/lib/email/templates";
+import { tripMembers } from "@/lib/db/schema";
+import { sendPush } from "@/lib/push/send";
 
 async function getAuthenticatedUser() {
   const user = await getCurrentUser();
@@ -97,8 +101,72 @@ export async function createVote(formData: FormData) {
     },
   }).catch(() => {});
 
+  // Notify the rest of the crew by email — soft-failing, idempotency-keyed,
+  // skipped entirely if RESEND_API_KEY is unset. Author themself is excluded.
+  notifyVoteOpened(tripId, vote.id, user.id, question.trim(), optionLabels).catch(
+    (e) => console.error("[votes/notify] failed:", e),
+  );
+
   revalidatePath(`/trips/${tripId}/votes`);
   revalidatePath(`/trips/${tripId}`);
+}
+
+async function notifyVoteOpened(
+  tripId: string,
+  voteId: string,
+  authorId: string,
+  question: string,
+  options: string[],
+): Promise<void> {
+  const tripRow = await db.query.trips.findFirst({
+    where: (t, { eq }) => eq(t.id, tripId),
+  });
+  if (!tripRow) return;
+  const authorRow = await db.query.profiles.findFirst({
+    where: (p, { eq }) => eq(p.id, authorId),
+  });
+  const members = await db
+    .select({
+      userId: tripMembers.userId,
+      displayName: tripMembers.displayName,
+    })
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, tripId));
+  const recipientUserIds: string[] = [];
+  for (const m of members) {
+    if (m.userId === authorId) continue;
+    recipientUserIds.push(m.userId);
+    const profile = await db.query.profiles.findFirst({
+      where: (p, { eq }) => eq(p.id, m.userId),
+    });
+    if (!profile?.email) continue;
+    const rendered = await renderVoteOpened({
+      recipientName: m.displayName || "there",
+      authorName: authorRow?.displayName ?? "Someone in the crew",
+      tripName: tripRow.name,
+      question,
+      options,
+      tripId,
+      voteId,
+    });
+    await sendEmail({
+      to: profile.email,
+      ...rendered,
+      kind: "vote_opened",
+    });
+  }
+
+  // Web push (silent if VAPID isn't configured). Tag groups multiple votes
+  // on the same trip so the latest replaces the older notification.
+  await sendPush({
+    toUserIds: recipientUserIds,
+    payload: {
+      title: `🗳️  ${authorRow?.displayName ?? "Someone"} opened a vote`,
+      body: question,
+      url: `/trips/${tripId}/votes`,
+      tag: `vote:${tripId}`,
+    },
+  });
 }
 
 // ─── Cast vote ────────────────────────────────────────────────────────────────
