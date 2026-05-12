@@ -127,8 +127,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Prevent long URLs, single-word destinations, or pasted chat content
+       from pushing the layout sideways on mobile. Per-element opt-outs use
+       `whitespace-nowrap` as normal. */
+    overflow-wrap: anywhere;
   }
   html {
     @apply font-sans;
+  }
+  /* Inputs sometimes inherit overflow-wrap and start wrapping on caret —
+     keep them on a single line unless they're explicitly multiline. */
+  input,
+  select {
+    overflow-wrap: normal;
+    word-break: normal;
   }
 }

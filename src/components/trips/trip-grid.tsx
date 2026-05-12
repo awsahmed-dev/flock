@@ -6,6 +6,7 @@ import { MapPin, Calendar, Plus, ArrowRight, Clock } from "lucide-react";
 import { format, parseISO, isPast, isFuture, differenceInDays } from "date-fns";
 import type { trips } from "@/lib/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
+import { OnboardingCard } from "@/components/dashboard/onboarding-card";
 
 type Trip = InferSelectModel<typeof trips>;
 
@@ -66,23 +67,10 @@ function getTripStatus(trip: Trip) {
 
 export function TripGrid({ trips }: Props) {
   if (trips.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center text-4xl mb-6 shadow-lg shadow-primary/25">
-          ✈️
-        </div>
-        <h3 className="font-semibold text-xl mb-2">No trips yet</h3>
-        <p className="text-muted-foreground text-sm mb-8 max-w-xs leading-relaxed">
-          Create your first trip and invite your crew to start planning together.
-        </p>
-        <Link href="/trips/new">
-          <Button className="gap-2 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0 shadow-md shadow-primary/25">
-            <Plus className="w-4 h-4" />
-            Create a trip
-          </Button>
-        </Link>
-      </div>
-    );
+    // First-run dashboard — illustrated onboarding card. The bare "No trips
+    // yet" empty state was a known conversion killer; this sets expectations
+    // and drives the first action.
+    return <OnboardingCard />;
   }
 
   return (

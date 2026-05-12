@@ -185,12 +185,14 @@ export default async function DashboardPage() {
 
       {/* ── All trips grid ─────────────────────────────────────────── */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-            {allTrips.length > 0 ? `All trips · ${allTrips.length}` : "Your trips"}
-          </h2>
-          <div className="flex-1 h-px bg-border/60" />
-        </div>
+        {allTrips.length > 0 && (
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+              All trips · {allTrips.length}
+            </h2>
+            <div className="flex-1 h-px bg-border/60" />
+          </div>
+        )}
         <TripGrid trips={allTrips} />
       </div>
     </DashboardShell>

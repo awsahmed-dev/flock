@@ -29,13 +29,16 @@ import {
   Copy,
   Keyboard,
   CalendarPlus,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { SidePanel } from "@/components/ui/side-panel";
@@ -71,6 +74,7 @@ export function TripShell({ trip, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const { theme, setTheme } = useTheme();
   const [chatOpen, setChatOpen] = useState(false);
   const [crewOpen, setCrewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -214,39 +218,12 @@ export function TripShell({ trip, children }: Props) {
             </div>
           </div>
 
+          {/* ── Right toolbar ────────────────────────────────────────
+              Slimmed to three buttons: Crew · Chat · Avatar menu.
+              Everything else (theme, share, calendar, shortcuts, trip
+              settings, sign out) lives inside the avatar dropdown so
+              the header isn't a wall of icons. */}
           <div className="flex items-center gap-1.5">
-            {/* Keyboard shortcuts trigger — desktop only.
-                Dispatches a synthetic '?' so we reuse the same overlay logic. */}
-            <button
-              onClick={() =>
-                document.dispatchEvent(new CustomEvent("flock:shortcuts:show"))
-              }
-              className="hidden sm:inline-flex p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Keyboard shortcuts (?)"
-            >
-              <Keyboard className="w-4 h-4" />
-            </button>
-            <ThemeToggle />
-            {/* Calendar export — downloads a .ics with every itinerary item */}
-            <a
-              href={`/api/trips/${trip.id}/calendar.ics`}
-              className="hidden sm:inline-flex p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Download trip as calendar (.ics)"
-            >
-              <CalendarPlus className="w-4 h-4" />
-            </a>
-            {/* Share button — only shown when sharing is enabled */}
-            {trip.shareToken && (
-              <button
-                onClick={handleShareCopy}
-                className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                title="Copy share link"
-              >
-                {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
-              </button>
-            )}
-            {/* Crew / members — top-right "group info" button (Telegram-style).
-                Replaces the old "Members" tab in the top + bottom nav. */}
             <button
               onClick={() => setCrewOpen(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -261,7 +238,7 @@ export function TripShell({ trip, children }: Props) {
                 "p-2 rounded-lg transition-colors relative",
                 chatOpen
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
               title={chatOpen ? "Close chat" : "Open chat"}
             >
@@ -273,40 +250,105 @@ export function TripShell({ trip, children }: Props) {
               )}
             </button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button className="rounded-full shrink-0">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                      Me
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              }
-            />
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem
-                render={<Link href="/dashboard" />}
-                className="gap-2"
-              >
-                <LayoutDashboard className="w-4 h-4" /> All trips
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                render={<Link href={`/trips/${trip.id}/settings`} />}
-                className="gap-2"
-              >
-                <Settings className="w-4 h-4" /> Trip settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="gap-2 text-destructive focus:text-destructive"
-              >
-                <LogOut className="w-4 h-4" /> Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    className="rounded-full shrink-0"
+                    title="Settings & profile"
+                  >
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                        Me
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-56">
+                {/* Primary nav */}
+                <DropdownMenuItem
+                  render={<Link href="/dashboard" />}
+                  className="gap-2"
+                >
+                  <LayoutDashboard className="w-4 h-4" /> All trips
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={<Link href={`/trips/${trip.id}/settings`} />}
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" /> Trip settings
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* Trip actions */}
+                {trip.shareToken && (
+                  <DropdownMenuItem
+                    onClick={handleShareCopy}
+                    className="gap-2"
+                  >
+                    {shareCopied ? (
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Share2 className="w-4 h-4" />
+                    )}
+                    {shareCopied ? "Link copied!" : "Copy share link"}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  render={
+                    <a href={`/api/trips/${trip.id}/calendar.ics`} download />
+                  }
+                  className="gap-2"
+                >
+                  <CalendarPlus className="w-4 h-4" /> Add to calendar
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* App preferences */}
+                <DropdownMenuItem
+                  onClick={() =>
+                    setTheme(theme === "dark" ? "light" : "dark")
+                  }
+                  className="gap-2"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="w-4 h-4" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                  {theme === "dark" ? "Light mode" : "Dark mode"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTheme("system")}
+                  className="gap-2"
+                  disabled={theme === "system"}
+                >
+                  <Monitor className="w-4 h-4" /> Match system
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    document.dispatchEvent(
+                      new CustomEvent("flock:shortcuts:show"),
+                    )
+                  }
+                  className="gap-2 hidden sm:flex"
+                >
+                  <Keyboard className="w-4 h-4" /> Keyboard shortcuts
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="gap-2 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="w-4 h-4" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
