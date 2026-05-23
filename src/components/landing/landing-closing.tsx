@@ -5,52 +5,48 @@ import { motion } from "motion/react";
 import { ArrowRight, Users } from "lucide-react";
 
 /**
- * Closing block + footer. Final CTA card with a soft gradient + the legal
- * + social links. Kept slim — most footer content (changelog, blog, etc.)
- * doesn't exist yet so we don't fake it.
+ * Closing block + footer. Pure black, centered, flat. Matches the hero's
+ * minimalism — no gradient cards, no shadow flourishes.
  */
 export function LandingClosing() {
   return (
     <>
-      <section className="relative py-32 px-4">
+      <section className="relative border-t border-white/[0.06] py-32 px-6">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-          className="relative max-w-3xl mx-auto rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-indigo-600/30 via-violet-600/20 to-fuchsia-600/20 p-10 sm:p-14 text-center"
+          transition={{ duration: 0.7 }}
+          className="max-w-3xl mx-auto text-center"
         >
-          <div
-            aria-hidden
-            className="absolute -top-1/2 left-1/2 -translate-x-1/2 w-[120%] h-[400px] rounded-full bg-indigo-500/30 blur-3xl pointer-events-none"
-          />
-          <div className="relative">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-              Your next trip starts here
-            </h2>
-            <p className="mt-4 text-white/70 leading-relaxed max-w-md mx-auto">
-              Start free. Invite your crew with one link. No accounts needed for
-              guests. Multi-currency built in.
-            </p>
+          <h2 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-[1.05]">
+            Plan your first trip.{" "}
+            <span className="text-white/40">It's free.</span>
+          </h2>
+          <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">
+            Invite your crew with one link. No accounts needed for guests.
+            Multi-currency built in.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-3">
             <Link
               href="/auth/signup"
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-white text-slate-900 hover:bg-white/90 px-6 py-3.5 text-sm font-bold shadow-xl transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-6 py-3.5 text-sm font-semibold transition-colors"
             >
-              Plan your first trip
+              Start for free
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </motion.div>
       </section>
 
-      <footer className="border-t border-white/5 py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+      <footer className="border-t border-white/[0.06] py-10 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-              <Users className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+              <Users className="w-3 h-3 text-black" />
             </div>
-            <span className="font-bold tracking-tight">Paxawa</span>
-            <span className="text-white/30">·</span>
+            <span className="font-semibold tracking-tight">Paxawa</span>
+            <span className="text-white/20">·</span>
             <span className="text-white/40 text-xs">
               © {new Date().getFullYear()}
             </span>
