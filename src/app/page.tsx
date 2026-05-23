@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -73,7 +74,24 @@ const steps = [
   },
 ];
 
-export default function HomePage() {
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  // Resilience guard: if Supabase Auth misroutes an OAuth callback to `/`
+  // (e.g. Site URL set to the bare domain instead of /auth/callback, or a
+  // www/non-www mismatch falling through to the Site URL fallback), catch
+  // the orphaned `?code=...` here and route it to the real callback so the
+  // session still gets created. Belt-and-braces against future misconfig.
+  const sp = await searchParams;
+  const code = sp.code;
+  if (typeof code === "string" && code.length > 0) {
+    const next = typeof sp.next === "string" ? sp.next : "/dashboard";
+    redirect(
+      `/auth/callback?code=${encodeURIComponent(code)}&next=${encodeURIComponent(next)}`,
+    );
+  }
   return (
     <div className="flex flex-col min-h-screen">
       {/* Nav */}
