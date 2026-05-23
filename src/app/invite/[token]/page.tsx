@@ -67,17 +67,29 @@ export default async function InvitePage({ params }: Props) {
     });
 
     if (!existing) {
+      // Make sure the user has a row in `profiles` before we insert into
+      // `trip_members` — Google-OAuth signups don't auto-create a profile
+      // and the FK constraint would 500 the page (Bug seen on prod).
+      const fallbackName =
+        user.user_metadata?.display_name ||
+        user.email?.split("@")[0] ||
+        "Traveler";
+      await db
+        .insert(profiles)
+        .values({
+          id: user.id,
+          displayName: fallbackName,
+          email: user.email ?? null,
+        })
+        .onConflictDoNothing();
+
       const profile = await db.query.profiles.findFirst({
         where: eq(profiles.id, user.id),
       });
       await db.insert(tripMembers).values({
         tripId: invite.tripId,
         userId: user.id,
-        displayName:
-          profile?.displayName ||
-          user.user_metadata?.display_name ||
-          user.email?.split("@")[0] ||
-          "Traveler",
+        displayName: profile?.displayName || fallbackName,
         role: "member",
       });
     }
