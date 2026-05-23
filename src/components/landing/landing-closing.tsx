@@ -11,16 +11,26 @@ import { ArrowRight, Users } from "lucide-react";
 export function LandingClosing() {
   return (
     <>
-      <section className="relative border-t border-white/[0.06] py-32 px-6">
+      <section className="relative border-t border-white/[0.06] py-32 px-6 overflow-hidden">
+        {/* Soft warm aurora to close warmer than the cool indigo hero */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(60%_60%_at_50%_50%,black_40%,transparent_80%)]"
+        >
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[50rem] rounded-full bg-gradient-to-br from-amber-500/20 via-fuchsia-500/15 to-indigo-500/20 blur-[120px]" />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7 }}
-          className="max-w-3xl mx-auto text-center"
+          className="relative max-w-3xl mx-auto text-center"
         >
           <h2 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-[1.05]">
-            Plan your first trip.{" "}
+            Plan your{" "}
+            <span className="bg-gradient-to-br from-amber-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent">
+              first trip.
+            </span>{" "}
             <span className="text-white/40">It's free.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">

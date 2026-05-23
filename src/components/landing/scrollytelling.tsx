@@ -20,6 +20,7 @@
 
 import { motion } from "motion/react";
 import { Calendar, Vote, Wallet, Backpack, Sparkles } from "lucide-react";
+import { SectionGlow } from "./aurora";
 
 interface Feature {
   key: string;
@@ -29,6 +30,10 @@ interface Feature {
   screen: string;
   icon: React.ComponentType<{ className?: string }>;
   iconColor: string;
+  /** Tailwind bg class used by the SectionGlow blob behind this feature. */
+  glow: string;
+  /** Gradient-text class applied to the title's accent span. */
+  accent: string;
 }
 
 const FEATURES: Feature[] = [
@@ -41,6 +46,8 @@ const FEATURES: Feature[] = [
     screen: "/screens/plan.svg",
     icon: Calendar,
     iconColor: "text-blue-400",
+    glow: "bg-blue-500",
+    accent: "bg-gradient-to-br from-blue-300 via-indigo-300 to-blue-200 bg-clip-text text-transparent",
   },
   {
     key: "vote",
@@ -51,6 +58,8 @@ const FEATURES: Feature[] = [
     screen: "/screens/vote.svg",
     icon: Vote,
     iconColor: "text-violet-400",
+    glow: "bg-violet-500",
+    accent: "bg-gradient-to-br from-violet-300 via-purple-300 to-fuchsia-300 bg-clip-text text-transparent",
   },
   {
     key: "pay",
@@ -61,6 +70,8 @@ const FEATURES: Feature[] = [
     screen: "/screens/pay.svg",
     icon: Wallet,
     iconColor: "text-emerald-400",
+    glow: "bg-emerald-500",
+    accent: "bg-gradient-to-br from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent",
   },
   {
     key: "pack",
@@ -71,6 +82,8 @@ const FEATURES: Feature[] = [
     screen: "/screens/pack.svg",
     icon: Backpack,
     iconColor: "text-amber-400",
+    glow: "bg-amber-500",
+    accent: "bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent",
   },
   {
     key: "chat",
@@ -81,6 +94,8 @@ const FEATURES: Feature[] = [
     screen: "/screens/chat.svg",
     icon: Sparkles,
     iconColor: "text-fuchsia-400",
+    glow: "bg-fuchsia-500",
+    accent: "bg-gradient-to-br from-fuchsia-300 via-pink-300 to-rose-300 bg-clip-text text-transparent",
   },
 ];
 
@@ -96,8 +111,8 @@ export function Scrollytelling() {
         </h2>
       </div>
 
-      {FEATURES.map((f) => (
-        <FeatureSection key={f.key} feature={f} />
+      {FEATURES.map((f, i) => (
+        <FeatureSection key={f.key} feature={f} side={i % 2 === 0 ? "left" : "right"} />
       ))}
     </div>
   );
@@ -105,14 +120,29 @@ export function Scrollytelling() {
 
 /* ──────────────────────────────────────────────────────────────────────── */
 
-function FeatureSection({ feature: f }: { feature: Feature }) {
+function FeatureSection({
+  feature: f,
+  side,
+}: {
+  feature: Feature;
+  side: "left" | "right";
+}) {
   const Icon = f.icon;
+  // Split the title at its last word so we can gradient the final clause —
+  // adds a moment of color without painting the whole headline.
+  const words = f.title.split(" ");
+  const lead = words.slice(0, words.length - 2).join(" ");
+  const accentTail = words.slice(-2).join(" ");
+
   return (
     <section className="relative border-t border-white/[0.06]">
-      <div className="max-w-7xl mx-auto px-6 py-20 sm:py-32 grid lg:grid-cols-2 gap-12 lg:gap-16">
+      <SectionGlow color={f.glow} side={side} />
+      <div className="relative max-w-7xl mx-auto px-6 py-20 sm:py-32 grid lg:grid-cols-2 gap-12 lg:gap-16">
         {/* Left — sticky title + copy */}
         <div className="lg:sticky lg:top-32 lg:self-start">
-          <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-white/40 mb-5">
+          <div
+            className={`inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] mb-5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 ${f.iconColor}`}
+          >
             <Icon className={`w-3.5 h-3.5 ${f.iconColor}`} />
             {f.eyebrow}
           </div>
@@ -123,7 +153,8 @@ function FeatureSection({ feature: f }: { feature: Feature }) {
             transition={{ duration: 0.6 }}
             className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] max-w-lg"
           >
-            {f.title}
+            {lead && <>{lead} </>}
+            <span className={f.accent}>{accentTail}</span>
           </motion.h3>
           <motion.p
             initial={{ opacity: 0, y: 12 }}

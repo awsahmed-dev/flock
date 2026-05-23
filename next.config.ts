@@ -53,6 +53,8 @@ const nextConfig: NextConfig = {
 
 // Only wrap with PWA in production (Turbopack handles dev fine without it)
 async function buildConfig() {
+  let cfg: NextConfig = nextConfig;
+
   if (process.env.NODE_ENV === "production") {
     const withPWAInit = (await import("@ducanh2912/next-pwa")).default;
     const withPWA = withPWAInit({
@@ -62,9 +64,35 @@ async function buildConfig() {
       reloadOnOnline: true,
       workboxOptions: { disableDevLogs: true },
     });
-    return withPWA(nextConfig);
+    cfg = withPWA(nextConfig) as NextConfig;
   }
-  return nextConfig;
+
+  // Sentry source-map upload at build time so production stack traces are
+  // readable. Skipped automatically when SENTRY_AUTH_TOKEN is unset (local
+  // dev, preview builds without secrets) — no error, just no upload.
+  if (process.env.SENTRY_AUTH_TOKEN) {
+    const { withSentryConfig } = await import("@sentry/nextjs");
+    cfg = withSentryConfig(cfg, {
+      org: "paxawa",
+      project: "javascript-nextjs",
+      silent: !process.env.CI,
+      // Upload a larger set of source maps for better stack traces.
+      widenClientFileUpload: true,
+      // Tunnel Sentry traffic through our own domain to dodge ad blockers
+      // (small chance, but it's free).
+      tunnelRoute: "/monitoring",
+      // Strip source map comments from the client bundle once upload is
+      // done — Sentry has them, browsers don't need them.
+      sourcemaps: { deleteSourcemapsAfterUpload: true },
+      disableLogger: true,
+      // Tag the release so Sentry groups errors by deploy.
+      release: {
+        name: process.env.VERCEL_GIT_COMMIT_SHA,
+      },
+    });
+  }
+
+  return cfg;
 }
 
 export default buildConfig();
