@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { track } from "@/lib/analytics/events";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -34,12 +35,14 @@ export function SignupForm() {
     if (error) {
       toast.error(error.message);
     } else {
+      track.signup("email");
       setSent(true);
     }
   }
 
   async function handleGoogle() {
     setGoogleLoading(true);
+    track.signup("google");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

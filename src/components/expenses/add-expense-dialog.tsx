@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createExpense } from "@/lib/actions/expenses";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics/events";
 import { Plus } from "lucide-react";
 
 const CATEGORIES = [
@@ -54,6 +55,9 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
       try {
         await createExpense(formData);
         toast.success("Expense logged");
+        // currency is on the form; reading from formData would be cleaner
+        // but the dialog defaults to trip base, which is what we want here.
+        track.expenseLogged(tripId, baseCurrency);
         setOpen(false);
         (e.target as HTMLFormElement).reset();
       } catch (err) {

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createVote } from "@/lib/actions/votes";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics/events";
 import { Plus, Trash2 } from "lucide-react";
 
 interface Props {
@@ -63,6 +64,7 @@ export function CreateVoteDialog({ tripId }: Props) {
       try {
         await createVote(formData);
         toast.success("Vote created");
+        track.voteOpened(tripId);
         setOpen(false);
         setOptions([{ label: "", cost: "" }, { label: "", cost: "" }]);
       } catch (err) {
