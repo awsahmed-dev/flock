@@ -134,6 +134,8 @@
   }
   html {
     @apply font-sans;
+    /* Smooth anchor scrolling for the landing-page in-page nav. */
+    scroll-behavior: smooth;
   }
   /* Inputs sometimes inherit overflow-wrap and start wrapping on caret —
      keep them on a single line unless they're explicitly multiline. */

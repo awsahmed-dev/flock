@@ -11,7 +11,7 @@ import { ArrowRight, Users } from "lucide-react";
 export function LandingClosing() {
   return (
     <>
-      <section className="relative border-t border-white/[0.06] py-32 px-6 overflow-hidden">
+      <section id="pricing" className="relative border-t border-white/[0.06] py-32 px-6 overflow-hidden scroll-mt-20">
         {/* Soft warm aurora to close warmer than the cool indigo hero */}
         <div
           aria-hidden

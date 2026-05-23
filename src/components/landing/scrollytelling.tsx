@@ -21,12 +21,21 @@
 import { motion } from "motion/react";
 import { Calendar, Vote, Wallet, Backpack, Sparkles } from "lucide-react";
 import { SectionGlow } from "./aurora";
+import { ChatDemo } from "./demos/chat-demo";
+import { VoteDemo } from "./demos/vote-demo";
+import { ExpenseDemo } from "./demos/expense-demo";
+
+type DemoKey = "chat" | "vote" | "expense" | "static";
 
 interface Feature {
   key: string;
   eyebrow: string;
   title: string;
   body: string;
+  /** Which interactive demo renders on the right side. `static` falls back
+   *  to the SVG mockup at `screen`. */
+  demo: DemoKey;
+  /** SVG screen used as fallback when `demo === "static"`. */
   screen: string;
   icon: React.ComponentType<{ className?: string }>;
   iconColor: string;
@@ -38,40 +47,60 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   {
-    key: "plan",
-    eyebrow: "Plan",
-    title: "One itinerary the whole crew can edit",
+    key: "chat",
+    eyebrow: "Talk",
+    title: "AI-aware group chat that turns talk into the plan",
     body:
-      "Drag, drop, propose, confirm — every activity, stay, transport, and meal in one place. AI can draft the trip in seconds; you tune what stays.",
-    screen: "/screens/plan.svg",
-    icon: Calendar,
-    iconColor: "text-blue-400",
-    glow: "bg-blue-500",
-    accent: "bg-gradient-to-br from-blue-300 via-indigo-300 to-blue-200 bg-clip-text text-transparent",
+      "Type a message — Claude reads it and offers one-tap chips. 'We should go to El Vilsito tomorrow' becomes a calendar entry. 'I paid €120 for dinner' becomes a split expense. Try it on the right →",
+    demo: "chat",
+    screen: "/screens/chat.svg",
+    icon: Sparkles,
+    iconColor: "text-fuchsia-400",
+    glow: "bg-fuchsia-500",
+    accent:
+      "bg-gradient-to-br from-fuchsia-300 via-pink-300 to-rose-300 bg-clip-text text-transparent",
   },
   {
     key: "vote",
     eyebrow: "Decide",
     title: "Settle the group debate in one screen",
     body:
-      "Open a vote on any decision — hotel, restaurant, day plan. Attach cost estimates. The winning option becomes the plan, the rest archive.",
+      "Open a vote on any decision — hotel, restaurant, day plan. Attach cost estimates. The winning option becomes the plan, the rest archive. Cast one on the right →",
+    demo: "vote",
     screen: "/screens/vote.svg",
     icon: Vote,
     iconColor: "text-violet-400",
     glow: "bg-violet-500",
-    accent: "bg-gradient-to-br from-violet-300 via-purple-300 to-fuchsia-300 bg-clip-text text-transparent",
+    accent:
+      "bg-gradient-to-br from-violet-300 via-purple-300 to-fuchsia-300 bg-clip-text text-transparent",
   },
   {
     key: "pay",
     eyebrow: "Split",
     title: "Multi-currency expenses, accurate balances",
     body:
-      "Log spend as it happens in any currency. Equal-split or custom. Live balances tell you who owes whom. Smart action chips spot 'I paid for dinner' in chat and offer a one-tap log.",
+      "Log spend as it happens in any currency. Equal-split or custom. Live balances tell you who owes whom. Change the amount or payer on the right →",
+    demo: "expense",
     screen: "/screens/pay.svg",
     icon: Wallet,
     iconColor: "text-emerald-400",
     glow: "bg-emerald-500",
-    accent: "bg-gradient-to-br from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent",
+    accent:
+      "bg-gradient-to-br from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent",
+  },
+  {
+    key: "plan",
+    eyebrow: "Plan",
+    title: "One itinerary the whole crew can edit",
+    body:
+      "Drag, drop, propose, confirm — every activity, stay, transport, and meal in one place. AI can draft the trip in seconds; you tune what stays.",
+    demo: "static",
+    screen: "/screens/plan.svg",
+    icon: Calendar,
+    iconColor: "text-blue-400",
+    glow: "bg-blue-500",
+    accent:
+      "bg-gradient-to-br from-blue-300 via-indigo-300 to-blue-200 bg-clip-text text-transparent",
   },
   {
     key: "pack",
@@ -79,35 +108,25 @@ const FEATURES: Feature[] = [
     title: "Packing that's shared and personal at the same time",
     body:
       "Group items everyone can check off. Personal items only you can toggle. Crew view shows who's lagging. Pre-trip nudges fire 30, 14, 7, and 1 days out.",
+    demo: "static",
     screen: "/screens/pack.svg",
     icon: Backpack,
     iconColor: "text-amber-400",
     glow: "bg-amber-500",
-    accent: "bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent",
-  },
-  {
-    key: "chat",
-    eyebrow: "Talk",
-    title: "AI-aware group chat that turns talk into the plan",
-    body:
-      "Pinned messages, read receipts, photo gallery — and Claude watching for actionable intent. Someone says 'we should go to El Vilsito tomorrow' and the right action chip appears under their message.",
-    screen: "/screens/chat.svg",
-    icon: Sparkles,
-    iconColor: "text-fuchsia-400",
-    glow: "bg-fuchsia-500",
-    accent: "bg-gradient-to-br from-fuchsia-300 via-pink-300 to-rose-300 bg-clip-text text-transparent",
+    accent:
+      "bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent",
   },
 ];
 
 export function Scrollytelling() {
   return (
-    <div className="relative">
+    <div id="features" className="relative scroll-mt-20">
       {/* Section heading lead-in */}
-      <div className="max-w-7xl mx-auto px-6 pt-24 pb-12 sm:pt-32">
-        <p className="text-sm text-white/40 mb-3">What's inside</p>
+      <div id="try-it" className="max-w-7xl mx-auto px-6 pt-24 pb-12 sm:pt-32 scroll-mt-20">
+        <p className="text-sm text-white/40 mb-3">Try it · No signup needed</p>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-[-0.035em] max-w-2xl leading-[1.05]">
-          Everything one shared trip needs.{" "}
-          <span className="text-white/40">Nothing it doesn't.</span>
+          Real screens. Real interactions.{" "}
+          <span className="text-white/40">Click around.</span>
         </h2>
       </div>
 
@@ -167,7 +186,7 @@ function FeatureSection({
           </motion.p>
         </div>
 
-        {/* Right — flat screenshot card */}
+        {/* Right — interactive demo (or static screenshot fallback) */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -175,14 +194,26 @@ function FeatureSection({
           transition={{ duration: 0.8 }}
           className="lg:pl-8"
         >
-          <ScreenCard src={f.screen} alt={`${f.title} screen`} />
+          <FeatureDemo demo={f.demo} screen={f.screen} title={f.title} />
         </motion.div>
       </div>
     </section>
   );
 }
 
-function ScreenCard({ src, alt }: { src: string; alt: string }) {
+function FeatureDemo({
+  demo,
+  screen,
+  title,
+}: {
+  demo: DemoKey;
+  screen: string;
+  title: string;
+}) {
+  if (demo === "chat") return <ChatDemo />;
+  if (demo === "vote") return <VoteDemo />;
+  if (demo === "expense") return <ExpenseDemo />;
+  // static fallback for features whose interactive demo isn't built yet.
   return (
     <div
       className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]"
@@ -190,8 +221,8 @@ function ScreenCard({ src, alt }: { src: string; alt: string }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
-        alt={alt}
+        src={screen}
+        alt={`${title} screen`}
         loading="lazy"
         className="absolute inset-0 w-full h-full object-cover"
       />

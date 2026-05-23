@@ -1,23 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { HeroAurora } from "./aurora";
+import { HeroPhone } from "./hero-phone";
 
 /**
- * Hero — centered Framer-style. Massive headline, short sub, two CTAs,
- * then a row of 4 destination photos below as "this is what your next trip
- * looks like" social proof.
+ * Hero v4 — JobSeekr-coded center phone with floating feature cards.
  *
- * Pure black background, no glow gradients, no device chrome. Type does
- * the heavy lifting. Photos are hot-linked from Unsplash (free, hot-link
- * permitted by their license) — easy to swap later for the user's own.
+ * Layout: centered eyebrow + headline + sub + CTAs, then the HeroPhone
+ * composition. As the user scrolls down, motion's useScroll/useTransform
+ * applies a soft parallax — the headline drifts up faster than the phone
+ * stack, so they offset in a way that feels alive but not theatrical.
+ *
+ * Travel-imagery strip stays at the bottom of the hero for the "this is
+ * what your next trip looks like" beat.
  */
 
-// Curated Unsplash photos — varied destinations, all landscape-oriented,
-// all royalty-free under the Unsplash license. Sized at 1200w for sharp
-// retina at the rendered ~280px width.
 const DESTINATIONS: { src: string; alt: string; label: string }[] = [
   {
     src: "https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=1200&auto=format&fit=crop&q=80",
@@ -42,14 +43,28 @@ const DESTINATIONS: { src: string; alt: string; label: string }[] = [
 ];
 
 export function LandingHero() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+  // Headline drifts up faster than the phone stack as user scrolls — soft
+  // parallax depth without being seasick.
+  const headlineY = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const phoneY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0.3]);
+
   return (
-    <section className="relative pt-20 sm:pt-32 pb-16 sm:pb-24 px-6 overflow-hidden">
-      {/* Aurora glow behind hero — adds quiet color personality without
-          breaking the sharp 2026 black aesthetic. */}
+    <section
+      ref={ref}
+      className="relative pt-20 sm:pt-28 pb-12 sm:pb-20 px-6 overflow-hidden"
+    >
       <HeroAurora />
 
-      <div className="relative max-w-5xl mx-auto text-center">
-        {/* Eyebrow */}
+      <motion.div
+        style={{ y: headlineY, opacity: heroOpacity }}
+        className="relative max-w-5xl mx-auto text-center"
+      >
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -60,7 +75,6 @@ export function LandingHero() {
           Group travel, finally calm · Free to start
         </motion.p>
 
-        {/* Headline — gradient on the key word so color reads as intentional */}
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,14 +82,13 @@ export function LandingHero() {
           className="text-[44px] leading-[1] sm:text-7xl lg:text-8xl font-semibold tracking-[-0.045em] text-white"
         >
           Plan the{" "}
-          <span className="bg-gradient-to-br from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-br from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">
             trip.
           </span>
           <br />
           <span className="text-white/40">Not the group chat.</span>
         </motion.h1>
 
-        {/* Sub */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -86,15 +99,12 @@ export function LandingHero() {
           that turns talk into the plan. One link to invite the crew.
         </motion.p>
 
-        {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.25 }}
           className="mt-10 flex items-center justify-center gap-3 flex-wrap"
         >
-          {/* Primary CTA — subtle gradient halo on hover to keep the
-              "white pill" simplicity but add a moment of life. */}
           <Link
             href="/auth/signup"
             className="group relative inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-5 py-3 text-sm font-semibold transition-colors"
@@ -106,41 +116,55 @@ export function LandingHero() {
             Start for free
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link
-            href="/auth/login"
+          <a
+            href="#features"
             className="inline-flex items-center rounded-full border border-white/15 hover:bg-white/[0.04] px-5 py-3 text-sm font-medium transition-colors"
           >
-            Log in
-          </Link>
+            See it work
+          </a>
         </motion.div>
-      </div>
+      </motion.div>
 
-      {/* Destination photo strip — replaces the old phone collage */}
+      {/* Phone composition with floating cards */}
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 0.4 }}
-        className="mt-24 sm:mt-32 max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+        style={{ y: phoneY }}
+        className="relative mt-16 sm:mt-24"
       >
-        {DESTINATIONS.map((d) => (
-          <div
-            key={d.label}
-            className="group relative aspect-[4/5] overflow-hidden rounded-2xl"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={d.src}
-              alt={d.alt}
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-            />
-            {/* Subtle bottom gradient for legibility of the label */}
-            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
-            <p className="absolute bottom-3 left-4 text-sm font-semibold tracking-wide text-white">
-              {d.label}
-            </p>
-          </div>
-        ))}
+        <HeroPhone />
+      </motion.div>
+
+      {/* Destination photo strip */}
+      <motion.div
+        id="destinations"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.8 }}
+        className="mt-24 sm:mt-32 max-w-7xl mx-auto scroll-mt-20"
+      >
+        <p className="text-center text-sm text-white/40 mb-6">
+          Whatever the next one looks like
+        </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {DESTINATIONS.map((d) => (
+            <div
+              key={d.label}
+              className="group relative aspect-[4/5] overflow-hidden rounded-2xl"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={d.src}
+                alt={d.alt}
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+              />
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
+              <p className="absolute bottom-3 left-4 text-sm font-semibold tracking-wide text-white">
+                {d.label}
+              </p>
+            </div>
+          ))}
+        </div>
       </motion.div>
     </section>
   );
