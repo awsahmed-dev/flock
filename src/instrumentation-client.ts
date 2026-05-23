@@ -18,6 +18,9 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     environment:
       process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
     enabled: process.env.NODE_ENV === "production",
+    // Same release tag as the server runtime — groups client+server errors
+    // for the same deploy together in Sentry's UI.
+    release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
     integrations: [
       Sentry.replayIntegration({
         maskAllText: true,
