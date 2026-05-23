@@ -16,11 +16,11 @@ import { eq } from "drizzle-orm";
  *   font fetch keeps cold starts fast.
  * - Cache headers come for free from next/og; the image regenerates if the
  *   route is invalidated (e.g. when trip name/dates change).
- * - Soft-fails to a generic Flock card if the trip can't be found — never
+ * - Soft-fails to a generic Paxawa card if the trip can't be found — never
  *   throws (a busted OG image shouldn't 500 a social bot).
  */
 
-export const alt = "Trip planned with Flock";
+export const alt = "Trip planned with Paxawa";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -39,7 +39,7 @@ function fmtDate(iso: string): string {
 }
 
 export default async function OgImage({ params }: Props) {
-  let title = "Trip with Flock";
+  let title = "Trip with Paxawa";
   let destination = "Somewhere amazing";
   let dateRange = "";
 
@@ -72,7 +72,7 @@ export default async function OgImage({ params }: Props) {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        {/* Top — Flock brand mark */}
+        {/* Top — Paxawa brand mark */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div
             style={{
@@ -96,7 +96,7 @@ export default async function OgImage({ params }: Props) {
               letterSpacing: "-0.02em",
             }}
           >
-            Flock
+            Paxawa
           </span>
         </div>
 
@@ -166,7 +166,7 @@ export default async function OgImage({ params }: Props) {
               display: "flex",
             }}
           >
-            flock-pi-six.vercel.app
+            paxawa.com
           </div>
         </div>
       </div>

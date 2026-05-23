@@ -83,7 +83,7 @@ export default function HomePage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
               <Users className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-lg tracking-tight">Flock</span>
+            <span className="font-bold text-lg tracking-tight">Paxawa</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/auth/login">
@@ -168,7 +168,7 @@ export default function HomePage() {
                 Everything your group needs
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto text-lg">
-                From first idea to post-trip memories — Flock keeps your entire
+                From first idea to post-trip memories — Paxawa keeps your entire
                 trip in one organized place.
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function HomePage() {
             <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
               <Users className="w-3 h-3 text-white" />
             </div>
-            <span className="font-semibold text-foreground">Flock</span>
+            <span className="font-semibold text-foreground">Paxawa</span>
           </div>
           <p>Plan trips together, without the chaos.</p>
         </div>

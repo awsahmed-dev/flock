@@ -17,7 +17,7 @@
  * string "undefined" on the deployed Vercel project, which produced broken
  * "undefined/invite/<token>" links).
  */
-const PRODUCTION_URL = "https://flock-pi-six.vercel.app";
+const PRODUCTION_URL = "https://paxawa.com";
 
 function isValidUrl(value: string | undefined | null): value is string {
   if (!value) return false;

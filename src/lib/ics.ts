@@ -93,7 +93,7 @@ export function buildIcs(
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Flock//Trip Planner//EN",
+    "PRODID:-//Paxawa//Trip Planner//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${esc(meta.name)}`,
@@ -104,7 +104,7 @@ export function buildIcs(
 
   for (const e of events) {
     lines.push("BEGIN:VEVENT");
-    lines.push(`UID:${e.uid}@flock-pi-six.vercel.app`);
+    lines.push(`UID:${e.uid}@paxawa.com`);
     lines.push(`DTSTAMP:${fmtUtcStamp(now)}`);
     if (e.updatedAt) lines.push(`LAST-MODIFIED:${fmtUtcStamp(e.updatedAt)}`);
 

@@ -19,7 +19,7 @@ const resendClient = (() => {
 
 const FROM =
   process.env.RESEND_FROM_EMAIL ??
-  "Flock <hello@flock-pi-six.vercel.app>";
+  "Paxawa <hello@paxawa.com>";
 const REPLY_TO = process.env.RESEND_REPLY_TO ?? undefined;
 
 export type EmailKind =

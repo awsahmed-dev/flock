@@ -6,7 +6,7 @@ import { Sparkles, Users, Vote, Wallet, ArrowRight } from "lucide-react";
 /**
  * First-run onboarding for the dashboard. Shown in place of the bare
  * "No trips yet" empty state. Three illustrated steps to set expectations
- * about what Flock does, then a single big CTA into trip creation.
+ * about what Paxawa does, then a single big CTA into trip creation.
  *
  * Why one screen instead of a multi-step tour: the only "step" that
  * actually does anything is the first trip creation. Everything else
@@ -64,7 +64,7 @@ export function OnboardingCard() {
           <div className="max-w-xl">
             <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-3">
               <Sparkles className="w-3 h-3" />
-              Welcome to Flock
+              Welcome to Paxawa
             </p>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
               Group trips, without the group-chat chaos.

@@ -14,7 +14,7 @@ export async function geocode(
   try {
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Flock-TravelApp/1.0 (contact@flock.app)",
+        "User-Agent": "Paxawa-TravelApp/1.0 (contact@flock.app)",
         "Accept-Language": "en",
       },
     });

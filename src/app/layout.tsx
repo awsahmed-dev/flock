@@ -23,21 +23,21 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Flock — Plan trips together",
+  title: "Paxawa — Plan trips together",
   description:
     "The place where group travel decisions get made and remembered. Plan itineraries, vote on options, and split expenses with your crew.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Flock",
+    title: "Paxawa",
   },
   formatDetection: { telephone: false },
   openGraph: {
     type: "website",
-    title: "Flock — Plan trips together",
+    title: "Paxawa — Plan trips together",
     description: "Group travel planning. Itinerary, votes, expenses — all in one place.",
-    siteName: "Flock",
+    siteName: "Paxawa",
   },
 };
 
@@ -53,7 +53,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Flock" />
+        <meta name="apple-mobile-web-app-title" content="Paxawa" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans overflow-x-hidden max-w-full">
         <Providers>

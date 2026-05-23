@@ -34,7 +34,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
   // always correct on the client.
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
   const validEnvUrl = envUrl && envUrl !== "undefined" && envUrl !== "null" ? envUrl : null;
-  const appUrl = validEnvUrl ?? (typeof window !== "undefined" ? window.location.origin : "https://flock-pi-six.vercel.app");
+  const appUrl = validEnvUrl ?? (typeof window !== "undefined" ? window.location.origin : "https://paxawa.com");
   const shareUrl = shareToken ? `${appUrl}/share/${shareToken}` : null;
 
   function handleUpdate(e: React.FormEvent<HTMLFormElement>) {

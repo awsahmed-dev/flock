@@ -43,7 +43,7 @@ const KIND_META: Record<
 };
 
 const STALE_MS = 30 * 60 * 1000;
-const STORAGE_PREFIX = "flock:ai-chips-dismissed:";
+const STORAGE_PREFIX = "paxawa:ai-chips-dismissed:";
 
 /**
  * AI-powered chip row that appears below the user's own freshly-sent text

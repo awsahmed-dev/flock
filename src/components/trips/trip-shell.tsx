@@ -82,7 +82,7 @@ export function TripShell({ trip, children }: Props) {
 
   // Persist desktop chat-open state per trip. Mobile is always closed
   // by default (it's a fullscreen overlay so opening on landing is jarring).
-  const chatPrefKey = `flock:chat-open:${trip.id}`;
+  const chatPrefKey = `paxawa:chat-open:${trip.id}`;
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.matchMedia("(max-width: 639px)").matches) return;
@@ -332,7 +332,7 @@ export function TripShell({ trip, children }: Props) {
                 <DropdownMenuItem
                   onClick={() =>
                     document.dispatchEvent(
-                      new CustomEvent("flock:shortcuts:show"),
+                      new CustomEvent("paxawa:shortcuts:show"),
                     )
                   }
                   className="gap-2 hidden sm:flex"

@@ -49,7 +49,7 @@ async function nominatim(q: string): Promise<{ lat: number; lng: number } | null
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=0`;
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Flock-TravelApp/1.0", "Accept-Language": "en" },
+      headers: { "User-Agent": "Paxawa-TravelApp/1.0", "Accept-Language": "en" },
     });
     if (!res.ok) return null;
     const data = await res.json();

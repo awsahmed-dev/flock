@@ -143,10 +143,10 @@ export function KeyboardShortcuts({ tripId, onToggleChat }: Props) {
     }
 
     document.addEventListener("keydown", onKey);
-    document.addEventListener("flock:shortcuts:show", onCustomShow);
+    document.addEventListener("paxawa:shortcuts:show", onCustomShow);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("flock:shortcuts:show", onCustomShow);
+      document.removeEventListener("paxawa:shortcuts:show", onCustomShow);
       clearPending();
     };
   }, [tripId, router, pathname, onToggleChat]);

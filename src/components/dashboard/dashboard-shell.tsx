@@ -37,7 +37,7 @@ export function DashboardShell({ children }: Props) {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
               <span className="text-white text-xs font-bold">✈</span>
             </div>
-            <span className="font-bold tracking-tight text-base">Flock</span>
+            <span className="font-bold tracking-tight text-base">Paxawa</span>
           </Link>
 
           <ThemeToggle />

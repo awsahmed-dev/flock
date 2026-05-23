@@ -26,7 +26,7 @@ import { render } from "@react-email/render";
  */
 
 const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://flock-pi-six.vercel.app";
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
 
 function EmailShell({
   preview,
@@ -48,7 +48,7 @@ function EmailShell({
                 <tr>
                   <td>
                     <Text className="text-white text-base font-bold m-0 tracking-tight">
-                      ✈ Flock
+                      ✈ Paxawa
                     </Text>
                   </td>
                 </tr>
@@ -62,7 +62,7 @@ function EmailShell({
             <Hr className="border-slate-200 my-0" />
             <Section className="px-8 py-5 text-center">
               <Text className="text-xs text-slate-400 m-0 leading-relaxed">
-                You're receiving this because you're on a trip in Flock.{" "}
+                You're receiving this because you're on a trip in Paxawa.{" "}
                 <Link
                   href={`${APP_URL}/dashboard`}
                   className="text-indigo-500 underline"

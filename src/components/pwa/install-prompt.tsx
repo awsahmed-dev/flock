@@ -69,7 +69,7 @@ export function InstallPrompt() {
             <span className="text-white text-lg">✈</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">Install Flock</p>
+            <p className="text-sm font-semibold">Install Paxawa</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Add to your home screen for the full app experience
             </p>
@@ -97,7 +97,7 @@ export function InstallPrompt() {
             <span className="text-white text-lg">✈</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">Install Flock on iPhone</p>
+            <p className="text-sm font-semibold">Install Paxawa on iPhone</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Tap <Share className="w-3 h-3 inline mx-0.5" /> then{" "}
               <strong>"Add to Home Screen"</strong>

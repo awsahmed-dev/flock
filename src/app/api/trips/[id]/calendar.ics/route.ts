@@ -37,8 +37,8 @@ export async function GET(
 
   const ics = buildIcs(
     {
-      name: `${trip.name} — Flock`,
-      description: `Trip to ${trip.destination}. Exported from Flock.`,
+      name: `${trip.name} — Paxawa`,
+      description: `Trip to ${trip.destination}. Exported from Paxawa.`,
     },
     items.map((it) => {
       const parts: string[] = [];
