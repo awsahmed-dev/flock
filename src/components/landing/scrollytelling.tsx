@@ -214,10 +214,17 @@ function FeatureDemo({
   if (demo === "vote") return <VoteDemo />;
   if (demo === "expense") return <ExpenseDemo />;
   // static fallback for features whose interactive demo isn't built yet.
+  // Matches the new (smaller, height-capped) DemoFrame dimensions so the
+  // section doesn't tower over the title.
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]"
-      style={{ aspectRatio: "9 / 16", maxWidth: 420, marginInline: "auto" }}
+      className="relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.02] mx-auto"
+      style={{
+        width: "100%",
+        maxWidth: 360,
+        aspectRatio: "9 / 13",
+        maxHeight: 560,
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

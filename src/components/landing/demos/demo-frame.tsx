@@ -16,8 +16,19 @@ export function DemoFrame({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-black"
-      style={{ aspectRatio: "9 / 16", maxWidth: 420, marginInline: "auto" }}
+      className="relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-black mx-auto"
+      style={{
+        // Tighter than v4's 420×16/9. Each demo now fits in a single
+        // viewport alongside the section title — user doesn't have to scan
+        // top-to-bottom of a phone-shaped tower.
+        width: "100%",
+        maxWidth: 360,
+        // Cap height so demos stay scan-able on tall viewports. The 9/13
+        // aspect ratio is the upper bound; whichever constraint kicks in
+        // first (height or width-driven aspect) wins.
+        aspectRatio: "9 / 13",
+        maxHeight: 560,
+      }}
     >
       {/* Soft inner gradient — gives each demo a hint of color without
           drowning the UI. */}

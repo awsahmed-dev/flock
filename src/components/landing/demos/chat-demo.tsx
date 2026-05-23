@@ -69,9 +69,15 @@ const CHIP_META: Record<
   vote: { icon: Vote, label: "Open a vote" },
 };
 
+// Pre-filled draft so visitors can just hit send instead of having to
+// invent a message — much higher demo-completion rate. Triggers the
+// expense + plan chips when sent.
+const DRAFT_MESSAGE =
+  "let's do dinner at Sushi Yoshino tomorrow at 8 · ~$40 each";
+
 export function ChatDemo() {
   const [messages, setMessages] = useState<Msg[]>(SEED);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(DRAFT_MESSAGE);
   const [appliedNotice, setAppliedNotice] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -160,16 +166,21 @@ export function ChatDemo() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Try it — type a message"
+          placeholder="Type a message"
           className="flex-1 min-w-0 bg-white/[0.04] rounded-full px-4 py-2 text-sm placeholder:text-white/30 text-white outline-none focus:bg-white/[0.06] focus:ring-1 focus:ring-white/20 transition-colors"
         />
         <button
           type="submit"
           disabled={!input.trim()}
-          className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="relative w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           aria-label="Send"
         >
-          <Send className="w-4 h-4 text-white" />
+          {/* Subtle pulse to call out the obvious next action while a draft
+              is still sitting in the input. Disappears once they've sent. */}
+          {input === DRAFT_MESSAGE && (
+            <span className="absolute inset-0 rounded-full bg-fuchsia-400/40 animate-ping" />
+          )}
+          <Send className="w-4 h-4 text-white relative" />
         </button>
       </form>
     </DemoFrame>
