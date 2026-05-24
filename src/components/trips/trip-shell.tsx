@@ -45,6 +45,7 @@ import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { SidePanel } from "@/components/ui/side-panel";
 import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
 import { Logo } from "@/components/ui/logo";
+import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 
 interface Trip {
   id: string;
@@ -464,6 +465,10 @@ export function TripShell({ trip, children }: Props) {
 
       {/* PWA install prompt */}
       <InstallPrompt />
+
+      {/* Pre-launch feedback widget — floating button bottom-right.
+          Renders only on authenticated trip pages. */}
+      <FeedbackWidget />
 
       {/* Trip-scoped keyboard shortcuts (?, c, /, g+i/v/e/d/s/h) */}
       <KeyboardShortcuts

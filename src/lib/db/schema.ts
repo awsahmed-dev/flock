@@ -298,6 +298,20 @@ export const messageReactions = pgTable("message_reactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ─── Waitlist signups ────────────────────────────────────────────────────────
+//
+// Landing-page email capture for visitors who aren't ready to sign up
+// properly. Kept separate from `profiles` so a waitlist signup never
+// implies an actual Supabase auth user exists. Unique by email so the
+// form doesn't double-add on repeat submits.
+export const waitlistSignups = pgTable("waitlist_signups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  source: text("source"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Push subscriptions ──────────────────────────────────────────────────────
 //
 // One row per device subscribed to web push (phone + laptop + tablet ok).

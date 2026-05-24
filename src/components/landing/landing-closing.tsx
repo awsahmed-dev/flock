@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { WaitlistForm } from "./waitlist-form";
 
 /**
  * Closing block + footer. Pure black, centered, flat. Matches the hero's
@@ -47,6 +48,8 @@ export function LandingClosing() {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+
+          <WaitlistForm />
         </motion.div>
       </section>
 
