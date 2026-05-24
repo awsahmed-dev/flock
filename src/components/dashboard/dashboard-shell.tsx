@@ -13,6 +13,7 @@ import { LogOut, LayoutDashboard, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Logo } from "@/components/ui/logo";
 
 interface Props {
   children: React.ReactNode;
@@ -33,11 +34,12 @@ export function DashboardShell({ children }: Props) {
       {/* Top nav */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
-              <span className="text-white text-xs font-bold">✈</span>
-            </div>
-            <span className="font-bold tracking-tight text-base">Paxawa</span>
+          <Link
+            href="/dashboard"
+            className="flex items-center text-foreground"
+            aria-label="Paxawa dashboard"
+          >
+            <Logo variant="full" size="sm" />
           </Link>
 
           <ThemeToggle />

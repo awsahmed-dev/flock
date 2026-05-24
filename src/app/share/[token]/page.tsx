@@ -16,6 +16,7 @@ import {
   Ticket, Hotel, Bus, Utensils, Star,
   ExternalLink, Users, Globe, CheckCircle2, BarChart3,
 } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -185,11 +186,10 @@ export default async function SharePage({ params }: Props) {
 
         <div className="relative max-w-3xl mx-auto px-6 pt-16 pb-12">
           {/* Paxawa badge */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center">
-              <Globe className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium text-white/60">Planned with Paxawa</span>
+          <div className="flex items-center gap-2.5 mb-8 text-white/80">
+            <Logo variant="full" size="sm" />
+            <span className="text-white/30">·</span>
+            <span className="text-sm text-white/50">Planned together</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
@@ -472,8 +472,8 @@ export default async function SharePage({ params }: Props) {
       {/* ── CTA footer ────────────────────────────────────────────── */}
       <div className="border-t border-white/10 bg-white/3">
         <div className="max-w-3xl mx-auto px-6 py-12 text-center space-y-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center mx-auto shadow-lg shadow-primary/30">
-            <Globe className="w-6 h-6 text-white" />
+          <div className="mx-auto text-white inline-flex">
+            <Logo variant="mark" size="xl" />
           </div>
           <div>
             <h2 className="text-xl font-bold">Plan your group trip with Paxawa</h2>

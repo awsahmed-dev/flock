@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 /**
  * Closing block + footer. Pure black, centered, flat. Matches the hero's
@@ -51,11 +52,8 @@ export function LandingClosing() {
 
       <footer className="border-t border-white/[0.06] py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center">
-              <Users className="w-3 h-3 text-black" />
-            </div>
-            <span className="font-semibold tracking-tight">Paxawa</span>
+          <div className="flex items-center gap-3 text-white">
+            <Logo variant="full" size="xs" />
             <span className="text-white/20">·</span>
             <span className="text-white/40 text-xs">
               © {new Date().getFullYear()}

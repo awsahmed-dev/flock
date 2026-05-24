@@ -44,6 +44,7 @@ import { EnablePushButton } from "@/components/pwa/enable-push";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { SidePanel } from "@/components/ui/side-panel";
 import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
+import { Logo } from "@/components/ui/logo";
 
 interface Trip {
   id: string;
@@ -207,9 +208,13 @@ export function TripShell({ trip, children }: Props) {
                 <ChevronLeft className="w-4 h-4" />
               </Button>
             </Link>
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0 shadow-sm">
-              <span className="text-white text-xs font-bold">✈</span>
-            </div>
+            <Link
+              href="/dashboard"
+              className="shrink-0 text-foreground hover:opacity-80 transition-opacity"
+              aria-label="Paxawa home"
+            >
+              <Logo variant="mark" size="sm" />
+            </Link>
             <div className="min-w-0">
               <p className="font-semibold truncate leading-tight">{trip.name}</p>
               <p className="text-xs text-muted-foreground truncate">

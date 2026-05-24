@@ -42,14 +42,31 @@ function EmailShell({
       <Tailwind>
         <Body className="bg-slate-50 font-sans my-0">
           <Container className="bg-white max-w-[520px] my-8 mx-auto rounded-2xl overflow-hidden border border-slate-200">
-            {/* Brand bar */}
+            {/* Brand bar. Email clients are unfriendly to inline SVG +
+                currentColor, so we serve the wordmark as a hosted asset
+                with explicit width/height for the Outlook fallback path. */}
             <Section className="bg-gradient-to-br from-indigo-600 to-violet-600 px-6 py-5">
               <table>
                 <tr>
                   <td>
-                    <Text className="text-white text-base font-bold m-0 tracking-tight">
-                      ✈ Paxawa
-                    </Text>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`${APP_URL}/logo/wordmark.svg`}
+                      alt="Paxawa"
+                      width="96"
+                      height="20"
+                      style={{
+                        display: "block",
+                        height: "20px",
+                        width: "auto",
+                        // Wordmark renders in currentColor — for hosted-SVG
+                        // delivery in email, we ship a white-tinted variant
+                        // via filter. Most modern clients honor this; Outlook
+                        // falls back to the dark wordmark on the gradient
+                        // (still readable).
+                        filter: "brightness(0) invert(1)",
+                      }}
+                    />
                   </td>
                 </tr>
               </table>

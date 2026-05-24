@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { Scrollytelling } from "@/components/landing/scrollytelling";
 import { LandingClosing } from "@/components/landing/landing-closing";
-import { Users, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 function NavAnchor({
   href,
@@ -54,13 +55,12 @@ export default async function HomePage({ searchParams }: PageProps) {
           set in globals.css (Tailwind v4 default). */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-black/70 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center">
-              <Users className="w-3.5 h-3.5 text-black" />
-            </div>
-            <span className="font-semibold tracking-tight text-base">
-              Paxawa
-            </span>
+          <Link
+            href="/"
+            className="flex items-center shrink-0 text-white"
+            aria-label="Paxawa home"
+          >
+            <Logo variant="full" size="sm" />
           </Link>
 
           {/* Centered anchor nav — desktop only. */}

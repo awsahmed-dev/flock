@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Users, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 /**
  * Shared chrome for /terms and /privacy. Slim top bar (just the wordmark
@@ -21,11 +22,12 @@ export function LegalShell({
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border/50 sticky top-0 bg-background/95 backdrop-blur z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
-              <Users className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="font-bold tracking-tight">Paxawa</span>
+          <Link
+            href="/"
+            className="flex items-center text-foreground"
+            aria-label="Paxawa home"
+          >
+            <Logo variant="full" size="sm" />
           </Link>
           <Link
             href="/"

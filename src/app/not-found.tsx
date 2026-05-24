@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Compass, Home, ArrowLeft } from "lucide-react";
+import { Home, ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 /**
  * 404 page. Replaces Next's default plain "404 This page could not be
@@ -10,8 +11,8 @@ export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-background text-foreground">
       <div className="max-w-md w-full rounded-3xl border border-border bg-card p-8 shadow-xl text-center">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center mb-5 shadow-lg shadow-primary/30">
-          <Compass className="w-7 h-7 text-white" />
+        <div className="mx-auto mb-5 text-foreground inline-flex">
+          <Logo variant="mark" size="xl" />
         </div>
         <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase mb-1">
           404 — off the map
