@@ -24,8 +24,10 @@ import { SectionGlow } from "./aurora";
 import { ChatDemo } from "./demos/chat-demo";
 import { VoteDemo } from "./demos/vote-demo";
 import { ExpenseDemo } from "./demos/expense-demo";
+import { ItineraryDemo } from "./demos/itinerary-demo";
+import { PackingDemo } from "./demos/packing-demo";
 
-type DemoKey = "chat" | "vote" | "expense" | "static";
+type DemoKey = "chat" | "vote" | "expense" | "plan" | "pack" | "static";
 
 interface Feature {
   key: string;
@@ -93,8 +95,8 @@ const FEATURES: Feature[] = [
     eyebrow: "Plan",
     title: "One itinerary the whole crew can edit",
     body:
-      "Drag, drop, propose, confirm — every activity, stay, transport, and meal in one place. AI can draft the trip in seconds; you tune what stays.",
-    demo: "static",
+      "AI drafts the whole trip in seconds. Drag any card on the right to reorder — every member sees the change live.",
+    demo: "plan",
     screen: "/screens/plan.svg",
     icon: Calendar,
     iconColor: "text-blue-400",
@@ -107,8 +109,8 @@ const FEATURES: Feature[] = [
     eyebrow: "Prepare",
     title: "Packing that's shared and personal at the same time",
     body:
-      "Group items everyone can check off. Personal items only you can toggle. Crew view shows who's lagging. Pre-trip nudges fire 30, 14, 7, and 1 days out.",
-    demo: "static",
+      "Group items everyone can check off. Personal items only you can toggle. Crew view shows who's lagging. Toggle a few items on the right →",
+    demo: "pack",
     screen: "/screens/pack.svg",
     icon: Backpack,
     iconColor: "text-amber-400",
@@ -213,6 +215,8 @@ function FeatureDemo({
   if (demo === "chat") return <ChatDemo />;
   if (demo === "vote") return <VoteDemo />;
   if (demo === "expense") return <ExpenseDemo />;
+  if (demo === "plan") return <ItineraryDemo />;
+  if (demo === "pack") return <PackingDemo />;
   // static fallback for features whose interactive demo isn't built yet.
   // Matches the new (smaller, height-capped) DemoFrame dimensions so the
   // section doesn't tower over the title.
