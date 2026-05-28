@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { createExpense } from "@/lib/actions/expenses";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics/events";
+import { normalizeDigits } from "@/lib/numerals";
 import { Plus } from "lucide-react";
 
 const CATEGORIES = [
@@ -51,6 +52,10 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    // Normalize Eastern Arabic / Persian numerals (٠١٢٣ / ۰۱۲۳) to ASCII so
+    // type=number coercion on the server works regardless of locale.
+    const rawAmount = (formData.get("amount") as string | null) ?? "";
+    formData.set("amount", normalizeDigits(rawAmount));
     startTransition(async () => {
       try {
         await createExpense(formData);
@@ -93,9 +98,13 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
               <Input
                 id="amount"
                 name="amount"
-                type="number"
-                min="0"
-                step="0.01"
+                /* type=text + inputmode=decimal so the input accepts
+                   Eastern Arabic ٠١٢٣ and Persian ۰۱۲۳ digits without
+                   the browser silently dropping them. We normalize to
+                   ASCII in handleSubmit before the server sees them. */
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9٠-٩۰-۹.,]*"
                 placeholder="0.00"
                 required
               />

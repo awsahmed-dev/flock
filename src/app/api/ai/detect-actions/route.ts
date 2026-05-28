@@ -28,6 +28,10 @@ export type DetectedAction =
       kind: "expense";
       title: string;
       amount: number;
+      /** ISO 4217 (USD/EUR/JPY...) — picked up from currency symbols or
+       *  explicit codes in the message. Server falls back to trip base
+       *  when unset or invalid. */
+      currency?: string;
       category: "accommodation" | "transport" | "food" | "activity" | "shopping" | "other";
     }
   | {
@@ -115,7 +119,8 @@ or
 
 Rules:
 - If the message is just chitchat / a question / a greeting, return {"actions":[]}.
-- amount/cost in USD, no currency symbol.
+- For expense actions, set "currency" to the 3-letter ISO code that matches the symbol or code in the message. €→EUR, $→USD, £→GBP, ¥→JPY, SAR→SAR, AED→AED, ₹→INR. If unclear, omit the field.
+- amount is the numeric value only, no currency symbol.
 - Keep title short (under 8 words).
 - For votes, options must be 2-4 short labels extracted from the message.
 - Never invent details that aren't in the message.`;

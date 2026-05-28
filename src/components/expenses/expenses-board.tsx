@@ -89,9 +89,9 @@ function computeBalances(expenses: Expense[], members: { userId: string; display
   return [...map.values()];
 }
 
-function fmt(n: number) {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+// Money formatter: drop `.00` on whole-number amounts, keep 2 decimals
+// otherwise. Matches the testers' "120 not 120.00" feedback.
+import { fmtAmount as fmt } from "@/lib/numerals";
 
 function ExpenseRow({ expense, userId, isOwner }: { expense: Expense; userId: string; isOwner: boolean }) {
   const [isPending, startTransition] = useTransition();

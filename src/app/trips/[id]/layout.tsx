@@ -1,4 +1,13 @@
-export const dynamic = "force-dynamic";
+// Trip name/destination/dates change rarely; layout doesn't need to re-fetch
+// on every tab navigation. Removing `force-dynamic` lets Next persist the
+// rendered layout across child route changes. Live data (chat unread badge,
+// real-time votes) updates client-side via React Query + Supabase realtime —
+// not via the layout.
+//
+// `revalidate = 60` puts a ceiling on staleness for edits; trip-settings
+// mutations call revalidatePath to flush immediately when they change names.
+
+export const revalidate = 60;
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";

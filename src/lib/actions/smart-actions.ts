@@ -127,6 +127,11 @@ export async function applyDetectedAction(formData: FormData) {
         ? payload.category
         : "other";
 
+    // Honor a currency hint extracted from the chat message (€120 → EUR).
+    // Only accept 3-letter ISO codes; fall back to trip base otherwise.
+    const ccyHint = String(payload.currency ?? "").trim().toUpperCase();
+    const currency = /^[A-Z]{3}$/.test(ccyHint) ? ccyHint : trip.currency;
+
     const today = new Date().toISOString().slice(0, 10);
 
     const [expense] = await db
@@ -135,7 +140,7 @@ export async function applyDetectedAction(formData: FormData) {
         tripId,
         title,
         amount,
-        currency: trip.currency,
+        currency,
         paidBy: user.id,
         category,
         expenseDate: today,
@@ -162,13 +167,13 @@ export async function applyDetectedAction(formData: FormData) {
       .values({
         tripId,
         userId: user.id,
-        body: `💸 ${title} — ${trip.currency} ${amount.toLocaleString()}`,
+        body: `💸 ${title} — ${currency} ${amount.toLocaleString()}`,
         type: "expense_card",
         metadata: {
           expenseId: expense.id,
           fromAi: true,
           amount,
-          currency: trip.currency,
+          currency,
           category,
           title,
           paidBy: user.id,

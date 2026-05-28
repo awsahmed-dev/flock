@@ -1,4 +1,6 @@
-export const dynamic = "force-dynamic";
+// Slow-changing data; let Next persist across nav. Mutations call
+// revalidatePath() to flush as needed.
+export const revalidate = 30;
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
