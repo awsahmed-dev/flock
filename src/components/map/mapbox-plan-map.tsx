@@ -122,6 +122,13 @@ export function MapboxPlanMap({
         center: initialCenter,
         zoom: 12,
         attributionControl: true,
+        // B7c-fix3: Mapbox v3.24 bundled in Next.js 16 doesn't read the
+        // `mapboxgl.accessToken` global at Map-construction time —
+        // RequestManager ended up with null, so TileJSON fetches went
+        // out without `?access_token=…` and silently 401'd. Pass the
+        // token explicitly so it lands on the constructed map's
+        // request manager.
+        accessToken: token,
       });
     } catch (err) {
       console.error("[mapbox] init failed", err);
