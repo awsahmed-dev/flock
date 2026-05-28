@@ -2,10 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* B7: Mapbox stylesheet — imported globally because the in-component
-   import (inside the dynamic chunk) was failing to land in Next.js 16's
-   production bundle, leaving the map as a blank canvas. */
-@import "mapbox-gl/dist/mapbox-gl.css";
+/* B7b: Mapbox CSS injected at runtime from the CDN — see MapboxPlanMap.
+   Tailwind v4 + Next.js 16's bundler was dropping both per-component
+   imports and globals-css imports for vendor stylesheets. CDN <link>
+   tag is the only path that reliably lands. */
 
 @custom-variant dark (&:is(.dark *));
 
