@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker, type Popup as MapboxPopup } from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+// B7: CSS now imported globally from src/app/globals.css — Next 16's
+// production bundling was dropping the per-component import inside the
+// dynamic chunk.
 
 /**
  * B5: Mapbox-powered Plan-page map.
@@ -86,6 +88,7 @@ export function MapboxPlanMap({
   days.forEach((d, i) => dayIndex.set(d, i));
 
   const [tokenMissing, setTokenMissing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // ── Init Mapbox once ───────────────────────────────────────────────
   useEffect(() => {
@@ -102,20 +105,40 @@ export function MapboxPlanMap({
     const initialCenter: [number, number] =
       destinationCenter ?? [items[0]?.lng ?? 0, items[0]?.lat ?? 0];
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: initialCenter,
-      zoom: 12,
-      attributionControl: true,
-    });
+    let map: MapboxMap;
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: initialCenter,
+        zoom: 12,
+        attributionControl: true,
+      });
+    } catch (err) {
+      console.error("[mapbox] init failed", err);
+      setErrorMsg(err instanceof Error ? err.message : "Map init failed");
+      return;
+    }
     mapRef.current = map;
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
 
     map.on("load", () => setReady(true));
+    map.on("error", (e) => {
+      // Mapbox emits an error event for token issues, tile failures, etc.
+      // Surface it so we stop guessing why the canvas is blank.
+      const m = e?.error?.message ?? "Map error";
+      console.error("[mapbox]", m, e);
+      setErrorMsg(m);
+    });
+
+    // B7: container can be 0×0 on first paint if the parent is still
+    // settling height; explicit resize a tick later catches the post-
+    // layout dimensions and forces Mapbox to draw.
+    const t = setTimeout(() => map.resize(), 80);
 
     return () => {
+      clearTimeout(t);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       popupRef.current?.remove();
@@ -264,11 +287,24 @@ export function MapboxPlanMap({
 
   return (
     <>
-      <div ref={containerRef} className="absolute inset-0 bg-muted/30" />
-      {tokenMissing && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-700 dark:text-amber-300 max-w-xs">
-            Map unavailable — Mapbox token isn't loaded. The page still works for adding items.
+      <div
+        ref={containerRef}
+        className="absolute inset-0 bg-muted/30"
+        // Ensure non-zero pixel dimensions so Mapbox's first paint sees
+        // a real container even if the parent's flex/grid is still
+        // computing height.
+        style={{ minHeight: 200 }}
+      />
+      {(tokenMissing || errorMsg) && (
+        <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+          <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-700 dark:text-amber-300 max-w-xs space-y-1">
+            <p className="font-bold">Map didn't load</p>
+            <p className="opacity-90">
+              {tokenMissing
+                ? "Mapbox token missing in this deployment."
+                : errorMsg}
+            </p>
+            <p className="opacity-70">The page still works for adding items.</p>
           </div>
         </div>
       )}
