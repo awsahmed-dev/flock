@@ -129,6 +129,9 @@ export function MapboxPlanMap({
       return;
     }
     mapRef.current = map;
+    // B7c debug: expose for in-browser diagnostics. Remove once map's
+    // reliably rendering.
+    (window as any).__mb = map;
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
 
