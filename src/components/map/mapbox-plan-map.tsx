@@ -355,15 +355,20 @@ export function MapboxPlanMap({
 
   return (
     <>
-      <div
-        ref={containerRef}
-        className="absolute inset-0 bg-muted/30"
-        // B7c: `minHeight: 200` here was being treated as the canonical
-        // height by Mapbox's first-paint sizing, leaving the canvas
-        // stuck at 200px tall even when the parent grew to 600+. The
-        // ResizeObserver in the init effect now handles late layout
-        // settle, so we don't need a hard floor.
-      />
+      {/* B7c-fix: wrapped container.
+          Mapbox GL JS injects `.mapboxgl-map { position: relative }`
+          into the head, which wins the cascade vs Tailwind's `absolute`
+          utility (same specificity, loaded later). My old container
+          had `absolute inset-0`, which Mapbox flipped to relative —
+          and a relative div with no explicit height collapses to 0.
+          Canvas rendered at 300px but was clipped to a 0-tall parent,
+          and Mapbox's transform stayed tiny so tile fetches never
+          fired. The wrapper now gives us a positioned parent; the
+          ref'd div is `w-full h-full` which works under any position
+          mode Mapbox chooses for us. */}
+      <div className="absolute inset-0">
+        <div ref={containerRef} className="w-full h-full bg-muted/30" />
+      </div>
       {(tokenMissing || errorMsg) && (
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
           <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-700 dark:text-amber-300 max-w-xs space-y-1">
