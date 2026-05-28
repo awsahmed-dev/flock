@@ -154,13 +154,18 @@ export function MapboxPlanMap({
       setErrorMsg(m);
     });
 
-    // B7: container can be 0×0 on first paint if the parent is still
-    // settling height; explicit resize a tick later catches the post-
-    // layout dimensions and forces Mapbox to draw.
+    // B7c: container can be 0×0 on first paint if the parent is still
+    // settling height. A one-shot resize catches the immediate post-
+    // layout dimensions; a ResizeObserver catches every subsequent
+    // resize (sheet expand, viewport resize, etc.) so the canvas always
+    // matches the available space instead of locking to first-paint.
     const t = setTimeout(() => map.resize(), 80);
+    const ro = new ResizeObserver(() => map.resize());
+    if (containerRef.current) ro.observe(containerRef.current);
 
     return () => {
       clearTimeout(t);
+      ro.disconnect();
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       popupRef.current?.remove();
@@ -363,10 +368,11 @@ export function MapboxPlanMap({
       <div
         ref={containerRef}
         className="absolute inset-0 bg-muted/30"
-        // Ensure non-zero pixel dimensions so Mapbox's first paint sees
-        // a real container even if the parent's flex/grid is still
-        // computing height.
-        style={{ minHeight: 200 }}
+        // B7c: `minHeight: 200` here was being treated as the canonical
+        // height by Mapbox's first-paint sizing, leaving the canvas
+        // stuck at 200px tall even when the parent grew to 600+. The
+        // ResizeObserver in the init effect now handles late layout
+        // settle, so we don't need a hard floor.
       />
       {(tokenMissing || errorMsg) && (
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
