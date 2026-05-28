@@ -54,6 +54,16 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Paxawa" />
+        {/* B7c-fix: Mapbox CSS served from their CDN, server-rendered into
+            the head so it's already applied when MapboxPlanMap's first
+            paint runs. Async runtime injection ran too late — Mapbox's
+            init detected missing CSS and rendered a styleless canvas
+            that never recovered. 36KB, cached cross-trip. */}
+        <link
+          rel="stylesheet"
+          href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans overflow-x-hidden max-w-full">
         <Providers>

@@ -3,22 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker, type Popup as MapboxPopup } from "mapbox-gl";
 
-// B7b: Mapbox CSS injected at runtime from their CDN. Both the per-
-// component import and a globals.css `@import` were dropped by Next.js
-// 16's Tailwind-v4 PostCSS pipeline — that's why the canvas was blank
-// even though `mapboxgl.Map` was constructing fine. The CDN URL is
-// pinned to the installed package version to stay style-compatible.
-const MAPBOX_CSS_VERSION = "3.10.0";
-function ensureMapboxCss() {
-  if (typeof document === "undefined") return;
-  const ID = "mapbox-gl-css-runtime";
-  if (document.getElementById(ID)) return;
-  const link = document.createElement("link");
-  link.id = ID;
-  link.rel = "stylesheet";
-  link.href = `https://api.mapbox.com/mapbox-gl-js/v${MAPBOX_CSS_VERSION}/mapbox-gl.css`;
-  document.head.appendChild(link);
-}
+// B7c-fix: Mapbox CSS now ships via a server-rendered `<link>` in
+// src/app/layout.tsx. Runtime injection ran too late — Mapbox's init
+// pass checked for CSS before our async injection landed, then rendered
+// a styleless canvas that never recovered.
 
 /**
  * B5: Mapbox-powered Plan-page map.
@@ -113,7 +101,6 @@ export function MapboxPlanMap({
 
   // ── Init Mapbox once ───────────────────────────────────────────────
   useEffect(() => {
-    ensureMapboxCss();
     if (mapRef.current || !containerRef.current) return;
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
