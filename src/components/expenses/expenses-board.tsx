@@ -314,7 +314,7 @@ export function ExpensesBoard({
           <h2 className="text-xl font-bold tracking-tight">Expenses</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Track spending and who owes what</p>
         </div>
-        <AddExpenseDialog tripId={tripId} baseCurrency={currency} />
+        <AddExpenseDialog tripId={tripId} baseCurrency={currency} tripBudget={tripBudget} sharedSpent={sharedSpentBase} personalBudget={personalBudget} personalSpent={personalSpentBase} memberCount={Math.max(1, members.length)} />
       </div>
 
       {/* B2 Budget v2 — health card on top: trip cap vs shared spend +
@@ -508,7 +508,7 @@ export function ExpensesBoard({
             </div>
             <p className="font-semibold text-sm mb-1">No expenses yet</p>
             <p className="text-xs text-muted-foreground mb-5">Log the first expense to start tracking the group spend</p>
-            <AddExpenseDialog tripId={tripId} baseCurrency={currency} />
+            <AddExpenseDialog tripId={tripId} baseCurrency={currency} tripBudget={tripBudget} sharedSpent={sharedSpentBase} personalBudget={personalBudget} personalSpent={personalSpentBase} memberCount={Math.max(1, members.length)} />
           </div>
         ) : (
           <div className="space-y-3">
