@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar, ReceiptText, Vote, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { applyDetectedAction } from "@/lib/actions/smart-actions";
@@ -56,6 +57,7 @@ const STORAGE_PREFIX = "paxawa:ai-chips-dismissed:";
  * localStorage so re-renders don't re-classify.
  */
 export function SmartActionChips({ tripId, messageId, body, createdAt }: Props) {
+  const router = useRouter();
   const [actions, setActions] = useState<DetectedAction[] | null>(null);
   const [hidden, setHidden] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -127,6 +129,13 @@ export function SmartActionChips({ tripId, messageId, body, createdAt }: Props) 
               ? "Expense logged"
               : "Vote opened",
         );
+        // Tester finding: chip → server insert worked, but switching to
+        // the expenses / votes / itinerary tab still showed stale data
+        // because the destination route was hydrated from a cached RSC
+        // payload. router.refresh() forces Next to refetch the currently
+        // mounted segment so when the user jumps tabs the new artifact
+        // is already there.
+        router.refresh();
         handleDismiss();
       } catch (e: any) {
         toast.error(e?.message || "Failed");

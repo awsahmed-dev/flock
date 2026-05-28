@@ -72,6 +72,9 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
         };
         onAdded(fake);
         toast.success("Item added");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
+        }
       } catch (err) {
         if (err instanceof Error && !err.message.includes("NEXT_REDIRECT")) {
           toast.error("Failed to add item");

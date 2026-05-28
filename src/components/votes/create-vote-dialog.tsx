@@ -65,6 +65,9 @@ export function CreateVoteDialog({ tripId }: Props) {
         await createVote(formData);
         toast.success("Vote created");
         track.voteOpened(tripId);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
+        }
         setOpen(false);
         setOptions([{ label: "", cost: "" }, { label: "", cost: "" }]);
       } catch (err) {

@@ -60,9 +60,14 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
       try {
         await createExpense(formData);
         toast.success("Expense logged");
-        // currency is on the form; reading from formData would be cleaner
-        // but the dialog defaults to trip base, which is what we want here.
         track.expenseLogged(tripId, baseCurrency);
+        // Tester finding: the chat sidebar's auto-posted expense card
+        // was lagging behind the create flow by up to 10s (the polling
+        // window). Dispatch a custom event so the open ChatSidebar can
+        // refetch immediately; harmless if no sidebar is mounted.
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
+        }
         setOpen(false);
         (e.target as HTMLFormElement).reset();
       } catch (err) {

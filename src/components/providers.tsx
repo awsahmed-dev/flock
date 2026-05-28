@@ -7,6 +7,7 @@ import { useState } from "react";
 import { SentryUserContext } from "./sentry-user-context";
 import { PostHogProvider } from "@/lib/analytics/posthog-client";
 import { CookieBanner } from "./legal/cookie-banner";
+import { SessionKeeper } from "./session-keeper";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <PostHogProvider>
           <SentryUserContext />
+          <SessionKeeper />
           {children}
           <CookieBanner />
           <ReactQueryDevtools initialIsOpen={false} />

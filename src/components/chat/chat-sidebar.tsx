@@ -121,6 +121,19 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
     return () => clearInterval(interval);
   }, [isOpen, fetchMessages]);
 
+  // External "refresh now" trigger — dispatched by createExpense /
+  // createVote / createItineraryItem after they auto-post a card to chat,
+  // so the sidebar reflects the new card immediately instead of waiting
+  // for the next 10s poll. Tester finding.
+  useEffect(() => {
+    if (!isOpen) return;
+    function onRefresh() {
+      fetchMessages();
+    }
+    window.addEventListener("paxawa:chat-refresh", onRefresh);
+    return () => window.removeEventListener("paxawa:chat-refresh", onRefresh);
+  }, [isOpen, fetchMessages]);
+
   // 2. Presence + typing channel — only re-runs when userId or tripId changes
   // displayName is read via ref to avoid re-running the effect on every fetch
   useEffect(() => {
