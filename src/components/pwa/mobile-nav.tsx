@@ -49,6 +49,10 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
             <Link
               key={tab.id}
               href={tab.href}
+              /* Eager prefetch — same reasoning as the desktop tabs.
+                 On mobile this fires on touchstart so the route is warm
+                 before the finger lifts. */
+              prefetch
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5 rounded-full m-1 transition-all relative",
                 isActive

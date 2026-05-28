@@ -5,6 +5,12 @@ import { Scrollytelling } from "@/components/landing/scrollytelling";
 import { LandingClosing } from "@/components/landing/landing-closing";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { createClient } from "@/lib/supabase/server";
+
+// Even though the landing is mostly cached marketing content, we need to
+// run on every request to check the auth cookie — a signed-in user who
+// re-opens paxawa.com expects their dashboard, not the marketing pitch.
+export const dynamic = "force-dynamic";
 
 function NavAnchor({
   href,
@@ -47,6 +53,27 @@ export default async function HomePage({ searchParams }: PageProps) {
       `/auth/callback?code=${encodeURIComponent(code)}&next=${encodeURIComponent(next)}`,
     );
   }
+
+  // If they're already signed in, send them straight to /dashboard.
+  // Tester finding: closing + reopening the tab landed signed-in users
+  // back on the marketing page, which felt like a sign-out. The cookie
+  // was actually persisting fine — we just weren't honoring it here.
+  // The `?from=landing` query opts out for the case of a signed-in user
+  // explicitly clicking the logo to revisit marketing.
+  let signedIn = false;
+  if (sp.from !== "landing") {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      signedIn = !!user;
+    } catch {
+      // Auth lookup hiccup — show the marketing page.
+    }
+  }
+  // redirect() throws an internal NEXT_REDIRECT; must be outside try.
+  if (signedIn) redirect("/dashboard");
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">

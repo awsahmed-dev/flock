@@ -38,11 +38,29 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
-import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import dynamicImport from "next/dynamic";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { EnablePushButton } from "@/components/pwa/enable-push";
-import { InstallPrompt } from "@/components/pwa/install-prompt";
-import { SidePanel } from "@/components/ui/side-panel";
+
+// Lazy load the heavy components that aren't needed at first paint:
+//   - ChatSidebar pulls in supabase realtime + motion + the AI chip
+//     fetcher; ~50KB of JS that only matters once the chat opens.
+//   - SidePanel + CrewSheetContent only render when the user opens
+//     the Crew sheet from the toolbar.
+//   - InstallPrompt waits for `beforeinstallprompt`, can absolutely defer.
+// All three drop the trip-shell initial bundle so tab clicks feel snappier.
+const ChatSidebar = dynamicImport(
+  () => import("@/components/chat/chat-sidebar").then((m) => ({ default: m.ChatSidebar })),
+  { ssr: false },
+);
+const SidePanel = dynamicImport(
+  () => import("@/components/ui/side-panel").then((m) => ({ default: m.SidePanel })),
+  { ssr: false },
+);
+const InstallPrompt = dynamicImport(
+  () => import("@/components/pwa/install-prompt").then((m) => ({ default: m.InstallPrompt })),
+  { ssr: false },
+);
 import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
 import { Logo } from "@/components/ui/logo";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
@@ -380,6 +398,11 @@ export function TripShell({ trip, children }: Props) {
               <Link
                 key={tab.href}
                 href={href}
+                /* Eager prefetch on hover/touchstart — Next 16's "auto"
+                   default skips prefetch for dynamic routes, but trip
+                   tabs are the hot path. The prefetch warms the RSC
+                   payload + page bundle so click→render feels instant. */
+                prefetch
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
                   isActive
@@ -403,19 +426,26 @@ export function TripShell({ trip, children }: Props) {
           </div>
         </main>
 
-        {/* Chat panel — pushes content on desktop, overlay on mobile */}
+        {/* Chat panel — pushes content on desktop, overlay on mobile.
+            Lazy-rendered: we don't mount ChatSidebar (and pay its JS
+            parse cost) until the user opens chat for the first time.
+            The collapse animation still works because the wrapping div
+            keeps the width transition; ChatSidebar slides in once
+            mounted. */}
         <div
           className={`shrink-0 border-l bg-background overflow-hidden transition-[width] duration-300 ease-out hidden sm:block ${
             chatOpen ? "w-[360px]" : "w-0"
           }`}
         >
           <div className="w-[360px] h-full">
-            <ChatSidebar
-              tripId={trip.id}
-              tripName={trip.name}
-              isOpen={chatOpen}
-              onClose={() => setChatOpen(false)}
-            />
+            {chatOpen && (
+              <ChatSidebar
+                tripId={trip.id}
+                tripName={trip.name}
+                isOpen={chatOpen}
+                onClose={() => setChatOpen(false)}
+              />
+            )}
           </div>
         </div>
 
@@ -449,19 +479,21 @@ export function TripShell({ trip, children }: Props) {
       )}
 
       {/* Crew side panel — opened from the Users icon in the toolbar.
-          Telegram/WhatsApp-style "group info" pattern: members, invite
-          link, leave/remove controls. Replaces the old Members tab. */}
-      <SidePanel
-        open={crewOpen}
-        onClose={() => setCrewOpen(false)}
-        title="Trip crew"
-        subtitle={`${trip.name}`}
-        icon={<Users className="w-4 h-4 text-white" />}
-        accentGradient="from-primary to-violet-600"
-        width="md"
-      >
-        <CrewSheetContent tripId={trip.id} shareToken={trip.shareToken ?? null} />
-      </SidePanel>
+          Lazy-mounted: same trick as ChatSidebar — don't load the panel
+          JS or run the members-fetch effect until the user opens it. */}
+      {crewOpen && (
+        <SidePanel
+          open={crewOpen}
+          onClose={() => setCrewOpen(false)}
+          title="Trip crew"
+          subtitle={`${trip.name}`}
+          icon={<Users className="w-4 h-4 text-white" />}
+          accentGradient="from-primary to-violet-600"
+          width="md"
+        >
+          <CrewSheetContent tripId={trip.id} shareToken={trip.shareToken ?? null} />
+        </SidePanel>
+      )}
 
       {/* PWA install prompt */}
       <InstallPrompt />
