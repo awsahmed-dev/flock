@@ -9,14 +9,10 @@ import {
   Calendar,
   Wallet,
   ArrowRight,
-  MapPin,
   Clock,
   Link2,
   Sparkles,
   Hotel,
-  FileText,
-  Vote,
-  Backpack,
 } from "lucide-react";
 import { format, parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
@@ -24,6 +20,7 @@ import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
 import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { ActivityFeed } from "./activity-feed";
+import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
 
 interface Member {
   id: string;
@@ -46,6 +43,7 @@ interface Props {
   trip: Trip;
   inviteUrl: string | null;
   userId: string;
+  stats: ActionHubStats;
 }
 
 const AVATAR_COLORS = [
@@ -91,7 +89,7 @@ function getTripStatus(startDate: string, endDate: string) {
   };
 }
 
-export function TripOverview({ trip, inviteUrl }: Props) {
+export function TripOverview({ trip, inviteUrl, stats }: Props) {
   const [copied, setCopied] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
@@ -185,47 +183,13 @@ export function TripOverview({ trip, inviteUrl }: Props) {
         </div>
       </div>
 
-      {/* ── Quick-access pills under the hero — fast jumps to less-frequent
-          views (Members / Documents / Map / Photos). The high-frequency
-          tabs already live in the bottom nav; these pills cover everything
-          else without spending screen space on a tile grid. */}
-      <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none">
-        <Link
-          href={`/trips/${trip.id}/members`}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
-        >
-          <Users className="w-3.5 h-3.5 text-cyan-500" />
-          Crew
-        </Link>
-        <Link
-          href={`/trips/${trip.id}/documents`}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
-        >
-          <FileText className="w-3.5 h-3.5 text-amber-500" />
-          Docs
-        </Link>
-        <Link
-          href={`/trips/${trip.id}/itinerary?view=map`}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
-        >
-          <MapPin className="w-3.5 h-3.5 text-blue-500" />
-          Map
-        </Link>
-        <Link
-          href={`/trips/${trip.id}/documents?type=image`}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-          Photos
-        </Link>
-        <Link
-          href={`/trips/${trip.id}/packing`}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent/50 px-3.5 py-1.5 text-xs font-semibold transition-colors"
-        >
-          <Backpack className="w-3.5 h-3.5 text-emerald-500" />
-          Packing
-        </Link>
-      </div>
+      {/* ── Action Hub — the "what can I do here?" surface (B2-2). Replaces
+          the old icon-only pill row that hid feature discoverability
+          (Tester 2: "I didn't know there was a vote feature"). Each card
+          now surfaces live state — counts, what's pending, what's
+          missing — and the Up-next card directs to the highest-leverage
+          action right now. */}
+      <TripActionHub tripId={trip.id} stats={stats} />
 
       {/* ── Activity Feed — capped at 5 most-recent events with summary
           chips on top. Total scale lives in the chips; the feed shows
