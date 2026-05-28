@@ -85,6 +85,8 @@ export function MapboxPlanMap({
   const dayIndex = new Map<string, number>();
   days.forEach((d, i) => dayIndex.set(d, i));
 
+  const [tokenMissing, setTokenMissing] = useState(false);
+
   // ── Init Mapbox once ───────────────────────────────────────────────
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
@@ -92,6 +94,7 @@ export function MapboxPlanMap({
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
     if (!token) {
       console.warn("[mapbox] NEXT_PUBLIC_MAPBOX_TOKEN missing — map not rendered");
+      setTokenMissing(true);
       return;
     }
     mapboxgl.accessToken = token;
@@ -259,7 +262,18 @@ export function MapboxPlanMap({
     }
   }, [items, focusedDay, highlightedItemId, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <div ref={containerRef} className="absolute inset-0" />;
+  return (
+    <>
+      <div ref={containerRef} className="absolute inset-0 bg-muted/30" />
+      {tokenMissing && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-700 dark:text-amber-300 max-w-xs">
+            Map unavailable — Mapbox token isn't loaded. The page still works for adding items.
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 function escapeHtml(s: string): string {

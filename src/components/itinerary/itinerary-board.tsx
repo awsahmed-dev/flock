@@ -2,31 +2,20 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { format, parseISO, isToday } from "date-fns";
-import { Plus, Sparkles, Hotel, Calendar, ChevronUp, ChevronDown, ExternalLink, Search, Bed, Plane, Car, Utensils, Ticket, HelpCircle, Trash2, Pencil } from "lucide-react";
+import {
+  Plus, Sparkles, Hotel, ChevronUp, ChevronDown, ExternalLink, Search,
+  Bed, Plane, Car, Utensils, Ticket, HelpCircle, Trash2, Pencil, GripVertical, MapPin, Clock,
+} from "lucide-react";
 import dynamicImport from "next/dynamic";
 import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
+  DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { AddItemDialog } from "./add-item-dialog";
-import { EditItemDialog } from "./edit-item-dialog";
 import { AddPlaceSearch } from "./add-place-search";
+import { EditItemDialog } from "./edit-item-dialog";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
 import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
@@ -37,7 +26,6 @@ import { toast } from "sonner";
 import type { InferSelectModel } from "drizzle-orm";
 import type { itineraryItems } from "@/lib/db/schema";
 
-// Mapbox is heavy + browser-only; ship it deferred.
 const MapboxPlanMap = dynamicImport(
   () => import("@/components/map/mapbox-plan-map").then((m) => m.MapboxPlanMap),
   { ssr: false, loading: () => <MapPlaceholder /> },
@@ -51,42 +39,48 @@ interface Props {
   items: Item[];
   currency: string;
   destination: string;
-  /** B5: pre-geocoded destination center [lng, lat] from server side. */
   destinationCenter: [number, number] | null;
-  /** B5: live FX rates for dual-currency display. */
   fxRates: RateBundle | null;
   userId: string;
   isOwner: boolean;
 }
 
 const DAY_PALETTE = [
-  "bg-blue-500", "bg-orange-500", "bg-amber-500", "bg-emerald-500",
-  "bg-violet-500", "bg-red-500", "bg-cyan-500", "bg-pink-500",
+  { dot: "bg-blue-500",    ring: "ring-blue-500/30",    chip: "text-blue-600 dark:text-blue-400" },
+  { dot: "bg-orange-500",  ring: "ring-orange-500/30",  chip: "text-orange-600 dark:text-orange-400" },
+  { dot: "bg-amber-500",   ring: "ring-amber-500/30",   chip: "text-amber-600 dark:text-amber-400" },
+  { dot: "bg-emerald-500", ring: "ring-emerald-500/30", chip: "text-emerald-600 dark:text-emerald-400" },
+  { dot: "bg-violet-500",  ring: "ring-violet-500/30",  chip: "text-violet-600 dark:text-violet-400" },
+  { dot: "bg-red-500",     ring: "ring-red-500/30",     chip: "text-red-600 dark:text-red-400" },
+  { dot: "bg-cyan-500",    ring: "ring-cyan-500/30",    chip: "text-cyan-600 dark:text-cyan-400" },
+  { dot: "bg-pink-500",    ring: "ring-pink-500/30",    chip: "text-pink-600 dark:text-pink-400" },
 ];
 
 const TYPE_CONFIG = {
-  activity:      { icon: Ticket,    text: "text-violet-600 dark:text-violet-400" },
-  accommodation: { icon: Bed,       text: "text-blue-600 dark:text-blue-400" },
-  transport:     { icon: Car,       text: "text-orange-600 dark:text-orange-400" },
-  meal:          { icon: Utensils,  text: "text-green-600 dark:text-green-400" },
-  other:         { icon: HelpCircle,text: "text-muted-foreground" },
+  activity:      { icon: Ticket,    text: "text-violet-600 dark:text-violet-400", label: "Activity" },
+  accommodation: { icon: Bed,       text: "text-blue-600 dark:text-blue-400",     label: "Stay" },
+  transport:     { icon: Car,       text: "text-orange-600 dark:text-orange-400", label: "Transport" },
+  meal:          { icon: Utensils,  text: "text-green-600 dark:text-green-400",   label: "Meal" },
+  other:         { icon: HelpCircle,text: "text-muted-foreground",                label: "Other" },
 } as const;
 
 function MapPlaceholder() {
   return (
-    <div className="absolute inset-0 bg-muted/40 flex items-center justify-center">
+    <div className="absolute inset-0 bg-muted/30 flex items-center justify-center">
       <p className="text-xs text-muted-foreground animate-pulse">Loading map…</p>
     </div>
   );
 }
 
 /**
- * B5: Plan page. Mapbox covers the surface; itinerary controls float
- * above as a bottom sheet (mobile + desktop). Day-chip rail floats at
- * the top so day-switching is one tap.
+ * B7: Plan page. Mapbox covers the surface, day list lives in a
+ * collapsible bottom sheet. Layout sizes to the available viewport
+ * (between trip header + bottom nav) instead of `fixed inset-0` which
+ * was breaking on mobile.
  *
- * The old split-view + Leaflet map are gone entirely. Map view is the
- * only view — drag-and-drop list lives inside the bottom sheet.
+ * Day list inside the sheet brings back the day-header + items-card
+ * look the previous version had — only flattened slightly so it stays
+ * inside the sheet without scroll thrash.
  */
 export function ItineraryBoard({
   tripId,
@@ -100,16 +94,14 @@ export function ItineraryBoard({
   isOwner,
 }: Props) {
   const [items, setItems] = useState(initialItems);
-  const [addingDay, setAddingDay] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [focusedDay, setFocusedDay] = useState<string | null>(days[0] ?? null);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
-  // Bottom-sheet expand state — closed shows day chips + focused day items;
-  // open shows all days scrollable.
   const [sheetOpen, setSheetOpen] = useState(true);
   const [, startTransition] = useTransition();
 
@@ -117,7 +109,7 @@ export function ItineraryBoard({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   function getItemsForDay(day: string) {
@@ -171,7 +163,11 @@ export function ItineraryBoard({
     });
   }
 
-  // Map needs lng,lat ordering + only items with coords.
+  function openAddFor(day: string | null) {
+    setDefaultAddDay(day);
+    setSearchOpen(true);
+  }
+
   const mapItems = useMemo(
     () =>
       items
@@ -196,11 +192,19 @@ export function ItineraryBoard({
   );
 
   const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
-  const focusedItems = focusedDay ? getItemsForDay(focusedDay) : [];
+
+  // Container height: between trip header (3.5rem) and the bottom nav.
+  // 100dvh handles iOS soft keyboard correctly. Bottom-nav is ~5.5rem
+  // including its safe-area padding. Negative margins pull the canvas
+  // edge-to-edge inside the trip page's padded main content.
+  const containerCls =
+    "relative -mx-4 sm:-mx-6 lg:-mx-6 -mt-4 sm:-mt-6 " +
+    "h-[calc(100dvh-3.5rem-5.5rem)] sm:h-[calc(100dvh-3.5rem)] " +
+    "overflow-hidden";
 
   return (
-    <div className="fixed inset-0 sm:relative sm:inset-auto sm:h-[calc(100vh-3.5rem)] sm:-mx-4 sm:-mt-6 lg:-mx-6">
-      {/* ── Full-bleed map ─────────────────────────────────────────── */}
+    <div className={containerCls}>
+      {/* ── Map layer ─────────────────────────────────────────────── */}
       <div className="absolute inset-0">
         <MapboxPlanMap
           items={mapItems}
@@ -212,13 +216,13 @@ export function ItineraryBoard({
         />
       </div>
 
-      {/* ── Top: day chip rail ─────────────────────────────────────── */}
+      {/* ── Day chip rail (always visible at top of map) ─────────── */}
       <div className="absolute top-3 left-3 right-3 sm:left-4 sm:right-4 z-20 flex items-center gap-2 overflow-x-auto scrollbar-none pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg p-1">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg p-1 max-w-full overflow-x-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setFocusedDay(null)}
-            className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
+            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
               focusedDay === null
                 ? "bg-foreground text-background"
                 : "text-muted-foreground hover:text-foreground"
@@ -229,6 +233,7 @@ export function ItineraryBoard({
           {days.map((day, idx) => {
             const count = getItemsForDay(day).length;
             const active = focusedDay === day;
+            const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
             return (
               <button
                 key={day}
@@ -240,17 +245,17 @@ export function ItineraryBoard({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${DAY_PALETTE[idx % DAY_PALETTE.length]}`} />
-                Day {idx + 1}
-                {count > 0 && <span className="opacity-70 tabular-nums">· {count}</span>}
+                <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+                D{idx + 1}
+                {count > 0 && <span className="opacity-70 tabular-nums">·{count}</span>}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ── Top-right floating actions: Hotels + AI ─────────────────── */}
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-16 z-20 flex flex-col gap-2 pointer-events-none">
+      {/* ── Top-right floating CTAs: AI / Hotels ─────────────────── */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex flex-col gap-2 pointer-events-none">
         <button
           type="button"
           onClick={() => setAiOpen(true)}
@@ -271,25 +276,25 @@ export function ItineraryBoard({
         </button>
       </div>
 
-      {/* ── Bottom-left floating "Add by search" ────────────────────── */}
+      {/* ── Add a place FAB (primary action) ─────────────────────── */}
       <button
         type="button"
-        onClick={() => setSearchOpen(true)}
-        className="absolute z-20 left-3 sm:left-4 bottom-[calc(env(safe-area-inset-bottom,0)+5rem)] sm:bottom-6 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground pl-3 pr-4 py-2.5 text-sm font-bold shadow-xl shadow-primary/40 hover:opacity-90 transition-opacity pointer-events-auto"
-        title="Add a place"
+        onClick={() => openAddFor(focusedDay)}
+        className="absolute z-30 right-3 sm:right-4 bottom-[7.5rem] sm:bottom-24 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground pl-3 pr-4 py-2.5 text-sm font-bold shadow-xl shadow-primary/40 hover:opacity-90 transition-opacity pointer-events-auto"
+        title="Add to itinerary"
       >
-        <Search className="w-4 h-4" />
-        Add a place
+        <Plus className="w-4 h-4" />
+        Add
       </button>
 
-      {/* ── Bottom sheet: day list ──────────────────────────────────── */}
+      {/* ── Bottom sheet ─────────────────────────────────────────── */}
       <div
-        className={`absolute left-0 right-0 bottom-0 z-10 transition-transform duration-300 ${
-          sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.5rem)]"
+        className={`absolute left-0 right-0 bottom-0 z-20 transition-transform duration-300 ease-out ${
+          sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.75rem)]"
         }`}
       >
         <div className="mx-auto max-w-3xl bg-card/95 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl overflow-hidden">
-          {/* Handle / header */}
+          {/* Handle + summary header */}
           <button
             type="button"
             onClick={() => setSheetOpen((o) => !o)}
@@ -307,7 +312,7 @@ export function ItineraryBoard({
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">
                   {focusedDay
-                    ? `${focusedItems.length} item${focusedItems.length !== 1 ? "s" : ""}`
+                    ? `${getItemsForDay(focusedDay).length} item${getItemsForDay(focusedDay).length !== 1 ? "s" : ""}`
                     : `${items.length} items across ${days.length} days`}
                 </p>
               </div>
@@ -318,7 +323,7 @@ export function ItineraryBoard({
           </button>
 
           {/* Scrollable list */}
-          <div className="max-h-[55vh] overflow-y-auto px-3 pb-[calc(env(safe-area-inset-bottom,0)+5rem)] sm:pb-4">
+          <div className="max-h-[55vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -328,52 +333,98 @@ export function ItineraryBoard({
               {(focusedDay ? [focusedDay] : days).map((day) => {
                 const dayItems = getItemsForDay(day);
                 const dayIdx = days.indexOf(day);
+                const palette = DAY_PALETTE[dayIdx % DAY_PALETTE.length];
+                const today = isToday(parseISO(day));
                 return (
-                  <div key={day} className="mb-3">
-                    {/* Day strip — visible when "All" is selected */}
-                    {!focusedDay && (
-                      <div className="flex items-center gap-2 mb-2 px-1">
-                        <span className={`w-1.5 h-1.5 rounded-full ${DAY_PALETTE[dayIdx % DAY_PALETTE.length]}`} />
-                        <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-                          Day {dayIdx + 1} · {format(parseISO(day), "EEE MMM d")}
+                  <div key={day} className="mb-4">
+                    {/* Day header — restores the richer card style */}
+                    <div className="flex items-center gap-3 mb-2.5 px-1">
+                      <div
+                        className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl border-2 shrink-0 ${
+                          today
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : `border-transparent ${palette.dot} text-white`
+                        }`}
+                      >
+                        <span className="text-[9px] font-bold leading-none tracking-widest uppercase">
+                          {format(parseISO(day), "EEE")}
+                        </span>
+                        <span className="text-base font-bold leading-tight tabular-nums">
+                          {format(parseISO(day), "d")}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm">
+                          Day {dayIdx + 1}{" "}
+                          {today && (
+                            <span className="ml-1.5 text-[9px] font-bold tracking-widest uppercase text-primary">
+                              today
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {format(parseISO(day), "MMMM d, yyyy")} · {dayItems.length} item
+                          {dayItems.length !== 1 ? "s" : ""}
                         </p>
                       </div>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => openAddFor(day)}
+                        title="Add to this day"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground transition-colors"
+                      >
+                        <Plus className="w-3 h-3" /> Add
+                      </button>
+                    </div>
 
+                    {/* Items */}
                     <SortableContext
                       items={dayItems.map((i) => i.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2 ml-2 pl-3 border-l-2 border-border/40">
                         {dayItems.map((item, idx) => (
                           <SortableItemRow
                             key={item.id}
                             item={item}
                             number={idx + 1}
-                            color={DAY_PALETTE[dayIdx % DAY_PALETTE.length]}
+                            paletteDot={palette.dot}
                             currency={currency}
                             localCurrency={localCurrency}
                             fxRates={fxRates}
                             canManage={isOwner || item.createdBy === userId}
                             highlighted={highlightedItemId === item.id}
                             onMouseEnter={() => setHighlightedItemId(item.id)}
-                            onMouseLeave={() => setHighlightedItemId((p) => (p === item.id ? null : p))}
+                            onMouseLeave={() =>
+                              setHighlightedItemId((p) => (p === item.id ? null : p))
+                            }
                             onEdit={() => setEditingItem(item)}
                             onDelete={() => {
+                              const id = item.id;
+                              setItems((p) => p.filter((i) => i.id !== id));
                               startTransition(async () => {
                                 try {
-                                  await deleteItineraryItem(item.id, tripId);
-                                  setItems((p) => p.filter((i) => i.id !== item.id));
+                                  await deleteItineraryItem(id, tripId);
                                 } catch (err) {
                                   toast.error(err instanceof Error ? err.message : "Failed to delete");
+                                  // Re-fetch on failure to recover
                                 }
                               });
                             }}
                             onStatusCycle={() => {
-                              const next = item.status === "proposed" ? "confirmed" : item.status === "confirmed" ? "rejected" : "proposed";
-                              setItems((p) => p.map((i) => (i.id === item.id ? { ...i, status: next } : i)));
+                              const next =
+                                item.status === "proposed"
+                                  ? "confirmed"
+                                  : item.status === "confirmed"
+                                    ? "rejected"
+                                    : "proposed";
+                              setItems((p) =>
+                                p.map((i) => (i.id === item.id ? { ...i, status: next } : i)),
+                              );
                               startTransition(() => {
-                                updateItemStatus(item.id, tripId, next).catch(() => toast.error("Failed to update status"));
+                                updateItemStatus(item.id, tripId, next).catch(() =>
+                                  toast.error("Failed to update status"),
+                                );
                               });
                             }}
                           />
@@ -382,19 +433,14 @@ export function ItineraryBoard({
                     </SortableContext>
 
                     {dayItems.length === 0 && (
-                      <p className="text-[11px] text-muted-foreground italic px-2 py-1.5">
-                        Nothing planned yet
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => openAddFor(day)}
+                        className="ml-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center"
+                      >
+                        Nothing planned · tap to add
+                      </button>
                     )}
-
-                    {/* Add row — bottom of each day */}
-                    <button
-                      type="button"
-                      onClick={() => setAddingDay(day)}
-                      className="mt-1.5 w-full inline-flex items-center gap-2 rounded-xl border border-dashed border-border hover:border-foreground/30 hover:bg-accent/30 px-3 py-2 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add manually
-                    </button>
                   </div>
                 );
               })}
@@ -411,28 +457,19 @@ export function ItineraryBoard({
         </div>
       </div>
 
-      {/* Dialogs / panels */}
+      {/* Sheets / dialogs */}
       <AddPlaceSearch
         open={searchOpen}
-        onClose={() => setSearchOpen(false)}
+        onClose={() => {
+          setSearchOpen(false);
+          setDefaultAddDay(null);
+        }}
         tripId={tripId}
         destination={destination}
         destinationCenter={destinationCenter}
         days={days}
+        defaultDay={defaultAddDay}
       />
-
-      {addingDay && (
-        <AddItemDialog
-          tripId={tripId}
-          dayDate={addingDay}
-          sortOrder={getItemsForDay(addingDay).length}
-          onClose={() => setAddingDay(null)}
-          onAdded={(newItem) => {
-            setItems((prev) => [...prev, newItem]);
-            setAddingDay(null);
-          }}
-        />
-      )}
 
       {editingItem && (
         <EditItemDialog
@@ -463,12 +500,12 @@ export function ItineraryBoard({
   );
 }
 
-/* ─── Sortable row ────────────────────────────────────────────────────── */
+/* ─── Sortable item row ──────────────────────────────────────────────── */
 
 function SortableItemRow({
   item,
   number,
-  color,
+  paletteDot,
   currency,
   localCurrency,
   fxRates,
@@ -482,7 +519,7 @@ function SortableItemRow({
 }: {
   item: Item;
   number: number;
-  color: string;
+  paletteDot: string;
   currency: string;
   localCurrency: string | null;
   fxRates: RateBundle | null;
@@ -499,16 +536,17 @@ function SortableItemRow({
   const TypeCfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;
   const TypeIcon = TypeCfg.icon;
 
-  // Dual-currency price hint.
   const localPrice =
     item.costEstimate != null && localCurrency && localCurrency !== currency && fxRates
       ? convert(item.costEstimate, currency, localCurrency, fxRates)
       : null;
 
-  // Open in Google Maps deep link.
-  const directionsUrl = item.locationLat != null && item.locationLng != null
-    ? `https://www.google.com/maps/dir/?api=1&destination=${item.locationLat},${item.locationLng}${item.locationName ? `&destination_place_id=${encodeURIComponent(item.locationName)}` : ""}`
-    : null;
+  const directionsUrl =
+    item.locationLat != null && item.locationLng != null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${item.locationLat},${item.locationLng}${
+          item.locationName ? `&destination_place_id=${encodeURIComponent(item.locationName)}` : ""
+        }`
+      : null;
 
   return (
     <li
@@ -517,19 +555,26 @@ function SortableItemRow({
       id={`item-${item.id}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`group rounded-xl border bg-card transition-all ${
+      className={`group relative rounded-xl border bg-card transition-all ${
         isDragging ? "opacity-40" : ""
       } ${highlighted ? "border-primary/60 shadow-md shadow-primary/20" : "border-border hover:border-foreground/20"}`}
     >
-      <div className="flex items-stretch">
-        {/* Numbered marker matching map pin */}
+      {/* Numbered marker chip — matches the map pin */}
+      <div
+        className={`absolute -left-[1.65rem] top-3 w-6 h-6 ${paletteDot} text-white rounded-full flex items-center justify-center text-[10px] font-extrabold shadow ring-2 ring-card`}
+      >
+        {number}
+      </div>
+
+      <div className="flex items-stretch gap-2.5 p-2.5">
+        {/* Drag handle */}
         <button
           {...attributes}
           {...listeners}
-          className={`shrink-0 w-9 flex items-center justify-center ${color} text-white text-xs font-extrabold rounded-l-xl cursor-grab active:cursor-grabbing`}
+          className="self-stretch flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
           aria-label="Drag to reorder"
         >
-          {number}
+          <GripVertical className="w-3.5 h-3.5" />
         </button>
 
         {/* Optional photo */}
@@ -538,35 +583,47 @@ function SortableItemRow({
           <img
             src={item.photoUrl}
             alt=""
-            className="w-14 object-cover shrink-0"
+            className="w-14 h-14 rounded-lg object-cover shrink-0"
             loading="lazy"
           />
         )}
 
-        <div className="flex-1 min-w-0 p-2.5">
+        <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   type="button"
                   onClick={onStatusCycle}
                   title={`${item.status} — tap to cycle`}
                   className={`w-2 h-2 rounded-full shrink-0 ${
-                    item.status === "confirmed" ? "bg-emerald-500" :
-                    item.status === "rejected" ? "bg-red-400" : "bg-amber-400"
+                    item.status === "confirmed"
+                      ? "bg-emerald-500"
+                      : item.status === "rejected"
+                        ? "bg-red-400"
+                        : "bg-amber-400"
                   }`}
                 />
-                <p className={`font-bold text-[13px] leading-tight truncate ${
-                  item.status === "rejected" ? "line-through text-muted-foreground" : ""
-                }`}>
+                <p
+                  className={`font-bold text-[13px] leading-tight ${
+                    item.status === "rejected" ? "line-through text-muted-foreground" : ""
+                  }`}
+                >
                   {item.title}
                 </p>
-                <TypeIcon className={`w-3 h-3 shrink-0 ${TypeCfg.text}`} />
+                <span
+                  className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-widest uppercase ${TypeCfg.text}`}
+                >
+                  <TypeIcon className="w-2.5 h-2.5" />
+                  {TypeCfg.label}
+                </span>
               </div>
 
               <div className="flex items-center gap-2 mt-1 flex-wrap text-[10px] text-muted-foreground">
                 {item.startTime && (
-                  <span className="tabular-nums">{item.startTime.slice(0, 5)}</span>
+                  <span className="inline-flex items-center gap-0.5 tabular-nums">
+                    <Clock className="w-2.5 h-2.5" /> {item.startTime.slice(0, 5)}
+                  </span>
                 )}
                 {item.rating != null && (
                   <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-bold">
@@ -575,16 +632,20 @@ function SortableItemRow({
                 )}
                 {item.costEstimate != null && (
                   <span className="tabular-nums">
-                    {currencySymbol(currency)}{fmtAmount(item.costEstimate)}
+                    {currencySymbol(currency)}
+                    {fmtAmount(item.costEstimate)}
                     {localPrice != null && (
                       <span className="ml-1 opacity-70">
-                        · {currencySymbol(localCurrency!)}{fmtAmount(localPrice)}
+                        · {currencySymbol(localCurrency!)}
+                        {fmtAmount(localPrice)}
                       </span>
                     )}
                   </span>
                 )}
                 {item.locationName && (
-                  <span className="truncate max-w-[140px]">{item.locationName}</span>
+                  <span className="inline-flex items-center gap-0.5 truncate max-w-[160px]">
+                    <MapPin className="w-2.5 h-2.5" /> {item.locationName}
+                  </span>
                 )}
               </div>
 
@@ -602,7 +663,7 @@ function SortableItemRow({
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Open in Google Maps"
-                  className="opacity-50 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                  className="opacity-60 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ExternalLink className="w-3 h-3" />

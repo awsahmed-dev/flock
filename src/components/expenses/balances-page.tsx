@@ -1,0 +1,209 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { fmtAmount as fmt } from "@/lib/numerals";
+import { convert, type RateBundle } from "@/lib/fx";
+import { ArrowRight } from "lucide-react";
+import { Header } from "./transactions-page";
+
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-violet-500", "bg-emerald-500",
+  "bg-amber-500", "bg-rose-500", "bg-cyan-500",
+];
+function avatarColor(id: string) {
+  const h = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+interface Expense {
+  id: string;
+  tripId: string;
+  amount: number;
+  currency: string;
+  paidBy: string;
+  scope: "shared" | "personal";
+  splits: { userId: string; amountOwed: number; settled: boolean }[];
+}
+
+interface Props {
+  tripId: string;
+  userId: string;
+  currency: string;
+  expenses: Expense[];
+  members: { userId: string; displayName: string }[];
+  fxRates: RateBundle | null;
+}
+
+/**
+ * B7: full Balances sub-page. Tester ask was a place to see who-owes-
+ * who at full fidelity (not just the truncated preview).
+ *
+ * Two views:
+ *   - Net balances per member (sortable)
+ *   - "Suggested settlements" — minimum-transactions algorithm to
+ *     square up the group with the fewest Venmo / cash exchanges.
+ */
+export function BalancesPage({ tripId, userId, currency, expenses, members, fxRates }: Props) {
+  const [view, setView] = useState<"net" | "settle">("net");
+
+  const data = useMemo(() => {
+    function toBase(amount: number, ccy: string) {
+      if (ccy === currency) return amount;
+      const c = convert(amount, ccy, currency, fxRates);
+      return c ?? 0;
+    }
+
+    const shared = expenses.filter((e) => e.scope !== "personal");
+
+    const map = new Map<string, { userId: string; displayName: string; net: number }>();
+    for (const m of members) {
+      map.set(m.userId, { userId: m.userId, displayName: m.displayName, net: 0 });
+    }
+    for (const e of shared) {
+      const p = map.get(e.paidBy);
+      if (p) p.net += toBase(e.amount, e.currency);
+      for (const sp of e.splits) {
+        if (sp.settled) continue;
+        const d = map.get(sp.userId);
+        if (d) d.net -= toBase(sp.amountOwed, e.currency);
+      }
+    }
+    const nets = [...map.values()];
+
+    // Greedy min-cash-flow: sort creditors desc, debtors asc, match
+    // largest pairs until cleared. Not strictly optimal but produces a
+    // settlement plan with at most N-1 transactions, which is what users
+    // actually want.
+    const creditors = nets.filter((n) => n.net > 0.005).map((n) => ({ ...n }));
+    const debtors = nets.filter((n) => n.net < -0.005).map((n) => ({ ...n }));
+    creditors.sort((a, b) => b.net - a.net);
+    debtors.sort((a, b) => a.net - b.net);
+
+    const transfers: { from: string; fromName: string; to: string; toName: string; amount: number }[] = [];
+    let i = 0;
+    let j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const d = debtors[i];
+      const c = creditors[j];
+      const amt = Math.min(-d.net, c.net);
+      if (amt > 0.005) {
+        transfers.push({
+          from: d.userId,
+          fromName: d.displayName,
+          to: c.userId,
+          toName: c.displayName,
+          amount: amt,
+        });
+        d.net += amt;
+        c.net -= amt;
+      }
+      if (Math.abs(d.net) < 0.005) i++;
+      if (Math.abs(c.net) < 0.005) j++;
+    }
+
+    return { nets, transfers };
+  }, [expenses, members, currency, fxRates]);
+
+  return (
+    <div className="space-y-5">
+      <Header tripId={tripId} title="Balances" subtitle="Who owes who · settle up" />
+
+      {/* View switch */}
+      <div className="inline-flex items-center rounded-full border border-border p-0.5 bg-muted/40">
+        <button
+          type="button"
+          onClick={() => setView("net")}
+          className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
+            view === "net" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Net per person
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("settle")}
+          className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
+            view === "settle" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Settle up
+        </button>
+      </div>
+
+      {view === "net" ? (
+        <ul className="rounded-2xl border border-border/60 bg-card divide-y divide-border/60 overflow-hidden">
+          {data.nets
+            .slice()
+            .sort((a, b) => b.net - a.net)
+            .map((b) => {
+              const isMe = b.userId === userId;
+              return (
+                <li key={b.userId} className="flex items-center gap-3 px-4 py-3">
+                  <div className={`w-9 h-9 rounded-full ${avatarColor(b.userId)} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
+                    {b.displayName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{isMe ? "You" : b.displayName}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {b.net > 0.005
+                        ? "Should be reimbursed"
+                        : b.net < -0.005
+                          ? "Owes the group"
+                          : "Settled up"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={`text-base font-bold tabular-nums ${
+                        b.net > 0.005
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : b.net < -0.005
+                            ? "text-orange-600 dark:text-orange-400"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {b.net > 0 ? "+" : ""}{currency} {fmt(b.net)}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+        </ul>
+      ) : data.transfers.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
+          <p className="text-sm font-semibold mb-1">Everyone's settled</p>
+          <p className="text-xs text-muted-foreground">No transfers needed.</p>
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {data.transfers.map((t, idx) => {
+            const fromIsMe = t.from === userId;
+            const toIsMe = t.to === userId;
+            return (
+              <li
+                key={idx}
+                className="rounded-2xl border border-border/60 bg-card px-4 py-3 flex items-center gap-3"
+              >
+                <div className={`w-8 h-8 rounded-full ${avatarColor(t.from)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
+                  {t.fromName.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0 text-center">
+                  <p className="text-sm font-bold">
+                    {fromIsMe ? "You" : t.fromName} → {toIsMe ? "You" : t.toName}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground tabular-nums">
+                    {currency} {fmt(t.amount)}
+                  </p>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <div className={`w-8 h-8 rounded-full ${avatarColor(t.to)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
+                  {t.toName.slice(0, 2).toUpperCase()}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}

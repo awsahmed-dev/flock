@@ -96,7 +96,8 @@ export async function createItineraryItemFromPlace(input: {
   dayDate: string;
   title: string;
   type?: "activity" | "accommodation" | "transport" | "meal" | "other";
-  fsqId: string;
+  /** B7: optional. Empty string or null = manual entry, no Foursquare. */
+  fsqId?: string | null;
   fsqCategory?: string | null;
   locationName?: string | null;
   locationLat?: number | null;
@@ -141,7 +142,7 @@ export async function createItineraryItemFromPlace(input: {
     status: "proposed",
     sortOrder,
     createdBy: user.id,
-    fsqId: input.fsqId,
+    fsqId: input.fsqId && input.fsqId.length > 0 ? input.fsqId : null,
     fsqCategory: input.fsqCategory ?? null,
     photoUrl: input.photoUrl ?? null,
     rating: input.rating ?? null,
