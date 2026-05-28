@@ -41,6 +41,12 @@ interface Props {
   destination: string;
   tripId: string;
   onAddPoi?: (name: string, locationName: string) => void;
+  /** B3-d: focus map bounds to a specific day's items + dim the others. */
+  focusedDay?: string | null;
+  /** B3-d: emphasise one marker (synced from list hover). */
+  highlightedItemId?: string | null;
+  /** B3-d: marker click bubbles up so the list can scroll/highlight. */
+  onItemClick?: (itemId: string) => void;
 }
 
 // ── Nominatim geocode (client-side, rate-limit friendly) ──────────────────────
@@ -126,7 +132,7 @@ async function fetchOverpassPois(lat: number, lng: number): Promise<PoiItem[]> {
 
 type GeoMap = Record<string, { lat: number; lng: number }>;
 
-export function TripMap({ items, destination, tripId, onAddPoi }: Props) {
+export function TripMap({ items, destination, tripId, onAddPoi, focusedDay = null, highlightedItemId = null, onItemClick }: Props) {
   const [center, setCenter] = useState<[number, number] | null>(null);
   const [pois, setPois] = useState<PoiItem[]>([]);
   const [poisLoading, setPoisLoading] = useState(false);
@@ -285,6 +291,9 @@ export function TripMap({ items, destination, tripId, onAddPoi }: Props) {
           pois={pois}
           center={center}
           onAddPoi={handleAddPoi}
+          focusedDay={focusedDay}
+          highlightedItemId={highlightedItemId}
+          onItemClick={onItemClick}
         />
       </div>
     </div>

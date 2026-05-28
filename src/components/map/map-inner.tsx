@@ -16,7 +16,11 @@ L.Icon.Default.mergeOptions({
 
 // ── Itinerary item markers (teardrop, coloured by status) ──────────────────────
 
-function makeItemIcon(status: string, type: string) {
+function makeItemIcon(
+  status: string,
+  type: string,
+  opts: { dimmed?: boolean; highlighted?: boolean } = {},
+) {
   const colors: Record<string, string> = {
     confirmed: "#22c55e",
     proposed: "#f59e0b",
@@ -33,21 +37,33 @@ function makeItemIcon(status: string, type: string) {
   };
   const emoji = typeEmoji[type] ?? "📍";
 
+  // B3-d: dimmed markers fade so the focused day reads as the foreground.
+  // Highlighted markers bump 25% larger with a colored ring.
+  const opacity = opts.dimmed ? 0.32 : 1;
+  const size = opts.highlighted ? 46 : 36;
+  const ringColor = opts.highlighted ? "#a855f7" : "white";
+  const ringWidth = opts.highlighted ? 3 : 2;
+  const shadow = opts.highlighted
+    ? "0 4px 16px rgba(168,85,247,.6)"
+    : "0 2px 8px rgba(0,0,0,.35)";
+
   return L.divIcon({
     className: "",
     html: `
       <div style="
-        width:36px;height:36px;border-radius:50% 50% 50% 0;
-        background:${bg};border:2px solid white;
-        box-shadow:0 2px 8px rgba(0,0,0,.35);
+        width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;
+        background:${bg};border:${ringWidth}px solid ${ringColor};
+        box-shadow:${shadow};
         transform:rotate(-45deg);
         display:flex;align-items:center;justify-content:center;
+        opacity:${opacity};
+        transition:opacity .2s, width .15s, height .15s;
       ">
-        <span style="transform:rotate(45deg);font-size:14px;line-height:1">${emoji}</span>
+        <span style="transform:rotate(45deg);font-size:${opts.highlighted ? 18 : 14}px;line-height:1">${emoji}</span>
       </div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -40],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size - 4],
   });
 }
 
@@ -92,19 +108,37 @@ function makePoiIcon(category: string) {
 
 // ── Auto-fit bounds when markers change ────────────────────────────────────────
 
-function FitBounds({ positions, center }: { positions: [number, number][]; center: [number, number] }) {
+function FitBounds({
+  positions,
+  center,
+  /** When set, take precedence — fit to this subset only (e.g. a single
+   *  day's items). Lets the parent "focus" the map on day-click without
+   *  re-rendering the marker layer. */
+  focusPositions,
+}: {
+  positions: [number, number][];
+  center: [number, number];
+  focusPositions?: [number, number][];
+}) {
   const map = useMap();
   useEffect(() => {
-    if (positions.length === 0) {
+    const target = focusPositions && focusPositions.length > 0 ? focusPositions : positions;
+    if (target.length === 0) {
       map.setView(center, 13);
-    } else if (positions.length === 1) {
-      map.setView(positions[0], 14);
+    } else if (target.length === 1) {
+      map.setView(target[0], 15);
     } else {
-      map.fitBounds(L.latLngBounds(positions), { padding: [48, 48] });
+      map.fitBounds(L.latLngBounds(target), { padding: [60, 60], maxZoom: 16 });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(positions)]);
+  }, [JSON.stringify(target_or(positions, focusPositions))]);
   return null;
+}
+
+// Tiny helper so FitBounds' dep array can serialise the "effective target"
+// without a useMemo. Keeps re-renders predictable.
+function target_or(positions: [number, number][], focusPositions?: [number, number][]) {
+  return focusPositions && focusPositions.length > 0 ? focusPositions : positions;
 }
 
 // ── Public types ───────────────────────────────────────────────────────────────
@@ -138,14 +172,35 @@ interface Props {
   pois?: PoiItem[];
   center: [number, number];
   onAddPoi?: (poi: PoiItem) => void;
+  /** B3-d: when set, the map fits to only this day's items and dims
+   *  markers from other days so the focused day reads clearly. */
+  focusedDay?: string | null;
+  /** B3-d: a single item id to emphasise — bumped z-index + larger icon. */
+  highlightedItemId?: string | null;
+  /** B3-d: bubble up marker clicks so the parent can scroll the day list
+   *  to the corresponding card. */
+  onItemClick?: (itemId: string) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function MapInner({ items, pois = [], center, onAddPoi }: Props) {
+export function MapInner({
+  items,
+  pois = [],
+  center,
+  onAddPoi,
+  focusedDay = null,
+  highlightedItemId = null,
+  onItemClick,
+}: Props) {
   const itemPositions = items.map((i) => [i.lat, i.lng] as [number, number]);
-  // Fit to itinerary items if any; otherwise just center on destination
   const fitPositions = itemPositions.length > 0 ? itemPositions : [];
+
+  // B3-d: when a day is focused, narrow the fit-bounds target and dim
+  // markers from other days so the focused day reads clearly.
+  const focusedPositions = focusedDay
+    ? items.filter((i) => i.dayDate === focusedDay).map((i) => [i.lat, i.lng] as [number, number])
+    : undefined;
 
   return (
     <MapContainer
@@ -159,15 +214,23 @@ export function MapInner({ items, pois = [], center, onAddPoi }: Props) {
         subdomains="abcd"
         maxZoom={20}
       />
-      <FitBounds positions={fitPositions} center={center} />
+      <FitBounds positions={fitPositions} center={center} focusPositions={focusedPositions} />
 
       {/* Itinerary item markers */}
-      {items.map((item) => (
+      {items.map((item) => {
+        const dimmed = focusedDay !== null && item.dayDate !== focusedDay;
+        const highlighted = highlightedItemId === item.id;
+        return (
         <Marker
           key={item.id}
           position={[item.lat, item.lng]}
-          icon={makeItemIcon(item.status, item.type)}
-          zIndexOffset={100}
+          icon={makeItemIcon(item.status, item.type, { dimmed, highlighted })}
+          zIndexOffset={highlighted ? 1000 : dimmed ? 10 : 100}
+          eventHandlers={
+            onItemClick
+              ? { click: () => onItemClick(item.id) }
+              : undefined
+          }
         >
           <Popup>
             <div className="min-w-[180px] space-y-1 text-sm">
@@ -208,7 +271,8 @@ export function MapInner({ items, pois = [], center, onAddPoi }: Props) {
             </div>
           </Popup>
         </Marker>
-      ))}
+        );
+      })}
 
       {/* POI recommendation markers */}
       {pois.map((poi) => (
