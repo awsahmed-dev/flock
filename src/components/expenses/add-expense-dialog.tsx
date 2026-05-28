@@ -48,6 +48,9 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
   );
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // B2 Budget v2 — Shared splits across the crew; Personal is your own
+  // pocket money (no splits, just counts toward your personal budget).
+  const [scope, setScope] = useState<"shared" | "personal">("shared");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -86,6 +89,40 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="tripId" value={tripId} />
           <input type="hidden" name="splitType" value="equal" />
+          <input type="hidden" name="scope" value={scope} />
+
+          {/* Shared vs Personal scope pill switcher. Drives whether the
+              server creates expense_splits (shared) or just the single
+              expense row (personal). */}
+          <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">
+            <button
+              type="button"
+              onClick={() => setScope("shared")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                scope === "shared"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              👥 Shared
+            </button>
+            <button
+              type="button"
+              onClick={() => setScope("personal")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                scope === "personal"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              👤 Personal
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground -mt-2">
+            {scope === "shared"
+              ? "Splits equally across the crew · counts toward trip budget."
+              : "Only counts toward your personal budget · no splits."}
+          </p>
 
           <div className="space-y-1.5">
             <Label htmlFor="title">Description</Label>
@@ -160,10 +197,17 @@ export function AddExpenseDialog({ tripId, baseCurrency }: Props) {
             />
           </div>
 
-          <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
-            Splits equally among all trip members. You (the payer) are marked as
-            settled.
-          </p>
+          {scope === "shared" ? (
+            <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
+              Splits equally among all trip members. You (the payer) are marked
+              as settled.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
+              Counts only toward your personal budget. The crew won't see this
+              in the shared totals.
+            </p>
+          )}
 
           <div className="flex gap-2 pt-1">
             <Button

@@ -57,6 +57,13 @@ export async function createExpense(formData: FormData) {
   const currencyRaw = (formData.get("currency") as string)?.trim().toUpperCase();
   const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : trip.currency;
 
+  // B2 Budget v2 — Scope. "personal" expenses (a member's own pocket
+  // spend) don't create splits and don't count toward the trip cap; they
+  // only count toward the payer's personal budget.
+  const scopeRaw = (formData.get("scope") as string)?.trim().toLowerCase();
+  const scope: "shared" | "personal" =
+    scopeRaw === "personal" ? "personal" : "shared";
+
   const [expense] = await db
     .insert(expenses)
     .values({
@@ -66,18 +73,19 @@ export async function createExpense(formData: FormData) {
       currency,
       paidBy: user.id,
       category: category as any,
+      scope,
       expenseDate,
       notes,
     })
     .returning();
 
-  // Get all trip members for splitting
+  // Get all trip members for splitting (only relevant for shared expenses)
   const members = await db
     .select()
     .from(tripMembers)
     .where(eq(tripMembers.tripId, tripId));
 
-  if (splitType === "equal" && members.length > 0) {
+  if (scope === "shared" && splitType === "equal" && members.length > 0) {
     const perPerson = amount / members.length;
     await db.insert(expenseSplits).values(
       members.map((m) => ({
@@ -88,7 +96,8 @@ export async function createExpense(formData: FormData) {
       }))
     );
   }
-  // Custom splits are handled separately via updateExpenseSplits
+  // Custom splits are handled separately via updateExpenseSplits.
+  // Personal expenses: no splits, no balance shifts — just the payer.
 
   // Auto-post the expense to chat (mirrors mobile app)
   await db.insert(chatMessages).values({

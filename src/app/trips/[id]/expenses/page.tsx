@@ -34,11 +34,18 @@ export default async function ExpensesPage({ params }: Props) {
     displayName: m.displayName,
   }));
 
+  // B2 Budget v2 — pull current user's personal budget cap to thread into
+  // the budget-health card. NULL when they haven't set one.
+  const myMembership = trip.members.find((m) => m.userId === user.id);
+  const personalBudget = myMembership?.personalBudget ?? null;
+
   return (
     <ExpensesBoard
       tripId={id}
       userId={user.id}
       currency={trip.currency}
+      tripBudget={trip.budgetTotal ?? null}
+      personalBudget={personalBudget}
       expenses={expenseList as any}
       members={members}
     />

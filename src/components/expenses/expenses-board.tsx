@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { AddExpenseDialog } from "./add-expense-dialog";
+import { BudgetHealth } from "./budget-health";
 import { Button } from "@/components/ui/button";
 import { settleSplit, deleteExpense } from "@/lib/actions/expenses";
 import { toast } from "sonner";
@@ -47,6 +48,9 @@ interface Expense {
   currency: string;
   paidBy: string;
   category: string;
+  /** B2 Budget v2 — "shared" (default) or "personal". Personal expenses
+   *  have no splits and only count toward the payer's personal budget. */
+  scope: "shared" | "personal";
   expenseDate: string;
   notes: string | null;
   createdAt: Date;
@@ -66,6 +70,10 @@ interface Props {
   tripId: string;
   userId: string;
   currency: string;
+  /** B2 Budget v2 — trip-shared cap set by the owner. NULL = no cap. */
+  tripBudget: number | null;
+  /** B2 Budget v2 — current user's personal budget for this trip. */
+  personalBudget: number | null;
   expenses: Expense[];
   members: { userId: string; displayName: string }[];
 }
@@ -208,13 +216,27 @@ function ExpenseRow({ expense, userId, isOwner }: { expense: Expense; userId: st
   );
 }
 
-export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList, members }: Props) {
+export function ExpensesBoard({
+  tripId,
+  userId,
+  currency,
+  tripBudget,
+  personalBudget,
+  expenses: expenseList,
+  members,
+}: Props) {
   const isOwner = members.some((m) => m.userId === userId);
+
+  // B2 Budget v2 — split the feed by scope. Shared expenses fuel the trip
+  // budget card + the "You paid / You owe" cards. Personal expenses are
+  // a separate stream that only counts toward the payer's personal cap.
+  const sharedExpenses = expenseList.filter((e) => e.scope !== "personal");
+  const personalExpenses = expenseList.filter((e) => e.scope === "personal");
 
   // Multi-currency totals: group everything by ISO code, render either a
   // single value (when all expenses share a currency) or a stacked list
   // (e.g. "USD 1500 / EUR 240"). Summing across currencies would lie.
-  const totalsByCurrency = expenseList.reduce<Record<string, number>>(
+  const totalsByCurrency = sharedExpenses.reduce<Record<string, number>>(
     (acc, e) => {
       acc[e.currency] = (acc[e.currency] ?? 0) + e.amount;
       return acc;
@@ -224,17 +246,19 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
   const currencyKeys = Object.keys(totalsByCurrency).sort();
   const isMultiCurrency = currencyKeys.length > 1;
 
-  const balances = computeBalances(expenseList, members);
+  // Balances are computed from SHARED expenses only. A personal-scope
+  // expense never shifts who-owes-whom.
+  const balances = computeBalances(sharedExpenses, members);
   const myBalance = balances.find((b) => b.userId === userId);
 
   // Per-person totals grouped by currency for the "You paid / You owe" cards.
-  const myPaidByCurrency = expenseList
+  const myPaidByCurrency = sharedExpenses
     .filter((e) => e.paidBy === userId)
     .reduce<Record<string, number>>((acc, e) => {
       acc[e.currency] = (acc[e.currency] ?? 0) + e.amount;
       return acc;
     }, {});
-  const myOwedByCurrency = expenseList.reduce<Record<string, number>>((acc, e) => {
+  const myOwedByCurrency = sharedExpenses.reduce<Record<string, number>>((acc, e) => {
     for (const s of e.splits) {
       if (s.userId === userId && !s.settled) {
         acc[e.currency] = (acc[e.currency] ?? 0) + s.amountOwed;
@@ -250,6 +274,27 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
         totalsByCurrency[a] >= totalsByCurrency[b] ? a : b,
       )
     : currencyKeys[0] ?? currency;
+
+  // B2 Budget v2 — totals for the budget-health card. All numbers are in
+  // the trip's base currency. Mixed-currency expenses are filtered to the
+  // base; the multi-currency flag on the card warns when this skips data.
+  const sharedSpentBase = sharedExpenses
+    .filter((e) => e.currency === currency)
+    .reduce((s, e) => s + e.amount, 0);
+  const myPersonalBase = personalExpenses
+    .filter((e) => e.paidBy === userId && e.currency === currency)
+    .reduce((s, e) => s + e.amount, 0);
+  const mySharedShareBase = sharedExpenses
+    .filter((e) => e.currency === currency)
+    .reduce((s, e) => {
+      const mySplit = e.splits.find((sp) => sp.userId === userId);
+      return s + (mySplit?.amountOwed ?? 0);
+    }, 0);
+  const personalSpentBase = myPersonalBase + mySharedShareBase;
+  const expenseCurrencies = new Set(expenseList.map((e) => e.currency));
+  const cardMultiCurrency =
+    expenseCurrencies.size > 1 ||
+    (expenseCurrencies.size === 1 && !expenseCurrencies.has(currency));
   const categoryTotals = expenseList
     .filter((e) => e.currency === primary)
     .reduce<Record<string, number>>((acc, e) => {
@@ -271,6 +316,18 @@ export function ExpensesBoard({ tripId, userId, currency, expenses: expenseList,
         </div>
         <AddExpenseDialog tripId={tripId} baseCurrency={currency} />
       </div>
+
+      {/* B2 Budget v2 — health card on top: trip cap vs shared spend +
+          your personal cap vs your spend, with threshold coloring. */}
+      <BudgetHealth
+        tripId={tripId}
+        baseCurrency={currency}
+        tripBudget={tripBudget}
+        sharedSpent={sharedSpentBase}
+        personalBudget={personalBudget}
+        personalSpent={personalSpentBase}
+        multiCurrency={cardMultiCurrency}
+      />
 
       {expenseList.length > 0 && (
         <>

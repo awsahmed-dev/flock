@@ -37,6 +37,10 @@ export const expenseCategoryEnum = pgEnum("expense_category", [
   "shopping",
   "other",
 ]);
+// B2 Budget v2 — "shared" = group expense, gets splits, counts toward
+// trip cap. "personal" = pocket spend by one member, no splits, counts
+// only toward that member's personal_budget.
+export const expenseScopeEnum = pgEnum("expense_scope", ["shared", "personal"]);
 export const documentTypeEnum = pgEnum("document_type", ["pdf", "link", "image"]);
 export const notificationTypeEnum = pgEnum("notification_type", [
   "vote_opened",
@@ -97,6 +101,10 @@ export const tripMembers = pgTable("trip_members", {
   displayName: text("display_name").notNull(), // cached for guests
   role: tripMemberRoleEnum("role").default("member").notNull(),
   balanceNet: real("balance_net").default(0).notNull(), // positive = owed money, negative = owes money
+  // Each member's personal pocket-money cap for this trip (B2 Budget v2).
+  // NULL = they haven't set one; we still track spend but skip the
+  // "over budget" coloring on the budget-health card.
+  personalBudget: real("personal_budget"),
   // Bumped each time the user views the chat at the bottom — drives the
   // ✓✓ read-receipt indicator on outgoing messages and unread badges.
   lastReadChatAt: timestamp("last_read_chat_at", { withTimezone: true }),
@@ -201,6 +209,10 @@ export const expenses = pgTable("expenses", {
     .notNull()
     .references(() => profiles.id),
   category: expenseCategoryEnum("category").default("other").notNull(),
+  // B2 Budget v2: shared expenses get split across members and count
+  // toward trip cap; personal expenses are pocket-money — no splits,
+  // counts only toward the payer's personal budget.
+  scope: expenseScopeEnum("scope").default("shared").notNull(),
   expenseDate: date("expense_date").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
