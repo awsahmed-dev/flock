@@ -112,69 +112,72 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* ── Hero card ──────────────────────────────────────────────────────── */}
+      {/* ── Hero card ──────────────────────────────────────────────────
+          B4: trimmed ~30% in height. Padding tightened, status pip lives
+          inline with destination, meta row collapses to 2 lines on
+          narrow screens with smaller text. The orbs are smaller and
+          fewer so the card reads as a header strip rather than a poster. */}
       <div className={`relative rounded-2xl bg-gradient-to-br ${gradient} overflow-hidden`}>
         {/* Decorative orbs */}
-        <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/10 pointer-events-none" />
-        <div className="absolute right-20 -bottom-8 w-32 h-32 rounded-full bg-white/8 pointer-events-none" />
-        <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-black/8 pointer-events-none" />
+        <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
+        <div className="absolute -left-4 bottom-0 w-20 h-20 rounded-full bg-black/8 pointer-events-none" />
 
-        <div className="relative z-10 p-6 sm:p-8">
-          {/* Status badge */}
-          <div className="mb-4">
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${tripStatus.color}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {tripStatus.label}
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 min-w-0">
+        <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-start justify-between gap-3 min-w-0">
             <div className="min-w-0 flex-1">
-              <p className="text-white/60 text-xs font-medium uppercase tracking-widest mb-1 break-words">
-                {trip.destination}
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight break-words">
+              {/* Destination + status on one line */}
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <p className="text-white/60 text-[10px] font-bold tracking-widest uppercase">
+                  {trip.destination}
+                </p>
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${tripStatus.color}`}>
+                  <span className="w-1 h-1 rounded-full bg-current" />
+                  {tripStatus.label}
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight break-words">
                 {trip.name}
               </h1>
-              <div className="flex flex-wrap items-center gap-4 mt-3">
-                <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d, yyyy")}
+              {/* Meta row — single horizontal-scroll line on mobile */}
+              <div className="flex items-center gap-3 mt-2 text-[11px] text-white/80 flex-wrap">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d")}
                 </span>
-                <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                  <Clock className="w-3.5 h-3.5" />
-                  {nights} night{nights !== 1 ? "s" : ""}
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {nights}n
                 </span>
-                <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                  <Users className="w-3.5 h-3.5" />
-                  {trip.members.length} traveler{trip.members.length !== 1 ? "s" : ""}
+                <span className="inline-flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {trip.members.length}
                 </span>
                 {trip.budgetTotal && (
-                  <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                    <Wallet className="w-3.5 h-3.5" />
-                    {trip.currency} {trip.budgetTotal.toLocaleString()} budget
+                  <span className="inline-flex items-center gap-1">
+                    <Wallet className="w-3 h-3" />
+                    {trip.currency} {trip.budgetTotal.toLocaleString()}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Member stack */}
-            <div className="flex items-center -space-x-2 shrink-0">
-              {trip.members.slice(0, 5).map((m) => {
+            {/* Member stack — smaller avatars to match the shorter hero */}
+            <div className="flex items-center -space-x-1.5 shrink-0">
+              {trip.members.slice(0, 4).map((m) => {
                 const c = getMemberColor(m.id);
                 return (
                   <div
                     key={m.id}
                     title={m.displayName}
-                    className={`w-8 h-8 rounded-full ${c.bg} ${c.text} border-2 border-white/30 flex items-center justify-center text-xs font-bold shrink-0`}
+                    className={`w-7 h-7 rounded-full ${c.bg} ${c.text} border-2 border-white/30 flex items-center justify-center text-[10px] font-bold shrink-0`}
                   >
                     {m.displayName.slice(0, 2).toUpperCase()}
                   </div>
                 );
               })}
-              {trip.members.length > 5 && (
-                <div className="w-8 h-8 rounded-full bg-black/25 text-white border-2 border-white/30 flex items-center justify-center text-xs font-bold shrink-0">
-                  +{trip.members.length - 5}
+              {trip.members.length > 4 && (
+                <div className="w-7 h-7 rounded-full bg-black/25 text-white border-2 border-white/30 flex items-center justify-center text-[10px] font-bold shrink-0">
+                  +{trip.members.length - 4}
                 </div>
               )}
             </div>
@@ -190,107 +193,118 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
           action right now. */}
       <TripActionHub tripId={trip.id} stats={stats} />
 
-      {/* ── Smart tools ────────────────────────────────────────────────────── */}
-      <div className="grid sm:grid-cols-2 gap-3">
+      {/* ── Smart tools ─────────────────────────────────────────────
+          B4: tightened tiles. The dramatic gradient/icon scale that
+          made these tower over the Action Hub is dialed back so they
+          read as a continuation of the dashboard, not a competing
+          surface. */}
+      <div className="grid sm:grid-cols-2 gap-2.5">
         <button
           type="button"
           onClick={() => setAiOpen(true)}
-          className="group text-left rounded-2xl border border-border/60 hover:border-primary/40 bg-gradient-to-br from-primary/5 via-violet-500/5 to-background hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 p-5 flex items-center gap-4"
+          className="group text-left rounded-2xl border border-primary/20 hover:border-primary/40 bg-gradient-to-br from-primary/5 to-violet-500/5 hover:shadow-md hover:shadow-primary/10 transition-all p-3 flex items-center gap-3"
         >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0 shadow-md shadow-primary/30 group-hover:scale-110 transition-transform duration-200">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold">AI Trip Planner</p>
-            <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
-              Generate a smart itinerary for {trip.destination}
+            <p className="font-bold text-sm">AI Trip Planner</p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              Smart itinerary for {trip.destination}
             </p>
           </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
         </button>
 
         <button
           type="button"
           onClick={() => setHotelOpen(true)}
-          className="group text-left rounded-2xl border border-border/60 hover:border-blue-400/40 bg-gradient-to-br from-blue-500/5 via-cyan-500/5 to-background hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 p-5 flex items-center gap-4"
+          className="group text-left rounded-2xl border border-blue-500/20 hover:border-blue-500/40 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 hover:shadow-md hover:shadow-blue-500/10 transition-all p-3 flex items-center gap-3"
         >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/30 group-hover:scale-110 transition-transform duration-200">
-            <Hotel className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
+            <Hotel className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold">Find a Stay</p>
-            <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
-              Search hotels, hostels, apartments — filter by budget
+            <p className="font-bold text-sm">Find a Stay</p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              Hotels, hostels, apartments
             </p>
           </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
         </button>
       </div>
 
-      {/* ── Members + Invite ───────────────────────────────────────────────── */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* Members */}
-        <div className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm">Crew ({trip.members.length})</h3>
-            <Link href={`/trips/${trip.id}/members`}>
-              <button className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
-                Manage →
-              </button>
-            </Link>
+      {/* ── Crew + invite ───────────────────────────────────────────
+          B4: merged into one card. Two side-by-side cards (one for
+          listing, one for inviting) was the redundancy testers
+          flagged. Now: roster on top, invite link as a compact action
+          row below — one card, one mental model. */}
+      <div className="rounded-2xl border border-border/60 bg-card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
+              <Users className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <h3 className="font-bold text-sm">Crew · {trip.members.length}</h3>
           </div>
-          <div className="space-y-3">
-            {trip.members.map((member) => {
-              const c = getMemberColor(member.id);
-              return (
-                <div key={member.id} className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full ${c.bg} ${c.text} flex items-center justify-center text-xs font-bold shrink-0`}>
-                    {member.displayName.slice(0, 2).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium flex-1 truncate">{member.displayName}</span>
-                  {member.role === "owner" && (
-                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                      Owner
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <Link
+            href={`/trips/${trip.id}/members`}
+            className="text-[11px] font-bold tracking-wider uppercase text-primary hover:text-primary/80"
+          >
+            Manage
+          </Link>
         </div>
 
-        {/* Invite */}
-        <div className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Link2 className="w-4 h-4 text-primary" />
-            </div>
-            <h3 className="font-semibold text-sm">Invite your crew</h3>
-          </div>
-          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            Share this link to invite friends. They can join with just their name — no account needed.
-          </p>
-          {inviteUrl ? (
-            <div className="space-y-2">
-              <div className="text-xs bg-muted/60 rounded-lg px-3 py-2.5 truncate border border-border/50 font-mono text-muted-foreground">
-                {inviteUrl}
-              </div>
-              <button
-                onClick={copyInviteLink}
-                className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                  copied
-                    ? "bg-emerald-600 text-white"
-                    : "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90 shadow-md shadow-primary/20"
-                }`}
+        {/* Roster — horizontal-scroll chips so the card doesn't grow
+            unbounded with big groups. */}
+        <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none mb-3">
+          {trip.members.map((member) => {
+            const c = getMemberColor(member.id);
+            return (
+              <div
+                key={member.id}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background pl-1 pr-2.5 py-1"
+                title={member.displayName}
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copied!" : "Copy invite link"}
-              </button>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">No invite token set.</p>
-          )}
+                <div className={`w-5 h-5 rounded-full ${c.bg} ${c.text} flex items-center justify-center text-[9px] font-bold shrink-0`}>
+                  {member.displayName.slice(0, 2).toUpperCase()}
+                </div>
+                <span className="text-[11px] font-medium truncate max-w-[110px]">
+                  {member.displayName}
+                </span>
+                {member.role === "owner" && (
+                  <span className="text-[9px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400">
+                    OWNER
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        {/* Invite row */}
+        {inviteUrl ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 pl-3 pr-1 py-1">
+            <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-[11px] text-muted-foreground truncate font-mono flex-1">
+              {inviteUrl.replace(/^https?:\/\//, "")}
+            </span>
+            <button
+              type="button"
+              onClick={copyInviteLink}
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                copied
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90"
+              }`}
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied ? "Copied" : "Copy invite"}
+            </button>
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground italic">No invite token set.</p>
+        )}
       </div>
 
       {/* Panels */}

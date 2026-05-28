@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { MapPin, Calendar, Plus, ArrowRight, Clock } from "lucide-react";
-import { format, parseISO, isPast, isFuture, differenceInDays } from "date-fns";
+import { Plus, ArrowRight, Calendar, Clock, Users } from "lucide-react";
+import { format, parseISO, isPast, differenceInDays } from "date-fns";
 import type { trips } from "@/lib/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { OnboardingCard } from "@/components/dashboard/onboarding-card";
@@ -13,6 +12,17 @@ type Trip = InferSelectModel<typeof trips>;
 interface Props {
   trips: Trip[];
 }
+
+/**
+ * B4: dashboard trip list redesigned from a 3-col card grid to a tight
+ * vertical row list. The old 176px gradient-hero cards meant a user
+ * with 6+ trips had to scroll a screen-and-a-half just to find a name;
+ * each new row is ~64px now, so 10 trips fit in one viewport.
+ *
+ * We trade the painterly destination art for a small gradient color
+ * stripe on the left (gives each trip a colour identity without taking
+ * vertical space). Hovering reveals a trailing arrow.
+ */
 
 const CARD_GRADIENTS = [
   "from-blue-500 to-indigo-600",
@@ -54,27 +64,23 @@ function getTripStatus(trip: Trip) {
   const start = parseISO(trip.startDate);
   const end = parseISO(trip.endDate);
   if (now >= start && now <= end)
-    return { label: "Ongoing", dot: "bg-emerald-400", text: "text-emerald-600 dark:text-emerald-400" };
+    return { label: "Ongoing", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
   if (isPast(end))
-    return { label: "Past", dot: "bg-slate-400", text: "text-muted-foreground" };
+    return { label: "Past", color: "bg-muted text-muted-foreground border-border" };
   const daysAway = differenceInDays(start, now);
   return {
-    label: daysAway <= 7 ? `In ${daysAway}d` : daysAway <= 30 ? `${daysAway} days` : "Upcoming",
-    dot: "bg-blue-400",
-    text: "text-blue-600 dark:text-blue-400",
+    label: daysAway <= 0 ? "Today" : daysAway <= 7 ? `In ${daysAway}d` : daysAway <= 30 ? `${daysAway} days` : "Upcoming",
+    color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30",
   };
 }
 
 export function TripGrid({ trips }: Props) {
   if (trips.length === 0) {
-    // First-run dashboard — illustrated onboarding card. The bare "No trips
-    // yet" empty state was a known conversion killer; this sets expectations
-    // and drives the first action.
     return <OnboardingCard />;
   }
 
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60">
       {trips.map((trip) => {
         const status = getTripStatus(trip);
         const gradient = getGradient(trip.id);
@@ -82,68 +88,103 @@ export function TripGrid({ trips }: Props) {
         const nights = differenceInDays(parseISO(trip.endDate), parseISO(trip.startDate));
 
         return (
-          <Link key={trip.id} href={`/trips/${trip.id}`}>
-            <div className="group rounded-2xl border border-border/50 bg-card overflow-hidden hover:shadow-lg hover:shadow-black/8 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
-              {/* Gradient hero */}
-              <div className={`relative h-32 bg-gradient-to-br ${gradient} p-5 flex flex-col justify-between overflow-hidden`}>
-                <div className="absolute -right-5 -top-5 w-28 h-28 rounded-full bg-white/10" />
-                <div className="absolute right-8 bottom-0 w-16 h-16 rounded-full bg-black/8" />
-
-                <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                    <span className="text-[11px] font-semibold text-white/90 uppercase tracking-wide">
-                      {status.label}
-                    </span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </div>
-
-                <div className="relative z-10">
-                  <div className="flex items-end gap-2">
-                    <span className="text-3xl leading-none">{emoji}</span>
-                    <div>
-                      <h3 className="font-bold text-white text-sm leading-tight line-clamp-1">
-                        {trip.name}
-                      </h3>
-                      <p className="text-white/75 text-xs mt-0.5 truncate">{trip.destination}</p>
-                    </div>
-                  </div>
+          <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
+            <div className="group flex items-center gap-3 pl-0 pr-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
+              {/* Color stripe + emoji tile — replaces the old gradient hero */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div className={`w-1 self-stretch rounded-full bg-gradient-to-b ${gradient}`} />
+                <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center text-lg shrink-0">
+                  {emoji}
                 </div>
               </div>
 
-              {/* Card body */}
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Calendar className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d")}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-bold text-sm truncate">{trip.name}</p>
+                  <span className={`text-[10px] font-bold tracking-widest uppercase border rounded-full px-2 py-0.5 ${status.color}`}>
+                    {status.label}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="w-3 h-3" />
-                  <span>{nights}n</span>
-                </div>
+                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="w-2.5 h-2.5" />
+                    {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d, yyyy")}
+                  </span>
+                  <span className="mx-1.5">·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" />
+                    {nights}n
+                  </span>
+                  <span className="mx-1.5">·</span>
+                  <span className="truncate">{trip.destination}</span>
+                </p>
               </div>
+
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
             </div>
           </Link>
         );
       })}
 
-      {/* New trip card */}
-      <Link href="/trips/new">
-        <div className="group rounded-2xl border-2 border-dashed border-border hover:border-primary/50 bg-transparent hover:bg-primary/3 transition-all duration-200 cursor-pointer min-h-[176px] flex flex-col items-center justify-center gap-3 p-6">
-          <div className="w-11 h-11 rounded-xl bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-            <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+      {/* New trip row — same height as a trip row, dashed accent */}
+      <Link href="/trips/new" prefetch>
+        <div className="group flex items-center gap-3 pl-3 pr-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
+          <div className="w-9 h-9 rounded-xl border-2 border-dashed border-border group-hover:border-primary/40 flex items-center justify-center shrink-0 transition-colors">
+            <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+          <div className="flex-1">
+            <p className="font-bold text-sm text-muted-foreground group-hover:text-foreground transition-colors">
               New trip
             </p>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">Invite your crew</p>
+            <p className="text-[11px] text-muted-foreground/70">Invite your crew, start planning</p>
           </div>
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
         </div>
       </Link>
+    </div>
+  );
+}
+
+/**
+ * B4: placeholder for the "suggested trips" horizontal carousel. Renders
+ * an inert teaser strip until we wire the Paxawa-curated plans backend.
+ * Lives in this file so dashboard/page.tsx can render <SuggestedTrips />
+ * without touching new imports.
+ */
+export function SuggestedTrips() {
+  const samples = [
+    { title: "Weekend in Lisbon", subtitle: "2 nights · Foodie + Cultural", emoji: "🇵🇹", gradient: "from-amber-500 to-orange-500" },
+    { title: "Kyoto in autumn", subtitle: "5 nights · Cultural + Chill", emoji: "🍁", gradient: "from-rose-500 to-pink-600" },
+    { title: "Iceland road loop", subtitle: "7 nights · Adventure", emoji: "🏔️", gradient: "from-cyan-500 to-blue-500" },
+    { title: "Bali surf + chill", subtitle: "10 nights · Relaxed", emoji: "🌴", gradient: "from-emerald-500 to-teal-600" },
+  ];
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+          Inspiration from Paxawa
+        </h2>
+        <span className="text-[10px] font-medium text-muted-foreground/70">Coming soon</span>
+      </div>
+      <div className="flex items-stretch gap-3 overflow-x-auto -mx-1 px-1 pb-2 scrollbar-none">
+        {samples.map((s) => (
+          <div
+            key={s.title}
+            className={`shrink-0 w-56 rounded-2xl bg-gradient-to-br ${s.gradient} p-3 text-white relative overflow-hidden cursor-not-allowed opacity-80`}
+            title="Coming soon"
+          >
+            <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/15" />
+            <div className="relative z-10 flex flex-col h-full justify-between min-h-[88px]">
+              <span className="text-2xl">{s.emoji}</span>
+              <div>
+                <p className="font-bold text-sm leading-tight">{s.title}</p>
+                <p className="text-[11px] opacity-80 mt-0.5">{s.subtitle}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

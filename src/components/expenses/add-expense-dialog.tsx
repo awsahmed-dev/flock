@@ -15,16 +15,21 @@ import { createExpense } from "@/lib/actions/expenses";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics/events";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";
-import { Plus } from "lucide-react";
+import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
+import { Plus, Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal, Users, User } from "lucide-react";
 
-const CATEGORIES = [
-  { value: "accommodation", label: "Accommodation" },
-  { value: "transport", label: "Transport" },
-  { value: "food", label: "Food & drinks" },
-  { value: "activity", label: "Activity" },
-  { value: "shopping", label: "Shopping" },
-  { value: "other", label: "Other" },
+const CATEGORIES: { value: ExpenseCategory; label: string; icon: React.ElementType; color: string }[] = [
+  { value: "accommodation", label: "Stay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
+  { value: "transport", label: "Transport", icon: Plane, color: "text-orange-600 dark:text-orange-400" },
+  { value: "food", label: "Food", icon: Utensils, color: "text-green-600 dark:text-green-400" },
+  { value: "activity", label: "Activity", icon: Ticket, color: "text-purple-600 dark:text-purple-400" },
+  { value: "shopping", label: "Shopping", icon: ShoppingBag, color: "text-pink-600 dark:text-pink-400" },
+  { value: "other", label: "Other", icon: MoreHorizontal, color: "text-muted-foreground" },
 ];
+
+function categoryMeta(value: ExpenseCategory) {
+  return CATEGORIES.find((c) => c.value === value) ?? CATEGORIES[CATEGORIES.length - 1];
+}
 
 // Shown in the currency dropdown — popular travel-relevant currencies
 // first, the rest of the world's majors after. Users can also type a
@@ -76,6 +81,15 @@ export function AddExpenseDialog({
   // recompute on every keystroke without dragging in a controlled form.
   const [amountInput, setAmountInput] = useState("");
   const [currencyInput, setCurrencyInput] = useState(baseCurrency);
+  // B4: smart-category auto-detect. Description text → category via the
+  // keyword dictionary. User can override via the dropdown; we keep the
+  // override in state so manual choices stick.
+  const [description, setDescription] = useState("");
+  const [categoryOverride, setCategoryOverride] = useState<ExpenseCategory | null>(null);
+  const inferred = inferCategory(description);
+  const category: ExpenseCategory = categoryOverride ?? inferred;
+  const catMeta = categoryMeta(category);
+  const CatIcon = catMeta.icon;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -111,94 +125,68 @@ export function AddExpenseDialog({
         <DialogHeader>
           <DialogTitle>Log an expense</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <input type="hidden" name="tripId" value={tripId} />
           <input type="hidden" name="splitType" value="equal" />
           <input type="hidden" name="scope" value={scope} />
+          {/* Smart-category submission — the dropdown can override, otherwise
+              this carries the inferred value. */}
+          <input type="hidden" name="category" value={category} />
 
-          {/* Shared vs Personal scope pill switcher. Drives whether the
-              server creates expense_splits (shared) or just the single
-              expense row (personal). */}
-          <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">
-            <button
-              type="button"
-              onClick={() => setScope("shared")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                scope === "shared"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              👥 Shared
-            </button>
-            <button
-              type="button"
-              onClick={() => setScope("personal")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                scope === "personal"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              👤 Personal
-            </button>
-          </div>
-          <p className="text-[11px] text-muted-foreground -mt-2">
-            {scope === "shared"
-              ? "Splits equally across the crew · counts toward trip budget."
-              : "Only counts toward your personal budget · no splits."}
-          </p>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Description</Label>
-            <Input
-              id="title"
-              name="title"
-              placeholder="Hotel checkout"
-              required
-            />
+          {/* B4: description first, with a live category icon next to it.
+              The icon flips as the user types (burger → Food, uber →
+              Transport). Tap the icon to open the override menu. */}
+          <div className="rounded-2xl border border-border bg-background px-3 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <CategoryPicker
+                value={category}
+                inferred={inferred}
+                onChange={(v) => setCategoryOverride(v)}
+              />
+              <input
+                id="title"
+                name="title"
+                placeholder="What was this?"
+                required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="flex-1 bg-transparent text-sm font-medium placeholder:text-muted-foreground focus:outline-none"
+              />
+            </div>
           </div>
 
-          <div className="flex gap-3">
-            <div className="space-y-1.5 flex-1">
-              <Label htmlFor="amount">Amount</Label>
-              <Input
+          {/* B4: amount as the centerpiece. Big borderless field on a
+              soft card — feels like a fresh receipt. Currency picker is a
+              compact suffix so the eye reads "120 USD" naturally. */}
+          <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-baseline gap-2">
+              <input
                 id="amount"
                 name="amount"
-                /* type=text + inputmode=decimal so the input accepts
-                   Eastern Arabic ٠١٢٣ and Persian ۰۱۲۳ digits without
-                   the browser silently dropping them. We normalize to
-                   ASCII in handleSubmit before the server sees them. */
                 type="text"
                 inputMode="decimal"
                 pattern="[0-9٠-٩۰-۹.,]*"
-                placeholder="0.00"
+                placeholder="0"
                 required
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
+                className="flex-1 min-w-0 bg-transparent text-3xl font-bold tabular-nums tracking-tight placeholder:text-muted-foreground/40 focus:outline-none"
               />
-            </div>
-            <div className="space-y-1.5 w-24">
-              <Label htmlFor="currency">Currency</Label>
               <select
                 id="currency"
                 name="currency"
                 value={currencyInput}
                 onChange={(e) => setCurrencyInput(e.target.value)}
-                className="w-full rounded-md border bg-background px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="shrink-0 rounded-lg bg-background border border-border px-2 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {currencyOptions.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* B2 Budget v2 — live projection. Only renders when the user
-              types a numeric amount in the trip's base currency AND there's
-              at least one cap to project against. */}
+          {/* B2 Budget v2 — live projection. */}
           <BudgetProjection
             amountInput={amountInput}
             currencyInput={currencyInput}
@@ -211,46 +199,43 @@ export function AddExpenseDialog({
             personalSpent={personalSpent}
           />
 
-          <div className="space-y-1.5">
-            <Label htmlFor="expenseDate">Date</Label>
-            <Input id="expenseDate" name="expenseDate" type="date" required />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="category">Category</Label>
-            <select
-              id="category"
-              name="category"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+          {/* B4: scope as a two-button row, full width — easier to thumb
+              on mobile than the floating pill. Caption sits below. */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => setScope("shared")}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                scope === "shared"
+                  ? "bg-primary/10 border border-primary/30 text-primary"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
             >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+              <Users className="w-3.5 h-3.5" /> Shared · split equally
+            </button>
+            <button
+              type="button"
+              onClick={() => setScope("personal")}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                scope === "personal"
+                  ? "bg-primary/10 border border-primary/30 text-primary"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <User className="w-3.5 h-3.5" /> Personal · just you
+            </button>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="notes">Notes (optional)</Label>
-            <Input
-              id="notes"
-              name="notes"
-              placeholder="Any extra details"
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Date</Label>
+              <Input id="expenseDate" name="expenseDate" type="date" required className="h-9" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="notes" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</Label>
+              <Input id="notes" name="notes" placeholder="optional" className="h-9" />
+            </div>
           </div>
-
-          {scope === "shared" ? (
-            <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
-              Splits equally among all trip members. You (the payer) are marked
-              as settled.
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
-              Counts only toward your personal budget. The crew won't see this
-              in the shared totals.
-            </p>
-          )}
 
           <div className="flex gap-2 pt-1">
             <Button
@@ -437,4 +422,70 @@ function projectionColors(pct: number): {
     text: "text-emerald-600 dark:text-emerald-400",
     dot: "bg-emerald-500",
   };
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * B4: leading category icon button on the description input. Auto-set
+ * from the keyword dictionary while the user types; tap it to open a
+ * small chooser that overrides. Shows a tiny "auto" dot when the
+ * displayed icon comes from inference (not a manual choice) so the
+ * user sees the smart pick at work.
+ */
+function CategoryPicker({
+  value,
+  inferred,
+  onChange,
+}: {
+  value: ExpenseCategory;
+  inferred: ExpenseCategory;
+  onChange: (v: ExpenseCategory) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const meta = categoryMeta(value);
+  const Icon = meta.icon;
+  const isInferred = value === inferred;
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title={isInferred ? `Auto: ${meta.label}` : meta.label}
+        className="relative w-9 h-9 rounded-xl bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
+      >
+        <Icon className={`w-4 h-4 ${meta.color}`} />
+        {isInferred && (
+          <span
+            className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-background"
+            title="Auto-detected"
+          />
+        )}
+      </button>
+      {open && (
+        <div
+          className="absolute z-50 top-full mt-1 left-0 rounded-xl border border-border bg-popover shadow-lg p-1 w-44"
+          onMouseLeave={() => setOpen(false)}
+        >
+          {CATEGORIES.map((c) => {
+            const CIcon = c.icon;
+            return (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => { onChange(c.value); setOpen(false); }}
+                className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors text-left ${
+                  c.value === value ? "bg-accent" : "hover:bg-accent/50"
+                }`}
+              >
+                <CIcon className={`w-3.5 h-3.5 ${c.color}`} />
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }

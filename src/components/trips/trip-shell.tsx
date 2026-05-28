@@ -273,23 +273,8 @@ export function TripShell({ trip, isOwner, children }: Props) {
               </Link>
             )}
 
-            <button
-              onClick={() => setChatOpen((o) => !o)}
-              className={cn(
-                "p-2 rounded-lg transition-colors relative",
-                chatOpen
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
-              )}
-              title={chatOpen ? "Close chat" : "Open chat"}
-            >
-              <MessageSquare className="w-4 h-4" />
-              {badges.chat > 0 && !chatOpen && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[9px] font-black flex items-center justify-center leading-none border-[1.5px] border-background">
-                  {badges.chat > 99 ? "99+" : badges.chat}
-                </span>
-              )}
-            </button>
+            {/* B4: chat icon removed from header. Desktop chat opens via the
+                right-edge handle below; mobile uses the bottom nav. */}
 
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -446,6 +431,27 @@ export function TripShell({ trip, isOwner, children }: Props) {
             {children}
           </div>
         </main>
+
+        {/* B4: right-edge chat handle (desktop). Replaces the header icon
+            so the toolbar stays clean. Tap-target sits 1/3 down the
+            viewport — easy to find with the right hand. Hidden while
+            chat is open. */}
+        {!chatOpen && (
+          <button
+            type="button"
+            onClick={() => setChatOpen(true)}
+            className="hidden sm:flex fixed right-0 top-1/3 z-30 items-center gap-1.5 rounded-l-full bg-primary text-primary-foreground pl-3 pr-2 py-2 shadow-lg shadow-primary/30 hover:pr-3 hover:translate-x-0 transition-all"
+            title="Open chat"
+            aria-label="Open chat"
+          >
+            <MessageSquare className="w-4 h-4" />
+            {badges.chat > 0 && (
+              <span className="min-w-[18px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-black flex items-center justify-center leading-none">
+                {badges.chat > 99 ? "99+" : badges.chat}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* Chat panel — pushes content on desktop, overlay on mobile.
             Lazy-rendered: we don't mount ChatSidebar (and pay its JS

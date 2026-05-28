@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { trips, tripMembers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { TripGrid } from "@/components/trips/trip-grid";
+import { TripGrid, SuggestedTrips } from "@/components/trips/trip-grid";
 import { parseISO, differenceInDays, isPast, isFuture, format } from "date-fns";
 import Link from "next/link";
 import { Calendar, MapPin, Clock, ArrowRight, Plus, Globe2 } from "lucide-react";
@@ -195,6 +195,11 @@ export default async function DashboardPage() {
         )}
         <TripGrid trips={allTrips} />
       </div>
+
+      {/* B4: Paxawa-curated inspiration — horizontal scroll teaser. Placeholder
+          until the suggestions backend lands. Hidden when the user has zero
+          trips so the empty state stays focused on creating one. */}
+      {allTrips.length > 0 && <SuggestedTrips />}
     </DashboardShell>
   );
 }

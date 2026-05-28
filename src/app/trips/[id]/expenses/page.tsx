@@ -55,6 +55,8 @@ export default async function ExpensesPage({ params }: Props) {
       expenses={expenseList as any}
       members={members}
       fxRates={fxRates}
+      startDate={trip.startDate}
+      endDate={trip.endDate}
     />
   );
 }
