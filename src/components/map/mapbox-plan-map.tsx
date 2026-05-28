@@ -96,6 +96,13 @@ export function MapboxPlanMap({
   const markersRef = useRef<MapboxMarker[]>([]);
   const popupRef = useRef<MapboxPopup | null>(null);
   const [ready, setReady] = useState(false);
+  // B7c: Mapbox Directions route cache. Key = "{day}|{lng,lat;lng,lat;…}"
+  // so a re-render with the same items doesn't refetch. Value = the
+  // route's GeoJSON LineString coordinates following actual roads.
+  const routeCacheRef = useRef<Map<string, [number, number][]>>(new Map());
+  // Bumped whenever a new route lands, to force the marker-and-line sync
+  // effect to redraw with the road geometry.
+  const [routeVersion, setRouteVersion] = useState(0);
 
   // Build day → index lookup (stable per day order so day 1 is always blue).
   const dayIndex = new Map<string, number>();
@@ -170,6 +177,57 @@ export function MapboxPlanMap({
     mapRef.current.flyTo({ center: destinationCenter, zoom: 12, duration: 800 });
   }, [destinationCenter, items.length]);
 
+  // ── Fetch Mapbox Directions for a day's route (cached) ────────────
+  // Async + best-effort. Falls back to straight lines if the API trips.
+  // Up to 25 coords per request; we trim if a day somehow exceeds that.
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    if (!token) return;
+
+    const byDay = new Map<string, PlanMapItem[]>();
+    for (const it of items) {
+      if (!Number.isFinite(it.lat) || !Number.isFinite(it.lng)) continue;
+      const arr = byDay.get(it.dayDate) ?? [];
+      arr.push(it);
+      byDay.set(it.dayDate, arr);
+    }
+
+    let cancelled = false;
+    (async () => {
+      for (const [day, dayItems] of byDay) {
+        if (dayItems.length < 2) continue;
+        const key = routeKey(day, dayItems);
+        if (routeCacheRef.current.has(key)) continue;
+
+        const coords = dayItems
+          .slice(0, 25)
+          .map((i) => `${i.lng},${i.lat}`)
+          .join(";");
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&access_token=${token}`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = (await res.json()) as {
+            routes?: Array<{ geometry?: { coordinates?: [number, number][] } }>;
+          };
+          const geom = data.routes?.[0]?.geometry?.coordinates;
+          if (geom && geom.length > 1) {
+            routeCacheRef.current.set(key, geom);
+          }
+        } catch {
+          // Network / quota error — leave un-cached so next render retries.
+        }
+      }
+      if (!cancelled && routeCacheRef.current.size > 0) {
+        setRouteVersion((v) => v + 1);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
+
   // ── Sync markers + lines whenever items / focus changes ───────────
   useEffect(() => {
     const map = mapRef.current;
@@ -179,28 +237,33 @@ export function MapboxPlanMap({
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
+    // B7c: when a day is focused, only render THAT day's stuff.
+    const visibleItems = focusedDay
+      ? items.filter((it) => it.dayDate === focusedDay)
+      : items;
+
     // Group items by day, preserving sort order (already incoming sorted by sortOrder).
     const byDay = new Map<string, PlanMapItem[]>();
-    for (const it of items) {
+    for (const it of visibleItems) {
       if (!Number.isFinite(it.lat) || !Number.isFinite(it.lng)) continue;
       const arr = byDay.get(it.dayDate) ?? [];
       arr.push(it);
       byDay.set(it.dayDate, arr);
     }
 
-    // ── Polylines: one feature per day connecting that day's items ─
-    const features = [...byDay.entries()].map(([day, dayItems]) => ({
-      type: "Feature" as const,
-      properties: {
-        day,
-        dimmed: focusedDay !== null && focusedDay !== day,
-        color: colorForDay(day, dayIndex),
-      },
-      geometry: {
-        type: "LineString" as const,
-        coordinates: dayItems.map((i) => [i.lng, i.lat]),
-      },
-    }));
+    // ── Polylines: one feature per day, using road-following route
+    //    from Directions when available, else straight line as fallback.
+    const features = [...byDay.entries()]
+      .filter(([, dayItems]) => dayItems.length >= 2)
+      .map(([day, dayItems]) => {
+        const cached = routeCacheRef.current.get(routeKey(day, dayItems));
+        const coordinates = cached ?? dayItems.map((i) => [i.lng, i.lat] as [number, number]);
+        return {
+          type: "Feature" as const,
+          properties: { day, color: colorForDay(day, dayIndex) },
+          geometry: { type: "LineString" as const, coordinates },
+        };
+      });
 
     const collection = { type: "FeatureCollection" as const, features };
 
@@ -217,18 +280,13 @@ export function MapboxPlanMap({
       paint: {
         "line-color": ["get", "color"],
         "line-width": 4,
-        "line-opacity": [
-          "case",
-          ["get", "dimmed"], 0.25,
-          0.9,
-        ],
+        "line-opacity": 0.9,
       },
     });
 
     // ── Markers ───────────────────────────────────────────────────
     for (const [day, dayItems] of byDay) {
       const color = colorForDay(day, dayIndex);
-      const dimmed = focusedDay !== null && focusedDay !== day;
       dayItems.forEach((item, idx) => {
         const el = document.createElement("button");
         el.type = "button";
@@ -249,7 +307,7 @@ export function MapboxPlanMap({
         el.style.justifyContent = "center";
         el.style.cursor = "pointer";
         el.style.transition = "all .15s";
-        el.style.opacity = dimmed ? "0.4" : "1";
+        el.style.opacity = "1";
         el.style.padding = "0";
         el.textContent = String(idx + 1);
 
@@ -298,7 +356,7 @@ export function MapboxPlanMap({
       for (const c of fitTargets) bounds.extend(c);
       map.fitBounds(bounds, { padding: { top: 80, right: 60, bottom: 240, left: 60 }, maxZoom: 16, duration: 700 });
     }
-  }, [items, focusedDay, highlightedItemId, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [items, focusedDay, highlightedItemId, ready, routeVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -324,6 +382,22 @@ export function MapboxPlanMap({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Stable cache key for a day's Directions route — combines day date with
+ * its ordered coords (rounded to ~10m precision) so adding / removing /
+ * reordering items invalidates the cached route but trivial re-renders
+ * don't.
+ */
+function routeKey(day: string, items: PlanMapItem[]): string {
+  return (
+    day +
+    "|" +
+    items
+      .map((i) => `${i.lng.toFixed(4)},${i.lat.toFixed(4)}`)
+      .join(";")
   );
 }
 

@@ -102,7 +102,10 @@ export function ItineraryBoard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [focusedDay, setFocusedDay] = useState<string | null>(days[0] ?? null);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(true);
+  // B7c: start collapsed so the map dominates the surface (was opening
+  // to ~55vh by default which made the map feel like a sub-feature).
+  // User taps the sheet handle to expand.
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   const localCurrency = inferLocalCurrency(destination);
@@ -258,7 +261,7 @@ export function ItineraryBoard({
       <button
         type="button"
         onClick={() => openAddFor(focusedDay)}
-        style={{ bottom: sheetOpen ? "calc(55vh + 1rem)" : "5rem" }}
+        style={{ bottom: sheetOpen ? "calc(45vh + 1rem)" : "5rem" }}
         className="absolute z-30 right-4 sm:right-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white pl-3.5 pr-4 py-3 text-sm font-bold shadow-xl shadow-primary/40 hover:opacity-90 transition-all"
         title="Add to itinerary"
       >
@@ -322,8 +325,9 @@ export function ItineraryBoard({
             </button>
           </div>
 
-          {/* Scrollable list */}
-          <div className="max-h-[55vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
+          {/* Scrollable list — trimmed from 55vh to 45vh so map gets
+              the larger share of the viewport when sheet is expanded. */}
+          <div className="max-h-[45vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
