@@ -122,13 +122,26 @@ export function MapboxPlanMap({
         center: initialCenter,
         zoom: 12,
         attributionControl: true,
-        // B7c-fix3: Mapbox v3.24 bundled in Next.js 16 doesn't read the
-        // `mapboxgl.accessToken` global at Map-construction time —
-        // RequestManager ended up with null, so TileJSON fetches went
-        // out without `?access_token=…` and silently 401'd. Pass the
-        // token explicitly so it lands on the constructed map's
-        // request manager.
         accessToken: token,
+        // B7c-fix4: bulletproof token injection. Mapbox v3.24 bundled by
+        // Next.js 16 wasn't picking up either the `mapboxgl.accessToken`
+        // module global OR the `accessToken` constructor option — the
+        // RequestManager ended up with `_accessToken: undefined`, so it
+        // produced TileJSON URLs without `?access_token=…` and got
+        // silently 401'd, leaving the map stuck on its land base color
+        // with zero vector tiles ever loaded. transformRequest fires
+        // for every URL the map fetches; append the token to any
+        // api.mapbox.com URL that doesn't already have it.
+        transformRequest: (url) => {
+          if (
+            url.startsWith("https://api.mapbox.com/") &&
+            !url.includes("access_token=")
+          ) {
+            const sep = url.includes("?") ? "&" : "?";
+            return { url: url + sep + "access_token=" + token };
+          }
+          return { url };
+        },
       });
     } catch (err) {
       console.error("[mapbox] init failed", err);
