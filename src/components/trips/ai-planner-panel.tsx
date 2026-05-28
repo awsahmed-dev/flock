@@ -74,6 +74,20 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const [travelStyle, setTravelStyle] = useState<TravelStyle>("cultural");
   const [interests, setInterests] = useState("");
   const [notes, setNotes] = useState("");
+  // B3-b: structured questionnaire. Step counter drives the multi-pane
+  // form below (Vibe → Rhythm → Constraints → Generate).
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [pace, setPace] = useState<"chill" | "balanced" | "packed">("balanced");
+  const [dailyBudget, setDailyBudget] = useState<"shoestring" | "mid" | "splurge">("mid");
+  const [dietary, setDietary] = useState<string[]>([]);
+  const [mustSee, setMustSee] = useState("");
+  const [avoid, setAvoid] = useState("");
+
+  function toggleDietary(tag: string) {
+    setDietary((prev) =>
+      prev.includes(tag) ? prev.filter((d) => d !== tag) : [...prev, tag],
+    );
+  }
   const [plan, setPlan] = useState<AiPlannerResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(0);
@@ -112,7 +126,17 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
       const res = await fetch("/api/ai/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tripId, travelStyle, interests, notes }),
+        body: JSON.stringify({
+          tripId,
+          travelStyle,
+          interests,
+          notes,
+          pace,
+          dailyBudget,
+          dietary,
+          mustSee,
+          avoid,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -220,74 +244,228 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
       accentGradient="from-primary to-violet-600"
       width="md"
     >
-      {/* Input form */}
+      {/* B3-b: 3-step questionnaire — Vibe → Rhythm → Constraints. Each
+          step is a single screen so the user is never overwhelmed by a
+          wall of inputs (the old single-form approach). */}
       {!plan && (
         <div className="p-4 space-y-4">
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Travel Style
-            </p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {TRAVEL_STYLES.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => setTravelStyle(s.value)}
-                  className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
-                    travelStyle === s.value
-                      ? "border-primary bg-primary/8 shadow-sm"
-                      : "border-border/60 hover:border-border hover:bg-muted/40"
-                  }`}
-                >
-                  <span className="text-sm">{s.label}</span>
-                  <span className="text-[10px] text-muted-foreground">{s.desc}</span>
-                </button>
-              ))}
+          {/* Step indicator */}
+          <div className="flex items-center gap-1.5">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className={`h-1 flex-1 rounded-full transition-colors ${
+                  step >= n ? "bg-primary" : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+            Step {step} of 3 ·{" "}
+            {step === 1 ? "Vibe" : step === 2 ? "Rhythm" : "Constraints"}
+          </p>
+
+          {/* ─── Step 1: Vibe ─────────────────────────────────────── */}
+          {step === 1 && (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold">What's the vibe?</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {TRAVEL_STYLES.map((s) => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => setTravelStyle(s.value)}
+                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
+                        travelStyle === s.value
+                          ? "border-primary bg-primary/8 shadow-sm"
+                          : "border-border/60 hover:border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <span className="text-sm">{s.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{s.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">
+                  What are you into? <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  value={interests}
+                  onChange={(e) => setInterests(e.target.value)}
+                  placeholder="e.g. anime, street food, temples, nightlife"
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Interests <span className="normal-case font-normal">(optional)</span>
-            </label>
-            <input
-              value={interests}
-              onChange={(e) => setInterests(e.target.value)}
-              placeholder="e.g. anime, street food, temples, nightlife"
-              className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+          {/* ─── Step 2: Rhythm ───────────────────────────────────── */}
+          {step === 2 && (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold">What pace works for the group?</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { v: "chill" as const, label: "🌴 Chill", desc: "2-3/day" },
+                    { v: "balanced" as const, label: "⚖️ Balanced", desc: "3-4/day" },
+                    { v: "packed" as const, label: "⚡ Packed", desc: "5+/day" },
+                  ].map((p) => (
+                    <button
+                      key={p.v}
+                      type="button"
+                      onClick={() => setPace(p.v)}
+                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
+                        pace === p.v
+                          ? "border-primary bg-primary/8 shadow-sm"
+                          : "border-border/60 hover:border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <span className="text-sm">{p.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{p.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Special notes <span className="normal-case font-normal">(optional)</span>
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. vegetarian friendly, early mornings free"
-              rows={3}
-              className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold">Daily spending vibe?</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { v: "shoestring" as const, label: "💸 Shoestring", desc: "Cheap & fun" },
+                    { v: "mid" as const, label: "🪙 Mid", desc: "Comfortable" },
+                    { v: "splurge" as const, label: "🥂 Splurge", desc: "Treat ourselves" },
+                  ].map((b) => (
+                    <button
+                      key={b.v}
+                      type="button"
+                      onClick={() => setDailyBudget(b.v)}
+                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
+                        dailyBudget === b.v
+                          ? "border-primary bg-primary/8 shadow-sm"
+                          : "border-border/60 hover:border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <span className="text-sm">{b.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{b.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
-          <Button
-            onClick={generate}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/20"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {LOADING_MESSAGES[loadingMsg]}
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate Itinerary
-              </>
+          {/* ─── Step 3: Constraints ──────────────────────────────── */}
+          {step === 3 && (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold">
+                  Dietary needs? <span className="font-normal text-muted-foreground">(any apply)</span>
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["vegetarian", "vegan", "halal", "kosher", "gluten-free", "nut allergy"].map((tag) => {
+                    const on = dietary.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleDietary(tag)}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all ${
+                          on
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border/60 hover:border-border hover:bg-muted/40"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">
+                  Anything must-see / must-do? <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  value={mustSee}
+                  onChange={(e) => setMustSee(e.target.value)}
+                  placeholder="e.g. Eiffel Tower at sunset, Tsukiji breakfast"
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">
+                  Anything to avoid? <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  value={avoid}
+                  onChange={(e) => setAvoid(e.target.value)}
+                  placeholder="e.g. crowded markets, museums, heights"
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">
+                  Anything else for the planner? <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. early mornings free, no shopping days"
+                  rows={2}
+                  className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex items-center gap-2 pt-1">
+            {step > 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep((s) => (s === 3 ? 2 : 1))}
+                disabled={loading}
+                className="flex-1"
+              >
+                Back
+              </Button>
             )}
-          </Button>
+            {step < 3 ? (
+              <Button
+                type="button"
+                onClick={() => setStep((s) => (s === 1 ? 2 : 3))}
+                className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                onClick={generate}
+                disabled={loading}
+                className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/20"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {LOADING_MESSAGES[loadingMsg]}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

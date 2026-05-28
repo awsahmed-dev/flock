@@ -77,6 +77,9 @@ interface Trip {
 interface Props {
   trip: Trip;
   userId: string;
+  /** B3-a: owners get a Settings button in the header (out of the
+   *  dropdown). Members still don't see it — server already redirects. */
+  isOwner: boolean;
   children: React.ReactNode;
 }
 
@@ -91,7 +94,7 @@ const NAV_TABS = [
   { label: "Packing", href: "/packing", icon: Backpack },
 ];
 
-export function TripShell({ trip, children }: Props) {
+export function TripShell({ trip, isOwner, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -257,6 +260,19 @@ export function TripShell({ trip, children }: Props) {
               <Users className="w-4 h-4" />
             </button>
 
+            {/* B3-a: owner-only Settings button. Pulled out of the avatar
+                dropdown so trip configuration is one click away. Members
+                don't see it — they'd be redirected anyway. */}
+            {isOwner && (
+              <Link
+                href={`/trips/${trip.id}/settings`}
+                title="Trip settings"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+            )}
+
             <button
               onClick={() => setChatOpen((o) => !o)}
               className={cn(
@@ -298,12 +314,17 @@ export function TripShell({ trip, children }: Props) {
                 >
                   <LayoutDashboard className="w-4 h-4" /> All trips
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link href={`/trips/${trip.id}/settings`} />}
-                  className="gap-2"
-                >
-                  <Settings className="w-4 h-4" /> Trip settings
-                </DropdownMenuItem>
+                {/* Trip Settings lives in the header now (B3-a) — kept here as
+                    a redundant entry only when the viewer is a non-owner so the
+                    dropdown still shows a hint of what exists, but disabled. */}
+                {!isOwner && (
+                  <DropdownMenuItem
+                    disabled
+                    className="gap-2 text-muted-foreground/60"
+                  >
+                    <Settings className="w-4 h-4" /> Trip settings · owner only
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator />
 

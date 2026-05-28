@@ -19,7 +19,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
 import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
-import { ActivityFeed } from "./activity-feed";
 import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
 
 interface Member {
@@ -190,16 +189,6 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
           missing — and the Up-next card directs to the highest-leverage
           action right now. */}
       <TripActionHub tripId={trip.id} stats={stats} />
-
-      {/* ── Activity Feed — capped at 5 most-recent events with summary
-          chips on top. Total scale lives in the chips; the feed shows
-          "what just happened" so the page stays scannable. */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold tracking-tight">Activity</h2>
-        </div>
-        <ActivityFeed tripId={trip.id} />
-      </div>
 
       {/* ── Smart tools ────────────────────────────────────────────────────── */}
       <div className="grid sm:grid-cols-2 gap-3">

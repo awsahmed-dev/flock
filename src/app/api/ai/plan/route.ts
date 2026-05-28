@@ -99,7 +99,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { tripId, travelStyle = "cultural", interests = "", notes = "" } = body;
+    const {
+      tripId,
+      travelStyle = "cultural",
+      interests = "",
+      notes = "",
+      // B3-b: questionnaire fields. All optional — the planner gracefully
+      // degrades to the legacy 3-field flow when these are missing.
+      pace = "balanced",          // "chill" | "balanced" | "packed"
+      dailyBudget = "mid",         // "shoestring" | "mid" | "splurge"
+      dietary = [] as string[],   // ["vegetarian", "halal", ...]
+      mustSee = "",
+      avoid = "",
+    } = body;
 
     if (!tripId) return NextResponse.json({ error: "Missing tripId" }, { status: 400 });
 
@@ -117,13 +129,31 @@ export async function POST(request: NextRequest) {
     const numDays = daysBetween(trip.startDate, trip.endDate);
     const memberCount = trip.members.length;
     const styleHint = STYLE_DESC[travelStyle] ?? "general sightseeing";
+    const PACE_DESC: Record<string, string> = {
+      chill: "2-3 activities/day, plenty of downtime, late mornings",
+      balanced: "3-4 activities/day, mix of effort and rest",
+      packed: "5+ activities/day, dawn-to-dusk, no idle time",
+    };
+    const BUDGET_DESC: Record<string, string> = {
+      shoestring: "cheapest options: street food, free attractions, public transit",
+      mid: "moderate: casual restaurants, paid attractions OK, ride-shares fine",
+      splurge: "premium: fine dining, private experiences, taxis welcome",
+    };
+
     const context = [
       `${numDays}-day trip to ${trip.destination}`,
       `${memberCount} people`,
       `Style: ${travelStyle} (${styleHint})`,
+      `Pace: ${pace} (${PACE_DESC[pace] ?? "balanced rhythm"})`,
+      `Daily budget vibe: ${dailyBudget} (${BUDGET_DESC[dailyBudget] ?? "moderate"})`,
       trip.budgetTotal
-        ? `Budget: $${trip.budgetTotal} total (~$${Math.round(trip.budgetTotal / memberCount)}/person)`
+        ? `Total budget: $${trip.budgetTotal} (~$${Math.round(trip.budgetTotal / memberCount)}/person)`
         : null,
+      Array.isArray(dietary) && dietary.length
+        ? `Dietary needs: ${dietary.join(", ")} — ALL meal picks must respect these`
+        : null,
+      mustSee ? `Must-see / must-do: ${mustSee}` : null,
+      avoid ? `Avoid: ${avoid}` : null,
       interests ? `Interests: ${interests}` : null,
       notes ? `Notes: ${notes}` : null,
     ]

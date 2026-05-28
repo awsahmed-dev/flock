@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { TripShell } from "@/components/trips/trip-shell";
+import { isOwner as checkOwner } from "@/lib/permissions";
 
 interface Props {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ export default async function TripLayout({ children, params }: Props) {
   };
 
   return (
-    <TripShell trip={tripForShell} userId={user.id}>
+    <TripShell trip={tripForShell} userId={user.id} isOwner={checkOwner(trip, user.id)}>
       {children}
     </TripShell>
   );
