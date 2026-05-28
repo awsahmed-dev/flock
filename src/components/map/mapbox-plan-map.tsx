@@ -118,7 +118,13 @@ export function MapboxPlanMap({
     try {
       map = new mapboxgl.Map({
         container: containerRef.current,
-        style: "mapbox://styles/mapbox/streets-v12",
+        // B7c-fix5: direct HTTPS style URL with token in the query.
+        // The `mapbox://styles/...` scheme is supposed to resolve via
+        // RequestManager but in this build the resolver never kicks
+        // off a TileJSON request, leaving the map stuck on its base
+        // land color forever. Direct URL bypasses the broken resolver
+        // and lets Mapbox process the style JSON normally.
+        style: `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${token}`,
         center: initialCenter,
         zoom: 12,
         attributionControl: true,
