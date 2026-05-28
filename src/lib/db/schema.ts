@@ -143,6 +143,15 @@ export const itineraryItems = pgTable("itinerary_items", {
   costEstimate: real("cost_estimate"),
   bookingUrl: text("booking_url"),
   notes: text("notes"),
+  // B5: Foursquare metadata — populated when the item was added via the
+  // place-search flow. NULL for manually-entered items.
+  fsqId: text("fsq_id"),
+  fsqCategory: text("fsq_category"),
+  photoUrl: text("photo_url"),
+  rating: real("rating"),
+  priceLevel: integer("price_level"),
+  hoursSummary: text("hours_summary"),
+  topTip: text("top_tip"),
   status: itineraryItemStatusEnum("status").default("proposed").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdBy: uuid("created_by")

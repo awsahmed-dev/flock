@@ -83,6 +83,104 @@ export async function createItineraryItem(formData: FormData) {
   revalidatePath(`/trips/${tripId}`);
 }
 
+/**
+ * B5: dedicated action for "Add a place by search" — takes a Foursquare
+ * place blob (id + name + lat/lng + address + rich metadata) and writes
+ * it straight to itinerary_items with no geocode roundtrip.
+ *
+ * The richer fields (photo, hours, rating, top tip) are best-effort and
+ * NULL when the upstream Foursquare details call was thin.
+ */
+export async function createItineraryItemFromPlace(input: {
+  tripId: string;
+  dayDate: string;
+  title: string;
+  type?: "activity" | "accommodation" | "transport" | "meal" | "other";
+  fsqId: string;
+  fsqCategory?: string | null;
+  locationName?: string | null;
+  locationLat?: number | null;
+  locationLng?: number | null;
+  photoUrl?: string | null;
+  rating?: number | null;
+  priceLevel?: number | null;
+  hoursSummary?: string | null;
+  topTip?: string | null;
+  costEstimate?: number | null;
+}) {
+  const user = await getAuthenticatedUser();
+  const trip = await getTripWithMembership(input.tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
+
+  await db.insert(profiles).values({
+    id: user.id,
+    displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "Traveler",
+    email: user.email,
+  }).onConflictDoNothing();
+
+  // Decide sort order — drop at the end of that day's stack so it doesn't
+  // jump in front of existing items.
+  const existingForDay = await db.query.itineraryItems.findMany({
+    where: and(
+      eq(itineraryItems.tripId, input.tripId),
+      eq(itineraryItems.dayDate, input.dayDate),
+    ),
+    columns: { sortOrder: true },
+  });
+  const sortOrder = existingForDay.length;
+
+  const [newItem] = await db.insert(itineraryItems).values({
+    tripId: input.tripId,
+    dayDate: input.dayDate,
+    title: input.title,
+    type: input.type ?? inferTypeFromCategory(input.fsqCategory),
+    locationName: input.locationName ?? null,
+    locationLat: input.locationLat ?? null,
+    locationLng: input.locationLng ?? null,
+    costEstimate: input.costEstimate ?? null,
+    status: "proposed",
+    sortOrder,
+    createdBy: user.id,
+    fsqId: input.fsqId,
+    fsqCategory: input.fsqCategory ?? null,
+    photoUrl: input.photoUrl ?? null,
+    rating: input.rating ?? null,
+    priceLevel: input.priceLevel ?? null,
+    hoursSummary: input.hoursSummary ?? null,
+    topTip: input.topTip ?? null,
+  }).returning();
+
+  const itemType = newItem.type ?? "activity";
+  await db.insert(chatMessages).values({
+    tripId: input.tripId,
+    userId: user.id,
+    body: `${TYPE_EMOJI[itemType] ?? "📍"} New plan: ${input.title}`,
+    type: "itinerary_card",
+    metadata: {
+      itineraryItemId: newItem.id,
+      title: input.title,
+      type: itemType,
+      dayDate: input.dayDate,
+      locationName: input.locationName ?? null,
+      photoUrl: input.photoUrl ?? null,
+    },
+  }).catch(() => {});
+
+  revalidatePath(`/trips/${input.tripId}/itinerary`);
+  revalidatePath(`/trips/${input.tripId}`);
+  return newItem;
+}
+
+/** Foursquare category text → our itinerary type enum. Best-effort. */
+function inferTypeFromCategory(category: string | null | undefined): "activity" | "accommodation" | "transport" | "meal" | "other" {
+  if (!category) return "activity";
+  const c = category.toLowerCase();
+  if (/(hotel|hostel|inn|resort|lodge|bnb|motel|villa)/.test(c)) return "accommodation";
+  if (/(restaurant|cafe|coffee|bar|pub|food|bakery|brewery|ice cream)/.test(c)) return "meal";
+  if (/(airport|train|station|subway|metro|bus|ferry|car|taxi)/.test(c)) return "transport";
+  return "activity";
+}
+
 export async function updateItineraryItem(formData: FormData) {
   const user = await getAuthenticatedUser();
   const itemId = formData.get("itemId") as string;

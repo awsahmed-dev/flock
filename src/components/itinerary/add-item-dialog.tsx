@@ -69,6 +69,15 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           createdBy: "",
           createdAt: new Date(),
           updatedAt: new Date(),
+          // B5: stub the new Foursquare metadata fields so the optimistic
+          // shape matches Item exactly. Server will leave them NULL.
+          fsqId: null,
+          fsqCategory: null,
+          photoUrl: null,
+          rating: null,
+          priceLevel: null,
+          hoursSummary: null,
+          topTip: null,
         };
         onAdded(fake);
         toast.success("Item added");
