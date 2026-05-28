@@ -8,6 +8,7 @@ import { itineraryItems } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO, format } from "date-fns";
+import { isOwner as checkOwner } from "@/lib/permissions";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -46,6 +47,8 @@ export default async function ItineraryPage({ params }: Props) {
       items={serializedItems as any}
       currency={trip.currency}
       destination={trip.destination}
+      userId={user.id}
+      isOwner={checkOwner(trip, user.id)}
     />
   );
 }

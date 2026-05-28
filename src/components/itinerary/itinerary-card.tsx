@@ -31,6 +31,10 @@ interface Props {
   isDragging?: boolean;
   onOptimisticUpdate?: (item: Item) => void;
   onOptimisticDelete?: (id: string) => void;
+  /** B2-3: true if the viewer is the item creator or the trip owner. When
+   *  false, the Edit/Delete menu items are hidden — group decisions
+   *  (status / order) are still open to everyone. */
+  canManage?: boolean;
 }
 
 const TYPE_CONFIG = {
@@ -54,6 +58,7 @@ export function ItineraryCard({
   isDragging,
   onOptimisticUpdate,
   onOptimisticDelete,
+  canManage = true,
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [, startTransition] = useTransition();
@@ -204,16 +209,20 @@ export function ItineraryCard({
                 <DropdownMenuItem onClick={() => handleStatusChange("rejected")} className="gap-2">
                   <XCircle className="w-3.5 h-3.5 text-red-500" /> Reject
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
-                  <Pencil className="w-3.5 h-3.5" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  className="gap-2 text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                </DropdownMenuItem>
+                {canManage && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
+                      <Pencil className="w-3.5 h-3.5" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleDelete}
+                      className="gap-2 text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
 import { geocode } from "@/lib/geocode";
+import { canManageItem, PermissionError } from "@/lib/permissions";
 
 const TYPE_EMOJI: Record<string, string> = {
   activity: "✨", accommodation: "🏨", transport: "✈️", meal: "🍽️", other: "📍",
@@ -90,6 +91,17 @@ export async function updateItineraryItem(formData: FormData) {
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Access denied");
 
+  // B2-3: only the item's creator or a trip owner may edit it. Group
+  // decisions (status / sort) stay open to all members — see updateItemStatus.
+  const existing = await db.query.itineraryItems.findFirst({
+    where: and(eq(itineraryItems.id, itemId), eq(itineraryItems.tripId, tripId)),
+    columns: { createdBy: true },
+  });
+  if (!existing) throw new Error("Item not found");
+  if (!canManageItem(existing, trip, user.id)) {
+    throw new PermissionError("Only the person who added this item or the trip owner can edit it");
+  }
+
   const costRaw = formData.get("costEstimate") as string;
   const locationName = (formData.get("locationName") as string) || null;
 
@@ -142,6 +154,16 @@ export async function deleteItineraryItem(itemId: string, tripId: string) {
   const user = await getAuthenticatedUser();
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Access denied");
+
+  // B2-3: creator-or-owner gate. Mirrors the edit gate.
+  const existing = await db.query.itineraryItems.findFirst({
+    where: and(eq(itineraryItems.id, itemId), eq(itineraryItems.tripId, tripId)),
+    columns: { createdBy: true },
+  });
+  if (!existing) throw new Error("Item not found");
+  if (!canManageItem(existing, trip, user.id)) {
+    throw new PermissionError("Only the person who added this item or the trip owner can delete it");
+  }
 
   await db.delete(itineraryItems)
     .where(and(eq(itineraryItems.id, itemId), eq(itineraryItems.tripId, tripId)));

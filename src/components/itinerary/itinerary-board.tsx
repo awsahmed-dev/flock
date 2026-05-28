@@ -39,6 +39,10 @@ interface Props {
   items: Item[];
   currency: string;
   destination: string;
+  /** Current viewer — needed for permission gates on edit/delete. */
+  userId: string;
+  /** Whether the viewer is the trip owner (sees every item's edit + delete). */
+  isOwner: boolean;
 }
 
 interface PoiDefault {
@@ -46,7 +50,7 @@ interface PoiDefault {
   locationName: string;
 }
 
-export function ItineraryBoard({ tripId, days, items: initialItems, currency, destination }: Props) {
+export function ItineraryBoard({ tripId, days, items: initialItems, currency, destination, userId, isOwner }: Props) {
   const [items, setItems] = useState(initialItems);
   const [addingDay, setAddingDay] = useState<string | null>(null);
   const [poiDefault, setPoiDefault] = useState<PoiDefault | undefined>(undefined);
@@ -233,6 +237,7 @@ export function ItineraryBoard({ tripId, days, items: initialItems, currency, de
                           item={item}
                           tripId={tripId}
                           currency={currency}
+                          canManage={isOwner || item.createdBy === userId}
                           onOptimisticUpdate={(updated) => {
                             setItems((prev) =>
                               prev.map((i) => (i.id === updated.id ? updated : i))
@@ -274,6 +279,7 @@ export function ItineraryBoard({ tripId, days, items: initialItems, currency, de
                 item={activeItem}
                 tripId={tripId}
                 currency={currency}
+                canManage={isOwner || activeItem.createdBy === userId}
                 isDragging
               />
             )}
