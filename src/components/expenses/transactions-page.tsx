@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  Receipt, ChevronRight, ArrowRightLeft, Calendar, Search,
+  Receipt, ChevronRight, ArrowRightLeft, Search,
   Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal,
 } from "lucide-react";
 import { format, parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
@@ -144,96 +144,43 @@ export function TransactionsPage({
     )
     .sort((a, b) => new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime());
 
-  // Group filtered by date
-  const grouped = useMemo(() => {
-    const map = new Map<string, Expense[]>();
-    for (const e of filtered) {
-      const arr = map.get(e.expenseDate) ?? [];
-      arr.push(e);
-      map.set(e.expenseDate, arr);
-    }
-    return [...map.entries()].sort(([a], [b]) => (a < b ? 1 : -1));
-  }, [filtered]);
+
 
   const baseAmountFor = (e: Expense) =>
     e.currency === currency ? null : convert(e.amount, e.currency, currency, fxRates);
 
+  // B9: index filtered transactions by date for fast per-day lookup in
+  // the unified timeline below.
+  const txByDay = useMemo(() => {
+    const m = new Map<string, Expense[]>();
+    for (const e of filtered) {
+      const arr = m.get(e.expenseDate) ?? [];
+      arr.push(e);
+      m.set(e.expenseDate, arr);
+    }
+    return m;
+  }, [filtered]);
+
+  // When searching, only render days that actually have matching txs (no
+  // sense showing an empty Day 4 progress bar while the user is searching
+  // for "hotel"). Without a query, show every day in the trip span so the
+  // rhythm is visible.
+  const isSearching = query.trim().length > 0;
+  const daysToRender = isSearching
+    ? derived.dailyBreakdown.filter((d) => (txByDay.get(d.dateKey) ?? []).length > 0)
+    : derived.dailyBreakdown;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         backHref={`/trips/${tripId}/expenses`}
         title="Activity"
-        subtitle={`${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""}`}
+        subtitle={
+          dailyTarget
+            ? `${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""} · Target ${currency} ${fmt(dailyTarget)}/day`
+            : `${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""}`
+        }
       />
-
-      {/* ── Daily tracker (sub-feature of Activity per tester ask) ── */}
-      <section className="rounded-2xl border border-border/60 bg-card p-4">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="min-w-0">
-            <h3 className="text-sm font-bold inline-flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-primary" /> Daily tracker
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              {dailyTarget
-                ? `Target ${currency} ${fmt(dailyTarget)}/day`
-                : "Set a trip budget for daily targets"}
-            </p>
-          </div>
-        </div>
-        <ul className="divide-y divide-border/60">
-          {derived.dailyBreakdown.map((d) => {
-            const pct = dailyTarget && dailyTarget > 0 ? (d.spent / dailyTarget) * 100 : 0;
-            const tone = pct >= 100 ? "bg-red-500" : pct >= 90 ? "bg-orange-500" : pct >= 75 ? "bg-amber-500" : "bg-emerald-500";
-            const today = isToday(d.date);
-            return (
-              <li
-                key={d.dateKey}
-                className={`flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 ${
-                  today ? "rounded-xl -mx-2 px-2 bg-primary/5" : ""
-                }`}
-              >
-                <div className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl shrink-0 ${
-                  today ? "bg-primary text-primary-foreground" : "bg-muted/60"
-                }`}>
-                  <span className={`text-[9px] font-bold tracking-widest uppercase leading-none ${today ? "" : "text-muted-foreground"}`}>
-                    Day
-                  </span>
-                  <span className="text-sm font-bold leading-tight tabular-nums">{d.dayNumber}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold truncate inline-flex items-center gap-1.5">
-                      {today ? "Today" : format(d.date, "EEE MMM d")}
-                      {today && (
-                        <span className="text-[9px] font-bold tracking-widest uppercase text-primary">
-                          live
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs font-bold tabular-nums text-right">
-                      {currency} {fmt(d.spent)}
-                      {dailyTarget && (
-                        <span className="text-muted-foreground font-medium ml-1">
-                          / {fmt(dailyTarget)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  {dailyTarget ? (
-                    <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.min(pct, 100)}%` }} />
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {d.spent > 0 ? "Logged today" : isFuture(d.date) ? "Upcoming" : "Nothing logged"}
-                    </p>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
 
       {/* ── Search + add ───────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
@@ -258,7 +205,11 @@ export function TransactionsPage({
         />
       </div>
 
-      {/* ── Grouped-by-day transactions list ───────────────────────── */}
+      {/* ── B9: unified per-day timeline. Daily tracker is no longer a
+          separate card above the list — instead, each day's progress
+          bar lives as the section header for that day's transactions.
+          Days with no transactions still render (when not searching) so
+          the user sees the trip's pace at a glance. */}
       {expenseList.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
           <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
@@ -269,31 +220,114 @@ export function TransactionsPage({
             Log your first expense to see it here.
           </p>
         </div>
-      ) : grouped.length === 0 ? (
+      ) : daysToRender.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-10">
           No matches for "{query}".
         </p>
       ) : (
-        <div className="space-y-4">
-          {grouped.map(([date, exps]) => (
-            <section key={date} className="rounded-2xl border border-border/60 bg-card p-3">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground px-1 mb-1.5">
-                {format(parseISO(date), "EEE, MMM d")}
-              </p>
-              <ul className="divide-y divide-border/60">
-                {exps.map((exp) => (
-                  <SlimRow
-                    key={exp.id}
-                    expense={exp}
-                    userId={userId}
-                    baseCurrency={currency}
-                    baseAmount={baseAmountFor(exp)}
-                    onClick={() => setOpenId(exp.id)}
-                  />
-                ))}
-              </ul>
-            </section>
-          ))}
+        <div className="space-y-2.5">
+          {daysToRender.map((d) => {
+            const dayTxs = txByDay.get(d.dateKey) ?? [];
+            const pct =
+              dailyTarget && dailyTarget > 0 ? (d.spent / dailyTarget) * 100 : 0;
+            const tone =
+              pct >= 100
+                ? "bg-red-500"
+                : pct >= 90
+                  ? "bg-orange-500"
+                  : pct >= 75
+                    ? "bg-amber-500"
+                    : "bg-emerald-500";
+            const today = isToday(d.date);
+            const isFutureDay = isFuture(d.date);
+
+            return (
+              <section
+                key={d.dateKey}
+                className={`rounded-2xl border bg-card overflow-hidden ${
+                  today
+                    ? "border-primary/40 shadow-sm shadow-primary/10"
+                    : "border-border/60"
+                }`}
+              >
+                {/* Day header — replaces the standalone Daily tracker row */}
+                <div
+                  className={`flex items-center gap-3 px-3.5 py-2.5 ${
+                    today ? "bg-primary/5" : ""
+                  }`}
+                >
+                  <div
+                    className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl shrink-0 ${
+                      today
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/60"
+                    }`}
+                  >
+                    <span
+                      className={`text-[9px] font-bold tracking-widest uppercase leading-none ${
+                        today ? "" : "text-muted-foreground"
+                      }`}
+                    >
+                      Day
+                    </span>
+                    <span className="text-sm font-bold leading-tight tabular-nums">
+                      {d.dayNumber}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-bold inline-flex items-center gap-1.5">
+                        {today ? "Today" : format(d.date, "EEE, MMM d")}
+                        {today && (
+                          <span className="text-[9px] font-bold tracking-widest uppercase text-primary">
+                            live
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs font-bold tabular-nums text-right">
+                        {currency} {fmt(d.spent)}
+                        {dailyTarget && (
+                          <span className="text-muted-foreground font-medium ml-1">
+                            / {fmt(dailyTarget)}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    {dailyTarget ? (
+                      <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${tone}`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Day transactions — listed inline under the progress bar.
+                    Empty days keep the header but show a tiny placeholder
+                    so the timeline stays continuous. */}
+                {dayTxs.length > 0 ? (
+                  <ul className="divide-y divide-border/60 border-t border-border/40 px-2">
+                    {dayTxs.map((exp) => (
+                      <SlimRow
+                        key={exp.id}
+                        expense={exp}
+                        userId={userId}
+                        baseCurrency={currency}
+                        baseAmount={baseAmountFor(exp)}
+                        onClick={() => setOpenId(exp.id)}
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="border-t border-border/40 px-4 py-2 text-[10px] text-muted-foreground italic">
+                    {isFutureDay ? "Upcoming day" : "No spend logged"}
+                  </p>
+                )}
+              </section>
+            );
+          })}
         </div>
       )}
 

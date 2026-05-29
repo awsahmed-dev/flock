@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AddExpenseDialog } from "./add-expense-dialog";
-import { BudgetHealth } from "./budget-health";
 import { ExpenseSheet } from "./expense-sheet";
 import {
   Receipt, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Eye, EyeOff,
@@ -238,19 +237,72 @@ export function ExpensesBoard({
               </p>
             </div>
           </div>
+
+          {/* B9: trip-budget progress strip absorbed into the hero. Used
+              to live as its own BudgetHealth card just below — that was
+              showing the same EUR number a third time. Now it's a thin
+              row inside the hero with a single progress bar. */}
+          {tripBudget && tripBudget > 0 && (
+            <div className="mt-4 pt-3 border-t border-white/15">
+              <div className="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-white/80 mb-1.5">
+                <span>Trip budget</span>
+                <span className="tabular-nums">
+                  {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••"}
+                  <span className="text-white/60 ml-1 font-medium">
+                    / {fmt(tripBudget)}
+                  </span>
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${
+                    derived.totalSharedBase / tripBudget >= 1
+                      ? "bg-red-300"
+                      : derived.totalSharedBase / tripBudget >= 0.9
+                        ? "bg-orange-300"
+                        : derived.totalSharedBase / tripBudget >= 0.75
+                          ? "bg-amber-300"
+                          : "bg-white"
+                  }`}
+                  style={{
+                    width: `${Math.min(100, (derived.totalSharedBase / tripBudget) * 100)}%`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1.5 text-[10px] text-white/70">
+                <span>
+                  {Math.round((derived.totalSharedBase / tripBudget) * 100)}%
+                  used
+                </span>
+                {/* Personal budget mini-stat OR a "set your budget" hint —
+                    no longer its own giant card. */}
+                <Link
+                  href={`/trips/${tripId}/settings`}
+                  className="hover:text-white inline-flex items-center gap-1"
+                >
+                  {personalBudget && personalBudget > 0 ? (
+                    <>
+                      Personal cap {currency} {fmt(personalBudget)} ·{" "}
+                      {Math.round(
+                        (derived.personalSpentBase / personalBudget) * 100,
+                      )}
+                      % used
+                    </>
+                  ) : (
+                    <>Set a personal cap →</>
+                  )}
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* CTA row */}
-      <div className="flex items-center justify-between">
-        <div className="min-w-0">
-          <h2 className="text-sm font-bold tracking-tight">
-            {expenseList.length} expense{expenseList.length !== 1 ? "s" : ""}
-          </h2>
-          <p className="text-[11px] text-muted-foreground">
-            Across the trip, all currencies normalised
-          </p>
-        </div>
+      {/* B9: single CTA row — was a separate "2 expenses · Log expense"
+          sub-header that read as decorative. Now it's a tight bar with
+          just the action; expense count moved into the hero's empty
+          state. */}
+      <div className="flex items-center justify-end">
         <AddExpenseDialog
           tripId={tripId}
           baseCurrency={currency}
@@ -262,21 +314,10 @@ export function ExpensesBoard({
         />
       </div>
 
-      {/* ── Budget Health (always visible) ─────────────────────────── */}
-      <BudgetHealth
-        tripId={tripId}
-        baseCurrency={currency}
-        tripBudget={tripBudget}
-        sharedSpent={derived.totalSharedBase}
-        personalBudget={personalBudget}
-        personalSpent={derived.personalSpentBase}
-        multiCurrency={derived.isMultiCurrency}
-      />
-
       {/* ── Activity preview (with View all → /transactions) ──────── */}
       <SectionCard
-        title="Activity"
-        subtitle="Most recent · daily tracker on the full page"
+        title={`Activity${expenseList.length > 0 ? ` · ${expenseList.length}` : ""}`}
+        subtitle="Most recent expenses"
         viewAllHref={`/trips/${tripId}/expenses/transactions`}
         empty={expenseList.length === 0}
         emptyLabel="No expenses logged yet"
