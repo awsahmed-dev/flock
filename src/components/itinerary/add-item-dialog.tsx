@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRef, useTransition } from "react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,15 +92,30 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
     });
   }
 
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            Add item · {format(parseISO(dayDate), "EEEE, MMM d")}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+    <BottomSheet
+      open
+      onClose={onClose}
+      title="Add item"
+      subtitle={format(parseISO(dayDate), "EEEE, MMM d")}
+      size="md"
+      footer={
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button
+            type="button"
+            disabled={isPending}
+            onClick={() => formRef.current?.requestSubmit()}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Add item
+          </Button>
+        </div>
+      }
+    >
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="title">Title *</Label>
             <Input id="title" name="title" placeholder="e.g. Visit the Colosseum" required autoFocus defaultValue={defaultValues?.title} />
@@ -147,15 +162,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
             <Input id="notes" name="notes" placeholder="Any details..." />
           </div>
 
-          <div className="flex gap-2 justify-end pt-1">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Add item
-            </Button>
-          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </BottomSheet>
   );
 }

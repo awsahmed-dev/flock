@@ -2,13 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createDocument } from "@/lib/actions/documents";
@@ -140,26 +134,17 @@ export function AddDocumentDialog({ tripId }: Props) {
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) resetState();
-      }}
-    >
-      <DialogTrigger
-        render={
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-1" />
-            Add document
-          </Button>
-        }
-      />
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add a document</DialogTitle>
-        </DialogHeader>
-
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus className="w-4 h-4 mr-1" />
+        Add document
+      </Button>
+      <BottomSheet
+        open={open}
+        onClose={() => { setOpen(false); resetState(); }}
+        title="Add a document"
+        size="md"
+      >
         {/* Upload / Link toggle */}
         <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">
           <button
@@ -320,7 +305,7 @@ export function AddDocumentDialog({ tripId }: Props) {
             </div>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </BottomSheet>
+    </>
   );
 }

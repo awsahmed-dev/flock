@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createVote } from "@/lib/actions/votes";
@@ -76,14 +70,40 @@ export function CreateVoteDialog({ tripId }: Props) {
     });
   }
 
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm"><Plus className="w-4 h-4 mr-1" />New vote</Button>} />
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create a vote</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus className="w-4 h-4 mr-1" />New vote
+      </Button>
+      <BottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Create a vote"
+        size="md"
+        footer={
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="flex-1"
+              disabled={isPending}
+              onClick={() => formRef.current?.requestSubmit()}
+            >
+              {isPending ? "Creating…" : "Create vote"}
+            </Button>
+          </div>
+        }
+      >
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
           <input type="hidden" name="tripId" value={tripId} />
 
           <div className="space-y-1.5">
@@ -150,21 +170,8 @@ export function CreateVoteDialog({ tripId }: Props) {
             )}
           </div>
 
-          <div className="flex gap-2 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isPending}>
-              {isPending ? "Creating…" : "Create vote"}
-            </Button>
-          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </BottomSheet>
+    </>
   );
 }

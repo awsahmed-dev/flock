@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createExpense } from "@/lib/actions/expenses";
@@ -118,14 +112,42 @@ export function AddExpenseDialog({
     });
   }
 
+  // B10: form ref so the BottomSheet footer's Submit button (which
+  // lives outside the <form> in the JSX tree) can still trigger submit.
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm"><Plus className="w-4 h-4 mr-1" />Log expense</Button>} />
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Log an expense</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus className="w-4 h-4 mr-1" />Log expense
+      </Button>
+      <BottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Log an expense"
+        size="md"
+        footer={
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="flex-1"
+              disabled={isPending}
+              onClick={() => formRef.current?.requestSubmit()}
+            >
+              {isPending ? "Logging…" : "Log expense"}
+            </Button>
+          </div>
+        }
+      >
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
           <input type="hidden" name="tripId" value={tripId} />
           <input type="hidden" name="splitType" value="equal" />
           <input type="hidden" name="scope" value={scope} />
@@ -237,22 +259,9 @@ export function AddExpenseDialog({
             </div>
           </div>
 
-          <div className="flex gap-2 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isPending}>
-              {isPending ? "Logging…" : "Log expense"}
-            </Button>
-          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </BottomSheet>
+    </>
   );
 }
 

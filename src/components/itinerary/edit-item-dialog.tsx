@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRef, useTransition } from "react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,13 +60,29 @@ export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
     });
   }
 
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit item</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+    <BottomSheet
+      open
+      onClose={onClose}
+      title="Edit item"
+      size="md"
+      footer={
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button
+            type="button"
+            disabled={isPending}
+            onClick={() => formRef.current?.requestSubmit()}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Save changes
+          </Button>
+        </div>
+      }
+    >
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="edit-title">Title *</Label>
             <Input id="edit-title" name="title" defaultValue={item.title} required autoFocus />
@@ -113,15 +129,7 @@ export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
             <Input id="edit-notes" name="notes" defaultValue={item.notes ?? ""} />
           </div>
 
-          <div className="flex gap-2 justify-end pt-1">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Save changes
-            </Button>
-          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </BottomSheet>
   );
 }
