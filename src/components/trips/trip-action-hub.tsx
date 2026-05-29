@@ -149,7 +149,7 @@ export function TripActionHub({ tripId, stats }: Props) {
           urgent={stats.myUnsettled > 0}
         />
         <ActionCard
-          href={`/trips/${tripId}/packing`}
+          href={`/trips/${tripId}/pack?view=packing`}
           icon={Backpack}
           color="amber"
           label="Pack"
@@ -181,7 +181,7 @@ export function TripActionHub({ tripId, stats }: Props) {
           compact
         />
         <ActionCard
-          href={`/trips/${tripId}/documents`}
+          href={`/trips/${tripId}/pack?view=docs`}
           icon={FileText}
           color="slate"
           label="Docs"
@@ -344,7 +344,7 @@ function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
     return {
       title: "Start your packing list",
       body: "Seed with suggestions, then customize by member.",
-      href: `/trips/${tripId}/packing`,
+      href: `/trips/${tripId}/pack?view=packing`,
       icon: Backpack,
       urgent: false,
     };

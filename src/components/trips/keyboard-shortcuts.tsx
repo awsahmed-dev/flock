@@ -35,8 +35,10 @@ const NAV_TARGETS: Record<string, string> = {
   i: "/itinerary",
   v: "/votes",
   e: "/expenses",
-  d: "/documents",
-  p: "/packing",
+  // B6: Docs + Packing merged into /pack with a segmented control inside.
+  // `d` jumps to the Docs view, `p` jumps to the Packing view.
+  d: "/pack?view=docs",
+  p: "/pack?view=packing",
   s: "/settings",
 };
 

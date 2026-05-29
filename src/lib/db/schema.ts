@@ -251,6 +251,8 @@ export const documents = pgTable("documents", {
   url: text("url").notNull(),
   title: text("title").notNull(),
   dayDate: date("day_date"),
+  // B6: free-text caption shown alongside the title in the Pack tab.
+  description: text("description"),
   uploadedBy: uuid("uploaded_by")
     .notNull()
     .references(() => profiles.id),

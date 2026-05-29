@@ -37,6 +37,9 @@ export async function createDocument(formData: FormData) {
   const url = formData.get("url") as string;
   const type = (formData.get("type") as string) || "link";
   const dayDate = (formData.get("dayDate") as string) || null;
+  // B6: free-text description shown alongside the title in the Pack list.
+  const descriptionRaw = (formData.get("description") as string | null) ?? "";
+  const description = descriptionRaw.trim() ? descriptionRaw.trim() : null;
 
   if (!title?.trim() || !url?.trim()) throw new Error("Title and URL are required");
 
@@ -51,11 +54,13 @@ export async function createDocument(formData: FormData) {
     type: type as any,
     url: normalizedUrl,
     title: title.trim(),
+    description,
     dayDate,
     uploadedBy: user.id,
   });
 
   revalidatePath(`/trips/${tripId}/documents`);
+  revalidatePath(`/trips/${tripId}/pack`);
 }
 
 export async function deleteDocument(formData: FormData) {
@@ -80,4 +85,5 @@ export async function deleteDocument(formData: FormData) {
 
   await db.delete(documents).where(eq(documents.id, documentId));
   revalidatePath(`/trips/${tripId}/documents`);
+  revalidatePath(`/trips/${tripId}/pack`);
 }

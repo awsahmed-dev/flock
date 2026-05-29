@@ -45,6 +45,8 @@ interface Props {
   userId: string;
   items: Item[];
   members: Member[];
+  /** B6: hide our internal PageHeader when rendered inside PackBoard. */
+  embedded?: boolean;
 }
 
 const CATEGORY_META: Record<
@@ -75,7 +77,7 @@ const CATEGORIES = Object.keys(CATEGORY_META);
  * Server-side enforcement matches: shared toggles are open to all members,
  * personal items only by the owner.
  */
-export function PackingBoard({ tripId, userId, items, members }: Props) {
+export function PackingBoard({ tripId, userId, items, members, embedded }: Props) {
   const [tab, setTab] = useState<"shared" | "mine" | "crew">("shared");
   const [isPending, startTransition] = useTransition();
   const [newLabel, setNewLabel] = useState("");
@@ -164,12 +166,12 @@ export function PackingBoard({ tripId, userId, items, members }: Props) {
 
   return (
     <div className="flex flex-col gap-6 max-w-full">
-      {/* B8: unified PageHeader pattern across trip sub-pages. */}
-      <PageHeader
-        title="Packing list"
-        subtitle="Shared crew items + your personal checklist"
-        action={
-          items.length === 0 ? (
+      {/* B8/B6: PageHeader is hidden when embedded inside PackBoard (which
+          owns the shared title). The "Start with suggestions" CTA stays
+          visible in both modes — surfaced on its own row when embedded. */}
+      {embedded ? (
+        items.length === 0 && (
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={seed}
@@ -179,9 +181,27 @@ export function PackingBoard({ tripId, userId, items, members }: Props) {
               <Sparkles className="w-3.5 h-3.5" />
               Start with suggestions
             </button>
-          ) : null
-        }
-      />
+          </div>
+        )
+      ) : (
+        <PageHeader
+          title="Packing list"
+          subtitle="Shared crew items + your personal checklist"
+          action={
+            items.length === 0 ? (
+              <button
+                type="button"
+                onClick={seed}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold px-3 py-1.5 transition-colors disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Start with suggestions
+              </button>
+            ) : null
+          }
+        />
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit max-w-full overflow-x-auto">

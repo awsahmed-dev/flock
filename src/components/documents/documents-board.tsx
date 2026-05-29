@@ -24,6 +24,8 @@ interface Document {
   type: "pdf" | "link" | "image";
   url: string;
   title: string;
+  /** B6: optional free-text caption shown beneath the title. */
+  description: string | null;
   dayDate: string | null;
   uploadedBy: string;
   createdAt: Date;
@@ -35,6 +37,10 @@ interface Props {
   userId: string;
   isOwner: boolean;
   documents: Document[];
+  /** B6: when true, the board is rendered inside <PackBoard /> which
+   *  already shows its own PageHeader. Hides the local header so we
+   *  don't get a doubled-up title. */
+  embedded?: boolean;
 }
 
 function DocumentCard({
@@ -74,7 +80,13 @@ function DocumentCard({
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{doc.title}</p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+        {/* B6: description shows under title when present. */}
+        {doc.description && (
+          <p className="text-xs text-foreground/80 mt-0.5 line-clamp-2 leading-snug">
+            {doc.description}
+          </p>
+        )}
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
           <span className="truncate">{doc.url}</span>
           {doc.dayDate && (
             <>
@@ -172,7 +184,7 @@ function Lightbox({ photo, onClose }: { photo: Document; onClose: () => void }) 
   );
 }
 
-export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Props) {
+export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embedded }: Props) {
   const searchParams = useSearchParams();
   const initialView =
     searchParams?.get("type") === "image" ? "photos" : "all";
@@ -201,12 +213,21 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Pro
 
   return (
     <div className="space-y-6">
-      {/* B8: unified PageHeader pattern across trip sub-pages. */}
-      <PageHeader
-        title="Documents"
-        subtitle="Photos, links, bookings, and reference docs"
-        action={<AddDocumentDialog tripId={tripId} />}
-      />
+      {/* B8/B6: unified PageHeader — hidden when embedded inside PackBoard
+          which owns the shared title strip. The Add CTA still needs to
+          show in both modes, so we surface it in a thin top-right bar
+          when embedded. */}
+      {embedded ? (
+        <div className="flex justify-end">
+          <AddDocumentDialog tripId={tripId} />
+        </div>
+      ) : (
+        <PageHeader
+          title="Documents"
+          subtitle="Photos, links, bookings, and reference docs"
+          action={<AddDocumentDialog tripId={tripId} />}
+        />
+      )}
 
       {/* View tabs */}
       <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">

@@ -90,8 +90,8 @@ const NAV_TABS = [
   { label: "Itinerary", href: "/itinerary", icon: MapPin },
   { label: "Votes", href: "/votes", icon: Vote },
   { label: "Expenses", href: "/expenses", icon: Wallet },
-  { label: "Documents", href: "/documents", icon: FileText },
-  { label: "Packing", href: "/packing", icon: Backpack },
+  // B6: Documents + Packing merged into Pack with segmented control inside.
+  { label: "Pack", href: "/pack", icon: Backpack },
 ];
 
 export function TripShell({ trip, isOwner, children }: Props) {

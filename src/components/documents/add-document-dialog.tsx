@@ -232,6 +232,16 @@ export function AddDocumentDialog({ tripId }: Props) {
               />
             </div>
 
+            {/* B6: optional description shows under the title in the list. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-desc-up">Description (optional)</Label>
+              <Input
+                id="doc-desc-up"
+                name="description"
+                placeholder="e.g. for Aws + Mubarak · check-in 3pm"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="doc-day-up">Pin to day (optional)</Label>
               <Input id="doc-day-up" name="dayDate" type="date" />
@@ -278,6 +288,15 @@ export function AddDocumentDialog({ tripId }: Props) {
                 type="url"
                 placeholder="https://docs.google.com/..."
                 required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-desc">Description (optional)</Label>
+              <Input
+                id="doc-desc"
+                name="description"
+                placeholder="e.g. official visa rules · valid 90 days"
               />
             </div>
 
