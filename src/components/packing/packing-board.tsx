@@ -23,6 +23,7 @@ import {
   deletePackingItem,
   seedSuggestedPacking,
 } from "@/lib/actions/packing";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface Item {
   id: string;
@@ -163,31 +164,24 @@ export function PackingBoard({ tripId, userId, items, members }: Props) {
 
   return (
     <div className="flex flex-col gap-6 max-w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm shrink-0">
-            <Backpack className="w-5 h-5 text-white" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold leading-tight">Packing list</h2>
-            <p className="text-xs text-muted-foreground">
-              Shared crew items + your personal checklist
-            </p>
-          </div>
-        </div>
-        {items.length === 0 && (
-          <button
-            type="button"
-            onClick={seed}
-            disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold px-3 py-1.5 transition-colors disabled:opacity-50"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Start with suggestions
-          </button>
-        )}
-      </div>
+      {/* B8: unified PageHeader pattern across trip sub-pages. */}
+      <PageHeader
+        title="Packing list"
+        subtitle="Shared crew items + your personal checklist"
+        action={
+          items.length === 0 ? (
+            <button
+              type="button"
+              onClick={seed}
+              disabled={isPending}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold px-3 py-1.5 transition-colors disabled:opacity-50"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Start with suggestions
+            </button>
+          ) : null
+        }
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit max-w-full overflow-x-auto">

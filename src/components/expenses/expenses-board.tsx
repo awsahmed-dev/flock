@@ -198,13 +198,13 @@ export function ExpensesBoard({
 
         <div className="relative z-10 p-5 sm:p-6">
           <div className="flex items-start justify-between mb-1">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-white/70">
+            <span className="text-[11px] font-bold tracking-widest uppercase text-white/90">
               Trip total spent
             </span>
             <button
               type="button"
               onClick={() => setShowAmounts((s) => !s)}
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/80 hover:text-white transition-colors"
               aria-label={showAmounts ? "Hide amounts" : "Show amounts"}
             >
               {showAmounts ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}

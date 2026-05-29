@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
-import { Header } from "./transactions-page";
+import { PageHeader } from "@/components/ui/page-header";
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -83,7 +83,11 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
 
   return (
     <div className="space-y-5">
-      <Header tripId={tripId} title="Spending breakdown" subtitle={`${currency} ${fmt(data.totalBase)} across ${expenses.filter((e) => e.scope !== "personal").length} shared expenses`} />
+      <PageHeader
+        backHref={`/trips/${tripId}/expenses`}
+        title="Spending breakdown"
+        subtitle={`${currency} ${fmt(data.totalBase)} across ${expenses.filter((e) => e.scope !== "personal").length} shared expense${expenses.filter((e) => e.scope !== "personal").length !== 1 ? "s" : ""}`}
+      />
 
       {data.cats.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">

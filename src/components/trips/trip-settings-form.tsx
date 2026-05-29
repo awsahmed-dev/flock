@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Settings, Trash2, AlertTriangle, Globe, Copy, RefreshCw, EyeOff, Check, Link2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface Props {
   tripId: string;
@@ -109,17 +110,10 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
   }
 
   return (
-    <div className="max-w-2xl space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center">
-          <Settings className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-semibold">Trip Settings</h1>
-          <p className="text-sm text-muted-foreground">Update trip details and sharing</p>
-        </div>
-      </div>
+    // B8: bumped max-width from 2xl to 3xl so the form isn't half-width
+    // on desktop. The shared PageHeader replaces the inline icon header.
+    <div className="max-w-3xl mx-auto space-y-6">
+      <PageHeader title="Trip settings" subtitle="Update trip details and sharing" />
 
       {/* Edit form */}
       <form onSubmit={handleUpdate} className="rounded-xl border bg-card p-6 space-y-4">

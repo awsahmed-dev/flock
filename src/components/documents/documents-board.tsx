@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface Document {
   id: string;
@@ -200,16 +201,12 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs }: Pro
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Documents</h2>
-          <p className="text-sm text-muted-foreground">
-            Photos, links, bookings, and reference docs
-          </p>
-        </div>
-        <AddDocumentDialog tripId={tripId} />
-      </div>
+      {/* B8: unified PageHeader pattern across trip sub-pages. */}
+      <PageHeader
+        title="Documents"
+        subtitle="Photos, links, bookings, and reference docs"
+        action={<AddDocumentDialog tripId={tripId} />}
+      />
 
       {/* View tabs */}
       <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">

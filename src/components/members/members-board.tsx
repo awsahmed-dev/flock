@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, Copy, Check, Crown, User } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface Member {
   userId: string;
@@ -57,17 +58,14 @@ export function MembersBoard({
   const otherMembers = members.filter((m) => m.role !== "owner");
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Members</h2>
-          <p className="text-sm text-muted-foreground">
-            {members.length} {members.length === 1 ? "person" : "people"} on this trip
-          </p>
-        </div>
-        {inviteUrl && <CopyInviteButton inviteUrl={inviteUrl} />}
-      </div>
+    <div className="space-y-6">
+      {/* B8: unified PageHeader (was duplicate copy buttons + a sub-h2).
+          Copy lives in the invite block below, not split across two
+          spots that did the same thing. */}
+      <PageHeader
+        title="Members"
+        subtitle={`${members.length} ${members.length === 1 ? "person" : "people"} on this trip`}
+      />
 
       {/* Invite banner */}
       {inviteUrl && (

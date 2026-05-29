@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
-  Receipt, ChevronLeft, ChevronRight, ArrowRightLeft, Calendar, Search,
+  Receipt, ChevronRight, ArrowRightLeft, Calendar, Search,
   Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal,
 } from "lucide-react";
 import { format, parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
@@ -11,6 +10,7 @@ import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
 import { ExpenseSheet } from "./expense-sheet";
 import { AddExpenseDialog } from "./add-expense-dialog";
+import { PageHeader } from "@/components/ui/page-header";
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -160,7 +160,11 @@ export function TransactionsPage({
 
   return (
     <div className="space-y-5">
-      <Header tripId={tripId} title="Activity" subtitle={`${expenseList.length} transactions`} />
+      <PageHeader
+        backHref={`/trips/${tripId}/expenses`}
+        title="Activity"
+        subtitle={`${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""}`}
+      />
 
       {/* ── Daily tracker (sub-feature of Activity per tester ask) ── */}
       <section className="rounded-2xl border border-border/60 bg-card p-4">
@@ -180,18 +184,31 @@ export function TransactionsPage({
           {derived.dailyBreakdown.map((d) => {
             const pct = dailyTarget && dailyTarget > 0 ? (d.spent / dailyTarget) * 100 : 0;
             const tone = pct >= 100 ? "bg-red-500" : pct >= 90 ? "bg-orange-500" : pct >= 75 ? "bg-amber-500" : "bg-emerald-500";
+            const today = isToday(d.date);
             return (
-              <li key={d.dateKey} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div className="flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-muted/60 shrink-0">
-                  <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground leading-none">
+              <li
+                key={d.dateKey}
+                className={`flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 ${
+                  today ? "rounded-xl -mx-2 px-2 bg-primary/5" : ""
+                }`}
+              >
+                <div className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl shrink-0 ${
+                  today ? "bg-primary text-primary-foreground" : "bg-muted/60"
+                }`}>
+                  <span className={`text-[9px] font-bold tracking-widest uppercase leading-none ${today ? "" : "text-muted-foreground"}`}>
                     Day
                   </span>
                   <span className="text-sm font-bold leading-tight tabular-nums">{d.dayNumber}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold truncate">
-                      {isToday(d.date) ? "Today" : format(d.date, "EEE MMM d")}
+                    <p className="text-xs font-bold truncate inline-flex items-center gap-1.5">
+                      {today ? "Today" : format(d.date, "EEE MMM d")}
+                      {today && (
+                        <span className="text-[9px] font-bold tracking-widest uppercase text-primary">
+                          live
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs font-bold tabular-nums text-right">
                       {currency} {fmt(d.spent)}
@@ -294,34 +311,6 @@ export function TransactionsPage({
 }
 
 /* ─── Shared bits for the sub-pages ──────────────────────────────────── */
-
-export function Header({
-  tripId,
-  title,
-  subtitle,
-}: {
-  tripId: string;
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <Link
-        href={`/trips/${tripId}/expenses`}
-        className="shrink-0 w-9 h-9 rounded-xl border border-border bg-card hover:bg-accent/40 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-        aria-label="Back to Money"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </Link>
-      <div className="min-w-0">
-        <h1 className="text-lg font-bold tracking-tight truncate">{title}</h1>
-        {subtitle && (
-          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function SlimRow({
   expense,

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
 import { ArrowRight } from "lucide-react";
-import { Header } from "./transactions-page";
+import { PageHeader } from "@/components/ui/page-header";
 
 const AVATAR_COLORS = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
@@ -106,9 +106,14 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
 
   return (
     <div className="space-y-5">
-      <Header tripId={tripId} title="Balances" subtitle="Who owes who · settle up" />
+      <PageHeader
+        backHref={`/trips/${tripId}/expenses`}
+        title="Balances"
+        subtitle={data.nets.length <= 1 ? "Solo trip — no balances to settle" : "Who owes who · settle up"}
+      />
 
-      {/* View switch */}
+      {/* View switch — hidden when nothing to settle (solo trip) */}
+      {members.length > 1 && (
       <div className="inline-flex items-center rounded-full border border-border p-0.5 bg-muted/40">
         <button
           type="button"
@@ -129,8 +134,27 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
           Settle up
         </button>
       </div>
+      )}
 
-      {view === "net" ? (
+      {/* B8: solo-trip case — the net/settle views show nonsense when there's
+          nobody else on the trip. Replace with a clean empty state that
+          explains why and links to invite. */}
+      {members.length <= 1 ? (
+        <div className="rounded-2xl border-2 border-dashed border-border/60 p-10 text-center space-y-3">
+          <p className="text-sm font-bold">No one to settle with yet</p>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Balances kick in once another traveller joins the trip — invite your
+            crew to start tracking who owes who.
+          </p>
+          <a
+            href={`/trips/${tripId}/members`}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-3.5 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
+          >
+            Invite the crew
+            <ArrowRight className="w-3 h-3" />
+          </a>
+        </div>
+      ) : view === "net" ? (
         <ul className="rounded-2xl border border-border/60 bg-card divide-y divide-border/60 overflow-hidden">
           {data.nets
             .slice()
