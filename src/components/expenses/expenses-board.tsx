@@ -370,7 +370,7 @@ export function ExpensesBoard({
                       />
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
+                  <span className="text-xs text-muted-foreground w-12 text-right tabular-nums whitespace-nowrap">
                     {Math.round(pct)}%
                   </span>
                 </div>
