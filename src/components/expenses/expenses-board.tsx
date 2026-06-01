@@ -311,6 +311,7 @@ export function ExpensesBoard({
           personalBudget={personalBudget}
           personalSpent={derived.personalSpentBase}
           memberCount={Math.max(1, members.length)}
+          fxRates={fxRates}
         />
       </div>
 

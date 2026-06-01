@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { track } from "@/lib/analytics/events";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";
 import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
+import { convert, type RateBundle } from "@/lib/fx";
 import { Plus, Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal, Users, User } from "lucide-react";
 
 const CATEGORIES: { value: ExpenseCategory; label: string; icon: React.ElementType; color: string }[] = [
@@ -52,6 +53,9 @@ interface Props {
   /** Total trip member count — used to compute your share for shared
    *  expenses. Must be at least 1. */
   memberCount: number;
+  /** B11: live FX rates so the dialog can show "≈ EUR 12" under the
+   *  amount while the user types in a non-base currency. */
+  fxRates?: RateBundle | null;
 }
 
 export function AddExpenseDialog({
@@ -62,6 +66,7 @@ export function AddExpenseDialog({
   personalBudget,
   personalSpent,
   memberCount,
+  fxRates = null,
 }: Props) {
   const currencyOptions = Array.from(
     new Set([baseCurrency, ...COMMON_CURRENCIES]),
@@ -179,7 +184,12 @@ export function AddExpenseDialog({
 
           {/* B4: amount as the centerpiece. Big borderless field on a
               soft card — feels like a fresh receipt. Currency picker is a
-              compact suffix so the eye reads "120 USD" naturally. */}
+              compact suffix so the eye reads "120 USD" naturally.
+
+              B11: live "≈ EUR …" hint shows the moment the user types an
+              amount in a non-base currency. Was completely missing
+              because the FX upstream silently 200'd with success:false;
+              fixed in lib/fx.ts. */}
           <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3">
             <div className="flex items-baseline gap-2">
               <input
@@ -206,6 +216,12 @@ export function AddExpenseDialog({
                 ))}
               </select>
             </div>
+            <LiveFxHint
+              amountInput={amountInput}
+              currency={currencyInput}
+              baseCurrency={baseCurrency}
+              fxRates={fxRates}
+            />
           </div>
 
           {/* B2 Budget v2 — live projection. */}
@@ -496,5 +512,36 @@ function CategoryPicker({
         </div>
       )}
     </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * B11: tiny pill that shows "≈ EUR 12.34" under the amount input when
+ * the user is typing in a non-base currency. Silent when the trip
+ * currency matches OR rates are missing — degrades cleanly.
+ */
+function LiveFxHint({
+  amountInput,
+  currency,
+  baseCurrency,
+  fxRates,
+}: {
+  amountInput: string;
+  currency: string;
+  baseCurrency: string;
+  fxRates: RateBundle | null;
+}) {
+  if (currency === baseCurrency) return null;
+  const parsed = parseFloat(normalizeDigits(amountInput));
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  const converted = convert(parsed, currency, baseCurrency, fxRates);
+  if (converted == null) return null;
+  return (
+    <p className="mt-1 text-[11px] text-muted-foreground tabular-nums">
+      ≈ {baseCurrency} {fmtAmount(converted)}{" "}
+      <span className="opacity-60">· live FX</span>
+    </p>
   );
 }

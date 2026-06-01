@@ -85,41 +85,47 @@ export default async function DashboardPage() {
 
   return (
     <DashboardShell>
-      {/* ── Greeting ───────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between flex-wrap gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+      {/* ── Greeting ─────────────────────────────────────────────────
+          B11: tighter top section. Was: large h1 + paragraph + 4 huge
+          stat tiles taking ~280px of vertical space. Now: h1 with
+          metrics inline as small pills, freeing the fold for actual
+          trip cards. */}
+      <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
             Good {timeOfDay}, {firstName} {timeEmoji}
           </h1>
-          <p className="text-muted-foreground mt-1.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {allTrips.length === 0
               ? "Create your first trip to get started"
               : ongoingTrips.length > 0
-              ? `You're currently on a trip — ${ongoingTrips[0].name}!`
+              ? `You're currently on a trip — ${ongoingTrips[0].name}`
               : upcomingTrips.length > 0
-              ? `${upcomingTrips.length} upcoming trip${upcomingTrips.length !== 1 ? "s" : ""} · Next: ${upcomingTrips[0].name}`
+              ? `${upcomingTrips.length} upcoming · Next: ${upcomingTrips[0].name}`
               : `${allTrips.length} trip${allTrips.length !== 1 ? "s" : ""} in your history`}
           </p>
         </div>
         <Link
           href="/trips/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-opacity"
+          prefetch
+          className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3 py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-opacity"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           New trip
         </Link>
       </div>
 
-      {/* ── Stats row ──────────────────────────────────────────────── */}
+      {/* B11: metrics inline as small chips. Single line on most viewports,
+          wraps on phones. No more 4-tile-grid that dominated the fold. */}
       {allTrips.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div className="flex flex-wrap items-center gap-1.5 mb-6">
           {stats.map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl border border-border/60 bg-card p-4 flex flex-col gap-1"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2.5 py-1 text-[11px]"
             >
-              <span className={`text-3xl font-bold ${s.color}`}>{s.value}</span>
-              <span className="text-xs text-muted-foreground font-medium">{s.label}</span>
+              <span className={`font-bold tabular-nums ${s.color}`}>{s.value}</span>
+              <span className="text-muted-foreground">{s.label.toLowerCase()}</span>
             </div>
           ))}
         </div>

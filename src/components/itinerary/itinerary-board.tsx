@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { motion } from "motion/react";
 import { format, parseISO, isToday } from "date-fns";
 import {
   Plus, Sparkles, Hotel, ChevronUp, ChevronDown, ExternalLink, Search,
@@ -257,30 +258,49 @@ export function ItineraryBoard({
         </div>
       </div>
 
-      {/* ── Add FAB (single big primary action, sits above the sheet) ── */}
+      {/* ── Add FAB ───────────────────────────────────────────────
+          B11: simplified positioning. Was using inline `bottom: …` to
+          jump above the sheet on open — felt jittery (FAB tracking the
+          sheet's drag). Now anchored to a fixed offset above the
+          sheet's peek strip (4.75rem = 3.75rem peek + 1rem gap). When
+          the sheet opens, the FAB stays put and the sheet slides up
+          over it — same vertical address, no awkward chase. */}
       <button
         type="button"
         onClick={() => openAddFor(focusedDay)}
-        style={{ bottom: sheetOpen ? "calc(45vh + 1rem)" : "5rem" }}
-        className="absolute z-30 right-4 sm:right-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white pl-3.5 pr-4 py-3 text-sm font-bold shadow-xl shadow-primary/40 hover:opacity-90 transition-all"
+        className="absolute z-30 right-4 sm:right-6 bottom-[4.75rem] inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white pl-3.5 pr-4 py-3 text-sm font-bold shadow-xl shadow-primary/40 hover:opacity-90 transition-opacity"
         title="Add to itinerary"
       >
         <Plus className="w-4 h-4" />
         Add place
       </button>
 
-      {/* ── Bottom sheet ─────────────────────────────────────────── */}
-      <div
-        className={`absolute left-0 right-0 bottom-0 z-20 transition-transform duration-300 ease-out ${
-          sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.75rem)]"
-        }`}
+      {/* ── Bottom sheet (B11: motion-driven drag-to-expand) ────────
+          Was a click-to-toggle button which made the sheet feel like a
+          panel you "open and close" rather than a true sheet. Now the
+          summary strip is the drag handle: pan up to expand, pan down
+          to collapse. Click still works as a fallback for fat-finger
+          users / non-touch devices. */}
+      <motion.div
+        className="absolute left-0 right-0 bottom-0 z-20"
+        animate={{ y: sheetOpen ? 0 : "calc(100% - 3.75rem)" }}
+        transition={{ type: "spring", damping: 28, stiffness: 280 }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.1, bottom: 0.1 }}
+        onDragEnd={(_, info) => {
+          // > 50px down OR a fast downward flick → collapse
+          if (info.offset.y > 50 || info.velocity.y > 500) setSheetOpen(false);
+          // > 50px up OR a fast upward flick → expand
+          else if (info.offset.y < -50 || info.velocity.y < -500) setSheetOpen(true);
+        }}
       >
         <div className="mx-auto max-w-3xl bg-card/95 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl overflow-hidden">
-          {/* Handle + summary header */}
+          {/* Handle + summary header — drag target. Tap still works. */}
           <button
             type="button"
             onClick={() => setSheetOpen((o) => !o)}
-            className="w-full px-5 pt-2.5 pb-2 flex flex-col items-stretch text-left hover:bg-accent/20 transition-colors"
+            className="w-full px-5 pt-2.5 pb-2 flex flex-col items-stretch text-left hover:bg-accent/20 transition-colors cursor-grab active:cursor-grabbing touch-none"
           >
             <div className="flex justify-center mb-1">
               <span className="block w-10 h-1 rounded-full bg-muted-foreground/30" />
@@ -459,7 +479,7 @@ export function ItineraryBoard({
             </DndContext>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Sheets / dialogs */}
       <AddPlaceSearch

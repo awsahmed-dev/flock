@@ -1,12 +1,16 @@
 /**
- * Real-time FX rates via exchangerate.host (free, no key, ~30 currencies via
- * ECB plus many world currencies). Refreshed once per 24h per base currency
- * — travel apps don't need minute-by-minute precision; what matters is that
- * "AED 200" shows up in someone's USD budget without the user doing math.
+ * Real-time FX rates via open.er-api.com — free, no API key, 160+
+ * currencies including the travel-heavy AED/SAR/THB/IDR/etc that the
+ * original exchangerate.host fallback didn't cover. Daily updates.
  *
- * We keep a module-level in-memory cache so each server runtime reuses the
- * same map across requests. In Vercel this is per-instance — fine, the
- * upstream is fast and bursting a fresh fetch every cold start is cheap.
+ * Migrated B11. exchangerate.host stopped serving the free /latest
+ * endpoint without an API key (now returns 200 + `{success: false,
+ * error: missing_access_key}`), which our parser was treating as a
+ * silent failure — so non-base-currency expenses never showed their
+ * "≈ USD …" conversion hint.
+ *
+ * Module-level in-memory cache, 24h TTL with 7d stale fallback, in-
+ * flight de-duplication. Per-instance in Vercel, which is fine.
  */
 
 interface RateBundle {
@@ -26,11 +30,11 @@ const STALE_MAX_MS = 7 * 24 * 60 * 60 * 1000;
 // page loads after TTL expiry into a single upstream fetch.
 const INFLIGHT = new Map<string, Promise<RateBundle | null>>();
 
-const API = "https://api.exchangerate.host/latest";
+const API = "https://open.er-api.com/v6/latest";
 
 async function fetchFresh(base: string): Promise<RateBundle | null> {
   try {
-    const url = `${API}?base=${encodeURIComponent(base)}`;
+    const url = `${API}/${encodeURIComponent(base)}`;
     // 5s timeout so a flaky network never stalls a page render. Falls back
     // to "no FX available" — the UI shows raw amounts in that case.
     const ctrl = new AbortController();
@@ -38,10 +42,17 @@ async function fetchFresh(base: string): Promise<RateBundle | null> {
     const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
     clearTimeout(t);
     if (!res.ok) return null;
-    const data = (await res.json()) as { base?: string; rates?: Record<string, number> };
-    if (!data?.rates || typeof data.rates !== "object") return null;
+    const data = (await res.json()) as {
+      result?: string;
+      base_code?: string;
+      rates?: Record<string, number>;
+    };
+    // open.er-api returns `{result: "success", base_code, rates}` on
+    // success and `{result: "error", error-type}` otherwise — be strict
+    // about checking so we don't cache garbage.
+    if (data?.result !== "success" || !data?.rates) return null;
     return {
-      base: (data.base ?? base).toUpperCase(),
+      base: (data.base_code ?? base).toUpperCase(),
       rates: data.rates,
       fetchedAt: Date.now(),
     };
