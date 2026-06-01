@@ -17,6 +17,7 @@ import {
 import { and, eq } from "drizzle-orm";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import type { ActionHubStats } from "@/components/trips/trip-action-hub";
+import { getRates, convert } from "@/lib/fx";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -48,12 +49,22 @@ export default async function TripPage({ params }: Props) {
       }),
       db.query.expenses.findMany({
         where: eq(expenses.tripId, id),
-        columns: { amount: true, scope: true },
+        // B12-followup: include `currency` so the dashboard can FX-
+        // convert mixed-currency expenses into the trip base.
+        // Previously the sum was raw — a JPY 500 + SAR 100 trip would
+        // show "USD 880" on the Money card while the expenses page
+        // (which does convert) showed the actual ~USD 130. Same fix
+        // applies to myUnsettled below.
+        columns: { amount: true, scope: true, currency: true },
       }),
       db.query.expenseSplits.findMany({
         where: and(eq(expenseSplits.userId, user.id), eq(expenseSplits.settled, false)),
         columns: { amountOwed: true, expenseId: true },
-        with: { expense: { columns: { tripId: true, paidBy: true } } },
+        with: {
+          expense: {
+            columns: { tripId: true, paidBy: true, currency: true },
+          },
+        },
       }),
       db.query.packingItems.findMany({
         where: eq(packingItems.tripId, id),
@@ -69,14 +80,35 @@ export default async function TripPage({ params }: Props) {
     differenceInCalendarDays(parseISO(trip.endDate), parseISO(trip.startDate)) + 1;
   const daysWithItems = new Set(itineraryRows.map((r) => r.dayDate)).size;
 
+  // B12-followup: FX-convert every row to the trip's base currency so
+  // the Money card matches the expenses page. Rates are stale-while-
+  // revalidate cached, so this is essentially free after the first hit
+  // per instance.
+  const fxRates = await getRates(trip.currency);
+  const toBase = (amount: number, ccy: string) => {
+    if (ccy === trip.currency) return amount;
+    const c = convert(amount, ccy, trip.currency, fxRates);
+    // If the FX provider is down (rates null) we'd rather show the raw
+    // amount than silently zero the row out — better to overshoot than
+    // tell users they spent nothing.
+    return c ?? amount;
+  };
+
   const sharedExpenses = expenseRows.filter((e) => e.scope === "shared");
-  const totalSpent = sharedExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const totalSpent = sharedExpenses.reduce(
+    (sum, e) => sum + toBase(e.amount ?? 0, e.currency),
+    0,
+  );
 
   // Filter splits to this trip's expenses + exclude rows where the user is
   // also the payer (their own splits don't count as "owed").
   const myUnsettled = splitRows
     .filter((s) => s.expense?.tripId === id && s.expense?.paidBy !== user.id)
-    .reduce((sum, s) => sum + (s.amountOwed ?? 0), 0);
+    .reduce(
+      (sum, s) =>
+        sum + toBase(s.amountOwed ?? 0, s.expense?.currency ?? trip.currency),
+      0,
+    );
 
   const stats: ActionHubStats = {
     itineraryCount: itineraryRows.length,

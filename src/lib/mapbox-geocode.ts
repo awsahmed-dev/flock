@@ -69,16 +69,17 @@ export async function searchPlaces({
     // B12-followup: proximity is only a *ranking* signal in Mapbox — a
     // search for "Petronas Towers" on a KL trip still surfaced "Petronas
     // Tower Street, South Africa" because the SA address scored higher
-    // on token match alone. Pin results geographically with a generous
-    // bbox (±3°, ~330 km) around the trip center. That's wide enough to
-    // catch metro-area + neighbouring cities but narrow enough to keep
-    // a different continent out of the suggestions.
+    // on token match alone. Pin results geographically with a tight bbox
+    // (±1.5°, ~165 km) around the trip center — wide enough to cover a
+    // metro area + day trips, narrow enough to exclude the next country
+    // (KL→Singapore is ~3° apart, so a wider bbox surfaced a Singaporean
+    // "Petronas" hit instead of the Twin Towers).
     const [lng, lat] = proximity;
     const bbox = [
-      Math.max(-180, lng - 3),
-      Math.max(-90, lat - 3),
-      Math.min(180, lng + 3),
-      Math.min(90, lat + 3),
+      Math.max(-180, lng - 1.5),
+      Math.max(-90, lat - 1.5),
+      Math.min(180, lng + 1.5),
+      Math.min(90, lat + 1.5),
     ];
     params.set("bbox", bbox.join(","));
   }
@@ -94,13 +95,26 @@ export async function searchPlaces({
         id?: string;
         text?: string;
         place_name?: string;
+        place_type?: string[];
         center?: [number, number];
         properties?: { category?: string };
         context?: Array<{ text?: string }>;
       }>;
     };
+    // Mapbox interleaves POIs and addresses by raw text score, which
+    // means a generic street can outrank the actual landmark a tourist
+    // is searching for. Re-rank so POIs come first, then addresses,
+    // then everything else — within each tier preserve Mapbox order.
+    const tier = (t?: string[]) => {
+      if (!t || t.length === 0) return 9;
+      if (t.includes("poi")) return 0;
+      if (t.includes("address")) return 1;
+      if (t.includes("place") || t.includes("locality")) return 2;
+      return 3;
+    };
     return (data.features ?? [])
       .filter((f) => Array.isArray(f.center) && f.center.length === 2)
+      .sort((a, b) => tier(a.place_type) - tier(b.place_type))
       .map((f) => ({
         id: f.id ?? `${f.center![0]},${f.center![1]}`,
         name: f.text ?? f.place_name ?? "Place",
