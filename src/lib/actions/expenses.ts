@@ -64,6 +64,10 @@ export async function createExpense(formData: FormData) {
   const scope: "shared" | "personal" =
     scopeRaw === "personal" ? "personal" : "shared";
 
+  // B12: optional receipt image URL from Splitwise-style upload field.
+  const receiptUrlRaw = (formData.get("receiptUrl") as string | null)?.trim();
+  const receiptUrl = receiptUrlRaw && /^https?:\/\//.test(receiptUrlRaw) ? receiptUrlRaw : null;
+
   const [expense] = await db
     .insert(expenses)
     .values({
@@ -76,6 +80,7 @@ export async function createExpense(formData: FormData) {
       scope,
       expenseDate,
       notes,
+      receiptUrl,
     })
     .returning();
 

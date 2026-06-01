@@ -224,6 +224,10 @@ export const expenses = pgTable("expenses", {
   scope: expenseScopeEnum("scope").default("shared").notNull(),
   expenseDate: date("expense_date").notNull(),
   notes: text("notes"),
+  // B12: optional receipt image stored in Supabase Storage under the
+  // trip-documents bucket. Splitwise-style attachment — null = no
+  // receipt. Shown as a thumbnail on the expense detail sheet.
+  receiptUrl: text("receipt_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

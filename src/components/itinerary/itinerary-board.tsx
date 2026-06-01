@@ -259,19 +259,18 @@ export function ItineraryBoard({
       </div>
 
       {/* ── Add FAB ───────────────────────────────────────────────
-          B11: simplified positioning. Was using inline `bottom: …` to
-          jump above the sheet on open — felt jittery (FAB tracking the
-          sheet's drag). Now anchored to a fixed offset above the
-          sheet's peek strip (4.75rem = 3.75rem peek + 1rem gap). When
-          the sheet opens, the FAB stays put and the sheet slides up
-          over it — same vertical address, no awkward chase. */}
+          B12: was sitting low-right above the sheet handle, covering
+          part of the day-list peek. Moved to top-right of the map
+          area (just under the AI/Hotels chips that were already up
+          there) so the entire sheet column is unobstructed. Smaller,
+          icon-led, label still readable but doesn't fight the list. */}
       <button
         type="button"
         onClick={() => openAddFor(focusedDay)}
-        className="absolute z-30 right-4 sm:right-6 bottom-[4.75rem] inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white pl-3.5 pr-4 py-3 text-sm font-bold shadow-xl shadow-primary/40 hover:opacity-90 transition-opacity"
+        className="absolute z-30 right-4 sm:right-6 top-16 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white pl-2.5 pr-3 py-2 text-xs font-bold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
         title="Add to itinerary"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-3.5 h-3.5" />
         Add place
       </button>
 

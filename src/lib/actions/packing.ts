@@ -133,94 +133,24 @@ export async function deletePackingItem(formData: FormData) {
   revalidatePath(`/trips/${tripId}/pack`);
 }
 
+import { buildPackingSuggestions } from "@/lib/packing-suggestions";
+
 /**
- * One-tap suggested-list bootstrapper. Adds a curated set of "every trip
- * needs these" items in a single insert. Skips duplicates by label so it's
- * safe to call twice. Drops items into "shared" scope.
+ * Local fallback so anything that still imports buildPackingSuggestions
+ * from this module continues to resolve. The real implementation now
+ * lives in src/lib/packing-suggestions.ts (pure data, no "use server").
  */
-export async function seedSuggestedPacking(formData: FormData) {
-  const user = await authed();
-  const tripId = formData.get("tripId") as string;
-  if (!tripId) throw new Error("Missing tripId");
-
-  const trip = await getTripWithMembership(tripId, user.id);
-  if (!trip) throw new Error("Trip not found or access denied");
-
-  await ensureProfile(user);
-
-  // B6: smarter defaults — generic essentials + destination-aware additions
-  // (beach trips get sunglasses & sandals, ski trips get gloves, etc).
-  const baseSuggestions: Array<{ label: string; category: string }> = [
-    // Docs
-    { label: "Passport", category: "docs" },
-    { label: "Travel insurance card", category: "docs" },
-    { label: "Boarding passes / tickets", category: "docs" },
-    // Tech
-    { label: "Phone charger", category: "tech" },
-    { label: "Power bank", category: "tech" },
-    { label: "Adapter / plug converter", category: "tech" },
-    { label: "Headphones", category: "tech" },
-    // Toiletries
-    { label: "Toothbrush", category: "toiletries" },
-    { label: "Toothpaste", category: "toiletries" },
-    { label: "Deodorant", category: "toiletries" },
-    { label: "Sunscreen", category: "toiletries" },
-    // Medical
-    { label: "First-aid kit", category: "medical" },
-    { label: "Painkillers", category: "medical" },
-    // Clothing essentials
-    { label: "Underwear (one per day)", category: "clothing" },
-    { label: "Socks (one per day)", category: "clothing" },
-    { label: "Comfortable walking shoes", category: "clothing" },
-    // General
-    { label: "Reusable water bottle", category: "general" },
-    { label: "Day bag / backpack", category: "general" },
-  ];
-
-  // Destination-aware add-ons
-  const dest = trip.destination?.toLowerCase() ?? "";
-  const extras: Array<{ label: string; category: string }> = [];
-  if (/(beach|bali|maldives|hawaii|cancun|phuket|santorini)/.test(dest)) {
-    extras.push(
-      { label: "Swimsuit", category: "clothing" },
-      { label: "Sandals / flip-flops", category: "clothing" },
-      { label: "Sunglasses", category: "clothing" },
-      { label: "Beach towel", category: "general" },
-      { label: "After-sun lotion", category: "toiletries" },
-    );
-  }
-  if (/(ski|snow|alps|aspen|whistler|hokkaido)/.test(dest)) {
-    extras.push(
-      { label: "Ski gloves", category: "clothing" },
-      { label: "Thermal base layers", category: "clothing" },
-      { label: "Wool socks", category: "clothing" },
-      { label: "Lip balm with SPF", category: "toiletries" },
-    );
-  }
-  if (/(hike|trek|mountain|patagonia|kilimanjaro|nepal|himalaya)/.test(dest)) {
-    extras.push(
-      { label: "Hiking boots", category: "clothing" },
-      { label: "Rain jacket", category: "clothing" },
-      { label: "Headlamp", category: "tech" },
-      { label: "Blister kit", category: "medical" },
-    );
-  }
-  if (/(japan|korea|taiwan|thailand|vietnam|indonesia|china|hong kong|singapore|asia)/.test(dest)) {
-    extras.push(
-      { label: "Slip-on shoes (temple visits)", category: "clothing" },
-      { label: "Pocket tissue / wet wipes", category: "general" },
-    );
-  }
-  if (/(europe|paris|rome|barcelona|prague|london|berlin)/.test(dest)) {
-    extras.push(
-      { label: "Compact umbrella", category: "general" },
-      { label: "Scarf / shawl", category: "clothing" },
-    );
-  }
-
-  const suggestions = [...baseSuggestions, ...extras];
-
-  // Find existing labels (case-insensitive) so we don't double-seed.
+/**
+ * B12: server entry — accepts a trip + the suggestion list, inserts
+ * any that don't already exist (idempotent by lowercased label).
+ * Shared between seedSuggestedPacking() (user-triggered) and
+ * createTrip() (auto-seed on trip create).
+ */
+async function insertSuggestions(
+  tripId: string,
+  userId: string,
+  suggestions: Array<{ label: string; category: string }>,
+) {
   const existing = await db
     .select({ label: packingItems.label })
     .from(packingItems)
@@ -234,13 +164,43 @@ export async function seedSuggestedPacking(formData: FormData) {
       userId: null,
       label: s.label,
       category: s.category,
-      createdBy: user.id,
+      createdBy: userId,
     }));
 
   if (toInsert.length > 0) {
     await db.insert(packingItems).values(toInsert);
   }
+}
+
+/**
+ * User-triggered "Start with suggestions" — same payload as the auto-
+ * seed during trip creation, but invoked from the Pack tab when the
+ * user clicks the suggestion CTA.
+ */
+export async function seedSuggestedPacking(formData: FormData) {
+  const user = await authed();
+  const tripId = formData.get("tripId") as string;
+  if (!tripId) throw new Error("Missing tripId");
+
+  const trip = await getTripWithMembership(tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
+
+  await ensureProfile(user);
+  await insertSuggestions(tripId, user.id, buildPackingSuggestions(trip.destination));
 
   revalidatePath(`/trips/${tripId}/packing`);
   revalidatePath(`/trips/${tripId}/pack`);
+}
+
+/**
+ * B12: auto-seed entry point called by createTrip(). Same insertion
+ * logic, but takes the destination directly since the trip is brand-new
+ * and not yet readable via getTripWithMembership.
+ */
+export async function autoSeedPackingForNewTrip(
+  tripId: string,
+  userId: string,
+  destination: string,
+) {
+  await insertSuggestions(tripId, userId, buildPackingSuggestions(destination));
 }

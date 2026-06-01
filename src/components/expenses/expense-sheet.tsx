@@ -25,6 +25,7 @@ interface Expense {
   paidBy: string;
   category: string;
   scope: "shared" | "personal";
+  receiptUrl?: string | null;
   expenseDate: string;
   notes: string | null;
   payer?: { displayName: string } | null;
@@ -220,8 +221,31 @@ export function ExpenseSheet({
 
       {/* Notes */}
       {expense.notes && (
-        <div className="rounded-xl border border-border/60 bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground italic">
+        <div className="rounded-xl border border-border/60 bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground italic mb-3">
           {expense.notes}
+        </div>
+      )}
+
+      {/* B12: receipt thumbnail. Tap opens the full image in a new tab —
+          simpler than a nested lightbox inside the sheet. */}
+      {expense.receiptUrl && (
+        <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground px-3 pt-2">
+            Receipt
+          </p>
+          <a
+            href={expense.receiptUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block px-3 pb-3 pt-2"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={expense.receiptUrl}
+              alt="Receipt"
+              className="w-full max-h-64 object-contain rounded-lg bg-muted/40"
+            />
+          </a>
         </div>
       )}
     </BottomSheet>

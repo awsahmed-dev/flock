@@ -2,7 +2,8 @@
 
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { trips, tripMembers, tripInvites, profiles } from "@/lib/db/schema";
+import { buildPackingSuggestions } from "@/lib/packing-suggestions";
+import { trips, tripMembers, tripInvites, profiles, packingItems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
@@ -65,6 +66,22 @@ export async function createTrip(formData: FormData) {
     token,
     createdBy: user.id,
   });
+
+  // B12: auto-seed packing list with destination-aware suggestions so
+  // the user lands on a populated checklist instead of an empty state.
+  // Pure local insert (no auth dance) — we already verified the user.
+  const suggestions = buildPackingSuggestions(destination);
+  if (suggestions.length > 0) {
+    await db.insert(packingItems).values(
+      suggestions.map((s) => ({
+        tripId: trip.id,
+        userId: null,
+        label: s.label,
+        category: s.category,
+        createdBy: user.id,
+      })),
+    );
+  }
 
   redirect(`/trips/${trip.id}`);
 }

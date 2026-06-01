@@ -11,7 +11,8 @@ import { track } from "@/lib/analytics/events";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";
 import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
 import { convert, type RateBundle } from "@/lib/fx";
-import { Plus, Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal, Users, User } from "lucide-react";
+import { Plus, Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal, Users, User, Receipt, X, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES: { value: ExpenseCategory; label: string; icon: React.ElementType; color: string }[] = [
   { value: "accommodation", label: "Stay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
@@ -85,10 +86,49 @@ export function AddExpenseDialog({
   // override in state so manual choices stick.
   const [description, setDescription] = useState("");
   const [categoryOverride, setCategoryOverride] = useState<ExpenseCategory | null>(null);
+  // B12: optional receipt image (Splitwise-style). URL after upload,
+  // null otherwise. Uploading flag drives the spinner on the chip.
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [receiptUploading, setReceiptUploading] = useState(false);
   const inferred = inferCategory(description);
   const category: ExpenseCategory = categoryOverride ?? inferred;
   const catMeta = categoryMeta(category);
   const CatIcon = catMeta.icon;
+
+  // B12: upload a receipt image straight from the dialog. Mirrors the
+  // pattern in AddDocumentDialog — pre-signs in the trip-documents
+  // bucket, returns the public URL we stash on the expense row.
+  async function handleReceiptPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Receipts must be images (jpg, png, heic)");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Receipt is too big — keep it under 10 MB");
+      return;
+    }
+    setReceiptUploading(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
+      const path = `${user.id}/${tripId}/receipt-${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("trip-documents")
+        .upload(path, file, { cacheControl: "3600", contentType: file.type || undefined });
+      if (upErr) throw new Error(upErr.message);
+      const { data } = supabase.storage.from("trip-documents").getPublicUrl(path);
+      setReceiptUrl(data.publicUrl);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setReceiptUploading(false);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -159,6 +199,8 @@ export function AddExpenseDialog({
           {/* Smart-category submission — the dropdown can override, otherwise
               this carries the inferred value. */}
           <input type="hidden" name="category" value={category} />
+          {/* B12: receipt URL travels with the form submit. */}
+          <input type="hidden" name="receiptUrl" value={receiptUrl ?? ""} />
 
           {/* B4: description first, with a live category icon next to it.
               The icon flips as the user types (burger → Food, uber →
@@ -273,6 +315,59 @@ export function AddExpenseDialog({
               <Label htmlFor="notes" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</Label>
               <Input id="notes" name="notes" placeholder="optional" className="h-9" />
             </div>
+          </div>
+
+          {/* B12: Splitwise-style receipt attach. Optional; uploads to
+              the trip-documents bucket, stashes the public URL on the
+              expense. Thumbnail preview with an X to remove. */}
+          <div>
+            <Label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
+              Receipt
+            </Label>
+            {receiptUrl ? (
+              <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-2.5 py-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={receiptUrl}
+                  alt="Receipt"
+                  className="w-10 h-10 rounded-lg object-cover shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate">Receipt attached</p>
+                  <p className="text-[10px] text-muted-foreground">Will show on the expense detail</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReceiptUrl(null)}
+                  className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+                  aria-label="Remove receipt"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="receipt-file"
+                className="flex items-center gap-2 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-accent/30 px-3 py-2.5 cursor-pointer transition-colors"
+              >
+                {receiptUploading ? (
+                  <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+                ) : (
+                  <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                <span className="text-xs font-bold text-muted-foreground">
+                  {receiptUploading ? "Uploading…" : "Attach a receipt photo (optional)"}
+                </span>
+                <input
+                  id="receipt-file"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleReceiptPick}
+                  disabled={receiptUploading}
+                />
+              </label>
+            )}
           </div>
 
         </form>

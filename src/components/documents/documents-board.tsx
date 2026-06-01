@@ -132,26 +132,39 @@ function PhotoGrid({
   onOpen: (photo: Document) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {photos.map((p) => (
         <button
           key={p.id}
           type="button"
           onClick={() => onOpen(p)}
-          className="aspect-square rounded-xl overflow-hidden bg-muted relative group"
+          className="text-left group"
           title={p.title}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={p.url}
-            alt={p.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          />
-          {p.dayDate && (
-            <span className="absolute bottom-1 left-1 text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">
-              {format(new Date(p.dayDate + "T00:00:00"), "MMM d")}
-            </span>
+          <div className="aspect-square rounded-xl overflow-hidden bg-muted relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={p.url}
+              alt={p.title}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+            {p.dayDate && (
+              <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">
+                {format(new Date(p.dayDate + "T00:00:00"), "MMM d")}
+              </span>
+            )}
+          </div>
+          {/* B12: title + description below thumbnail. Before, photos
+              were dropped into the grid with no caption — users wrote
+              titles and descriptions on upload and they just vanished. */}
+          <p className="mt-1.5 text-xs font-semibold text-foreground line-clamp-1">
+            {p.title}
+          </p>
+          {p.description && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2 leading-snug">
+              {p.description}
+            </p>
           )}
         </button>
       ))}
@@ -162,13 +175,13 @@ function PhotoGrid({
 function Lightbox({ photo, onClose }: { photo: Document; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4"
       onClick={onClose}
     >
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white z-10"
         aria-label="Close"
       >
         <X className="w-5 h-5" />
@@ -177,9 +190,30 @@ function Lightbox({ photo, onClose }: { photo: Document; onClose: () => void }) 
       <img
         src={photo.url}
         alt={photo.title}
-        className="max-w-full max-h-full object-contain rounded-xl"
+        className="max-w-full max-h-[calc(100vh-9rem)] object-contain rounded-xl"
         onClick={(e) => e.stopPropagation()}
       />
+      {/* B12: title + description caption. Was missing — users uploaded
+          a photo with "Hotel confirmation - check-in 3pm" and never saw
+          it again. */}
+      {(photo.title || photo.description) && (
+        <div
+          className="mt-4 max-w-2xl w-full text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-sm font-bold text-white">{photo.title}</p>
+          {photo.description && (
+            <p className="mt-1 text-xs text-white/80 leading-relaxed">
+              {photo.description}
+            </p>
+          )}
+          {photo.dayDate && (
+            <p className="mt-1 text-[11px] text-white/60">
+              {format(new Date(photo.dayDate + "T00:00:00"), "EEE, MMM d")}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

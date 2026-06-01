@@ -59,6 +59,11 @@ export async function searchPlaces({
   // Bias toward POIs and addresses; skip whole countries / regions which
   // would polluate the list with "Japan" entries for a Japan trip.
   params.set("types", "poi,address,place,locality,neighborhood");
+  // B12: force English names. Without `language`, Mapbox returns POI
+  // names in the local script — Osaka Castle becomes 大阪城, which is
+  // accurate but useless for English-speaking users who typed "osaka
+  // castle". `worldview=us` keeps disputed-territory naming neutral.
+  params.set("language", "en");
   if (proximity) params.set("proximity", proximity.join(","));
 
   try {

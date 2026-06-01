@@ -55,6 +55,7 @@ interface Expense {
   paidBy: string;
   category: string;
   scope: "shared" | "personal";
+  receiptUrl?: string | null;
   expenseDate: string;
   notes: string | null;
   createdAt: Date;
