@@ -8,14 +8,22 @@
  * pump a fat JSON payload over the wire.
  */
 
-const BASE = "https://api.foursquare.com/v3/places";
+// B12-followup-4: Foursquare migrated to the new Places API in late
+// 2025. The old api.foursquare.com/v3 endpoint started returning 401
+// for our existing key — same key works fine against the new endpoint
+// with `Bearer` auth + a pinned API-version header. The response shape
+// also changed (fsq_id → fsq_place_id, geocodes.main → top-level
+// latitude/longitude) so simplify() reads both layouts.
+const BASE = "https://places-api.foursquare.com/places";
+const API_VERSION = "2025-06-17";
 
 function authHeaders() {
   const key = process.env.FOURSQUARE_API_KEY;
   if (!key) throw new Error("FOURSQUARE_API_KEY not configured");
   return {
     Accept: "application/json",
-    Authorization: key,
+    Authorization: `Bearer ${key}`,
+    "X-Places-Api-Version": API_VERSION,
   };
 }
 
@@ -141,10 +149,22 @@ async function fetchTopTip(fsqId: string): Promise<string | null> {
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
 interface FsqRawResult {
-  fsq_id: string;
+  // New API uses `fsq_place_id`; we keep `fsq_id` as a back-compat alias
+  // in case Foursquare flips a tenant back. simplify() picks whichever
+  // is present.
+  fsq_place_id?: string;
+  fsq_id?: string;
   name?: string;
-  categories?: { id: number; name: string; icon?: { prefix?: string; suffix?: string } }[];
+  categories?: {
+    fsq_category_id?: string;
+    id?: number;
+    name: string;
+    icon?: { prefix?: string; suffix?: string };
+  }[];
   location?: { formatted_address?: string; locality?: string; country?: string };
+  // New API: top-level latitude/longitude. Legacy: geocodes.main.
+  latitude?: number;
+  longitude?: number;
   geocodes?: { main?: { latitude?: number; longitude?: number } };
   distance?: number;
 }
@@ -169,13 +189,13 @@ function simplify(r: FsqRawResult): FsqSearchHit {
     ? `${cat.icon.prefix}64${cat.icon.suffix}`
     : null;
   return {
-    fsqId: r.fsq_id,
+    fsqId: r.fsq_place_id ?? r.fsq_id ?? "",
     name: r.name ?? "",
     category: cat?.name ?? null,
     categoryIcon: icon,
     address: r.location?.formatted_address ?? null,
-    lat: r.geocodes?.main?.latitude ?? null,
-    lng: r.geocodes?.main?.longitude ?? null,
+    lat: r.latitude ?? r.geocodes?.main?.latitude ?? null,
+    lng: r.longitude ?? r.geocodes?.main?.longitude ?? null,
     distance: typeof r.distance === "number" ? r.distance : null,
   };
 }
