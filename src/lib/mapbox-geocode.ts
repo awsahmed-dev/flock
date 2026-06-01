@@ -64,7 +64,24 @@ export async function searchPlaces({
   // accurate but useless for English-speaking users who typed "osaka
   // castle". `worldview=us` keeps disputed-territory naming neutral.
   params.set("language", "en");
-  if (proximity) params.set("proximity", proximity.join(","));
+  if (proximity) {
+    params.set("proximity", proximity.join(","));
+    // B12-followup: proximity is only a *ranking* signal in Mapbox — a
+    // search for "Petronas Towers" on a KL trip still surfaced "Petronas
+    // Tower Street, South Africa" because the SA address scored higher
+    // on token match alone. Pin results geographically with a generous
+    // bbox (±3°, ~330 km) around the trip center. That's wide enough to
+    // catch metro-area + neighbouring cities but narrow enough to keep
+    // a different continent out of the suggestions.
+    const [lng, lat] = proximity;
+    const bbox = [
+      Math.max(-180, lng - 3),
+      Math.max(-90, lat - 3),
+      Math.min(180, lng + 3),
+      Math.min(90, lat + 3),
+    ];
+    params.set("bbox", bbox.join(","));
+  }
 
   try {
     const res = await fetch(

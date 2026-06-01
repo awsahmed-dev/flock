@@ -47,8 +47,19 @@ export default async function PackRoute({ params, searchParams }: Props) {
       userId={user.id}
       isOwner={isOwner}
       // Validate the URL ?view= against our known set so a typo doesn't
-      // crash the segmented control; default to docs.
-      initialView={view === "packing" ? "packing" : "docs"}
+      // crash the segmented control. When the user hasn't picked a sub-
+      // view, default to the side that has content — packing has the
+      // auto-seeded 20-item list on every new trip, so showing the empty
+      // Docs grid first hides the more useful view.
+      initialView={
+        view === "packing"
+          ? "packing"
+          : view === "docs"
+            ? "docs"
+            : docs.length === 0 && items.length > 0
+              ? "packing"
+              : "docs"
+      }
       documents={docs as any}
       packing={items.map((i) => ({
         id: i.id,

@@ -271,6 +271,7 @@ export function AddExpenseDialog({
             amountInput={amountInput}
             currencyInput={currencyInput}
             baseCurrency={baseCurrency}
+            fxRates={fxRates}
             scope={scope}
             memberCount={memberCount}
             tripBudget={tripBudget}
@@ -395,6 +396,7 @@ function BudgetProjection({
   amountInput,
   currencyInput,
   baseCurrency,
+  fxRates,
   scope,
   memberCount,
   tripBudget,
@@ -405,6 +407,7 @@ function BudgetProjection({
   amountInput: string;
   currencyInput: string;
   baseCurrency: string;
+  fxRates: RateBundle | null;
   scope: "shared" | "personal";
   memberCount: number;
   tripBudget: number | null;
@@ -414,28 +417,36 @@ function BudgetProjection({
 }) {
   const parsed = parseFloat(normalizeDigits(amountInput));
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  // Only project when the expense currency matches trip base — otherwise
-  // we'd be comparing oranges to apples.
+  // B12-followup: when the expense is in a non-base currency, FX-convert
+  // to baseCurrency so the projection reflects the actual budget impact.
+  // Previously this branch bailed with a "Budget projection skipped"
+  // message — but the server-side budget tracker DOES apply live FX, so
+  // the dialog was lying to the user. If rates are missing (FX provider
+  // down), keep the original honest fallback.
+  let baseAmount = parsed;
   if (currencyInput !== baseCurrency) {
-    return (
-      <p className="text-[11px] text-muted-foreground bg-muted/40 rounded-md px-3 py-1.5">
-        Budget projection skipped — expense currency differs from trip base
-        ({baseCurrency}).
-      </p>
-    );
+    const converted = convert(parsed, currencyInput, baseCurrency, fxRates);
+    if (converted == null) {
+      return (
+        <p className="text-[11px] text-muted-foreground bg-muted/40 rounded-md px-3 py-1.5">
+          Live FX unavailable — projection skipped. Submitting still works.
+        </p>
+      );
+    }
+    baseAmount = converted;
   }
 
   // Trip projection — only meaningful for shared expenses.
-  const tripImpact = scope === "shared" ? parsed : 0;
+  const tripImpact = scope === "shared" ? baseAmount : 0;
   const tripProjected = sharedSpent + tripImpact;
 
   // Personal projection — full amount for personal, your-share for shared.
   const personalImpact =
     scope === "personal"
-      ? parsed
+      ? baseAmount
       : memberCount > 0
-        ? parsed / memberCount
-        : parsed;
+        ? baseAmount / memberCount
+        : baseAmount;
   const personalProjected = personalSpent + personalImpact;
 
   const showTrip = tripBudget != null && tripBudget > 0 && tripImpact > 0;
