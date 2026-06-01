@@ -48,6 +48,10 @@ export function AddPlaceSearch({
   // Picked-from-suggestion coordinates. NULL when the user is typing
   // free-text. Set on suggestion pick, cleared on title edit.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // Foursquare id of the picked suggestion, if any. Lets us short-circuit
+  // the background enrichment pass — we already have category + coords.
+  const [pickedFsqId, setPickedFsqId] = useState<string | null>(null);
+  const [pickedFsqCategory, setPickedFsqCategory] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<GeoSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -65,6 +69,8 @@ export function AddPlaceSearch({
       setTitle("");
       setLocation("");
       setCoords(null);
+      setPickedFsqId(null);
+      setPickedFsqCategory(null);
       setSuggestions([]);
       setShowSuggestions(false);
       setDayDate(defaultDay ?? days[0] ?? "");
@@ -74,7 +80,13 @@ export function AddPlaceSearch({
     }
   }, [open, days, defaultDay]);
 
-  // Debounced Mapbox autocomplete on title typing
+  // Debounced place autocomplete on title typing.
+  //
+  // B12-followup-3: hit Foursquare *first* via /api/places/search — it's
+  // a real POI database, so "KLCC Towers", "Petronas Twin Towers",
+  // restaurants, museums all resolve to the actual landmark instead of
+  // a same-name street. Fall back to Mapbox geocoder if Foursquare
+  // returns nothing (free-form addresses, obscure locations).
   useEffect(() => {
     if (!open) return;
     const q = title.trim();
@@ -86,23 +98,68 @@ export function AddPlaceSearch({
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     if (abortRef.current) abortRef.current.abort();
     debounceRef.current = window.setTimeout(async () => {
-      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-      if (!token) {
-        setSuggestions([]);
-        return;
-      }
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       setSearching(true);
       try {
-        const results = await searchPlaces({
-          query: q,
-          proximity: destinationCenter ?? undefined,
-          token,
-          signal: ctrl.signal,
-          limit: 6,
-        });
-        setSuggestions(results);
+        // ── 1. Foursquare POI search (server route — keeps API key off the
+        //    client). Biased by trip center lat/lng so "ramen" in a Tokyo
+        //    trip returns Tokyo ramen, not Brooklyn.
+        const fsqParams = new URLSearchParams({ q });
+        if (destinationCenter) {
+          fsqParams.set("lng", String(destinationCenter[0]));
+          fsqParams.set("lat", String(destinationCenter[1]));
+        } else if (destination) {
+          fsqParams.set("near", destination);
+        }
+        let fsqResults: GeoSuggestion[] = [];
+        try {
+          const res = await fetch(`/api/places/search?${fsqParams}`, {
+            signal: ctrl.signal,
+          });
+          if (res.ok) {
+            const data = (await res.json()) as {
+              results?: Array<{
+                fsqId: string;
+                name: string;
+                category: string | null;
+                address: string | null;
+                lat: number | null;
+                lng: number | null;
+              }>;
+            };
+            fsqResults = (data.results ?? [])
+              .filter((r) => r.lat != null && r.lng != null)
+              .map((r) => ({
+                id: r.fsqId,
+                name: r.name,
+                context: r.address ?? r.category,
+                lat: r.lat!,
+                lng: r.lng!,
+                category: r.category,
+              }));
+          }
+        } catch {
+          // Network/abort — drop to Mapbox fallback below.
+        }
+
+        // ── 2. Mapbox fallback for free-form text + addresses when FSQ
+        //    came back empty. Keeps the "just type anything" promise.
+        let mbResults: GeoSuggestion[] = [];
+        if (fsqResults.length === 0) {
+          const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+          if (token) {
+            mbResults = await searchPlaces({
+              query: q,
+              proximity: destinationCenter ?? undefined,
+              token,
+              signal: ctrl.signal,
+              limit: 6,
+            });
+          }
+        }
+
+        setSuggestions(fsqResults.length > 0 ? fsqResults : mbResults);
         setShowSuggestions(true);
       } finally {
         setSearching(false);
@@ -111,12 +168,22 @@ export function AddPlaceSearch({
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [title, destinationCenter, open]);
+  }, [title, destinationCenter, destination, open]);
 
   function handlePickSuggestion(s: GeoSuggestion) {
     setTitle(s.name);
     setLocation(s.context ?? "");
     setCoords({ lat: s.lat, lng: s.lng });
+    // FSQ ids are short alphanumeric — Mapbox ids start with "poi.", etc.
+    // We treat anything that isn't a Mapbox-shaped id as a Foursquare hit
+    // so the server can fetch photo/rating later.
+    if (!/^[a-z]+\.[a-z0-9]+/i.test(s.id)) {
+      setPickedFsqId(s.id);
+      setPickedFsqCategory(s.category);
+    } else {
+      setPickedFsqId(null);
+      setPickedFsqCategory(null);
+    }
     setSuggestions([]);
     setShowSuggestions(false);
   }
@@ -126,6 +193,10 @@ export function AddPlaceSearch({
     // If user edits the title after picking a suggestion, drop the picked
     // coords — we don't want to attach Tokyo coords to a free-text entry.
     if (coords) setCoords(null);
+    if (pickedFsqId) {
+      setPickedFsqId(null);
+      setPickedFsqCategory(null);
+    }
   }
 
   function handleSubmit() {
@@ -145,13 +216,12 @@ export function AddPlaceSearch({
           locationName: location.trim() || null,
           locationLat: coords?.lat ?? null,
           locationLng: coords?.lng ?? null,
-          // No FSQ id from this path. The server action takes one but it's
-          // an empty string → we treat it as a manual add. We'd ideally
-          // overload the action; the current shape requires fsqId so we
-          // pass an empty string and the server stores it as such.
-          // Backfill via background enrichment in a follow-up.
-          fsqId: "",
-          fsqCategory: null,
+          // B12-followup-3: when the user picked a Foursquare suggestion
+          // we have the real fsq id + category — pass them through so
+          // the server can skip the background re-search and go straight
+          // to photo/rating enrichment.
+          fsqId: pickedFsqId ?? "",
+          fsqCategory: pickedFsqCategory,
           costEstimate: cost && Number.isFinite(cost) ? cost : null,
         });
         toast.success(`Added "${title.trim()}" to Day ${days.indexOf(dayDate) + 1}`);
