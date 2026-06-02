@@ -41,6 +41,7 @@ import { format, parseISO } from "date-fns";
 import dynamicImport from "next/dynamic";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { EnablePushButton } from "@/components/pwa/enable-push";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 // Lazy load the heavy components that aren't needed at first paint:
 //   - ChatSidebar pulls in supabase realtime + motion + the AI chip
@@ -252,6 +253,11 @@ export function TripShell({ trip, isOwner, children }: Props) {
               settings, sign out) lives inside the avatar dropdown so
               the header isn't a wall of icons. */}
           <div className="flex items-center gap-1.5">
+            {/* B13b: bell with unread badge + dropdown. Sits before
+                Crew so notifications get prime real-estate in the
+                header. */}
+            <NotificationBell />
+
             <button
               onClick={() => setCrewOpen(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

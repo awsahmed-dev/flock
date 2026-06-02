@@ -11,6 +11,7 @@ import { maybePostBudgetAlert } from "@/lib/ai/budget-watcher";
 import { sendEmail } from "@/lib/email/send";
 import { renderExpenseLogged } from "@/lib/email/templates";
 import { sendPush } from "@/lib/push/send";
+import { recordEvent } from "@/lib/inbox";
 
 async function getAuthenticatedUser() {
   const user = await getCurrentUser();
@@ -123,19 +124,32 @@ export async function createExpense(formData: FormData) {
   // Email every debtor with the line they owe. Idempotency key includes the
   // recipient so retried inserts (we use no-op upsert above) only ever
   // dispatch one email per (expense, recipient) within Resend's 24h window.
+  const payerDisplayName =
+    (user as any).user_metadata?.display_name ||
+    (user as any).email?.split("@")[0] ||
+    "Someone";
+
   notifyExpenseLogged({
     tripId,
     tripName: trip.name,
     expenseId: expense.id,
     payerId: user.id,
-    payerName:
-      (user as any).user_metadata?.display_name ||
-      (user as any).email?.split("@")[0] ||
-      "Someone",
+    payerName: payerDisplayName,
     title,
     amount,
     currency: currency,
   }).catch((e) => console.error("[expenses/notify] failed:", e));
+
+  // B13b: in-app inbox row for every other trip member.
+  recordEvent({
+    tripId,
+    kind: "expense_logged",
+    actorUserId: user.id,
+    title: `${payerDisplayName} paid for ${title}`,
+    body: `${currency} ${amount.toLocaleString()} · ${trip.name}`,
+    payload: { expenseId: expense.id, amount, currency },
+    recipients: null,
+  });
 
   revalidatePath(`/trips/${tripId}/expenses`);
   revalidatePath(`/trips/${tripId}`);
@@ -240,6 +254,7 @@ export async function settleSplit(formData: FormData) {
   // Only the payer or the debtor can settle
   const split = await db.query.expenseSplits.findFirst({
     where: eq(expenseSplits.id, splitId),
+    with: { expense: { columns: { paidBy: true, title: true, currency: true } } },
   });
   if (!split) throw new Error("Split not found");
 
@@ -247,6 +262,29 @@ export async function settleSplit(formData: FormData) {
     .update(expenseSplits)
     .set({ settled: true, settledAt: new Date() })
     .where(eq(expenseSplits.id, splitId));
+
+  // B13b: tell the payer that this debt was just cleared. Skip if the
+  // payer is the one settling their own (already-settled) row, which
+  // shouldn't reach here but defend anyway.
+  if (split.expense && split.expense.paidBy !== user.id) {
+    const debtorProfile = await db.query.profiles.findFirst({
+      where: (p, { eq }) => eq(p.id, user.id),
+      columns: { displayName: true },
+    });
+    recordEvent({
+      tripId,
+      kind: "split_settled",
+      actorUserId: user.id,
+      title: `${debtorProfile?.displayName ?? "Someone"} settled up`,
+      body: `${split.expense.currency} ${split.amountOwed.toLocaleString()} for ${split.expense.title}`,
+      payload: {
+        splitId,
+        amount: split.amountOwed,
+        currency: split.expense.currency,
+      },
+      recipients: [split.expense.paidBy],
+    });
+  }
 
   revalidatePath(`/trips/${tripId}/expenses`);
 }

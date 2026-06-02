@@ -286,11 +286,28 @@ export const notifications = pgTable("notifications", {
   userId: uuid("user_id")
     .notNull()
     .references(() => profiles.id),
-  tripId: uuid("trip_id").references(() => trips.id, { onDelete: "cascade" }),
-  type: notificationTypeEnum("type").notNull(),
-  title: text("title").notNull(),
+  // B13b: tripId is required for the in-app inbox click destination —
+  // every kind we record is trip-scoped. The DB column is still
+  // nullable for back-compat with the earlier shape, but new inserts
+  // always include it.
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  // B13b: switched from notificationTypeEnum to plain text in the DB
+  // (migration b13b_notifications_type_to_text) so new kinds —
+  // split_settled, vote_closed, trip_starting_soon — don't need an
+  // enum migration each time.
+  type: text("type").notNull(),
+  title: text("title"),
   body: text("body"),
+  // B13b: actor + payload added so the renderer can build copy
+  // without re-querying. payload is jsonb for forward compat.
+  actorUserId: uuid("actor_user_id").references(() => profiles.id, {
+    onDelete: "set null",
+  }),
+  payload: jsonb("payload"),
   read: boolean("read").default(false).notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

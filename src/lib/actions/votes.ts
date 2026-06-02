@@ -11,6 +11,7 @@ import { sendEmail } from "@/lib/email/send";
 import { renderVoteOpened } from "@/lib/email/templates";
 import { tripMembers } from "@/lib/db/schema";
 import { sendPush } from "@/lib/push/send";
+import { recordEvent } from "@/lib/inbox";
 
 async function getAuthenticatedUser() {
   const user = await getCurrentUser();
@@ -106,6 +107,21 @@ export async function createVote(formData: FormData) {
   notifyVoteOpened(tripId, vote.id, user.id, question.trim(), optionLabels).catch(
     (e) => console.error("[votes/notify] failed:", e),
   );
+
+  // B13b: in-app inbox row for every other trip member.
+  const actorName =
+    (user as any).user_metadata?.display_name ||
+    (user as any).email?.split("@")[0] ||
+    "Someone";
+  recordEvent({
+    tripId,
+    kind: "vote_opened",
+    actorUserId: user.id,
+    title: `${actorName} opened a vote`,
+    body: question.trim(),
+    payload: { voteId: vote.id, question: question.trim() },
+    recipients: null,
+  });
 
   revalidatePath(`/trips/${tripId}/votes`);
   revalidatePath(`/trips/${tripId}`);
