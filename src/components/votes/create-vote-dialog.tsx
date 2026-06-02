@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
@@ -62,8 +63,17 @@ export function CreateVoteDialog({ tripId }: Props) {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
         }
-        setOpen(false);
-        setOptions([{ label: "", cost: "" }, { label: "", cost: "" }]);
+        // B13a: flushSync forces the dialog close *before* the
+        // revalidatePath-driven page refresh re-renders the tree.
+        // Without it, this setOpen sat in the transition queue behind
+        // the Suspense refresh for 3-5s and the sheet looked stuck.
+        flushSync(() => {
+          setOpen(false);
+          setOptions([
+            { label: "", cost: "" },
+            { label: "", cost: "" },
+          ]);
+        });
       } catch (err) {
         toast.error((err as Error).message || "Failed to create vote");
       }

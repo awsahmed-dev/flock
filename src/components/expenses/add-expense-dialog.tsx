@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
@@ -149,7 +150,11 @@ export function AddExpenseDialog({
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
         }
-        setOpen(false);
+        // B13a: see note on votes' CreateVoteDialog — flushSync makes
+        // the close commit before revalidatePath's Suspense refresh.
+        flushSync(() => {
+          setOpen(false);
+        });
         (e.target as HTMLFormElement).reset();
       } catch (err) {
         toast.error((err as Error).message || "Failed to log expense");
