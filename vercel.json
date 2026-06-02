@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/pre-trip-nudge",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/notif-digest",
+      "schedule": "0 16 * * *"
     }
   ]
 }

@@ -65,6 +65,12 @@ export const profiles = pgTable("profiles", {
   displayName: text("display_name").notNull(),
   avatarUrl: text("avatar_url"),
   email: text("email"),
+  // B13c: per-channel notification opt-outs. Defaults are all-on so a
+  // brand-new account hears about everything until they tune it down.
+  notifInapp: boolean("notif_inapp").default(true).notNull(),
+  notifEmail: boolean("notif_email").default(true).notNull(),
+  notifPush: boolean("notif_push").default(true).notNull(),
+  notifDigest: boolean("notif_digest").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

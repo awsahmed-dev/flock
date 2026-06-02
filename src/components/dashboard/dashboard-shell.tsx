@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Logo } from "@/components/ui/logo";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface Props {
   children: React.ReactNode;
@@ -43,7 +44,10 @@ export function DashboardShell({ children }: Props) {
             <Logo variant="full" size="sm" />
           </Link>
 
-          <ThemeToggle />
+          <div className="flex items-center gap-1.5">
+            <NotificationBell />
+            <ThemeToggle />
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -63,6 +67,12 @@ export function DashboardShell({ children }: Props) {
                 className="gap-2"
               >
                 <LayoutDashboard className="w-4 h-4" /> Dashboard
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={<Link href="/account/notifications" />}
+                className="gap-2"
+              >
+                <Settings className="w-4 h-4" /> Notification settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

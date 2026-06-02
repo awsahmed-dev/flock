@@ -263,6 +263,17 @@ export async function closeVote(formData: FormData) {
     .set({ status: "closed", resolvedAt: new Date() })
     .where(eq(votes.id, voteId));
 
+  // B13c: tell the crew the vote was resolved.
+  recordEvent({
+    tripId,
+    kind: "vote_closed",
+    actorUserId: user.id,
+    title: `Vote closed: ${vote.question}`,
+    body: "Tap to see the result",
+    payload: { voteId },
+    recipients: null,
+  });
+
   revalidatePath(`/trips/${tripId}/votes`);
 }
 

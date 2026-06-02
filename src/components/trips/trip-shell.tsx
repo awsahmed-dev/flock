@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Users,
+  Bell,
   LogOut,
   LayoutDashboard,
   MapPin,
@@ -304,6 +305,13 @@ export function TripShell({ trip, isOwner, children }: Props) {
                   className="gap-2"
                 >
                   <LayoutDashboard className="w-4 h-4" /> All trips
+                </DropdownMenuItem>
+                {/* B13c: account-level notification preferences. */}
+                <DropdownMenuItem
+                  render={<Link href="/account/notifications" />}
+                  className="gap-2"
+                >
+                  <Bell className="w-4 h-4" /> Notification settings
                 </DropdownMenuItem>
                 {/* Trip Settings lives in the header now (B3-a) — kept here as
                     a redundant entry only when the viewer is a non-owner so the

@@ -11,7 +11,7 @@
  */
 
 import { db } from "@/lib/db";
-import { notifications, tripMembers } from "@/lib/db/schema";
+import { notifications, tripMembers, profiles } from "@/lib/db/schema";
 import { and, eq, isNull, desc, inArray } from "drizzle-orm";
 
 export type NotifKind =
@@ -60,8 +60,19 @@ export async function recordEvent(args: RecordArgs): Promise<void> {
     ];
     if (uniq.length === 0) return;
 
+    // B13c: respect per-user `notif_inapp` opt-out. One short query —
+    // we'd rather skip an insert than push to someone who muted us.
+    const profilesRows = await db
+      .select({ id: profiles.id, notifInapp: profiles.notifInapp })
+      .from(profiles)
+      .where(inArray(profiles.id, uniq));
+    const optedIn = profilesRows
+      .filter((p) => p.notifInapp)
+      .map((p) => p.id);
+    if (optedIn.length === 0) return;
+
     await db.insert(notifications).values(
-      uniq.map((userId) => ({
+      optedIn.map((userId) => ({
         userId,
         tripId: args.tripId,
         type: args.kind,

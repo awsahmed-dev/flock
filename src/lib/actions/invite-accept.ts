@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email/send";
 import { renderInviteAccepted } from "@/lib/email/templates";
 import { sendPush } from "@/lib/push/send";
+import { recordEvent } from "@/lib/inbox";
 
 /**
  * Explicit accept for an invite link. Used by the /invite/[token] preview
@@ -80,6 +81,17 @@ export async function acceptInvite(formData: FormData) {
   notifyJoined(invite.tripId, newMember.id, displayName, user.id).catch((e) =>
     console.error("[invite/notify] failed:", e),
   );
+
+  // B13c: in-app inbox row for everyone *else* on the trip.
+  recordEvent({
+    tripId: invite.tripId,
+    kind: "member_joined",
+    actorUserId: user.id,
+    title: `${displayName} joined the trip`,
+    body: "Tap to see the crew",
+    payload: { memberId: newMember.id, joinerUserId: user.id },
+    recipients: null,
+  });
 
   redirect(`/trips/${invite.tripId}`);
 }
