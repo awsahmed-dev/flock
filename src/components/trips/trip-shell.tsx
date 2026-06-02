@@ -39,6 +39,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import dynamicImport from "next/dynamic";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { EnablePushButton } from "@/components/pwa/enable-push";
@@ -242,8 +243,8 @@ export function TripShell({ trip, isOwner, children }: Props) {
             <div className="min-w-0">
               <p className="font-semibold truncate leading-tight">{trip.name}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {trip.destination} · {format(parseISO(trip.startDate), "MMM d")} –{" "}
-                {format(parseISO(trip.endDate), "MMM d, yyyy")}
+                {trip.destination} · {format(parseDateOnly(trip.startDate), "MMM d")} –{" "}
+                {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
               </p>
             </div>
           </div>

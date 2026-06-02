@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { TripGrid, SuggestedTrips } from "@/components/trips/trip-grid";
 import { parseISO, differenceInDays, isPast, isFuture, format } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import Link from "next/link";
 import { Calendar, MapPin, Clock, ArrowRight, Plus, Globe2 } from "lucide-react";
 import type { InferSelectModel } from "drizzle-orm";
@@ -58,15 +59,15 @@ export default async function DashboardPage() {
 
   const now = new Date();
   const ongoingTrips = allTrips.filter(
-    (t) => parseISO(t.startDate) <= now && now <= parseISO(t.endDate)
+    (t) => parseDateOnly(t.startDate) <= now && now <= parseDateOnly(t.endDate)
   );
   const upcomingTrips = allTrips
-    .filter((t) => isFuture(parseISO(t.startDate)))
-    .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-  const pastTrips = allTrips.filter((t) => isPast(parseISO(t.endDate)));
+    .filter((t) => isFuture(parseDateOnly(t.startDate)))
+    .sort((a, b) => parseDateOnly(a.startDate).getTime() - parseDateOnly(b.startDate).getTime());
+  const pastTrips = allTrips.filter((t) => isPast(parseDateOnly(t.endDate)));
 
   const totalDays = allTrips.reduce(
-    (s, t) => s + differenceInDays(parseISO(t.endDate), parseISO(t.startDate)) + 1,
+    (s, t) => s + differenceInDays(parseDateOnly(t.endDate), parseDateOnly(t.startDate)) + 1,
     0
   );
 
@@ -162,12 +163,12 @@ export default async function DashboardPage() {
                   <div className="flex flex-wrap items-center gap-3 mt-3">
                     <span className="flex items-center gap-1.5 text-white/80 text-sm">
                       <Calendar className="w-3.5 h-3.5" />
-                      {format(parseISO(spotlight.startDate), "MMM d")} –{" "}
-                      {format(parseISO(spotlight.endDate), "MMM d, yyyy")}
+                      {format(parseDateOnly(spotlight.startDate), "MMM d")} –{" "}
+                      {format(parseDateOnly(spotlight.endDate), "MMM d, yyyy")}
                     </span>
                     <span className="flex items-center gap-1.5 text-white/80 text-sm">
                       <Clock className="w-3.5 h-3.5" />
-                      {differenceInDays(parseISO(spotlight.endDate), parseISO(spotlight.startDate)) + 1} days
+                      {differenceInDays(parseDateOnly(spotlight.endDate), parseDateOnly(spotlight.startDate)) + 1} days
                     </span>
                     {spotlight.budgetTotal && (
                       <span className="flex items-center gap-1.5 text-white/80 text-sm">

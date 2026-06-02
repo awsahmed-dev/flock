@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import {
   MapPin, Calendar, Clock, DollarSign,
   Ticket, Hotel, Bus, Utensils, Star,
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: `Check out this ${trip.destination} trip planned with Paxawa`,
     openGraph: {
       title: `${trip.name} · Paxawa`,
-      description: `${differenceInDays(parseISO(trip.endDate), parseISO(trip.startDate)) + 1} days in ${trip.destination}`,
+      description: `${differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1} days in ${trip.destination}`,
     },
   };
 }
@@ -157,8 +158,8 @@ export default async function SharePage({ params }: Props) {
   );
 
   // Build ordered day list
-  const start = parseISO(trip.startDate);
-  const end = parseISO(trip.endDate);
+  const start = parseDateOnly(trip.startDate);
+  const end = parseDateOnly(trip.endDate);
   const totalDays = differenceInDays(end, start) + 1;
   const days: string[] = Array.from({ length: totalDays }, (_, i) => {
     const d = new Date(start);

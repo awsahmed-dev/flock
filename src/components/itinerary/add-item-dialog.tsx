@@ -9,6 +9,7 @@ import { createItineraryItem } from "@/lib/actions/itinerary";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import type { InferSelectModel } from "drizzle-orm";
 import type { itineraryItems } from "@/lib/db/schema";
 
@@ -99,7 +100,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
       open
       onClose={onClose}
       title="Add item"
-      subtitle={format(parseISO(dayDate), "EEEE, MMM d")}
+      subtitle={format(parseDateOnly(dayDate), "EEEE, MMM d")}
       size="md"
       footer={
         <div className="flex gap-2 justify-end">

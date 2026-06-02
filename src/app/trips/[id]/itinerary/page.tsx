@@ -8,6 +8,7 @@ import { itineraryItems } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO, format } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import { isOwner as checkOwner } from "@/lib/permissions";
 import { geocode } from "@/lib/geocode";
 import { getRates } from "@/lib/fx";
@@ -37,8 +38,8 @@ export default async function ItineraryPage({ params }: Props) {
   ]);
 
   const days = eachDayOfInterval({
-    start: parseISO(trip.startDate),
-    end: parseISO(trip.endDate),
+    start: parseDateOnly(trip.startDate),
+    end: parseDateOnly(trip.endDate),
   }).map((d) => format(d, "yyyy-MM-dd"));
 
   // Serialize Date fields so Next.js can safely pass them to the client

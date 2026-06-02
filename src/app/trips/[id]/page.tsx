@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { differenceInCalendarDays, parseISO } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import type { ActionHubStats } from "@/components/trips/trip-action-hub";
 import { getRates, convert } from "@/lib/fx";
 
@@ -77,7 +78,7 @@ export default async function TripPage({ params }: Props) {
     ]);
 
   const totalDays =
-    differenceInCalendarDays(parseISO(trip.endDate), parseISO(trip.startDate)) + 1;
+    differenceInCalendarDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
   const daysWithItems = new Set(itineraryRows.map((r) => r.dayDate)).size;
 
   // B12-followup: FX-convert every row to the trip's base currency so

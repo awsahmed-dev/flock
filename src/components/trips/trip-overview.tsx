@@ -15,6 +15,7 @@ import {
   Hotel,
 } from "lucide-react";
 import { format, parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import Link from "next/link";
 import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
@@ -93,7 +94,7 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
 
-  const nights = differenceInDays(parseISO(trip.endDate), parseISO(trip.startDate));
+  const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
   const gradient = getGradient(trip.id);
   const tripStatus = getTripStatus(trip.startDate, trip.endDate);
 
@@ -142,7 +143,7 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
               <div className="flex items-center gap-3 mt-2 text-[11px] text-white/80 flex-wrap">
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d")}
+                  {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d")}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Clock className="w-3 h-3" />

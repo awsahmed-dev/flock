@@ -28,6 +28,7 @@ import { MapPin, Calendar, Users, Wallet, Sparkles } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -48,7 +49,7 @@ export default async function InvitePage({ params }: Props) {
 
   const trip = invite.trip;
   const days =
-    differenceInDays(parseISO(trip.endDate), parseISO(trip.startDate)) + 1;
+    differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
 
   // Member roster (display names only — no PII).
   const members = await db
@@ -109,8 +110,8 @@ export default async function InvitePage({ params }: Props) {
               </span>
               <span className="inline-flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                {format(parseISO(trip.startDate), "MMM d")} –{" "}
-                {format(parseISO(trip.endDate), "MMM d, yyyy")}
+                {format(parseDateOnly(trip.startDate), "MMM d")} –{" "}
+                {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
               </span>
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5" />

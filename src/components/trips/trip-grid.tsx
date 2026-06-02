@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus, ArrowRight, Calendar, Clock, Users } from "lucide-react";
 import { format, parseISO, isPast, differenceInDays } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import type { trips } from "@/lib/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { OnboardingCard } from "@/components/dashboard/onboarding-card";
@@ -61,8 +62,8 @@ function getGradient(id: string): string {
 
 function getTripStatus(trip: Trip) {
   const now = new Date();
-  const start = parseISO(trip.startDate);
-  const end = parseISO(trip.endDate);
+  const start = parseDateOnly(trip.startDate);
+  const end = parseDateOnly(trip.endDate);
   if (now >= start && now <= end)
     return { label: "Ongoing", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
   if (isPast(end))
@@ -85,7 +86,7 @@ export function TripGrid({ trips }: Props) {
         const status = getTripStatus(trip);
         const gradient = getGradient(trip.id);
         const emoji = getTripEmoji(trip.destination);
-        const nights = differenceInDays(parseISO(trip.endDate), parseISO(trip.startDate));
+        const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
 
         return (
           <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
@@ -108,7 +109,7 @@ export function TripGrid({ trips }: Props) {
                 <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-2.5 h-2.5" />
-                    {format(parseISO(trip.startDate), "MMM d")} – {format(parseISO(trip.endDate), "MMM d, yyyy")}
+                    {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
                   </span>
                   <span className="mx-1.5">·</span>
                   <span className="inline-flex items-center gap-1">
