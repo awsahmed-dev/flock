@@ -150,10 +150,14 @@ export async function POST(request: NextRequest) {
     // don't read like a half-translated brochure. We instruct the
     // model rather than translate output post-hoc — cheaper and gives
     // better names ("معبد كيوميزو" vs. transliterated "Kiyomizu-dera").
+    // The PLACE column feeds a geocoder (Nominatim/Mapbox) and must use
+    // the place's local-language Latin-script form even when the rest of
+    // the line is Arabic — otherwise the pin can't be found on the map.
+    // E.g. write "Jalan Alor" not "جالان علور".
     const localeInstruction =
       locale === "ar"
-        ? "Respond in Modern Standard Arabic (MSA). Keep proper nouns (places, neighbourhoods, dishes) in Arabic when a canonical form exists, otherwise transliterate. Use Western digits and ISO currency codes."
-        : "Respond in English.";
+        ? "Respond in Modern Standard Arabic (MSA) for TITLE. Use Western digits and ISO currency codes. CRITICAL: PLACE must always be the venue's real Latin-script name as it appears on Google Maps (e.g. 'Petronas Twin Towers', 'Jalan Alor', 'Batu Caves'), never an Arabic transliteration — it is used for map lookup, not display."
+        : "Respond in English. PLACE must be the venue's real name as it appears on Google Maps.";
 
     const context = [
       `${numDays}-day trip to ${trip.destination}`,
