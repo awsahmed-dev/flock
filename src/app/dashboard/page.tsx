@@ -86,11 +86,15 @@ export default async function DashboardPage() {
   const t = (k: string, p?: Record<string, string | number>) =>
     tFromDict(dict, k, p, locale);
 
+  // B15-i: dropped the {count} interpolation in these labels — the chip
+  // already renders s.value next to it, so a label like "5 total trips"
+  // alongside the "5" pill produced the duplicated "5 5 total trips"
+  // bug spotted in screenshot. Labels are now plain noun strings.
   const stats = [
-    { label: t("dashboard.totalTrips", { count: allTrips.length }), value: allTrips.length, color: "text-primary", bg: "bg-primary/8" },
-    { label: t("dashboard.upcomingCount", { count: upcomingTrips.length }), value: upcomingTrips.length, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
-    { label: t("dashboard.daysPlanned", { count: totalDays }), value: totalDays, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
-    { label: t("dashboard.pastTrips", { count: pastTrips.length }), value: pastTrips.length, color: "text-muted-foreground", bg: "bg-muted/60" },
+    { label: t("dashboard.totalTrips"), value: allTrips.length, color: "text-primary", bg: "bg-primary/8" },
+    { label: t("dashboard.upcomingCount"), value: upcomingTrips.length, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
+    { label: t("dashboard.daysPlanned"), value: totalDays, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+    { label: t("dashboard.pastTrips"), value: pastTrips.length, color: "text-muted-foreground", bg: "bg-muted/60" },
   ];
 
   return (
