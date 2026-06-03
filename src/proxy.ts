@@ -2,6 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  // ── Internal brand docs subdomain ─────────────────────────────────────
+  // doc.paxawa.com serves the standalone brand guidelines HTML from
+  // public/brand/index.html. No auth, no nav link from the main app —
+  // the URL is the access control. Handled before the Supabase auth
+  // dance below because the asset is static and doesn't need a session.
+  const host = request.headers.get("host") ?? "";
+  if (host.startsWith("doc.paxawa.com") || host === "doc.localhost:3000") {
+    if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/brand/index.html";
+      return NextResponse.rewrite(url);
+    }
+    // Any non-root request on the doc subdomain stays a 404 — we don't
+    // want to leak the main app surface through this host.
+    return NextResponse.next({ request });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
