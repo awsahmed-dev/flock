@@ -52,7 +52,7 @@ interface Props {
 
 export function TripActionHub({ tripId, stats }: Props) {
   const t = useT();
-  const suggestion = pickSuggestion(tripId, stats);
+  const suggestion = pickSuggestion(tripId, stats, t);
 
   return (
     <div className="space-y-3">
@@ -171,23 +171,25 @@ export function TripActionHub({ tripId, stats }: Props) {
           href={`/trips/${tripId}/chat`}
           icon={MessageSquare}
           color="fuchsia"
-          label="Chat"
-          headline="Talk"
-          subline="AI watches for actions"
+          label={t("actionHub.chatLabel")}
+          headline={t("actionHub.chatHeadline")}
+          subline={t("actionHub.chatSubline")}
           compact
         />
         <ActionCard
           href={`/trips/${tripId}/pack?view=docs`}
           icon={FileText}
           color="slate"
-          label="Docs"
+          label={t("actionHub.docsLabel")}
           headline={
             stats.documentsCount === 0
-              ? "Empty"
-              : `${stats.documentsCount} file${stats.documentsCount !== 1 ? "s" : ""}`
+              ? t("actionHub.docsEmpty")
+              : t("actionHub.docsCount", { count: stats.documentsCount })
           }
           subline={
-            stats.documentsCount === 0 ? "Visa, bookings, photos" : "Files + photos"
+            stats.documentsCount === 0
+              ? t("actionHub.docsEmptySubline")
+              : t("actionHub.docsSubline")
           }
           compact
         />
@@ -290,7 +292,14 @@ interface Suggestion {
   urgent: boolean;
 }
 
-function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
+// B15-i: pickSuggestion accepts the translator so the smart-suggestion
+// title + body follow the active locale. The function isn't a React
+// component so it can't call useT() itself.
+function pickSuggestion(
+  tripId: string,
+  s: ActionHubStats,
+  t: (k: string, p?: Record<string, string | number>) => string,
+): Suggestion {
   // Priority order:
   //   1. Open votes → cast yours
   //   2. Unsettled balance → check what you owe
@@ -301,8 +310,8 @@ function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
 
   if (s.votesOpen > 0) {
     return {
-      title: `${s.votesOpen} vote${s.votesOpen !== 1 ? "s" : ""} need your input`,
-      body: "Cast your vote so the group can move on.",
+      title: t("actionHub.sgVotesOpenTitle", { count: s.votesOpen }),
+      body: t("actionHub.sgVotesOpenBody"),
       href: `/trips/${tripId}/votes`,
       icon: Vote,
       urgent: true,
@@ -310,8 +319,11 @@ function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
   }
   if (s.myUnsettled > 0) {
     return {
-      title: `You owe ${s.currency} ${fmtAmount(s.myUnsettled)}`,
-      body: "Check the splits and settle when you can.",
+      title: t("actionHub.sgUnsettledTitle", {
+        currency: s.currency,
+        amount: fmtAmount(s.myUnsettled),
+      }),
+      body: t("actionHub.sgUnsettledBody"),
       href: `/trips/${tripId}/expenses`,
       icon: Wallet,
       urgent: true,
@@ -319,8 +331,8 @@ function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
   }
   if (s.itineraryCount === 0) {
     return {
-      title: "Your itinerary is empty",
-      body: "Let AI draft a day-by-day plan in seconds.",
+      title: t("actionHub.sgItineraryEmptyTitle"),
+      body: t("actionHub.sgItineraryEmptyBody"),
       href: `/trips/${tripId}/itinerary`,
       icon: Sparkles,
       urgent: false,
@@ -329,8 +341,8 @@ function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
   if (s.daysWithItems < s.totalDays) {
     const empty = s.totalDays - s.daysWithItems;
     return {
-      title: `${empty} day${empty !== 1 ? "s" : ""} still empty`,
-      body: "Drop in activities or let AI fill the gaps.",
+      title: t("actionHub.sgDaysEmptyTitle", { count: empty }),
+      body: t("actionHub.sgDaysEmptyBody"),
       href: `/trips/${tripId}/itinerary`,
       icon: Calendar,
       urgent: false,
@@ -338,16 +350,16 @@ function pickSuggestion(tripId: string, s: ActionHubStats): Suggestion {
   }
   if (s.packingTotal === 0) {
     return {
-      title: "Start your packing list",
-      body: "Seed with suggestions, then customize by member.",
+      title: t("actionHub.sgPackingEmptyTitle"),
+      body: t("actionHub.sgPackingEmptyBody"),
       href: `/trips/${tripId}/pack?view=packing`,
       icon: Backpack,
       urgent: false,
     };
   }
   return {
-    title: "Everything's in order",
-    body: "Hop into chat to keep the crew in the loop.",
+    title: t("actionHub.sgAllDoneTitle"),
+    body: t("actionHub.sgAllDoneBody"),
     href: `/trips/${tripId}/chat`,
     icon: MessageSquare,
     urgent: false,

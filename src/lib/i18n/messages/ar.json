@@ -150,6 +150,28 @@
     "allTripsHeading": "كل الرحلات",
     "openTrip": "افتح الرحلة"
   },
+  "actionHub": {
+    "chatLabel": "الدردشة",
+    "chatHeadline": "تواصلوا",
+    "chatSubline": "AI يرصد الإجراءات",
+    "docsLabel": "مستندات",
+    "docsEmpty": "فارغ",
+    "docsCount": "{count} ملفات",
+    "docsEmptySubline": "تأشيرة، حجوزات، صور",
+    "docsSubline": "ملفات وصور",
+    "sgVotesOpenTitle": "{count} تصويت ينتظر منك",
+    "sgVotesOpenBody": "صوّت لتتقدّم المجموعة.",
+    "sgUnsettledTitle": "عليك {currency} {amount}",
+    "sgUnsettledBody": "راجع التقسيمات وسوِّ الحسابات حين تستطيع.",
+    "sgItineraryEmptyTitle": "برنامجك فارغ",
+    "sgItineraryEmptyBody": "دع الذكاء الاصطناعي يصمّم لك خطة يومية في ثوانٍ.",
+    "sgDaysEmptyTitle": "{count} يوم فارغ بعد",
+    "sgDaysEmptyBody": "أضف أنشطة أو دع الذكاء الاصطناعي يكمل الفراغات.",
+    "sgPackingEmptyTitle": "ابدأ قائمة الأمتعة",
+    "sgPackingEmptyBody": "ابدأ باقتراحات، ثم خصّص حسب كل فرد.",
+    "sgAllDoneTitle": "كل شيء في مكانه",
+    "sgAllDoneBody": "افتح الدردشة وأبقِ الفريق على اطّلاع."
+  },
   "trip": {
     "inDays": "بعد {days} يوم",
     "startsIn": "تبدأ بعد {days} يوم",
@@ -166,7 +188,11 @@
     "endDate": "تاريخ النهاية",
     "totalBudget": "الميزانية الإجمالية (اختياري)",
     "currency": "العملة",
-    "createButton": "إنشاء الرحلة"
+    "createButton": "إنشاء الرحلة",
+    "crewCount": "الفريق · {count}",
+    "manage": "إدارة",
+    "owner": "المالك",
+    "member": "عضو"
   },
   "cards": {
     "plan": "خطّط",

@@ -260,13 +260,13 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
             <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
               <Users className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
             </div>
-            <h3 className="font-bold text-sm">Crew · {trip.members.length}</h3>
+            <h3 className="font-bold text-sm">{t("trip.crewCount", { count: trip.members.length })}</h3>
           </div>
           <Link
             href={`/trips/${trip.id}/members`}
             className="text-[11px] font-bold tracking-wider uppercase text-primary hover:text-primary/80"
           >
-            Manage
+            {t("trip.manage")}
           </Link>
         </div>
 
@@ -289,7 +289,7 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
                 </span>
                 {member.role === "owner" && (
                   <span className="text-[9px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400">
-                    OWNER
+                    {t("trip.owner")}
                   </span>
                 )}
               </div>

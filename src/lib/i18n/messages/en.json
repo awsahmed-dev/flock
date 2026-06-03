@@ -150,6 +150,28 @@
     "allTripsHeading": "All trips",
     "openTrip": "Open trip"
   },
+  "actionHub": {
+    "chatLabel": "Chat",
+    "chatHeadline": "Talk",
+    "chatSubline": "AI watches for actions",
+    "docsLabel": "Docs",
+    "docsEmpty": "Empty",
+    "docsCount": "{count} files",
+    "docsEmptySubline": "Visa, bookings, photos",
+    "docsSubline": "Files + photos",
+    "sgVotesOpenTitle": "{count} vote need your input",
+    "sgVotesOpenBody": "Cast your vote so the group can move on.",
+    "sgUnsettledTitle": "You owe {currency} {amount}",
+    "sgUnsettledBody": "Check the splits and settle when you can.",
+    "sgItineraryEmptyTitle": "Your itinerary is empty",
+    "sgItineraryEmptyBody": "Let AI draft a day-by-day plan in seconds.",
+    "sgDaysEmptyTitle": "{count} days still empty",
+    "sgDaysEmptyBody": "Drop in activities or let AI fill the gaps.",
+    "sgPackingEmptyTitle": "Start your packing list",
+    "sgPackingEmptyBody": "Seed with suggestions, then customize by member.",
+    "sgAllDoneTitle": "Everything's in order",
+    "sgAllDoneBody": "Hop into chat to keep the crew in the loop."
+  },
   "trip": {
     "inDays": "In {days} days",
     "startsIn": "Starts in {days} days",
@@ -166,7 +188,11 @@
     "endDate": "End date",
     "totalBudget": "Total budget (optional)",
     "currency": "Currency",
-    "createButton": "Create trip"
+    "createButton": "Create trip",
+    "crewCount": "Crew · {count}",
+    "manage": "Manage",
+    "owner": "Owner",
+    "member": "Member"
   },
   "cards": {
     "plan": "Plan",

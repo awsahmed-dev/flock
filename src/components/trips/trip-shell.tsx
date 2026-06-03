@@ -249,8 +249,8 @@ export function TripShell({ trip, isOwner, children }: Props) {
             <div className="min-w-0">
               <p className="font-semibold truncate leading-tight">{trip.name}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {trip.destination} · {format(parseDateOnly(trip.startDate), "MMM d")} –{" "}
-                {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
+                {trip.destination} · {format(parseDateOnly(trip.startDate), "d MMM")} –{" "}
+                {format(parseDateOnly(trip.endDate), "d MMM yyyy")}
               </p>
             </div>
           </div>
