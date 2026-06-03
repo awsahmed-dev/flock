@@ -10,8 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics/events";
+import { useT } from "@/components/i18n/locale-provider";
 
 export function SignupForm() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,8 +82,8 @@ export function SignupForm() {
   return (
     <Card>
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl">Create account</CardTitle>
-        <CardDescription>Start planning trips with your crew</CardDescription>
+        <CardTitle className="text-xl">{t("auth.signupTitle")}</CardTitle>
+        <CardDescription>{t("auth.signupSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <Button
@@ -95,29 +97,28 @@ export function SignupForm() {
           ) : (
             <GoogleIcon />
           )}
-          Continue with Google
+          {t("auth.continueWith", { provider: "Google" })}
         </Button>
 
         <div className="flex items-center gap-3">
           <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">or</span>
+          <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
           <Separator className="flex-1" />
         </div>
 
         <form onSubmit={handleSignup} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="name">Your name</Label>
+            <Label htmlFor="name">{t("auth.displayName")}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Alex"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -129,7 +130,7 @@ export function SignupForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-            Send magic link
+            {t("auth.signUp")}
           </Button>
         </form>
       </CardContent>

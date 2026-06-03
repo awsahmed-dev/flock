@@ -13,6 +13,22 @@ import {
   Tailwind,
 } from "@react-email/components";
 import { render } from "@react-email/render";
+import { getDictionary, tFromDict, type Locale } from "@/lib/i18n";
+
+// B15-f: locale-aware HTML/text rendering. Callers pass each recipient's
+// preferred language (`profiles.locale`) and the templates pick copy
+// from the in-memory message catalogs. We don't try to render a
+// per-locale subject line — that's threaded as well so the email
+// inbox preview reads correctly.
+function tFor(locale: Locale) {
+  const dict = getDictionary(locale);
+  return (k: string, p?: Record<string, string | number>) =>
+    tFromDict(dict, k, p, locale);
+}
+
+function isRtl(locale: Locale) {
+  return locale === "ar";
+}
 
 /**
  * Transactional email templates. All variants share `<EmailShell>` so the
@@ -30,17 +46,23 @@ const APP_URL =
 
 function EmailShell({
   preview,
+  locale = "en",
   children,
 }: {
   preview: string;
+  locale?: Locale;
   children: React.ReactNode;
 }) {
+  // B15-f: <html dir="rtl"> + lang for Arabic recipients. Most clients
+  // (Gmail, Apple Mail, Outlook web) honor dir on the body — the rest
+  // fall back to LTR which is acceptable.
+  const dir = isRtl(locale) ? "rtl" : "ltr";
   return (
-    <Html>
+    <Html lang={locale} dir={dir}>
       <Head />
       <Preview>{preview}</Preview>
       <Tailwind>
-        <Body className="bg-slate-50 font-sans my-0">
+        <Body className="bg-slate-50 font-sans my-0" dir={dir}>
           <Container className="bg-white max-w-[520px] my-8 mx-auto rounded-2xl overflow-hidden border border-slate-200">
             {/* Brand bar. Email clients are unfriendly to inline SVG +
                 currentColor, so we serve the wordmark as a hosted asset
@@ -118,17 +140,23 @@ interface VoteOpenedProps {
   options: string[];
   tripId: string;
   voteId: string;
+  /** B15-f: BCP-47 tag from profiles.locale. Defaults to "en". */
+  locale?: Locale;
 }
 
 function VoteOpenedEmail(p: VoteOpenedProps) {
+  const locale = p.locale ?? "en";
+  const t = tFor(locale);
   return (
-    <EmailShell preview={`${p.authorName} opened a vote on ${p.tripName}`}>
+    <EmailShell
+      preview={t("email.voteOpenedSubject", { actor: p.authorName, trip: p.tripName })}
+      locale={locale}
+    >
       <Heading className="text-slate-900 text-xl font-bold m-0 mb-2">
-        {p.authorName} wants the crew's input
+        {t("email.voteOpenedHeading", { actor: p.authorName })}
       </Heading>
       <Text className="text-slate-600 text-sm m-0 mb-5 leading-relaxed">
-        Hey {p.recipientName} — a new vote just opened on{" "}
-        <strong className="text-slate-900">{p.tripName}</strong>.
+        {t("email.voteOpenedBody", { name: p.recipientName, trip: p.tripName })}
       </Text>
       <Section className="bg-slate-50 rounded-xl p-4 mb-5">
         <Text className="text-slate-900 text-base font-semibold m-0 mb-3 leading-snug">
@@ -148,27 +176,27 @@ function VoteOpenedEmail(p: VoteOpenedProps) {
       </Section>
       <PrimaryButton
         href={`${APP_URL}/trips/${p.tripId}/votes`}
-        label="Cast your vote"
+        label={t("email.voteOpenedCta")}
       />
     </EmailShell>
   );
 }
 
 export async function renderVoteOpened(p: VoteOpenedProps) {
+  const locale = p.locale ?? "en";
+  const t = tFor(locale);
   const html = await render(<VoteOpenedEmail {...p} />);
   const text = [
-    `Hey ${p.recipientName},`,
-    "",
-    `${p.authorName} opened a vote on ${p.tripName}:`,
+    t("email.voteOpenedBody", { name: p.recipientName, trip: p.tripName }),
     "",
     p.question,
     "",
     ...p.options.slice(0, 5).map((o) => `  · ${o}`),
     "",
-    `Cast your vote: ${APP_URL}/trips/${p.tripId}/votes`,
+    `${t("email.voteOpenedCta")}: ${APP_URL}/trips/${p.tripId}/votes`,
   ].join("\n");
   return {
-    subject: `🗳️  ${p.authorName} opened a vote on ${p.tripName}`,
+    subject: t("email.voteOpenedSubject", { actor: p.authorName, trip: p.tripName }),
     html,
     text,
     idempotencyKey: `vote_opened:${p.voteId}`,
@@ -189,23 +217,26 @@ interface ExpenseLoggedProps {
   yourShare: number;
   tripId: string;
   expenseId: string;
+  locale?: Locale;
 }
 
 function ExpenseLoggedEmail(p: ExpenseLoggedProps) {
+  const locale = p.locale ?? "en";
+  const t = tFor(locale);
   return (
     <EmailShell
-      preview={`${p.payerName} paid for ${p.title} — you owe ${p.currency} ${p.yourShare.toFixed(2)}`}
+      preview={t("email.expenseLoggedSubject", { actor: p.payerName, title: p.title })}
+      locale={locale}
     >
       <Heading className="text-slate-900 text-xl font-bold m-0 mb-2">
-        {p.payerName} paid {p.currency} {p.amount.toFixed(2)}
+        {t("email.expenseLoggedHeading", { actor: p.payerName, currency: p.currency, amount: p.amount.toFixed(2) })}
       </Heading>
       <Text className="text-slate-600 text-sm m-0 mb-5 leading-relaxed">
-        for <strong className="text-slate-900">{p.title}</strong> on{" "}
-        {p.tripName}.
+        {t("email.expenseLoggedBody", { title: p.title, trip: p.tripName })}
       </Text>
       <Section className="bg-orange-50 rounded-xl p-4 mb-5 border border-orange-100">
         <Text className="text-orange-700 text-xs font-bold m-0 mb-1 uppercase tracking-wider">
-          Your share
+          {t("email.expenseLoggedYourShare")}
         </Text>
         <Text className="text-orange-900 text-2xl font-bold m-0 tabular-nums">
           {p.currency} {p.yourShare.toFixed(2)}
@@ -213,24 +244,25 @@ function ExpenseLoggedEmail(p: ExpenseLoggedProps) {
       </Section>
       <PrimaryButton
         href={`${APP_URL}/trips/${p.tripId}/expenses`}
-        label="See breakdown"
+        label={t("email.expenseLoggedCta")}
       />
     </EmailShell>
   );
 }
 
 export async function renderExpenseLogged(p: ExpenseLoggedProps) {
+  const locale = p.locale ?? "en";
+  const t = tFor(locale);
   const html = await render(<ExpenseLoggedEmail {...p} />);
   const text = [
-    `Hey ${p.recipientName},`,
+    t("email.expenseLoggedHeading", { actor: p.payerName, currency: p.currency, amount: p.amount.toFixed(2) }),
+    t("email.expenseLoggedBody", { title: p.title, trip: p.tripName }),
+    `${t("email.expenseLoggedYourShare")}: ${p.currency} ${p.yourShare.toFixed(2)}`,
     "",
-    `${p.payerName} paid ${p.currency} ${p.amount.toFixed(2)} for ${p.title} on ${p.tripName}.`,
-    `Your share: ${p.currency} ${p.yourShare.toFixed(2)}`,
-    "",
-    `See the full breakdown: ${APP_URL}/trips/${p.tripId}/expenses`,
+    `${t("email.expenseLoggedCta")}: ${APP_URL}/trips/${p.tripId}/expenses`,
   ].join("\n");
   return {
-    subject: `💸 ${p.payerName} paid for ${p.title}`,
+    subject: t("email.expenseLoggedSubject", { actor: p.payerName, title: p.title }),
     html,
     text,
     idempotencyKey: `expense_logged:${p.expenseId}:${p.recipientName}`,
@@ -248,39 +280,42 @@ interface InviteAcceptedProps {
   destination: string;
   tripId: string;
   memberId: string;
+  locale?: Locale;
 }
 
 function InviteAcceptedEmail(p: InviteAcceptedProps) {
+  const locale = p.locale ?? "en";
+  const t = tFor(locale);
   return (
-    <EmailShell preview={`${p.joinerName} just joined ${p.tripName}`}>
+    <EmailShell
+      preview={t("email.inviteAcceptedSubject", { actor: p.joinerName, trip: p.tripName })}
+      locale={locale}
+    >
       <Heading className="text-slate-900 text-xl font-bold m-0 mb-2">
-        🎉 {p.joinerName} joined the trip
+        {t("email.inviteAcceptedHeading", { actor: p.joinerName })}
       </Heading>
       <Text className="text-slate-600 text-sm m-0 mb-5 leading-relaxed">
-        Hey {p.recipientName} — <strong>{p.joinerName}</strong> just signed up
-        for the trip to{" "}
-        <strong className="text-slate-900">{p.destination}</strong>. The crew
-        is coming together.
+        {t("email.inviteAcceptedBody", { name: p.recipientName, actor: p.joinerName, destination: p.destination })}
       </Text>
       <PrimaryButton
         href={`${APP_URL}/trips/${p.tripId}`}
-        label="Open the trip"
+        label={t("email.inviteAcceptedCta")}
       />
     </EmailShell>
   );
 }
 
 export async function renderInviteAccepted(p: InviteAcceptedProps) {
+  const locale = p.locale ?? "en";
+  const t = tFor(locale);
   const html = await render(<InviteAcceptedEmail {...p} />);
   const text = [
-    `Hey ${p.recipientName},`,
+    t("email.inviteAcceptedBody", { name: p.recipientName, actor: p.joinerName, destination: p.destination }),
     "",
-    `${p.joinerName} just joined the trip to ${p.destination} (${p.tripName}).`,
-    "",
-    `Open the trip: ${APP_URL}/trips/${p.tripId}`,
+    `${t("email.inviteAcceptedCta")}: ${APP_URL}/trips/${p.tripId}`,
   ].join("\n");
   return {
-    subject: `🎉 ${p.joinerName} joined ${p.tripName}`,
+    subject: t("email.inviteAcceptedSubject", { actor: p.joinerName, trip: p.tripName }),
     html,
     text,
     idempotencyKey: `invite_accepted:${p.memberId}`,

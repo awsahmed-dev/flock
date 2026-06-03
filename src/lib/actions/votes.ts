@@ -164,6 +164,8 @@ async function notifyVoteOpened(
       options,
       tripId,
       voteId,
+      // B15-f: per-recipient locale from profiles.locale.
+      locale: (profile as any).locale === "ar" ? "ar" : "en",
     });
     await sendEmail({
       to: profile.email,

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
 import { toast } from "sonner";
 import { addPlannedItems, voteOnPlannedItems, type PlannedActivity } from "@/lib/actions/ai-planner";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Props {
   open: boolean;
@@ -35,13 +36,15 @@ interface AiPlannerResult {
   activities: PlannedActivity[];
 }
 
+// B15-f: labels are i18n keys; resolved at render time so a runtime
+// language switch relabels the wizard without remounting state.
 const TRAVEL_STYLES = [
-  { value: "adventure", label: "🏔️ Adventure", desc: "Outdoors & thrills" },
-  { value: "relaxed", label: "🌴 Relaxed", desc: "Chill & scenic" },
-  { value: "cultural", label: "🏛️ Cultural", desc: "History & art" },
-  { value: "foodie", label: "🍜 Foodie", desc: "Eat everything" },
-  { value: "budget", label: "💸 Budget", desc: "Smart spending" },
-  { value: "luxury", label: "✨ Luxury", desc: "Premium vibes" },
+  { value: "adventure", labelKey: "aiPlan.vibeAdventure", descKey: "aiPlan.vibeAdventureDesc" },
+  { value: "relaxed", labelKey: "aiPlan.vibeRelaxed", descKey: "aiPlan.vibeRelaxedDesc" },
+  { value: "cultural", labelKey: "aiPlan.vibeCultural", descKey: "aiPlan.vibeCulturalDesc" },
+  { value: "foodie", labelKey: "aiPlan.vibeFoodie", descKey: "aiPlan.vibeFoodieDesc" },
+  { value: "budget", labelKey: "aiPlan.vibeBudget", descKey: "aiPlan.vibeBudgetDesc" },
+  { value: "luxury", labelKey: "aiPlan.vibeLuxury", descKey: "aiPlan.vibeLuxuryDesc" },
 ] as const;
 
 type TravelStyle = typeof TRAVEL_STYLES[number]["value"];
@@ -60,16 +63,19 @@ const TYPE_COLOR: Record<string, string> = {
   meal: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30",
 };
 
-const LOADING_MESSAGES = [
-  "Scouting the best spots…",
-  "Balancing adventures & downtime…",
-  "Finding hidden gems…",
-  "Checking local favorites…",
-  "Crafting your perfect days…",
-];
+// B15-f: loading messages live as i18n keys; the t() call happens
+// inside the render so a language flip mid-load shows the new copy.
+const LOADING_KEYS = [
+  "aiPlan.loadingScouting",
+  "aiPlan.loadingBalancing",
+  "aiPlan.loadingHidden",
+  "aiPlan.loadingLocal",
+  "aiPlan.loadingCrafting",
+] as const;
 
 export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const router = useRouter();
+  const t = useT();
 
   const [travelStyle, setTravelStyle] = useState<TravelStyle>("cultural");
   const [interests, setInterests] = useState("");
@@ -118,7 +124,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     let msgIdx = 0;
     setLoadingMsg(0);
     const interval = setInterval(() => {
-      msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
+      msgIdx = (msgIdx + 1) % LOADING_KEYS.length;
       setLoadingMsg(msgIdx);
     }, 2200);
 
@@ -238,8 +244,8 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     <SidePanel
       open={open}
       onClose={onClose}
-      title="AI Trip Planner"
-      subtitle={`Smart itinerary for ${destination}`}
+      title={t("aiPlan.title")}
+      subtitle={t("aiPlan.subtitle", { destination })}
       icon={<Sparkles className="w-4 h-4 text-white" />}
       accentGradient="from-primary to-violet-600"
       width="md"
@@ -261,15 +267,17 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
             ))}
           </div>
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-            Step {step} of 3 ·{" "}
-            {step === 1 ? "Vibe" : step === 2 ? "Rhythm" : "Constraints"}
+            {t("aiPlan.stepOf", {
+              step,
+              label: t(step === 1 ? "aiPlan.stepVibe" : step === 2 ? "aiPlan.stepRhythm" : "aiPlan.stepConstraints"),
+            })}
           </p>
 
           {/* ─── Step 1: Vibe ─────────────────────────────────────── */}
           {step === 1 && (
             <div className="space-y-3">
               <div className="space-y-2">
-                <p className="text-xs font-semibold">What's the vibe?</p>
+                <p className="text-xs font-semibold">{t("aiPlan.whatsTheVibe")}</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {TRAVEL_STYLES.map((s) => (
                     <button
@@ -282,8 +290,8 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                           : "border-border/60 hover:border-border hover:bg-muted/40"
                       }`}
                     >
-                      <span className="text-sm">{s.label}</span>
-                      <span className="text-[10px] text-muted-foreground">{s.desc}</span>
+                      <span className="text-sm">{t(s.labelKey)}</span>
+                      <span className="text-[10px] text-muted-foreground">{t(s.descKey)}</span>
                     </button>
                   ))}
                 </div>
@@ -291,12 +299,12 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold">
-                  What are you into? <span className="font-normal text-muted-foreground">(optional)</span>
+                  {t("aiPlan.whatAreYouInto")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
                 </label>
                 <input
                   value={interests}
                   onChange={(e) => setInterests(e.target.value)}
-                  placeholder="e.g. anime, street food, temples, nightlife"
+                  placeholder={t("aiPlan.interestsPlaceholder")}
                   className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
@@ -307,12 +315,12 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
           {step === 2 && (
             <div className="space-y-3">
               <div className="space-y-2">
-                <p className="text-xs font-semibold">What pace works for the group?</p>
+                <p className="text-xs font-semibold">{t("aiPlan.paceQuestion")}</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
-                    { v: "chill" as const, label: "🌴 Chill", desc: "2-3/day" },
-                    { v: "balanced" as const, label: "⚖️ Balanced", desc: "3-4/day" },
-                    { v: "packed" as const, label: "⚡ Packed", desc: "5+/day" },
+                    { v: "chill" as const, labelKey: "aiPlan.paceChill", descKey: "aiPlan.paceChillDesc" },
+                    { v: "balanced" as const, labelKey: "aiPlan.paceBalanced", descKey: "aiPlan.paceBalancedDesc" },
+                    { v: "packed" as const, labelKey: "aiPlan.pacePacked", descKey: "aiPlan.pacePackedDesc" },
                   ].map((p) => (
                     <button
                       key={p.v}
@@ -324,20 +332,20 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                           : "border-border/60 hover:border-border hover:bg-muted/40"
                       }`}
                     >
-                      <span className="text-sm">{p.label}</span>
-                      <span className="text-[10px] text-muted-foreground">{p.desc}</span>
+                      <span className="text-sm">{t(p.labelKey)}</span>
+                      <span className="text-[10px] text-muted-foreground">{t(p.descKey)}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold">Daily spending vibe?</p>
+                <p className="text-xs font-semibold">{t("aiPlan.budgetQuestion")}</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
-                    { v: "shoestring" as const, label: "💸 Shoestring", desc: "Cheap & fun" },
-                    { v: "mid" as const, label: "🪙 Mid", desc: "Comfortable" },
-                    { v: "splurge" as const, label: "🥂 Splurge", desc: "Treat ourselves" },
+                    { v: "shoestring" as const, labelKey: "aiPlan.budgetShoestring", descKey: "aiPlan.budgetShoestringDesc" },
+                    { v: "mid" as const, labelKey: "aiPlan.budgetMid", descKey: "aiPlan.budgetMidDesc" },
+                    { v: "splurge" as const, labelKey: "aiPlan.budgetSplurge", descKey: "aiPlan.budgetSplurgeDesc" },
                   ].map((b) => (
                     <button
                       key={b.v}
@@ -349,8 +357,8 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                           : "border-border/60 hover:border-border hover:bg-muted/40"
                       }`}
                     >
-                      <span className="text-sm">{b.label}</span>
-                      <span className="text-[10px] text-muted-foreground">{b.desc}</span>
+                      <span className="text-sm">{t(b.labelKey)}</span>
+                      <span className="text-[10px] text-muted-foreground">{t(b.descKey)}</span>
                     </button>
                   ))}
                 </div>
@@ -363,7 +371,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
             <div className="space-y-3">
               <div className="space-y-2">
                 <p className="text-xs font-semibold">
-                  Dietary needs? <span className="font-normal text-muted-foreground">(any apply)</span>
+                  {t("aiPlan.dietaryQuestion")} <span className="font-normal text-muted-foreground">{t("aiPlan.anyApply")}</span>
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {["vegetarian", "vegan", "halal", "kosher", "gluten-free", "nut allergy"].map((tag) => {
@@ -388,36 +396,36 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold">
-                  Anything must-see / must-do? <span className="font-normal text-muted-foreground">(optional)</span>
+                  {t("aiPlan.mustSeeQuestion")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
                 </label>
                 <input
                   value={mustSee}
                   onChange={(e) => setMustSee(e.target.value)}
-                  placeholder="e.g. Eiffel Tower at sunset, Tsukiji breakfast"
+                  placeholder={t("aiPlan.mustSeePlaceholder")}
                   className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold">
-                  Anything to avoid? <span className="font-normal text-muted-foreground">(optional)</span>
+                  {t("aiPlan.avoidQuestion")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
                 </label>
                 <input
                   value={avoid}
                   onChange={(e) => setAvoid(e.target.value)}
-                  placeholder="e.g. crowded markets, museums, heights"
+                  placeholder={t("aiPlan.avoidPlaceholder")}
                   className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold">
-                  Anything else for the planner? <span className="font-normal text-muted-foreground">(optional)</span>
+                  {t("aiPlan.notesQuestion")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. early mornings free, no shopping days"
+                  placeholder={t("aiPlan.notesPlaceholder")}
                   rows={2}
                   className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
@@ -435,7 +443,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                 disabled={loading}
                 className="flex-1"
               >
-                Back
+                {t("aiPlan.back")}
               </Button>
             )}
             {step < 3 ? (
@@ -444,7 +452,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                 onClick={() => setStep((s) => (s === 1 ? 2 : 3))}
                 className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
               >
-                Next
+                {t("aiPlan.next")}
               </Button>
             ) : (
               <Button
@@ -455,12 +463,12 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                    {LOADING_MESSAGES[loadingMsg]}
+                    {t(LOADING_KEYS[loadingMsg])}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 me-2" />
-                    Generate
+                    {t("aiPlan.generate")}
                   </>
                 )}
               </Button>
@@ -474,7 +482,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
         <div className="px-4 pb-4">
           <div className="rounded-xl bg-muted/40 border px-3 py-4 flex flex-col items-center gap-2">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <p className="text-xs text-muted-foreground">{LOADING_MESSAGES[loadingMsg]}</p>
+            <p className="text-xs text-muted-foreground">{t(LOADING_KEYS[loadingMsg])}</p>
           </div>
         </div>
       )}

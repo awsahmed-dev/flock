@@ -197,6 +197,10 @@ async function notifyExpenseLogged(args: {
       yourShare: s.amountOwed,
       tripId: args.tripId,
       expenseId: args.expenseId,
+      // B15-f: render in the recipient's preferred language. Falls back
+      // to English when profiles.locale is unset or not one of our two
+      // supported tags.
+      locale: (profile as any).locale === "ar" ? "ar" : "en",
     });
     await sendEmail({ to: profile.email, ...rendered, kind: "expense_logged" });
   }

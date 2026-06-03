@@ -10,8 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/i18n/locale-provider";
 
 export function LoginForm() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -55,8 +57,8 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl">Sign in</CardTitle>
-        <CardDescription>Welcome back — enter your details below</CardDescription>
+        <CardTitle className="text-xl">{t("auth.loginTitle")}</CardTitle>
+        <CardDescription>{t("auth.loginSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {/* Google */}
@@ -67,19 +69,19 @@ export function LoginForm() {
           disabled={googleLoading}
         >
           {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
-          Continue with Google
+          {t("auth.continueWith", { provider: "Google" })}
         </Button>
 
         <div className="flex items-center gap-3">
           <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">or</span>
+          <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
           <Separator className="flex-1" />
         </div>
 
         {/* Email + password */}
         <form onSubmit={handleLogin} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -91,7 +93,7 @@ export function LoginForm() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -118,7 +120,7 @@ export function LoginForm() {
             disabled={loading}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-            Sign in
+            {t("auth.signIn")}
           </Button>
         </form>
       </CardContent>

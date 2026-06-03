@@ -152,7 +152,12 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
               <div className="flex items-center gap-3 mt-2 text-[11px] text-white/80 flex-wrap">
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d")}
+                  {/* B15-f: date-fns ar locale resolves month names to
+                      Arabic via the active-locale module state set by
+                      the root layout / locale provider. Pattern stays
+                      "d MMM" so the order reads naturally in both
+                      languages (day, then month). */}
+                  {format(parseDateOnly(trip.startDate), "d MMM")} – {format(parseDateOnly(trip.endDate), "d MMM")}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Clock className="w-3 h-3" />

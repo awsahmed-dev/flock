@@ -136,6 +136,9 @@ async function notifyJoined(
       destination: trip.destination,
       tripId,
       memberId,
+      // B15-f: render each crew member's invite-accepted email in their
+      // preferred language.
+      locale: (profile as any).locale === "ar" ? "ar" : "en",
     });
     await sendEmail({ to: profile.email, ...rendered, kind: "invite_accepted" });
   }
