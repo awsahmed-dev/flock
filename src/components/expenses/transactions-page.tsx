@@ -5,7 +5,8 @@ import {
   Receipt, ChevronRight, ArrowRightLeft, Search,
   Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal,
 } from "lucide-react";
-import { format, parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
+import { parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
 import { ExpenseSheet } from "./expense-sheet";

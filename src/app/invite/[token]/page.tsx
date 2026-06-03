@@ -27,7 +27,8 @@ import {
 import { MapPin, Calendar, Users, Wallet, Sparkles } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { parseISO, differenceInDays } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 
 interface Props {

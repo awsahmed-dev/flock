@@ -5,6 +5,10 @@
  * imported both by `seedSuggestedPacking` (user-triggered) and
  * `createTrip` (auto-seed) without smuggling a pure function through
  * the server-action graph.
+ *
+ * B15-d: the second arg is a BCP-47 language tag — pass "ar" and we
+ * return Arabic labels (مظلة قابلة للطي etc.). Defaults to English so
+ * existing callers keep working unchanged.
  */
 
 export interface PackingSuggestion {
@@ -12,7 +16,56 @@ export interface PackingSuggestion {
   category: string;
 }
 
-export function buildPackingSuggestions(destination: string): PackingSuggestion[] {
+const AR_TRANSLATIONS: Record<string, string> = {
+  // Docs
+  "Passport": "جواز السفر",
+  "Travel insurance card": "بطاقة تأمين السفر",
+  "Boarding passes / tickets": "بطاقات الصعود / التذاكر",
+  // Tech
+  "Phone charger": "شاحن الجوال",
+  "Power bank": "باور بانك",
+  "Adapter / plug converter": "محوّل قابس",
+  "Headphones": "سمّاعات",
+  "Headlamp": "كشّاف رأس",
+  // Toiletries
+  "Toothbrush": "فرشاة أسنان",
+  "Toothpaste": "معجون أسنان",
+  "Deodorant": "مزيل عرق",
+  "Sunscreen": "واقي شمس",
+  "Lip balm with SPF": "مرطّب شفاه بواقي شمس",
+  "After-sun lotion": "مرطّب ما بعد الشمس",
+  "Insect repellent": "طارد حشرات",
+  // Medical
+  "First-aid kit": "حقيبة إسعافات أوّلية",
+  "Painkillers": "مسكّنات ألم",
+  "Blister kit": "ضمّادات احتكاك",
+  // Clothing
+  "Underwear (one per day)": "ملابس داخلية (لكل يوم قطعة)",
+  "Socks (one per day)": "جوارب (لكل يوم زوج)",
+  "Comfortable walking shoes": "حذاء مشي مريح",
+  "Swimsuit": "ملابس سباحة",
+  "Sandals / flip-flops": "صنادل / شباشب",
+  "Sunglasses": "نظارة شمسية",
+  "Ski gloves": "قفازات تزلج",
+  "Thermal base layers": "ملابس داخلية حرارية",
+  "Wool socks": "جوارب صوف",
+  "Hiking boots": "حذاء مشي جبلي",
+  "Rain jacket": "جاكيت ضد المطر",
+  "Slip-on shoes (temple visits)": "حذاء سهل اللبس (لزيارة المعابد)",
+  "Scarf / shawl": "وشاح / شال",
+  // General
+  "Reusable water bottle": "قارورة ماء قابلة للاستخدام",
+  "Day bag / backpack": "حقيبة ظهر يومية",
+  "Beach towel": "منشفة شاطئ",
+  "Pocket tissue / wet wipes": "مناديل ورقية / مناديل مبلّلة",
+  "Compact umbrella": "مظلّة قابلة للطي",
+  "Cooling towel": "منشفة تبريد",
+};
+
+export function buildPackingSuggestions(
+  destination: string,
+  locale: string = "en",
+): PackingSuggestion[] {
   const baseSuggestions: PackingSuggestion[] = [
     // Docs
     { label: "Passport", category: "docs" },
@@ -87,5 +140,12 @@ export function buildPackingSuggestions(destination: string): PackingSuggestion[
     );
   }
 
-  return [...baseSuggestions, ...extras];
+  const all = [...baseSuggestions, ...extras];
+  if (locale === "ar") {
+    return all.map((s) => ({
+      ...s,
+      label: AR_TRANSLATIONS[s.label] ?? s.label,
+    }));
+  }
+  return all;
 }

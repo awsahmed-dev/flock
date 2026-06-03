@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { CheckCircle2, Trash2, Receipt, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";

@@ -6,6 +6,7 @@ import { Providers } from "@/components/providers";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
 import { getLocale, getDictionary, isRtl } from "@/lib/i18n";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { setActiveLocale } from "@/lib/i18n/date-fns";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -54,6 +55,9 @@ export default async function RootLayout({
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const dir = isRtl(locale) ? "rtl" : "ltr";
+  // B15-d: prime the module-level date-fns locale so format() in
+  // server components uses Arabic month/day names when ar is active.
+  setActiveLocale(locale);
 
   return (
     <html

@@ -10,7 +10,8 @@ import {
   expenses,
 } from "@/lib/db/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { parseISO, differenceInDays } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import {
   MapPin, Calendar, Clock, DollarSign,

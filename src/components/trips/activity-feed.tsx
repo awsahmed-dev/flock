@@ -6,7 +6,8 @@ import {
   Sparkles, Plane, Utensils, MapPin, BarChart3, Bed, Calendar,
   DollarSign, MessageSquare, UserPlus, FileText, ChevronRight,
 } from "lucide-react";
-import { format, parseISO, formatDistanceToNow, isToday, isYesterday } from "date-fns";
+import { parseISO, isToday, isYesterday } from "date-fns";
+import { format, formatDistanceToNow } from "@/lib/i18n/date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 

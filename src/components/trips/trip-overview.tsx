@@ -14,7 +14,8 @@ import {
   Sparkles,
   Hotel,
 } from "lucide-react";
-import { format, parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
+import { parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import Link from "next/link";
 import { toast } from "sonner";

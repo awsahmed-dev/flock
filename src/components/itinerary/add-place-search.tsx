@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import { Search, MapPin, Loader2, X, Calendar, Sparkles, ChevronDown, Clock, Tag } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createItineraryItemFromPlace } from "@/lib/actions/itinerary";

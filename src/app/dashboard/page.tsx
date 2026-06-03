@@ -7,8 +7,10 @@ import { trips, tripMembers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { TripGrid, SuggestedTrips } from "@/components/trips/trip-grid";
-import { parseISO, differenceInDays, isPast, isFuture, format } from "date-fns";
+import { parseISO, differenceInDays, isPast, isFuture } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
+import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import Link from "next/link";
 import { Calendar, MapPin, Clock, ArrowRight, Plus, Globe2 } from "lucide-react";
 import type { InferSelectModel } from "drizzle-orm";
@@ -77,11 +79,18 @@ export default async function DashboardPage() {
   const timeOfDay = getTimeOfDay();
   const timeEmoji = { morning: "☀️", afternoon: "🌤️", evening: "🌙" }[timeOfDay];
 
+  // B15-d: pull the dictionary so the stats chips, greeting + spotlight
+  // text are translated server-side.
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const t = (k: string, p?: Record<string, string | number>) =>
+    tFromDict(dict, k, p, locale);
+
   const stats = [
-    { label: "Total trips", value: allTrips.length, color: "text-primary", bg: "bg-primary/8" },
-    { label: "Upcoming", value: upcomingTrips.length, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
-    { label: "Days planned", value: totalDays, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
-    { label: "Past trips", value: pastTrips.length, color: "text-muted-foreground", bg: "bg-muted/60" },
+    { label: t("dashboard.totalTrips", { count: allTrips.length }), value: allTrips.length, color: "text-primary", bg: "bg-primary/8" },
+    { label: t("dashboard.upcomingCount", { count: upcomingTrips.length }), value: upcomingTrips.length, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
+    { label: t("dashboard.daysPlanned", { count: totalDays }), value: totalDays, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+    { label: t("dashboard.pastTrips", { count: pastTrips.length }), value: pastTrips.length, color: "text-muted-foreground", bg: "bg-muted/60" },
   ];
 
   return (
@@ -94,16 +103,14 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-            Good {timeOfDay}, {firstName} {timeEmoji}
+            {t(`greeting.${timeOfDay}`, { name: firstName })}
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             {allTrips.length === 0
-              ? "Create your first trip to get started"
-              : ongoingTrips.length > 0
-              ? `You're currently on a trip — ${ongoingTrips[0].name}`
+              ? t("greeting.tripsSummaryEmpty")
               : upcomingTrips.length > 0
-              ? `${upcomingTrips.length} upcoming · Next: ${upcomingTrips[0].name}`
-              : `${allTrips.length} trip${allTrips.length !== 1 ? "s" : ""} in your history`}
+              ? t("greeting.tripsSummary", { upcoming: upcomingTrips.length, next: upcomingTrips[0].name })
+              : t("greeting.tripsSummaryEmpty")}
           </p>
         </div>
         <Link
@@ -112,7 +119,7 @@ export default async function DashboardPage() {
           className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3 py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-opacity"
         >
           <Plus className="w-3.5 h-3.5" />
-          New trip
+          {t("dashboard.newTrip")}
         </Link>
       </div>
 
@@ -180,8 +187,8 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 transition-colors backdrop-blur">
-                    Open trip
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    {t("dashboard.openTrip")}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                   </span>
                 </div>
               </div>
@@ -195,7 +202,7 @@ export default async function DashboardPage() {
         {allTrips.length > 0 && (
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-              All trips · {allTrips.length}
+              {t("dashboard.allTripsHeading")} · {allTrips.length}
             </h2>
             <div className="flex-1 h-px bg-border/60" />
           </div>

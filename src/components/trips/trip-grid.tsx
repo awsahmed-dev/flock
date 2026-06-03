@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Plus, ArrowRight, Calendar, Clock, Users } from "lucide-react";
-import { format, parseISO, isPast, differenceInDays } from "date-fns";
+import { parseISO, isPast, differenceInDays } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { trips } from "@/lib/db/schema";
 import type { InferSelectModel } from "drizzle-orm";

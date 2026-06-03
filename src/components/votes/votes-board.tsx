@@ -1,6 +1,9 @@
+"use client";
+
 import { VoteCard } from "./vote-card";
 import { CreateVoteDialog } from "./create-vote-dialog";
 import { Vote } from "lucide-react";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface VoteOption {
   id: string;
@@ -37,6 +40,7 @@ interface Props {
 }
 
 export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) {
+  const t = useT();
   const openVotes = votes.filter((v) => v.status === "open");
   const closedVotes = votes.filter((v) => v.status === "closed");
 
@@ -45,8 +49,8 @@ export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Votes</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Make group decisions together</p>
+          <h2 className="text-xl font-bold tracking-tight">{t("votes.title")}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("votes.subtitle")}</p>
         </div>
         <CreateVoteDialog tripId={tripId} />
       </div>
@@ -59,7 +63,7 @@ export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) 
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
             )}
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-              Active · {openVotes.length}
+              {t("votes.active")} · {openVotes.length}
             </h3>
           </div>
           <div className="flex-1 h-px bg-border/60" />
@@ -70,8 +74,8 @@ export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) 
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
               <Vote className="w-7 h-7 text-muted-foreground/50" />
             </div>
-            <p className="font-semibold text-sm mb-1">No active votes</p>
-            <p className="text-xs text-muted-foreground mb-5">Create a vote to get the group&apos;s input on decisions</p>
+            <p className="font-semibold text-sm mb-1">{t("votes.noActiveVotes")}</p>
+            <p className="text-xs text-muted-foreground mb-5">{t("votes.createPrompt")}</p>
             <CreateVoteDialog tripId={tripId} />
           </div>
         ) : (
@@ -88,7 +92,7 @@ export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) 
         <div>
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-              Resolved · {closedVotes.length}
+              {t("votes.closed")} · {closedVotes.length}
             </h3>
             <div className="flex-1 h-px bg-border/60" />
           </div>

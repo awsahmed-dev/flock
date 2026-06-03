@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { motion } from "motion/react";
-import { format, parseISO, isToday } from "date-fns";
+import { parseISO, isToday } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import {
   Plus, Sparkles, Hotel, ChevronUp, ChevronDown, ExternalLink, Search,
   Bed, Plane, Car, Utensils, Ticket, HelpCircle, Trash2, Pencil, GripVertical, MapPin, Clock,

@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useCallback, useMemo } from "react";
+import { createContext, useContext, useCallback, useMemo, useEffect } from "react";
+import { setActiveLocale } from "@/lib/i18n/date-fns";
 
 export type Locale = "en" | "ar";
 
@@ -35,6 +36,12 @@ export function LocaleProvider({
     () => ({ locale, dict, isRtl: locale === "ar" }),
     [locale, dict],
   );
+  // B15-d: keep the module-level date-fns active locale in sync on the
+  // client so format() calls inside client components match the
+  // currently rendered language.
+  useEffect(() => {
+    setActiveLocale(locale);
+  }, [locale]);
   return (
     <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
   );

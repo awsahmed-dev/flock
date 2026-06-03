@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles, Calendar, Wallet, MessageSquare, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Props {
   tripId: string;
@@ -29,12 +30,13 @@ interface Props {
  */
 export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props) {
   const pathname = usePathname();
+  const t = useT();
 
   const tabs = [
-    { id: "home" as const,      label: "Home",  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },
-    { id: "itinerary" as const, label: "Plan",  href: `/trips/${tripId}/itinerary`, icon: Calendar, exact: false },
-    { id: "expenses" as const,  label: "Money", href: `/trips/${tripId}/expenses`,  icon: Wallet,   exact: false },
-    { id: "documents" as const, label: "Docs",  href: `/trips/${tripId}/documents`, icon: FileText, exact: false },
+    { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },
+    { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`, icon: Calendar, exact: false },
+    { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,  icon: Wallet,   exact: false },
+    { id: "documents" as const, label: t("nav.pack"),      href: `/trips/${tripId}/documents`, icon: FileText, exact: false },
   ];
 
   return (

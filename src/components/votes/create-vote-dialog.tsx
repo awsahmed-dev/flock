@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function CreateVoteDialog({ tripId }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [options, setOptions] = useState([
@@ -58,7 +60,7 @@ export function CreateVoteDialog({ tripId }: Props) {
     startTransition(async () => {
       try {
         await createVote(formData);
-        toast.success("Vote created");
+        toast.success(t("votes.voteCreatedToast"));
         track.voteOpened(tripId);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
@@ -85,12 +87,12 @@ export function CreateVoteDialog({ tripId }: Props) {
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 mr-1" />New vote
+        <Plus className="w-4 h-4 mr-1" />{t("votes.newVote")}
       </Button>
       <BottomSheet
         open={open}
         onClose={() => setOpen(false)}
-        title="Create a vote"
+        title={t("votes.createTitle")}
         size="md"
         footer={
           <div className="flex gap-2">
@@ -100,7 +102,7 @@ export function CreateVoteDialog({ tripId }: Props) {
               className="flex-1"
               onClick={() => setOpen(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -108,7 +110,7 @@ export function CreateVoteDialog({ tripId }: Props) {
               disabled={isPending}
               onClick={() => formRef.current?.requestSubmit()}
             >
-              {isPending ? "Creating…" : "Create vote"}
+              {isPending ? t("common.saving") : t("votes.createButton")}
             </Button>
           </div>
         }
@@ -117,33 +119,33 @@ export function CreateVoteDialog({ tripId }: Props) {
           <input type="hidden" name="tripId" value={tripId} />
 
           <div className="space-y-1.5">
-            <Label htmlFor="question">Question</Label>
+            <Label htmlFor="question">{t("votes.question")}</Label>
             <Input
               id="question"
               name="question"
-              placeholder="Which hotel should we book?"
+              placeholder={t("votes.questionPlaceholder")}
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="deadline">Deadline (optional)</Label>
+            <Label htmlFor="deadline">{t("votes.deadline")}</Label>
             <Input id="deadline" name="deadline" type="datetime-local" />
           </div>
 
           <div className="space-y-2">
-            <Label>Options</Label>
+            <Label>{t("votes.options")}</Label>
             {options.map((opt, i) => (
               <div key={i} className="flex gap-2 items-center">
                 <Input
-                  placeholder={`Option ${i + 1}`}
+                  placeholder={t("votes.optionPlaceholder", { n: i + 1 })}
                   value={opt.label}
                   onChange={(e) => updateOption(i, "label", e.target.value)}
                   required
                   className="flex-1"
                 />
                 <Input
-                  placeholder="Cost"
+                  placeholder={t("votes.costPlaceholder")}
                   type="number"
                   min="0"
                   step="0.01"
@@ -162,7 +164,7 @@ export function CreateVoteDialog({ tripId }: Props) {
                 )}
               </div>
             ))}
-            {options.length < MAX_OPTIONS ? (
+            {options.length < MAX_OPTIONS && (
               <Button
                 type="button"
                 variant="ghost"
@@ -171,12 +173,8 @@ export function CreateVoteDialog({ tripId }: Props) {
                 className="w-full border border-dashed"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
-                Add option ({options.length}/{MAX_OPTIONS})
+                {t("votes.addOption", { count: options.length, max: MAX_OPTIONS })}
               </Button>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center pt-1">
-                Max {MAX_OPTIONS} options — keep votes scannable.
-              </p>
             )}
           </div>
 

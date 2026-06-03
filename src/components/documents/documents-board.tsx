@@ -15,7 +15,7 @@ import {
   Files,
   X,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { PageHeader } from "@/components/ui/page-header";
 
 interface Document {

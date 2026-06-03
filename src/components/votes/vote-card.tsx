@@ -10,8 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/i18n/date-fns";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface VoteOption {
   id: string;
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export function VoteCard({ vote, userId, isOwner, currency }: Props) {
+  const t = useT();
   const [isPending, startTransition] = useTransition();
   const [optimisticSelected, setOptimisticSelected] = useState<string | null>(
     vote.responses.find((r) => r.userId === userId)?.selectedOptionId ?? null
@@ -130,8 +132,8 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
                   : "bg-muted text-muted-foreground"
               )}>
                 {isOpen
-                  ? <><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />Open</>
-                  : <><Lock className="w-3 h-3" />Closed</>
+                  ? <><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />{t("votes.open")}</>
+                  : <><Lock className="w-3 h-3" />{t("votes.closed")}</>
                 }
               </span>
               {vote.deadline && isOpen && (
@@ -144,7 +146,7 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
             <p className="font-semibold leading-snug">{vote.question}</p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="w-3 h-3" />
-              {totalResponses} {totalResponses === 1 ? "response" : "responses"}
+              {t("votes.responses", { count: totalResponses })}
             </div>
           </div>
 
@@ -224,7 +226,7 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
                       </span>
                       {isSelected && (
                         <span className="text-[10px] font-semibold uppercase tracking-wide text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded-full">
-                          your vote
+                          {t("votes.yourVote")}
                         </span>
                       )}
                     </div>
@@ -251,7 +253,7 @@ export function VoteCard({ vote, userId, isOwner, currency }: Props) {
 
         {isOpen && hasVoted && (
           <p className="text-xs text-muted-foreground text-center">
-            Tap any option to change your vote
+            {t("votes.tapToChange")}
           </p>
         )}
       </div>

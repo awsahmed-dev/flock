@@ -8,7 +8,8 @@ import {
   Receipt, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Eye, EyeOff,
   Plane, Utensils, Bed, ShoppingBag, Ticket, MoreHorizontal, ChevronRight,
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import type { RateBundle } from "@/lib/fx";
 import { convert } from "@/lib/fx";

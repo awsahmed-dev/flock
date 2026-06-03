@@ -7,6 +7,7 @@ import { trips, tripMembers, tripInvites, profiles, packingItems } from "@/lib/d
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
+import { getLocale } from "@/lib/i18n";
 
 export async function createTrip(formData: FormData) {
   const user = await getCurrentUser();
@@ -70,7 +71,12 @@ export async function createTrip(formData: FormData) {
   // B12: auto-seed packing list with destination-aware suggestions so
   // the user lands on a populated checklist instead of an empty state.
   // Pure local insert (no auth dance) — we already verified the user.
-  const suggestions = buildPackingSuggestions(destination);
+  // B15-d: seed labels follow the user's locale, so an Arabic tester
+  // sees "جواز السفر" instead of "Passport" on the freshly created
+  // packing list. Saved literally in the DB; later language flips
+  // don't retranslate (matches user-generated content semantics).
+  const tripLocale = await getLocale();
+  const suggestions = buildPackingSuggestions(destination, tripLocale);
   if (suggestions.length > 0) {
     await db.insert(packingItems).values(
       suggestions.map((s) => ({

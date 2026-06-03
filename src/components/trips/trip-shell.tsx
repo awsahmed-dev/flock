@@ -38,13 +38,15 @@ import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import dynamicImport from "next/dynamic";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { EnablePushButton } from "@/components/pwa/enable-push";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useT } from "@/components/i18n/locale-provider";
 
 // Lazy load the heavy components that aren't needed at first paint:
 //   - ChatSidebar pulls in supabase realtime + motion + the AI chip
@@ -89,18 +91,21 @@ interface Props {
 
 // Desktop top tabs — Members moved out (now a top-right "Users" icon
 // that opens a side panel, mirroring WhatsApp's group-info pattern).
+// B15-d: labels are i18n keys; resolved at render time so a runtime
+// language flip relabels the nav without a remount.
 const NAV_TABS = [
-  { label: "Overview", href: "", icon: LayoutDashboard },
-  { label: "Itinerary", href: "/itinerary", icon: MapPin },
-  { label: "Votes", href: "/votes", icon: Vote },
-  { label: "Expenses", href: "/expenses", icon: Wallet },
+  { key: "nav.overview", href: "", icon: LayoutDashboard },
+  { key: "nav.itinerary", href: "/itinerary", icon: MapPin },
+  { key: "nav.votes", href: "/votes", icon: Vote },
+  { key: "nav.expenses", href: "/expenses", icon: Wallet },
   // B6: Documents + Packing merged into Pack with segmented control inside.
-  { label: "Pack", href: "/pack", icon: Backpack },
+  { key: "nav.pack", href: "/pack", icon: Backpack },
 ];
 
 export function TripShell({ trip, isOwner, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useT();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
   const [chatOpen, setChatOpen] = useState(false);
@@ -439,7 +444,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 )}
               >
                 <tab.icon className="w-3.5 h-3.5" />
-                {tab.label}
+                {t(tab.key)}
               </Link>
             );
           })}

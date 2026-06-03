@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { checkLimit } from "@/lib/rate-limit";
+import { getLocale } from "@/lib/i18n";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
@@ -126,6 +127,10 @@ export async function POST(request: NextRequest) {
     const trip = await getTripWithMembership(tripId, user.id);
     if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
+    // B15-d: read locale from the cookie so the LLM responds in the
+    // user's UI language.
+    const locale = await getLocale();
+
     const numDays = daysBetween(trip.startDate, trip.endDate);
     const memberCount = trip.members.length;
     const styleHint = STYLE_DESC[travelStyle] ?? "general sightseeing";
@@ -139,6 +144,16 @@ export async function POST(request: NextRequest) {
       mid: "moderate: casual restaurants, paid attractions OK, ride-shares fine",
       splurge: "premium: fine dining, private experiences, taxis welcome",
     };
+
+    // B15-d: locale-aware output. If the viewer's UI is Arabic the
+    // LLM should respond in Modern Standard Arabic so the day cards
+    // don't read like a half-translated brochure. We instruct the
+    // model rather than translate output post-hoc — cheaper and gives
+    // better names ("معبد كيوميزو" vs. transliterated "Kiyomizu-dera").
+    const localeInstruction =
+      locale === "ar"
+        ? "Respond in Modern Standard Arabic (MSA). Keep proper nouns (places, neighbourhoods, dishes) in Arabic when a canonical form exists, otherwise transliterate. Use Western digits and ISO currency codes."
+        : "Respond in English.";
 
     const context = [
       `${numDays}-day trip to ${trip.destination}`,
@@ -156,6 +171,7 @@ export async function POST(request: NextRequest) {
       avoid ? `Avoid: ${avoid}` : null,
       interests ? `Interests: ${interests}` : null,
       notes ? `Notes: ${notes}` : null,
+      localeInstruction,
     ]
       .filter(Boolean)
       .join(". ");

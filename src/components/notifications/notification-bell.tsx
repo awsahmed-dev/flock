@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Bell, Receipt, Vote, Check, Users as UsersIcon } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/i18n/date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface InboxRow {
   id: string;
@@ -51,6 +52,7 @@ function metaFor(kind: string, tripId: string) {
  * — tap-anywhere to dismiss matches the chat-app convention.
  */
 export function NotificationBell() {
+  const t = useT();
   const [rows, setRows] = useState<InboxRow[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -99,8 +101,8 @@ export function NotificationBell() {
         render={
           <button
             className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Notifications"
-            aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ""}`}
+            title={t("notifications.title")}
+            aria-label={`${t("notifications.title")}${unread > 0 ? ` (${unread})` : ""}`}
           >
             <Bell className="w-4 h-4" />
             {unread > 0 && (
@@ -114,11 +116,11 @@ export function NotificationBell() {
       <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
         <div className="px-3 py-2.5 border-b border-border/60 flex items-center justify-between">
           <p className="text-xs font-bold tracking-wide uppercase text-muted-foreground">
-            Notifications
+            {t("notifications.title")}
           </p>
           {rows.length > 0 && (
             <p className="text-[10px] text-muted-foreground">
-              Last {rows.length}
+              {t("notifications.last", { count: rows.length })}
             </p>
           )}
         </div>
@@ -126,7 +128,7 @@ export function NotificationBell() {
           <div className="px-4 py-8 text-center">
             <Bell className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
             <p className="text-xs text-muted-foreground">
-              You're all caught up.
+              {t("common.youreAllCaughtUp")}
             </p>
           </div>
         ) : (
