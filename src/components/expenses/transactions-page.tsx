@@ -290,7 +290,7 @@ export function TransactionsPage({
                       <p className="text-xs font-bold tabular-nums text-right">
                         {currency} {fmt(d.spent)}
                         {dailyTarget && (
-                          <span className="text-muted-foreground font-medium ml-1">
+                          <span className="text-muted-foreground font-medium ms-1">
                             / {fmt(dailyTarget)}
                           </span>
                         )}
@@ -384,7 +384,7 @@ function SlimRow({
           <p className="text-[11px] text-muted-foreground truncate">
             {payerName}
             {iOwe && (
-              <span className="ml-1.5 text-orange-600 dark:text-orange-400 font-semibold">
+              <span className="ms-1.5 text-orange-600 dark:text-orange-400 font-semibold">
                 · you owe {expense.currency} {fmt(mySplit!.amountOwed)}
               </span>
             )}

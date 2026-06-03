@@ -194,7 +194,7 @@ export function ItineraryCard({
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-muted shrink-0 -mt-0.5 -mr-0.5">
+                  <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-muted shrink-0 -mt-0.5 -me-0.5">
                     <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
                 }

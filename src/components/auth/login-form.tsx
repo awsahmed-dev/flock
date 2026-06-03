@@ -101,7 +101,7 @@ export function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="pr-10"
+                className="pe-10"
               />
               <button
                 type="button"
@@ -117,7 +117,7 @@ export function LoginForm() {
             className="w-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
             disabled={loading}
           >
-            {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             Sign in
           </Button>
         </form>

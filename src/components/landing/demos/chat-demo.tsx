@@ -230,7 +230,7 @@ function MessageBubble({
               exit={{ opacity: 0 }}
               className="flex items-center gap-1.5 flex-wrap mt-0.5"
             >
-              <Sparkles className="w-3 h-3 text-indigo-300 ml-1" />
+              <Sparkles className="w-3 h-3 text-indigo-300 ms-1" />
               {msg.chips.map((k) => {
                 const meta = CHIP_META[k];
                 const Icon = meta.icon;

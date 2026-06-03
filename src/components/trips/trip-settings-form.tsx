@@ -267,7 +267,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             className="text-destructive border-destructive/30 hover:bg-destructive/10"
             onClick={() => setShowDeleteConfirm(true)}
           >
-            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+            <Trash2 className="w-3.5 h-3.5 me-1.5" />
             Delete trip
           </Button>
         )}

@@ -23,6 +23,7 @@ import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
+import { useT } from "@/components/i18n/locale-provider";
 import { convert, type RateBundle } from "@/lib/fx";
 import { toast } from "sonner";
 import type { InferSelectModel } from "drizzle-orm";
@@ -95,6 +96,7 @@ export function ItineraryBoard({
   userId,
   isOwner,
 }: Props) {
+  const t = useT();
   const [items, setItems] = useState(initialItems);
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
@@ -233,7 +235,7 @@ export function ItineraryBoard({
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            All
+            {t("itinerary.all")}
           </button>
           {days.map((day, idx) => {
             const count = getItemsForDay(day).length;
@@ -268,11 +270,11 @@ export function ItineraryBoard({
       <button
         type="button"
         onClick={() => openAddFor(focusedDay)}
-        className="absolute z-30 right-4 sm:right-6 top-16 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white pl-2.5 pr-3 py-2 text-xs font-bold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
-        title="Add to itinerary"
+        className="absolute z-30 right-4 sm:right-6 top-16 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white ps-2.5 pe-3 py-2 text-xs font-bold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
+        title={t("itinerary.addToItinerary")}
       >
         <Plus className="w-3.5 h-3.5" />
-        Add place
+        {t("itinerary.addPlace")}
       </button>
 
       {/* ── Bottom sheet (B11: motion-driven drag-to-expand) ────────
@@ -309,13 +311,13 @@ export function ItineraryBoard({
               <div className="min-w-0">
                 <p className="font-bold text-sm truncate">
                   {focusedDay
-                    ? `Day ${days.indexOf(focusedDay) + 1} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
-                    : "All days"}
+                    ? `${t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
+                    : t("itinerary.all")}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">
                   {focusedDay
-                    ? `${getItemsForDay(focusedDay).length} item${getItemsForDay(focusedDay).length !== 1 ? "s" : ""}`
-                    : `${items.length} items across ${days.length} days`}
+                    ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
+                    : t("itinerary.items", { count: items.length })}
                 </p>
               </div>
               <span className="shrink-0 text-muted-foreground">
@@ -334,14 +336,14 @@ export function ItineraryBoard({
               onClick={() => setAiOpen(true)}
               className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 hover:border-primary/40 text-primary px-3 py-1.5 text-[11px] font-bold transition-colors"
             >
-              <Sparkles className="w-3 h-3" /> AI Plan
+              <Sparkles className="w-3 h-3" /> {t("itinerary.aiPlan")}
             </button>
             <button
               type="button"
               onClick={() => setHotelOpen(true)}
               className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 text-blue-600 dark:text-blue-400 px-3 py-1.5 text-[11px] font-bold transition-colors"
             >
-              <Hotel className="w-3 h-3" /> Find a Stay
+              <Hotel className="w-3 h-3" /> {t("itinerary.findAStay")}
             </button>
           </div>
 
@@ -381,7 +383,7 @@ export function ItineraryBoard({
                         <p className="font-bold text-sm">
                           Day {dayIdx + 1}{" "}
                           {today && (
-                            <span className="ml-1.5 text-[9px] font-bold tracking-widest uppercase text-primary">
+                            <span className="ms-1.5 text-[9px] font-bold tracking-widest uppercase text-primary">
                               today
                             </span>
                           )}
@@ -406,7 +408,7 @@ export function ItineraryBoard({
                       items={dayItems.map((i) => i.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <ul className="space-y-2 ml-2 pl-3 border-l-2 border-border/40">
+                      <ul className="space-y-2 ms-2 ps-3 border-l-2 border-border/40">
                         {dayItems.map((item, idx) => (
                           <SortableItemRow
                             key={item.id}
@@ -460,7 +462,7 @@ export function ItineraryBoard({
                       <button
                         type="button"
                         onClick={() => openAddFor(day)}
-                        className="ml-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center"
+                        className="ms-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center"
                       >
                         Nothing planned · tap to add
                       </button>
@@ -659,7 +661,7 @@ function SortableItemRow({
                     {currencySymbol(currency)}
                     {fmtAmount(item.costEstimate)}
                     {localPrice != null && (
-                      <span className="ml-1 opacity-70">
+                      <span className="ms-1 opacity-70">
                         · {currencySymbol(localCurrency!)}
                         {fmtAmount(localPrice)}
                       </span>

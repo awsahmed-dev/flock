@@ -71,6 +71,11 @@ export const profiles = pgTable("profiles", {
   notifEmail: boolean("notif_email").default(true).notNull(),
   notifPush: boolean("notif_push").default(true).notNull(),
   notifDigest: boolean("notif_digest").default(true).notNull(),
+  // B15-e: viewer's preferred language tag. Cookie remains the source
+  // of truth in-session; this column lets server-only flows (email
+  // templates, push payloads, digest cron) render in the right tongue
+  // without re-reading the browser cookie. Synced by setLocale().
+  locale: text("locale").default("en").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

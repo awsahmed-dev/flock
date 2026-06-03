@@ -111,7 +111,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
             disabled={isPending}
             onClick={() => formRef.current?.requestSubmit()}
           >
-            {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             Add item
           </Button>
         </div>

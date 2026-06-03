@@ -454,12 +454,12 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                     {LOADING_MESSAGES[loadingMsg]}
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 mr-2" />
+                    <Sparkles className="w-4 h-4 me-2" />
                     Generate
                   </>
                 )}
@@ -641,7 +641,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>
-                  <Vote className="w-3.5 h-3.5 mr-1.5" />
+                  <Vote className="w-3.5 h-3.5 me-1.5" />
                   Vote on {selectedItems.length}
                 </>
               )}
@@ -656,7 +656,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                  <CheckCircle2 className="w-3.5 h-3.5 me-1.5" />
                   Add {selectedItems.length} to plan
                 </>
               )}

@@ -87,7 +87,7 @@ export function CreateVoteDialog({ tripId }: Props) {
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 mr-1" />{t("votes.newVote")}
+        <Plus className="w-4 h-4 me-1" />{t("votes.newVote")}
       </Button>
       <BottomSheet
         open={open}
@@ -172,7 +172,7 @@ export function CreateVoteDialog({ tripId }: Props) {
                 onClick={addOption}
                 className="w-full border border-dashed"
               >
-                <Plus className="w-3.5 h-3.5 mr-1" />
+                <Plus className="w-3.5 h-3.5 me-1" />
                 {t("votes.addOption", { count: options.length, max: MAX_OPTIONS })}
               </Button>
             )}

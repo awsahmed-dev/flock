@@ -128,7 +128,7 @@ export function SignupForm() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             Send magic link
           </Button>
         </form>

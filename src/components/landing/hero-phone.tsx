@@ -339,10 +339,10 @@ function ChatCard() {
         <div className="bg-white/[0.06] rounded-lg rounded-tl-sm px-2.5 py-1.5 text-[11px] text-white/80">
           Sushi at 8 tomorrow?
         </div>
-        <div className="bg-gradient-to-br from-indigo-500 to-fuchsia-600 rounded-lg rounded-tr-sm px-2.5 py-1.5 text-[11px] text-white ml-6">
+        <div className="bg-gradient-to-br from-indigo-500 to-fuchsia-600 rounded-lg rounded-tr-sm px-2.5 py-1.5 text-[11px] text-white ms-6">
           yes, $40pp
         </div>
-        <div className="flex items-center gap-1 mt-1 ml-6">
+        <div className="flex items-center gap-1 mt-1 ms-6">
           <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-300">
             ✨ Log expense
           </span>

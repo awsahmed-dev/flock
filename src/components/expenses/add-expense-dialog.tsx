@@ -171,7 +171,7 @@ export function AddExpenseDialog({
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 mr-1" />{t("expenses.logExpense")}
+        <Plus className="w-4 h-4 me-1" />{t("expenses.logExpense")}
       </Button>
       <BottomSheet
         open={open}
@@ -512,7 +512,7 @@ function ProjectionLine({
         <span className={`w-1.5 h-1.5 rounded-full ${dot} shrink-0`} />
         <span className="text-muted-foreground truncate">
           {label}
-          <span className="text-foreground/70 ml-1.5 tabular-nums">
+          <span className="text-foreground/70 ms-1.5 tabular-nums">
             +{currency} {fmtAmount(impact)}
           </span>
         </span>

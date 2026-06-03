@@ -245,7 +245,7 @@ export function TripMap({ items, destination, tripId, onAddPoi, focusedDay = nul
           <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" /> Recommendations
         </span>
       )}
-      <span className="ml-auto flex items-center gap-3 font-medium text-foreground">
+      <span className="ms-auto flex items-center gap-3 font-medium text-foreground">
         {mapItems.length > 0 && (
           <span>{mapItems.length} planned</span>
         )}

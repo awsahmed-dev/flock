@@ -110,7 +110,7 @@ export function OnboardingCard() {
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-opacity"
         >
           Plan your first trip
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4 rtl:rotate-180" />
         </Link>
 
         <p className="text-[11px] text-muted-foreground mt-3 inline-flex items-center gap-3 flex-wrap">

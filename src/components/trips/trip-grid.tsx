@@ -91,7 +91,7 @@ export function TripGrid({ trips }: Props) {
 
         return (
           <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
-            <div className="group flex items-center gap-3 pl-0 pr-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
+            <div className="group flex items-center gap-3 ps-0 pe-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
               {/* Color stripe + emoji tile — replaces the old gradient hero */}
               <div className="flex items-center gap-2.5 shrink-0">
                 <div className={`w-1 self-stretch rounded-full bg-gradient-to-b ${gradient}`} />
@@ -122,7 +122,7 @@ export function TripGrid({ trips }: Props) {
                 </p>
               </div>
 
-              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
             </div>
           </Link>
         );
@@ -130,7 +130,7 @@ export function TripGrid({ trips }: Props) {
 
       {/* New trip row — same height as a trip row, dashed accent */}
       <Link href="/trips/new" prefetch>
-        <div className="group flex items-center gap-3 pl-3 pr-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
+        <div className="group flex items-center gap-3 ps-3 pe-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
           <div className="w-9 h-9 rounded-xl border-2 border-dashed border-border group-hover:border-primary/40 flex items-center justify-center shrink-0 transition-colors">
             <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
@@ -140,7 +140,7 @@ export function TripGrid({ trips }: Props) {
             </p>
             <p className="text-[11px] text-muted-foreground/70">Invite your crew, start planning</p>
           </div>
-          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
         </div>
       </Link>
     </div>

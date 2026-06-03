@@ -49,7 +49,7 @@ export function LegalShell({
 
         {/* Manual typography styling — no @tailwindcss/typography dependency.
             Hand-tuned for legal-text readability without bringing in a plugin. */}
-        <div className="mt-8 text-foreground/80 leading-relaxed [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h2]:mt-10 [&_h2]:mb-3 [&_p]:mt-3 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mt-3 [&_ul]:space-y-1.5 [&_a]:text-primary hover:[&_a]:underline [&_strong]:text-foreground [&_strong]:font-semibold">
+        <div className="mt-8 text-foreground/80 leading-relaxed [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h2]:mt-10 [&_h2]:mb-3 [&_p]:mt-3 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:ps-5 [&_ul]:mt-3 [&_ul]:space-y-1.5 [&_a]:text-primary hover:[&_a]:underline [&_strong]:text-foreground [&_strong]:font-semibold">
           {children}
         </div>
       </main>

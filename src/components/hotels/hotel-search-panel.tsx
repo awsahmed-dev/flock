@@ -493,7 +493,7 @@ export function HotelSearchPanel({ open, onClose, tripId, destination }: Props) 
                         type="button"
                         onClick={() => handleSuggestSingle(hotel)}
                         disabled={isSuggesting || suggesting !== null}
-                        className="ml-auto inline-flex items-center gap-1 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 px-2 py-1 text-[11px] text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-50"
+                        className="ms-auto inline-flex items-center gap-1 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 px-2 py-1 text-[11px] text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-50"
                       >
                         {isSuggesting ? (
                           <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -530,7 +530,7 @@ export function HotelSearchPanel({ open, onClose, tripId, destination }: Props) 
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <Vote className="w-4 h-4 mr-2" />
+                    <Vote className="w-4 h-4 me-2" />
                     Compare {selectedHotels.length} in a group vote
                   </>
                 )}

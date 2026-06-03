@@ -146,8 +146,8 @@ export function SmartActionChips({ tripId, messageId, body, createdAt }: Props) 
   if (hidden || !actions || actions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 mt-1.5 -ml-0.5">
-      <Sparkles className="w-3 h-3 text-primary/60 ml-1" />
+    <div className="flex flex-wrap items-center gap-1.5 mt-1.5 -ms-0.5">
+      <Sparkles className="w-3 h-3 text-primary/60 ms-1" />
       {actions.map((action, idx) => {
         const meta = KIND_META[action.kind];
         if (!meta) return null;

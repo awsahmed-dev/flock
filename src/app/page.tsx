@@ -110,7 +110,7 @@ export default async function HomePage({ searchParams }: PageProps) {
               className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-4 py-2 text-sm font-medium transition-colors"
             >
               Sign up
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </Link>
           </nav>
         </div>

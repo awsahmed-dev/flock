@@ -76,7 +76,7 @@ export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
             disabled={isPending}
             onClick={() => formRef.current?.requestSubmit()}
           >
-            {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             Save changes
           </Button>
         </div>

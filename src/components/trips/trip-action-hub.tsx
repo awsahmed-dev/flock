@@ -84,7 +84,7 @@ export function TripActionHub({ tripId, stats }: Props) {
               {suggestion.body}
             </p>
           </div>
-          <ArrowRight className="w-4 h-4 text-primary shrink-0 mt-2 group-hover:translate-x-0.5 transition-transform" />
+          <ArrowRight className="w-4 h-4 text-primary shrink-0 mt-2 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
         </div>
       </Link>
 
@@ -239,7 +239,7 @@ function ActionCard({
           {label}
         </span>
         {urgent && (
-          <span className="ml-auto inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="ms-auto inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
         )}
       </div>
       <p

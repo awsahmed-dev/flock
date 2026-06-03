@@ -99,7 +99,7 @@ export function JoinTripForm({ token, tripId }: Props) {
         </div>
 
         <Button type="submit" className="w-full" disabled={isPending}>
-          {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+          {isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
           Join trip
         </Button>
       </form>

@@ -194,7 +194,7 @@ function FeatureSection({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.8 }}
-          className="lg:pl-8"
+          className="lg:ps-8"
         >
           <FeatureDemo demo={f.demo} screen={f.screen} title={f.title} />
         </motion.div>

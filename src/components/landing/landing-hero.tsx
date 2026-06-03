@@ -114,7 +114,7 @@ export function LandingHero() {
               className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 opacity-0 group-hover:opacity-60 blur-md transition-opacity -z-10"
             />
             Start for free
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 rtl:rotate-180" />
           </Link>
           <a
             href="#features"

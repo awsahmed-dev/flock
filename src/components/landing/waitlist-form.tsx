@@ -57,7 +57,7 @@ export function WaitlistForm() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onSubmit={submit}
-            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] backdrop-blur p-1 pl-4 focus-within:border-white/25 transition-colors"
+            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] backdrop-blur p-1 ps-4 focus-within:border-white/25 transition-colors"
           >
             <Mail className="w-4 h-4 text-white/40 shrink-0" />
             <input
@@ -79,7 +79,7 @@ export function WaitlistForm() {
               className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed px-3.5 py-2 text-xs font-bold transition-colors"
             >
               {isPending ? "…" : "Notify me"}
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRight className="w-3 h-3 rtl:rotate-180" />
             </button>
           </motion.form>
         )}

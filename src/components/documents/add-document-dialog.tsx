@@ -136,7 +136,7 @@ export function AddDocumentDialog({ tripId }: Props) {
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 mr-1" />
+        <Plus className="w-4 h-4 me-1" />
         Add document
       </Button>
       <BottomSheet
@@ -185,7 +185,7 @@ export function AddDocumentDialog({ tripId }: Props) {
                 {file ? (
                   <p className="text-sm font-medium truncate max-w-full">
                     {file.name}
-                    <span className="text-xs text-muted-foreground ml-2">
+                    <span className="text-xs text-muted-foreground ms-2">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </span>
                   </p>

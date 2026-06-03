@@ -465,13 +465,13 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
               render={<button className="w-full text-left" />}
               onClick={() => setActiveAction("itinerary")}
             >
-              <MapPin className="w-3.5 h-3.5 mr-2 text-blue-500" />
+              <MapPin className="w-3.5 h-3.5 me-2 text-blue-500" />
               Suggest activity
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <span className="ml-auto text-[10px] text-muted-foreground hidden sm:block">
+        <span className="ms-auto text-[10px] text-muted-foreground hidden sm:block">
           Enter to send
         </span>
       </div>

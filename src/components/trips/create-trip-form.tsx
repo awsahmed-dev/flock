@@ -8,10 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createTrip } from "@/lib/actions/trips";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/i18n/locale-provider";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "JPY", "AUD", "CAD"];
 
 export function CreateTripForm() {
+  const t = useT();
   const [isPending, startTransition] = useTransition();
   const [currency, setCurrency] = useState("USD");
 
@@ -35,28 +37,26 @@ export function CreateTripForm() {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="name">Trip name *</Label>
+            <Label htmlFor="name">{t("trip.tripName")} *</Label>
             <Input
               id="name"
               name="name"
-              placeholder="Barcelona with the crew"
               required
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="destination">Destination *</Label>
+            <Label htmlFor="destination">{t("trip.destination")} *</Label>
             <Input
               id="destination"
               name="destination"
-              placeholder="Barcelona, Spain"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="startDate">Start date *</Label>
+              <Label htmlFor="startDate">{t("trip.startDate")} *</Label>
               <Input
                 id="startDate"
                 name="startDate"
@@ -65,7 +65,7 @@ export function CreateTripForm() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="endDate">End date *</Label>
+              <Label htmlFor="endDate">{t("trip.endDate")} *</Label>
               <Input
                 id="endDate"
                 name="endDate"
@@ -77,7 +77,7 @@ export function CreateTripForm() {
 
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2 flex flex-col gap-1.5">
-              <Label htmlFor="budgetTotal">Total budget (optional)</Label>
+              <Label htmlFor="budgetTotal">{t("trip.totalBudget")}</Label>
               <Input
                 id="budgetTotal"
                 name="budgetTotal"
@@ -88,7 +88,7 @@ export function CreateTripForm() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="currency">{t("trip.currency")}</Label>
               <select
                 id="currency"
                 name="currency"
@@ -104,8 +104,8 @@ export function CreateTripForm() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Create trip
+            {isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+            {t("trip.createButton")}
           </Button>
         </form>
       </CardContent>

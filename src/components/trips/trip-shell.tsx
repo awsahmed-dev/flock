@@ -235,8 +235,8 @@ export function TripShell({ trip, isOwner, children }: Props) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="shrink-0 -ml-2 hover:bg-primary/8 hover:text-primary">
-                <ChevronLeft className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="shrink-0 -ms-2 hover:bg-primary/8 hover:text-primary">
+                <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
               </Button>
             </Link>
             <Link
@@ -467,7 +467,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="hidden sm:flex fixed right-0 top-1/3 z-30 items-center gap-1.5 rounded-l-full bg-primary text-primary-foreground pl-3 pr-2 py-2 shadow-lg shadow-primary/30 hover:pr-3 hover:translate-x-0 transition-all"
+            className="hidden sm:flex fixed right-0 top-1/3 z-30 items-center gap-1.5 rounded-l-full bg-primary text-primary-foreground ps-3 pe-2 py-2 shadow-lg shadow-primary/30 hover:pe-3 hover:translate-x-0 transition-all"
             title="Open chat"
             aria-label="Open chat"
           >

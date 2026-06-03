@@ -45,7 +45,7 @@ export function LandingClosing() {
               className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-6 py-3.5 text-sm font-semibold transition-colors"
             >
               Start for free
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
           </div>
 

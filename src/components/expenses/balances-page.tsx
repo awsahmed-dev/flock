@@ -151,7 +151,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
             className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-3.5 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
           >
             Invite the crew
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-3 h-3 rtl:rotate-180" />
           </a>
         </div>
       ) : view === "net" ? (
@@ -219,7 +219,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                     {currency} {fmt(t.amount)}
                   </p>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 rtl:rotate-180" />
                 <div className={`w-8 h-8 rounded-full ${avatarColor(t.to)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
                   {t.toName.slice(0, 2).toUpperCase()}
                 </div>

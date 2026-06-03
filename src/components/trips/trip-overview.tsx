@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
 import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Member {
   id: string;
@@ -77,33 +78,40 @@ function getMemberColor(id: string) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-function getTripStatus(startDate: string, endDate: string) {
+// B15-e: status label now takes a translator so the hero pill follows
+// the active locale ("In 38 days" / "بعد 38 يوم").
+function getTripStatus(
+  startDate: string,
+  endDate: string,
+  t: (k: string, p?: Record<string, string | number>) => string,
+) {
   const now = new Date();
   const start = parseISO(startDate);
   const end = parseISO(endDate);
-  if (now >= start && now <= end) return { label: "Ongoing now", color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" };
-  if (isPast(end)) return { label: "Completed", color: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
+  if (now >= start && now <= end) return { label: t("trip.happeningNow"), color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" };
+  if (isPast(end)) return { label: t("trip.past"), color: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
   const days = differenceInCalendarDays(start, now);
   return {
-    label: days === 0 ? "Starts today!" : days === 1 ? "Starts tomorrow" : `In ${days} days`,
+    label: t("trip.startsIn", { days }),
     color: "bg-blue-500/20 text-blue-200 border-blue-500/30",
   };
 }
 
 export function TripOverview({ trip, inviteUrl, stats }: Props) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
 
   const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
   const gradient = getGradient(trip.id);
-  const tripStatus = getTripStatus(trip.startDate, trip.endDate);
+  const tripStatus = getTripStatus(trip.startDate, trip.endDate, t);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
     await navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
-    toast.success("Invite link copied!");
+    toast.success(t("common.copied"));
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -148,7 +156,7 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  {nights}n
+                  {t("trip.nightsCount", { nights })}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Users className="w-3 h-3" />
@@ -210,12 +218,12 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
             <Sparkles className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">AI Trip Planner</p>
+            <p className="font-bold text-sm">{t("itinerary.aiPlan")}</p>
             <p className="text-[11px] text-muted-foreground truncate">
-              Smart itinerary for {trip.destination}
+              {trip.destination}
             </p>
           </div>
-          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
         </button>
 
         <button
@@ -227,12 +235,12 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
             <Hotel className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">Find a Stay</p>
+            <p className="font-bold text-sm">{t("itinerary.findAStay")}</p>
             <p className="text-[11px] text-muted-foreground truncate">
-              Hotels, hostels, apartments
+              {trip.destination}
             </p>
           </div>
-          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
         </button>
       </div>
 
@@ -265,7 +273,7 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
             return (
               <div
                 key={member.id}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background pl-1 pr-2.5 py-1"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background ps-1 pe-2.5 py-1"
                 title={member.displayName}
               >
                 <div className={`w-5 h-5 rounded-full ${c.bg} ${c.text} flex items-center justify-center text-[9px] font-bold shrink-0`}>
@@ -286,7 +294,7 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
 
         {/* Invite row */}
         {inviteUrl ? (
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 pl-3 pr-1 py-1">
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 ps-3 pe-1 py-1">
             <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="text-[11px] text-muted-foreground truncate font-mono flex-1">
               {inviteUrl.replace(/^https?:\/\//, "")}

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createItineraryItemFromPlace } from "@/lib/actions/itinerary";
 import { searchPlaces, type GeoSuggestion } from "@/lib/mapbox-geocode";
-import { useLocale } from "@/components/i18n/locale-provider";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 
 interface Props {
   open: boolean;
@@ -68,6 +68,7 @@ export function AddPlaceSearch({
   // route which reads cookie server-side) and Mapbox (passed directly
   // since the call is client-side).
   const { locale } = useLocale();
+  const t = useT();
 
   // Reset on close
   useEffect(() => {
@@ -245,8 +246,8 @@ export function AddPlaceSearch({
     <BottomSheet
       open={open}
       onClose={onClose}
-      title="Add to itinerary"
-      subtitle={`Trip to ${destination}`}
+      title={t("itinerary.addToItinerary")}
+      subtitle={t("itinerary.tripToDestination", { destination })}
       size="md"
       footer={
         <div className="flex items-center gap-2">
@@ -256,7 +257,7 @@ export function AddPlaceSearch({
             disabled={isPending}
             className="rounded-xl border border-border bg-card hover:bg-accent/40 px-3 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -265,7 +266,7 @@ export function AddPlaceSearch({
             className="flex-1 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white py-2.5 text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Add to itinerary
+            {t("itinerary.addToItinerary")}
           </button>
         </div>
       }
@@ -274,7 +275,7 @@ export function AddPlaceSearch({
         {/* Title — primary field, free-text with autocomplete suggestions */}
         <div className="relative">
           <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
-            What are you adding?
+            {t("itinerary.whatAreYouAdding")}
           </label>
           <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 focus-within:border-primary/40">
             {searching ? (
@@ -290,7 +291,7 @@ export function AddPlaceSearch({
               onChange={(e) => handleTitleChange(e.target.value)}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 160)}
-              placeholder="Type a name (e.g. Osaka Castle, lunch with crew…)"
+              placeholder={t("itinerary.typeName")}
               autoFocus
               className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground"
             />
@@ -309,7 +310,7 @@ export function AddPlaceSearch({
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute z-30 left-0 right-0 mt-1 rounded-xl border border-border bg-popover shadow-xl overflow-hidden">
               <p className="px-3 pt-2 pb-1 text-[9px] font-bold tracking-widest uppercase text-muted-foreground">
-                Suggestions · pick one or keep typing
+                {t("itinerary.suggestions")}
               </p>
               <ul className="max-h-64 overflow-y-auto">
                 {suggestions.map((s) => (
@@ -340,7 +341,7 @@ export function AddPlaceSearch({
           {/* Hint when no suggestions yet */}
           {!showSuggestions && title.length < 2 && (
             <p className="mt-1.5 text-[10px] text-muted-foreground">
-              💡 Type a place name to see suggestions — or just write anything.
+              {t("itinerary.typeForSuggestions")}
             </p>
           )}
         </div>
@@ -364,7 +365,7 @@ export function AddPlaceSearch({
         {/* Day picker */}
         <div>
           <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block inline-flex items-center gap-1.5">
-            <Calendar className="w-3 h-3" /> Add to day
+            <Calendar className="w-3 h-3" /> {t("itinerary.addToDay")}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             {days.map((d, idx) => {
@@ -380,7 +381,7 @@ export function AddPlaceSearch({
                       : "border-border bg-card hover:border-foreground/20"
                   }`}
                 >
-                  <p className="text-[9px] font-bold tracking-widest uppercase">Day {idx + 1}</p>
+                  <p className="text-[9px] font-bold tracking-widest uppercase">{t("itinerary.dayN", { n: idx + 1 })}</p>
                   <p className="text-xs font-bold mt-0.5">{format(parseISO(d), "MMM d")}</p>
                 </button>
               );
@@ -391,12 +392,12 @@ export function AddPlaceSearch({
         {/* Optional time + cost — collapsed under a disclosure to stay clean */}
         <details className="rounded-xl border border-border bg-card/40">
           <summary className="cursor-pointer px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 list-none">
-            <ChevronDown className="w-3 h-3" /> More details (optional)
+            <ChevronDown className="w-3 h-3" /> {t("itinerary.moreDetails")}
           </summary>
           <div className="px-3 pb-3 grid grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" /> Time
+                <Clock className="w-2.5 h-2.5" /> {t("itinerary.time")}
               </label>
               <input
                 type="time"
@@ -407,7 +408,7 @@ export function AddPlaceSearch({
             </div>
             <div>
               <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
-                <Tag className="w-2.5 h-2.5" /> Cost
+                <Tag className="w-2.5 h-2.5" /> {t("itinerary.cost")}
               </label>
               <input
                 type="text"
@@ -420,7 +421,7 @@ export function AddPlaceSearch({
             </div>
             <div className="col-span-2">
               <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block">
-                Notes
+                {t("expenses.notes")}
               </label>
               <input
                 type="text"

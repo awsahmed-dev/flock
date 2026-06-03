@@ -252,7 +252,7 @@ export function ExpensesBoard({
                 <span>{t("expenses.tripBudget")}</span>
                 <span className="tabular-nums">
                   {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••"}
-                  <span className="text-white/60 ml-1 font-medium">
+                  <span className="text-white/60 ms-1 font-medium">
                     / {fmt(tripBudget)}
                   </span>
                 </span>
@@ -522,7 +522,7 @@ function SlimExpenseRow({
           <p className="text-[11px] text-muted-foreground truncate">
             {format(new Date(expense.expenseDate), "MMM d")} · {payerName}
             {iOwe && (
-              <span className="ml-1.5 text-orange-600 dark:text-orange-400 font-semibold">
+              <span className="ms-1.5 text-orange-600 dark:text-orange-400 font-semibold">
                 · you owe {expense.currency} {fmt(mySplit!.amountOwed)}
               </span>
             )}
