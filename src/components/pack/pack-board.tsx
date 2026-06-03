@@ -6,6 +6,7 @@ import { FileText, Backpack } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { DocumentsBoard } from "@/components/documents/documents-board";
 import { PackingBoard } from "@/components/packing/packing-board";
+import { useT } from "@/components/i18n/locale-provider";
 
 type View = "docs" | "packing";
 
@@ -66,6 +67,7 @@ export function PackBoard({
   members,
 }: Props) {
   const router = useRouter();
+  const t = useT();
   const [view, setView] = useState<View>(initialView);
   const [, startTransition] = useTransition();
 
@@ -86,8 +88,8 @@ export function PackBoard({
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Pack"
-        subtitle="Trip docs and packing checklist — everything you need on the road"
+        title={t("pack.title")}
+        subtitle={t("pack.subtitle")}
       />
 
       {/* B6: segmented control between Docs and Packing. The active tab
@@ -105,7 +107,7 @@ export function PackBoard({
           }`}
         >
           <FileText className="w-3 h-3" />
-          Docs
+          {t("pack.docs")}
           <span className={`tabular-nums ${view === "docs" ? "opacity-80" : "opacity-60"}`}>
             · {docsCount}
           </span>
@@ -121,7 +123,7 @@ export function PackBoard({
           }`}
         >
           <Backpack className="w-3 h-3" />
-          Packing
+          {t("pack.packing")}
           <span className={`tabular-nums ${view === "packing" ? "opacity-80" : "opacity-60"}`}>
             · {totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}
           </span>

@@ -13,6 +13,7 @@ import { format } from "@/lib/i18n/date-fns";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import type { RateBundle } from "@/lib/fx";
 import { convert } from "@/lib/fx";
+import { useT } from "@/components/i18n/locale-provider";
 
 /* ─── Static configs ─────────────────────────────────────────────────── */
 
@@ -100,6 +101,7 @@ export function ExpensesBoard({
   startDate,
   endDate,
 }: Props) {
+  const t = useT();
   const isOwner = members.some((m) => m.userId === userId);
   const [openId, setOpenId] = useState<string | null>(null);
   const [showAmounts, setShowAmounts] = useState(true);
@@ -200,7 +202,7 @@ export function ExpensesBoard({
         <div className="relative z-10 p-5 sm:p-6">
           <div className="flex items-start justify-between mb-1">
             <span className="text-[11px] font-bold tracking-widest uppercase text-white/90">
-              Trip total spent
+              {t("expenses.tripTotalSpent")}
             </span>
             <button
               type="button"
@@ -217,14 +219,14 @@ export function ExpensesBoard({
           {derived.isMultiCurrency && fxRates && (
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-white/70">
               <ArrowRightLeft className="w-3 h-3" />
-              Live FX applied across {[...new Set(expenseList.map((e) => e.currency))].length} currencies
+              {t("expenses.liveFxApplied", { count: [...new Set(expenseList.map((e) => e.currency))].length })}
             </p>
           )}
 
           <div className="grid grid-cols-2 gap-2.5 mt-4">
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white/80">
-                <ArrowUpRight className="w-3 h-3" /> You paid
+                <ArrowUpRight className="w-3 h-3" /> {t("expenses.youPaid")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
                 {currency} {showAmounts ? fmt(derived.myPaidBase) : "•••••"}
@@ -232,7 +234,7 @@ export function ExpensesBoard({
             </div>
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white/80">
-                <ArrowDownRight className="w-3 h-3" /> You owe
+                <ArrowDownRight className="w-3 h-3" /> {t("expenses.youOwe")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
                 {currency} {showAmounts ? fmt(derived.myOwedBase) : "•••••"}
@@ -247,7 +249,7 @@ export function ExpensesBoard({
           {tripBudget && tripBudget > 0 && (
             <div className="mt-4 pt-3 border-t border-white/15">
               <div className="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-white/80 mb-1.5">
-                <span>Trip budget</span>
+                <span>{t("expenses.tripBudget")}</span>
                 <span className="tabular-nums">
                   {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••"}
                   <span className="text-white/60 ml-1 font-medium">
@@ -273,8 +275,7 @@ export function ExpensesBoard({
               </div>
               <div className="flex items-center justify-between mt-1.5 text-[10px] text-white/70">
                 <span>
-                  {Math.round((derived.totalSharedBase / tripBudget) * 100)}%
-                  used
+                  {t("expenses.percentUsed", { percent: Math.round((derived.totalSharedBase / tripBudget) * 100) })}
                 </span>
                 {/* Personal budget mini-stat OR a "set your budget" hint —
                     no longer its own giant card. */}
@@ -291,7 +292,7 @@ export function ExpensesBoard({
                       % used
                     </>
                   ) : (
-                    <>Set a personal cap →</>
+                    <>{t("expenses.setPersonalCap")}</>
                   )}
                 </Link>
               </div>
@@ -319,11 +320,11 @@ export function ExpensesBoard({
 
       {/* ── Activity preview (with View all → /transactions) ──────── */}
       <SectionCard
-        title={`Activity${expenseList.length > 0 ? ` · ${expenseList.length}` : ""}`}
-        subtitle="Most recent expenses"
+        title={`${t("expenses.activity")}${expenseList.length > 0 ? ` · ${expenseList.length}` : ""}`}
+        subtitle={t("expenses.mostRecent")}
         viewAllHref={`/trips/${tripId}/expenses/transactions`}
         empty={expenseList.length === 0}
-        emptyLabel="No expenses logged yet"
+        emptyLabel={t("expenses.activity")}
       >
         <ul className="divide-y divide-border/60">
           {recentExpenses.map((exp) => (
@@ -342,8 +343,8 @@ export function ExpensesBoard({
       {/* ── Spending breakdown preview (top 3 categories) ──────────── */}
       {derived.topCategories.length > 0 && (
         <SectionCard
-          title="Spending breakdown"
-          subtitle="Top categories · drill into full breakdown"
+          title={t("expenses.spendingBreakdown")}
+          subtitle={t("expenses.topCategories")}
           viewAllHref={`/trips/${tripId}/expenses/breakdown`}
         >
           <div className="space-y-2.5">
@@ -386,8 +387,8 @@ export function ExpensesBoard({
       {/* ── Balances preview ──────────────────────────────────────── */}
       {derived.balances.length > 0 && (
         <SectionCard
-          title="Balances"
-          subtitle="Who owes who · settle up"
+          title={t("expenses.balances")}
+          subtitle={t("expenses.whoOwesWho")}
           viewAllHref={`/trips/${tripId}/expenses/balances`}
         >
           <ul className="divide-y divide-border/60">
@@ -419,7 +420,7 @@ export function ExpensesBoard({
                         {currency} {fmt(b.net)}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {b.net > 0.005 ? "gets back" : b.net < -0.005 ? "owes" : "settled"}
+                        {b.net > 0.005 ? t("expenses.getsBack") : b.net < -0.005 ? t("expenses.owes") : t("common.youreSettled")}
                       </p>
                     </div>
                   </li>

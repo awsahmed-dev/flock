@@ -14,6 +14,7 @@ import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
 import { convert, type RateBundle } from "@/lib/fx";
 import { Plus, Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal, Users, User, Receipt, X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/components/i18n/locale-provider";
 
 const CATEGORIES: { value: ExpenseCategory; label: string; icon: React.ElementType; color: string }[] = [
   { value: "accommodation", label: "Stay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
@@ -73,6 +74,7 @@ export function AddExpenseDialog({
   const currencyOptions = Array.from(
     new Set([baseCurrency, ...COMMON_CURRENCIES]),
   );
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   // B2 Budget v2 — Shared splits across the crew; Personal is your own
@@ -141,7 +143,7 @@ export function AddExpenseDialog({
     startTransition(async () => {
       try {
         await createExpense(formData);
-        toast.success("Expense logged");
+        toast.success(t("expenses.loggedToast"));
         track.expenseLogged(tripId, baseCurrency);
         // Tester finding: the chat sidebar's auto-posted expense card
         // was lagging behind the create flow by up to 10s (the polling
@@ -169,12 +171,12 @@ export function AddExpenseDialog({
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 mr-1" />Log expense
+        <Plus className="w-4 h-4 mr-1" />{t("expenses.logExpense")}
       </Button>
       <BottomSheet
         open={open}
         onClose={() => setOpen(false)}
-        title="Log an expense"
+        title={t("expenses.logTitle")}
         size="md"
         footer={
           <div className="flex gap-2">
@@ -184,7 +186,7 @@ export function AddExpenseDialog({
               className="flex-1"
               onClick={() => setOpen(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -192,7 +194,7 @@ export function AddExpenseDialog({
               disabled={isPending}
               onClick={() => formRef.current?.requestSubmit()}
             >
-              {isPending ? "Logging…" : "Log expense"}
+              {isPending ? t("expenses.loggingToast") : t("expenses.logExpense")}
             </Button>
           </div>
         }
@@ -220,7 +222,7 @@ export function AddExpenseDialog({
               <input
                 id="title"
                 name="title"
-                placeholder="What was this?"
+                placeholder={t("expenses.whatWasThis")}
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -297,7 +299,7 @@ export function AddExpenseDialog({
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Users className="w-3.5 h-3.5" /> Shared · split equally
+              <Users className="w-3.5 h-3.5" /> {t("expenses.sharedSplitEqually")}
             </button>
             <button
               type="button"
@@ -308,18 +310,18 @@ export function AddExpenseDialog({
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <User className="w-3.5 h-3.5" /> Personal · just you
+              <User className="w-3.5 h-3.5" /> {t("expenses.personalJustYou")}
             </button>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Date</Label>
+              <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.date")}</Label>
               <Input id="expenseDate" name="expenseDate" type="date" required className="h-9" />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="notes" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</Label>
-              <Input id="notes" name="notes" placeholder="optional" className="h-9" />
+              <Label htmlFor="notes" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.notes")}</Label>
+              <Input id="notes" name="notes" placeholder={t("expenses.notesOptional")} className="h-9" />
             </div>
           </div>
 
@@ -328,7 +330,7 @@ export function AddExpenseDialog({
               expense. Thumbnail preview with an X to remove. */}
           <div>
             <Label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
-              Receipt
+              {t("expenses.receipt")}
             </Label>
             {receiptUrl ? (
               <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-2.5 py-2">
@@ -362,7 +364,7 @@ export function AddExpenseDialog({
                   <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
                 <span className="text-xs font-bold text-muted-foreground">
-                  {receiptUploading ? "Uploading…" : "Attach a receipt photo (optional)"}
+                  {receiptUploading ? t("common.loading") : t("expenses.addReceipt")}
                 </span>
                 <input
                   id="receipt-file"

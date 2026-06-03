@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { settleSplit, deleteExpense } from "@/lib/actions/expenses";
 import { fmtAmount as fmt } from "@/lib/numerals";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Split {
   id: string;
@@ -72,6 +73,7 @@ export function ExpenseSheet({
   baseAmount,
   baseCurrency,
 }: Props) {
+  const t = useT();
   const [isPending, startTransition] = useTransition();
 
   if (!expense) return <BottomSheet open={open} onClose={onClose}>{null}</BottomSheet>;
@@ -86,8 +88,8 @@ export function ExpenseSheet({
     fd.set("splitId", splitId);
     fd.set("tripId", expense.tripId);
     startTransition(async () => {
-      try { await settleSplit(fd); toast.success("Settled"); }
-      catch { toast.error("Failed to settle"); }
+      try { await settleSplit(fd); toast.success(t("expenses.settledToast")); }
+      catch { toast.error(t("common.error")); }
     });
   }
 
@@ -124,7 +126,7 @@ export function ExpenseSheet({
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 text-destructive py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            Delete expense
+            {t("common.delete")}
           </button>
         ) : null
       }
@@ -158,7 +160,7 @@ export function ExpenseSheet({
       {expense.splits.length > 0 ? (
         <div className="mb-4">
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-2 px-1">
-            Split between {expense.splits.length}
+            {t("expenses.splitBetween", { count: expense.splits.length })}
           </p>
           <div className="space-y-1.5">
             {expense.splits.map((split) => {
@@ -186,7 +188,7 @@ export function ExpenseSheet({
                   {split.settled ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                       <CheckCircle2 className="w-3 h-3" />
-                      Settled
+                      {t("common.youreSettled")}
                     </span>
                   ) : iOwe ? (
                     <button
@@ -195,7 +197,7 @@ export function ExpenseSheet({
                       disabled={isPending}
                       className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-[11px] font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                      Settle
+                      {t("expenses.settle")}
                     </button>
                   ) : owesMe ? (
                     <button
@@ -204,7 +206,7 @@ export function ExpenseSheet({
                       disabled={isPending}
                       className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 text-[11px] font-bold hover:bg-emerald-500/15 transition-colors disabled:opacity-50"
                     >
-                      Mark paid
+                      {t("expenses.markPaid")}
                     </button>
                   ) : null}
                 </div>
@@ -215,7 +217,7 @@ export function ExpenseSheet({
       ) : (
         <div className="rounded-xl border border-dashed border-border/60 p-3 mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Receipt className="w-3.5 h-3.5" />
-          Personal expense — no splits.
+          {t("expenses.personalNoSplits")}
         </div>
       )}
 

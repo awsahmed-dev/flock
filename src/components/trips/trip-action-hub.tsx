@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { fmtAmount } from "@/lib/numerals";
+import { useT } from "@/components/i18n/locale-provider";
 
 /**
  * Trip Action Hub — rebuild of the trip overview's "what can I do here?"
@@ -50,6 +51,7 @@ interface Props {
 }
 
 export function TripActionHub({ tripId, stats }: Props) {
+  const t = useT();
   const suggestion = pickSuggestion(tripId, stats);
 
   return (
@@ -66,12 +68,12 @@ export function TripActionHub({ tripId, stats }: Props) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-bold tracking-widest uppercase text-primary">
-                Up next
+                {t("common.upNext")}
               </span>
               {suggestion.urgent && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
                   <AlertCircle className="w-2.5 h-2.5" />
-                  Needs you
+                  {t("common.needsYou")}
                 </span>
               )}
             </div>
@@ -93,18 +95,18 @@ export function TripActionHub({ tripId, stats }: Props) {
           href={`/trips/${tripId}/itinerary`}
           icon={Calendar}
           color="blue"
-          label="Plan"
+          label={t("cards.plan")}
           headline={
             stats.itineraryCount === 0
-              ? "Empty"
-              : `${stats.itineraryCount} item${stats.itineraryCount !== 1 ? "s" : ""}`
+              ? t("cards.planEmpty")
+              : t("cards.planItems", { count: stats.itineraryCount })
           }
           subline={
             stats.itineraryCount === 0
-              ? "Start with AI"
+              ? t("cards.planStartWithAi")
               : stats.daysWithItems < stats.totalDays
-                ? `${stats.totalDays - stats.daysWithItems} day${stats.totalDays - stats.daysWithItems !== 1 ? "s" : ""} empty`
-                : "All days covered"
+                ? t("cards.planDaysEmpty", { days: stats.totalDays - stats.daysWithItems })
+                : ""
           }
           warn={stats.itineraryCount === 0}
         />
@@ -112,20 +114,16 @@ export function TripActionHub({ tripId, stats }: Props) {
           href={`/trips/${tripId}/votes`}
           icon={Vote}
           color="violet"
-          label="Decide"
+          label={t("cards.decide")}
           headline={
             stats.votesOpen > 0
-              ? `${stats.votesOpen} open`
-              : stats.votesResolved > 0
-                ? `${stats.votesResolved} resolved`
-                : "No votes"
+              ? t("cards.decideOpen", { count: stats.votesOpen })
+              : t("cards.decideNoVotes")
           }
           subline={
             stats.votesOpen > 0
-              ? "Needs your vote"
-              : stats.votesResolved > 0
-                ? "All decided"
-                : "Settle a debate"
+              ? t("cards.decideNeedsYourVote")
+              : t("cards.decideSettleADebate")
           }
           urgent={stats.votesOpen > 0}
         />
@@ -133,18 +131,18 @@ export function TripActionHub({ tripId, stats }: Props) {
           href={`/trips/${tripId}/expenses`}
           icon={Wallet}
           color="emerald"
-          label="Money"
+          label={t("cards.money")}
           headline={
             stats.expensesCount === 0
-              ? "No expenses"
+              ? t("cards.moneyNoExpenses")
               : `${stats.currency} ${fmtAmount(stats.totalSpent)}`
           }
           subline={
             stats.expensesCount === 0
-              ? "Log your first"
+              ? t("cards.moneyLogYourFirst")
               : stats.myUnsettled > 0
-                ? `You owe ${stats.currency} ${fmtAmount(stats.myUnsettled)}`
-                : "You're settled"
+                ? `${t("expenses.youOwe")} ${stats.currency} ${fmtAmount(stats.myUnsettled)}`
+                : t("cards.moneyYoureSettled")
           }
           urgent={stats.myUnsettled > 0}
         />
@@ -152,18 +150,16 @@ export function TripActionHub({ tripId, stats }: Props) {
           href={`/trips/${tripId}/pack?view=packing`}
           icon={Backpack}
           color="amber"
-          label="Pack"
+          label={t("cards.pack")}
           headline={
             stats.packingTotal === 0
-              ? "Empty list"
-              : `${stats.packingPacked}/${stats.packingTotal}`
+              ? t("cards.planEmpty")
+              : t("cards.packCount", { packed: stats.packingPacked, total: stats.packingTotal })
           }
           subline={
             stats.packingTotal === 0
-              ? "Start with suggestions"
-              : stats.packingPacked >= stats.packingTotal
-                ? "All packed"
-                : `${Math.round((stats.packingPacked / stats.packingTotal) * 100)}% packed`
+              ? ""
+              : t("cards.packPercentPacked", { percent: Math.round((stats.packingPacked / stats.packingTotal) * 100) })
           }
           warn={stats.packingTotal === 0}
         />
