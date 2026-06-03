@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -71,6 +72,7 @@ export default function RootLayout({
           <PushNotificationInit />
         </Providers>
         <Toaster richColors position="top-right" />
+        <Analytics />
       </body>
     </html>
   );
