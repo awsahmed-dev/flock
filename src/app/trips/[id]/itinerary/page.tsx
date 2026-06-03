@@ -38,6 +38,36 @@ export default async function ItineraryPage({ params }: Props) {
     getRates(trip.currency),
   ]);
 
+  // Backfill missing coordinates for any items that have a location name
+  // but no coords yet — AI-planned trips written before the geocode-on-
+  // insert fix have null lat/lng so they don't show as map pins. We
+  // geocode in parallel (capped at 30 to avoid abusing Nominatim) and
+  // persist the result, then patch the in-memory rows so this render
+  // already includes them.
+  const missingGeo = items
+    .filter((i) => i.locationName && i.locationLat == null && i.locationLng == null)
+    .slice(0, 30);
+  if (missingGeo.length > 0) {
+    const results = await Promise.all(
+      missingGeo.map((i) =>
+        geocode(i.locationName as string, trip.destination).catch(() => null),
+      ),
+    );
+    await Promise.all(
+      missingGeo.map(async (i, idx) => {
+        const geo = results[idx];
+        if (!geo) return;
+        i.locationLat = geo.lat;
+        i.locationLng = geo.lng;
+        await db
+          .update(itineraryItems)
+          .set({ locationLat: geo.lat, locationLng: geo.lng })
+          .where(eq(itineraryItems.id, i.id))
+          .catch(() => {});
+      }),
+    );
+  }
+
   const days = eachDayOfInterval({
     start: parseDateOnly(trip.startDate),
     end: parseDateOnly(trip.endDate),

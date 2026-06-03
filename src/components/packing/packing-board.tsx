@@ -24,6 +24,7 @@ import {
   seedSuggestedPacking,
 } from "@/lib/actions/packing";
 import { PageHeader } from "@/components/ui/page-header";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Item {
   id: string;
@@ -51,16 +52,16 @@ interface Props {
 
 const CATEGORY_META: Record<
   string,
-  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
+  { i18nKey: string; icon: React.ComponentType<{ className?: string }>; color: string }
 > = {
-  general: { label: "General", icon: Tag, color: "text-slate-400" },
-  clothes: { label: "Clothes", icon: Tent, color: "text-blue-500" },
-  docs: { label: "Documents", icon: FileText, color: "text-amber-500" },
-  tech: { label: "Tech", icon: Smartphone, color: "text-violet-500" },
-  toiletries: { label: "Toiletries", icon: Droplet, color: "text-cyan-500" },
-  medical: { label: "Medical", icon: Pill, color: "text-red-500" },
-  outdoor: { label: "Outdoor", icon: Tent, color: "text-emerald-500" },
-  other: { label: "Other", icon: Tag, color: "text-muted-foreground" },
+  general: { i18nKey: "general", icon: Tag, color: "text-slate-400" },
+  clothes: { i18nKey: "clothes", icon: Tent, color: "text-blue-500" },
+  docs: { i18nKey: "documents", icon: FileText, color: "text-amber-500" },
+  tech: { i18nKey: "tech", icon: Smartphone, color: "text-violet-500" },
+  toiletries: { i18nKey: "toiletries", icon: Droplet, color: "text-cyan-500" },
+  medical: { i18nKey: "medical", icon: Pill, color: "text-red-500" },
+  outdoor: { i18nKey: "outdoor", icon: Tent, color: "text-emerald-500" },
+  other: { i18nKey: "other", icon: Tag, color: "text-muted-foreground" },
 };
 
 const CATEGORIES = Object.keys(CATEGORY_META);
@@ -78,6 +79,7 @@ const CATEGORIES = Object.keys(CATEGORY_META);
  * personal items only by the owner.
  */
 export function PackingBoard({ tripId, userId, items, members, embedded }: Props) {
+  const t = useT();
   const [tab, setTab] = useState<"shared" | "mine" | "crew">("shared");
   const [isPending, startTransition] = useTransition();
   const [newLabel, setNewLabel] = useState("");
@@ -107,7 +109,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
   function add(scope: "shared" | "mine") {
     const label = newLabel.trim();
     if (!label) {
-      toast.error("Give it a name");
+      toast.error(t("pack.giveItName"));
       return;
     }
     const fd = new FormData();
@@ -120,7 +122,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
         await createPackingItem(fd);
         setNewLabel("");
       } catch (e: any) {
-        toast.error(e?.message || "Couldn't add");
+        toast.error(e?.message || t("pack.couldntAdd"));
       }
     });
   }
@@ -133,7 +135,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
       try {
         await togglePackingItem(fd);
       } catch (e: any) {
-        toast.error(e?.message || "Couldn't update");
+        toast.error(e?.message || t("pack.couldntUpdate"));
       }
     });
   }
@@ -146,7 +148,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
       try {
         await deletePackingItem(fd);
       } catch (e: any) {
-        toast.error(e?.message || "Couldn't delete");
+        toast.error(e?.message || t("pack.couldntDelete"));
       }
     });
   }
@@ -157,9 +159,9 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
     startTransition(async () => {
       try {
         await seedSuggestedPacking(fd);
-        toast.success("Suggested items added");
+        toast.success(t("pack.suggestedAdded"));
       } catch (e: any) {
-        toast.error(e?.message || "Couldn't seed");
+        toast.error(e?.message || t("pack.couldntSeed"));
       }
     });
   }
@@ -179,14 +181,14 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold px-3 py-1.5 transition-colors disabled:opacity-50"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Start with suggestions
+              {t("pack.startWithSuggestions")}
             </button>
           </div>
         )
       ) : (
         <PageHeader
-          title="Packing list"
-          subtitle="Shared crew items + your personal checklist"
+          title={t("pack.headerTitle")}
+          subtitle={t("pack.headerSubtitle")}
           action={
             items.length === 0 ? (
               <button
@@ -209,21 +211,21 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
           active={tab === "shared"}
           onClick={() => setTab("shared")}
           icon={Users}
-          label="Shared"
+          label={t("pack.shared")}
           count={counts.shared.total}
         />
         <TabButton
           active={tab === "mine"}
           onClick={() => setTab("mine")}
           icon={User}
-          label="Yours"
+          label={t("pack.yours")}
           count={counts.mine.total}
         />
         <TabButton
           active={tab === "crew"}
           onClick={() => setTab("crew")}
           icon={Users}
-          label="Crew"
+          label={t("pack.crew")}
           count={crewByMember.size}
         />
       </div>
@@ -244,8 +246,8 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder={
               tab === "shared"
-                ? "What does the group need? (tent, snacks…)"
-                : "What do you need to bring? (passport, meds…)"
+                ? t("pack.whatDoesGroupNeed")
+                : t("pack.whatYouNeed")
             }
             className="flex-1 min-w-0 bg-transparent text-sm px-2 py-1.5 outline-none placeholder:text-muted-foreground"
             onKeyDown={(e) => {
@@ -259,7 +261,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {CATEGORY_META[c]?.label ?? c}
+                {t(`pack.categories.${CATEGORY_META[c]?.i18nKey ?? "other"}`)}
               </option>
             ))}
           </select>
@@ -270,7 +272,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
             className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-violet-600 text-white text-xs font-bold px-3 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" />
-            Add
+            {t("pack.add")}
           </button>
         </div>
       )}
@@ -344,13 +346,14 @@ function TabButton({
 }
 
 function ProgressBar({ packed, total }: { packed: number; total: number }) {
+  const t = useT();
   if (total === 0) return null;
   const pct = Math.round((packed / total) * 100);
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground font-medium">
-          {packed} of {total} packed
+          {t("pack.ofPacked", { packed, total })}
         </span>
         <span className="font-bold text-foreground tabular-nums">{pct}%</span>
       </div>
@@ -375,6 +378,7 @@ function CategoryList({
   onDelete: (id: string) => void;
   userId: string;
 }) {
+  const t = useT();
   const grouped = useMemo(() => {
     const map = new Map<string, Item[]>();
     for (const i of items) {
@@ -390,8 +394,8 @@ function CategoryList({
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
         <Backpack className="w-8 h-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm font-medium">Nothing on the list yet</p>
-        <p className="text-xs mt-1">Add an item above to get started</p>
+        <p className="text-sm font-medium">{t("pack.nothingOnList")}</p>
+        <p className="text-xs mt-1">{t("pack.addToStart")}</p>
       </div>
     );
   }
@@ -406,7 +410,7 @@ function CategoryList({
             <div className="flex items-center gap-1.5 px-1">
               <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
               <p className="text-[11px] font-extrabold tracking-wider text-muted-foreground uppercase">
-                {meta.label} · {list.length}
+                {t(`pack.categories.${meta.i18nKey}`)} · {list.length}
               </p>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -440,6 +444,7 @@ function PackingRow({
   onDelete: () => void;
   canDelete: boolean;
 }) {
+  const t = useT();
   return (
     <div
       className={`group flex items-center gap-3 rounded-xl border bg-card p-3 transition-all ${
@@ -454,7 +459,7 @@ function PackingRow({
             ? "bg-emerald-500 text-white"
             : "border-2 border-muted-foreground/40 hover:border-primary"
         }`}
-        aria-label={item.packed ? "Mark as not packed" : "Mark as packed"}
+        aria-label={item.packed ? t("pack.markNotPacked") : t("pack.markPacked")}
       >
         {item.packed && <Check className="w-3.5 h-3.5" />}
       </button>
@@ -475,7 +480,7 @@ function PackingRow({
           type="button"
           onClick={onDelete}
           className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive transition-all"
-          aria-label="Delete item"
+          aria-label={t("pack.deleteItem")}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -493,14 +498,15 @@ function CrewView({
   crewByMember: Map<string, Item[]>;
   userId: string;
 }) {
+  const t = useT();
   const others = members.filter((m) => m.userId !== userId);
 
   if (others.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
         <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm font-medium">You're flying solo</p>
-        <p className="text-xs mt-1">Invite friends and their lists land here</p>
+        <p className="text-sm font-medium">{t("pack.flyingSolo")}</p>
+        <p className="text-xs mt-1">{t("pack.inviteCrew")}</p>
       </div>
     );
   }
@@ -525,7 +531,7 @@ function CrewView({
             </div>
             {list.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">
-                Nothing packed yet
+                {t("pack.nothingPackedYet")}
               </p>
             ) : (
               <ul className="flex flex-col gap-1">

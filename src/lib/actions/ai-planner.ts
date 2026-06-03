@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { itineraryItems, votes, voteOptions, chatMessages, profiles } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { geocode } from "@/lib/geocode";
 
 export interface PlannedActivity {
   day: number;
@@ -55,7 +56,20 @@ export async function addPlannedItems(tripId: string, items: PlannedActivity[]) 
     email: user.email,
   }).onConflictDoNothing();
 
-  // Coords are left null here — the client-side map geocodes them lazily
+  // Geocode each item's locationName so it shows up as a pin on the trip
+  // map. Without this, AI-planned items only appear in the list — the map
+  // looks empty and the two views feel disconnected. Best-effort: failures
+  // leave coords null so the item still saves. Falls back to using the
+  // title when the model didn't emit a locationName. Nominatim tolerates
+  // small parallel bursts for user-triggered actions.
+  const geos = await Promise.all(
+    items.map((a) => {
+      const query = (a.locationName || a.title || "").trim();
+      if (!query) return Promise.resolve(null);
+      return geocode(query, trip.destination ?? undefined).catch(() => null);
+    }),
+  );
+
   const rows = items.map((a, idx) => ({
     tripId,
     dayDate: addDays(trip.startDate as string, a.day - 1),
@@ -63,8 +77,8 @@ export async function addPlannedItems(tripId: string, items: PlannedActivity[]) 
     type: sanitizeType(a.type),
     startTime: sanitizeTime(a.startTime), // AI returns "morning"/"evening" which breaks TIME columns
     locationName: a.locationName ?? null,
-    locationLat: null as number | null,
-    locationLng: null as number | null,
+    locationLat: geos[idx]?.lat ?? null,
+    locationLng: geos[idx]?.lng ?? null,
     costEstimate: a.costEstimate ?? null,
     notes: a.notes ?? null,
     status: "proposed" as const,
