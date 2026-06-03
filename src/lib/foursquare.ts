@@ -51,12 +51,16 @@ export async function searchPlaces({
   lat,
   lng,
   limit = 8,
+  locale,
 }: {
   query: string;
   near?: string;
   lat?: number;
   lng?: number;
   limit?: number;
+  /** B15: BCP-47 language tag for the response. Falls back to the
+   *  POI's primary name when the FSQ record has no translation. */
+  locale?: string;
 }): Promise<FsqSearchHit[]> {
   const params = new URLSearchParams();
   params.set("query", query);
@@ -67,8 +71,10 @@ export async function searchPlaces({
     params.set("near", near);
   }
 
+  const headers: Record<string, string> = { ...authHeaders() };
+  if (locale) headers["Accept-Language"] = locale;
   const res = await fetch(`${BASE}/search?${params.toString()}`, {
-    headers: authHeaders(),
+    headers,
     // Cache short — autocomplete is bursty, don't burn quota repeating
     // identical keystrokes.
     next: { revalidate: 60 },

@@ -43,12 +43,17 @@ export async function searchPlaces({
   token,
   signal,
   limit = 8,
+  language,
 }: {
   query: string;
   proximity?: [number, number];
   token: string;
   signal?: AbortSignal;
   limit?: number;
+  /** B15: BCP-47 language tag (e.g. "ar", "en"). Defaults to "en".
+   *  Mapbox returns place names in the requested script when
+   *  available — handy for users browsing in Arabic. */
+  language?: string;
 }): Promise<GeoSuggestion[]> {
   if (query.trim().length < 2) return [];
 
@@ -63,7 +68,7 @@ export async function searchPlaces({
   // names in the local script — Osaka Castle becomes 大阪城, which is
   // accurate but useless for English-speaking users who typed "osaka
   // castle". `worldview=us` keeps disputed-territory naming neutral.
-  params.set("language", "en");
+  params.set("language", language ?? "en");
   if (proximity) {
     params.set("proximity", proximity.join(","));
     // B12-followup: proximity is only a *ranking* signal in Mapbox — a

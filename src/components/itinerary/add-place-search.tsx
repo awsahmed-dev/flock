@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createItineraryItemFromPlace } from "@/lib/actions/itinerary";
 import { searchPlaces, type GeoSuggestion } from "@/lib/mapbox-geocode";
+import { useLocale } from "@/components/i18n/locale-provider";
 
 interface Props {
   open: boolean;
@@ -62,6 +63,10 @@ export function AddPlaceSearch({
   const [isPending, startTransition] = useTransition();
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // B15: pass the viewer's locale to both Foursquare (via the /api
+  // route which reads cookie server-side) and Mapbox (passed directly
+  // since the call is client-side).
+  const { locale } = useLocale();
 
   // Reset on close
   useEffect(() => {
@@ -155,6 +160,7 @@ export function AddPlaceSearch({
               token,
               signal: ctrl.signal,
               limit: 6,
+              language: locale,
             });
           }
         }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { searchPlaces } from "@/lib/foursquare";
+import { getLocale } from "@/lib/i18n";
 
 /**
  * B5: Foursquare-backed place autocomplete for the Plan page's "Add by
@@ -24,12 +25,18 @@ export async function GET(request: Request) {
   }
 
   try {
+    // B15: pass the viewer's locale so FSQ returns Arabic POI names
+    // ("أبراج بتروناس التوأم") when the user has switched the app to
+    // Arabic. Falls back to the canonical name when no translation
+    // exists for that POI.
+    const locale = await getLocale();
     const results = await searchPlaces({
       query,
       near,
       lat: lat ? Number(lat) : undefined,
       lng: lng ? Number(lng) : undefined,
       limit: 8,
+      locale,
     });
     return NextResponse.json({ results });
   } catch (err) {

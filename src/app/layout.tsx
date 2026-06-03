@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
+import { getLocale, getDictionary, isRtl } from "@/lib/i18n";
+import { LocaleProvider } from "@/components/i18n/locale-provider";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -41,13 +43,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // B15: locale + RTL handling. Cookie-driven; falls back to
+  // Accept-Language sniff on first visit. The Provider hands the
+  // already-loaded dictionary to every client component below.
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const dir = isRtl(locale) ? "rtl" : "ltr";
+
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased overflow-x-hidden`} suppressHydrationWarning>
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${inter.variable} h-full antialiased overflow-x-hidden`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -66,11 +80,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans overflow-x-hidden max-w-full">
-        <Providers>
-          {children}
-          <PushNotificationInit />
-        </Providers>
-        <Toaster richColors position="top-right" />
+        <LocaleProvider locale={locale} dict={dict}>
+          <Providers>
+            {children}
+            <PushNotificationInit />
+          </Providers>
+          <Toaster richColors position="top-right" />
+        </LocaleProvider>
       </body>
     </html>
   );

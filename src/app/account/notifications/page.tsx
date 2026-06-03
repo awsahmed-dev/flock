@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { updateNotificationPrefs } from "@/lib/actions/notifications-prefs";
+import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -35,34 +36,42 @@ export default async function NotificationPrefsPage() {
     notifDigest: profile?.notifDigest ?? true,
   };
 
+  // B15: server-side translate. The page is fully RSC so we pull from
+  // the dictionary in-process rather than shipping the JSON to the
+  // browser.
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const t = (k: string, p?: Record<string, string | number>) =>
+    tFromDict(dict, k, p, locale);
+
   const rows = [
     {
       key: "notif_inapp",
       checked: prefs.notifInapp,
       icon: Bell,
-      title: "In-app bell",
-      caption: "Show the bell badge and dropdown of recent activity.",
+      title: t("notifications.inAppBell"),
+      caption: t("notifications.inAppDesc"),
     },
     {
       key: "notif_email",
       checked: prefs.notifEmail,
       icon: Mail,
-      title: "Transactional email",
-      caption: "Real-time emails when someone logs an expense, opens a vote, or settles up.",
+      title: t("notifications.txEmail"),
+      caption: t("notifications.txEmailDesc"),
     },
     {
       key: "notif_push",
       checked: prefs.notifPush,
       icon: Smartphone,
-      title: "Push notifications",
-      caption: "Browser + mobile push for the same events. You'll be asked to enable push on first opt-in.",
+      title: t("notifications.push"),
+      caption: t("notifications.pushDesc"),
     },
     {
       key: "notif_digest",
       checked: prefs.notifDigest,
       icon: Calendar,
-      title: "Daily digest email",
-      caption: "One summary email per active trip per day — quieter than per-event mail.",
+      title: t("notifications.digest"),
+      caption: t("notifications.digestDesc"),
     },
   ];
 
@@ -72,13 +81,12 @@ export default async function NotificationPrefsPage() {
         href="/dashboard"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-6"
       >
-        <ChevronLeft className="w-3.5 h-3.5" /> Back to trips
+        <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" /> {t("nav.backToTrips")}
       </Link>
 
-      <h1 className="text-2xl font-bold mb-1">Notifications</h1>
+      <h1 className="text-2xl font-bold mb-1">{t("notifications.prefsHeading")}</h1>
       <p className="text-sm text-muted-foreground mb-6">
-        Choose how you'd like to hear about trip activity. Each channel can be
-        flipped independently.
+        {t("notifications.prefsSub")}
       </p>
 
       <form action={updateNotificationPrefs} className="space-y-2">
@@ -113,7 +121,7 @@ export default async function NotificationPrefsPage() {
             type="submit"
             className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity"
           >
-            Save preferences
+            {t("notifications.savePrefs")}
           </button>
         </div>
       </form>

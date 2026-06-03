@@ -44,6 +44,7 @@ import dynamicImport from "next/dynamic";
 import { MobileNav } from "@/components/pwa/mobile-nav";
 import { EnablePushButton } from "@/components/pwa/enable-push";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 // Lazy load the heavy components that aren't needed at first paint:
 //   - ChatSidebar pulls in supabase realtime + motion + the AI chip
@@ -314,6 +315,12 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 >
                   <Bell className="w-4 h-4" /> Notification settings
                 </DropdownMenuItem>
+                {/* B15: language switcher — sits next to the
+                    settings link so the most personal toggles are
+                    grouped at the top of the dropdown. */}
+                <div className="px-1.5 py-0.5">
+                  <LanguageSwitcher />
+                </div>
                 {/* Trip Settings lives in the header now (B3-a) — kept here as
                     a redundant entry only when the viewer is a non-owner so the
                     dropdown still shows a hint of what exists, but disabled. */}

@@ -161,6 +161,36 @@ export function MapboxPlanMap({
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
 
+    // B15: localize on-map labels. The streets-v12 style ships a
+    // text-field expression that falls back to the local name; we
+    // override it to prefer the user's locale (ar / en) so a Saudi
+    // user browsing Tokyo sees "طوكيو" instead of "Tokyo". The HTML
+    // `lang` attribute is the source of truth — set by the root
+    // layout, read here so we don't have to thread props through.
+    map.on("style.load", () => {
+      try {
+        const lang =
+          typeof document !== "undefined" && document.documentElement.lang
+            ? document.documentElement.lang.split("-")[0]
+            : "en";
+        const expr: any = [
+          "coalesce",
+          ["get", `name_${lang}`],
+          ["get", "name"],
+        ];
+        for (const layer of map.getStyle()?.layers ?? []) {
+          if (
+            layer.type === "symbol" &&
+            (layer.layout as any)?.["text-field"]
+          ) {
+            map.setLayoutProperty(layer.id, "text-field", expr);
+          }
+        }
+      } catch (err) {
+        console.warn("[mapbox] label localization skipped:", err);
+      }
+    });
+
     map.on("load", () => setReady(true));
     map.on("error", (e) => {
       // Mapbox emits an error event for token issues, tile failures, etc.

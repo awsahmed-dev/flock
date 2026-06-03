@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Logo } from "@/components/ui/logo";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 interface Props {
   children: React.ReactNode;
@@ -74,6 +75,13 @@ export function DashboardShell({ children }: Props) {
               >
                 <Settings className="w-4 h-4" /> Notification settings
               </DropdownMenuItem>
+              {/* B15: language switcher. Rendered outside a
+                  DropdownMenuItem because the LanguageSwitcher *is*
+                  the interactive control — wrapping would steal its
+                  click + double the focus ring. */}
+              <div className="px-1.5 py-0.5">
+                <LanguageSwitcher />
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleSignOut}
