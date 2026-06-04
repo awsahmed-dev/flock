@@ -457,5 +457,14 @@
     "digestHeading": "Hi {name},",
     "digestBody": "Here's what happened on your trips in the last day.",
     "digestFooter": "You can quiet this email any time in Notification settings."
+  },
+  "affiliate": {
+    "bookingTitle": "Find a hotel in {destination}",
+    "bookingSub": "Your dates · {members} guests · Booking.com",
+    "airaloTitle": "Stay connected in {destination}",
+    "airaloSubSoon": "You leave in {days} days · eSIM from $9",
+    "airaloSubGeneric": "Skip roaming charges · eSIM from $9",
+    "disclosure": "ad",
+    "dismiss": "Dismiss"
   }
 }

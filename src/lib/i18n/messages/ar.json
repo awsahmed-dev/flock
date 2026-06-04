@@ -457,5 +457,14 @@
     "digestHeading": "أهلاً {name}،",
     "digestBody": "هذا ما حدث في رحلاتك خلال آخر يوم.",
     "digestFooter": "يمكنك إيقاف هذا الإيميل في أي وقت من إعدادات الإشعارات."
+  },
+  "affiliate": {
+    "bookingTitle": "ابحث عن فندق في {destination}",
+    "bookingSub": "تواريخك · {members} ضيوف · Booking.com",
+    "airaloTitle": "ابقَ متصلًا في {destination}",
+    "airaloSubSoon": "تبدأ رحلتك بعد {days} أيام · eSIM من $9",
+    "airaloSubGeneric": "تجنّب رسوم التجوال · eSIM من $9",
+    "disclosure": "إعلان",
+    "dismiss": "إخفاء"
   }
 }

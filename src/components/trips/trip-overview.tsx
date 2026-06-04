@@ -22,7 +22,8 @@ import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
 import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { AffiliateStrip } from "@/components/affiliate/affiliate-strip";
 
 interface Member {
   id: string;
@@ -99,6 +100,7 @@ function getTripStatus(
 
 export function TripOverview({ trip, inviteUrl, stats }: Props) {
   const t = useT();
+  const { locale } = useLocale();
   const [copied, setCopied] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
@@ -206,6 +208,22 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
           now surfaces live state — counts, what's pending, what's
           missing — and the Up-next card directs to the highest-leverage
           action right now. */}
+      {/* Affiliate strip (preview/mock) — hotel + eSIM CTAs that deep-link
+          to Booking.com and Airalo with trip context prefilled. Sits
+          above the action grid so it's the first thing visible under the
+          hero, but stays slim so it never dominates the primary actions.
+          Each card is dismissible per-trip via localStorage. Append
+          ?previewAffiliate=1 to force-show regardless of date/dismissal. */}
+      <AffiliateStrip
+        tripId={trip.id}
+        destination={trip.destination}
+        startDate={trip.startDate}
+        endDate={trip.endDate}
+        members={trip.members.length}
+        currency={trip.currency}
+        locale={locale === "ar" ? "ar" : "en"}
+      />
+
       <TripActionHub tripId={trip.id} stats={stats} />
 
       {/* ── Smart tools ─────────────────────────────────────────────
