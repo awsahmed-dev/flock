@@ -75,9 +75,15 @@ export function AffiliateStrip({
   const eSimWindow = previewMode || (daysToStart <= 7 && !tripIsPast);
   const hasAiraloCountry = !!detectCountryForAiralo(destination);
 
-  const showBooking = !tripIsPast && (previewMode || !bookingDismissed);
+  // Mock gate: nothing renders unless the URL has ?previewAffiliate=1.
+  // This lets us ship the placement to production for review without any
+  // tester seeing it. Once we have real affiliate IDs and have decided to
+  // launch, flip this to show by default.
+  if (!previewMode) return null;
+
+  const showBooking = !tripIsPast && !bookingDismissed;
   const showAiralo =
-    !tripIsPast && eSimWindow && hasAiraloCountry && (previewMode || !airaloDismissed);
+    !tripIsPast && eSimWindow && hasAiraloCountry && !airaloDismissed;
 
   if (!showBooking && !showAiralo) return null;
 
