@@ -24,6 +24,7 @@ import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { AffiliateStrip } from "@/components/affiliate/affiliate-strip";
+import { BookingsRail } from "@/components/affiliate/bookings-rail";
 
 interface Member {
   id: string;
@@ -225,6 +226,11 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
       />
 
       <TripActionHub tripId={trip.id} stats={stats} />
+
+      {/* Bookings rail (preview/mock) — shows what the trip will look
+          like once parsed booking confirmations land here from the
+          forwarded-email pipeline. Gated by ?previewAffiliate=1. */}
+      <BookingsRail currency={trip.currency} />
 
       {/* ── Smart tools ─────────────────────────────────────────────
           B4: tightened tiles. The dramatic gradient/icon scale that

@@ -466,5 +466,19 @@
     "airaloSubGeneric": "Skip roaming charges · eSIM from $9",
     "disclosure": "ad",
     "dismiss": "Dismiss"
+  },
+  "bookings": {
+    "section": "Bookings",
+    "totalLine": "{count} confirmations · {currency} {amount}",
+    "viewAll": "View all",
+    "typeHotel": "Stay",
+    "typeFlight": "Flight",
+    "typeEsim": "eSIM",
+    "typeActivity": "Tour",
+    "confirmed": "Confirmed",
+    "autoAdded": "Auto-added from your inbox",
+    "forwardTitle": "Forward booking emails here",
+    "forwardSub": "Send any confirmation to trip-abc@paxawa.com — we'll add it",
+    "copyAddress": "Copy address"
   }
 }

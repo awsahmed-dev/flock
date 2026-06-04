@@ -466,5 +466,19 @@
     "airaloSubGeneric": "تجنّب رسوم التجوال · eSIM من $9",
     "disclosure": "إعلان",
     "dismiss": "إخفاء"
+  },
+  "bookings": {
+    "section": "الحجوزات",
+    "totalLine": "{count} حجوزات · {currency} {amount}",
+    "viewAll": "عرض الكل",
+    "typeHotel": "إقامة",
+    "typeFlight": "طيران",
+    "typeEsim": "شريحة",
+    "typeActivity": "جولة",
+    "confirmed": "مؤكَّد",
+    "autoAdded": "أُضيف تلقائيًا من بريدك",
+    "forwardTitle": "أرسل تأكيدات الحجز هنا",
+    "forwardSub": "حوِّل أي تأكيد إلى trip-abc@paxawa.com وسنضيفه",
+    "copyAddress": "انسخ العنوان"
   }
 }
