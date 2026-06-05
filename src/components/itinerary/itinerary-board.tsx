@@ -23,7 +23,10 @@ import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { PlanModeSwitch } from "./plan-mode-switch";
+import { BookMode } from "./book-mode";
+import { useSearchParams } from "next/navigation";
 import { convert, type RateBundle } from "@/lib/fx";
 import { toast } from "sonner";
 import type { InferSelectModel } from "drizzle-orm";
@@ -97,7 +100,15 @@ export function ItineraryBoard({
   isOwner,
 }: Props) {
   const t = useT();
+  const { locale } = useLocale();
+  const searchParams = useSearchParams();
+  // Plan-mode swipe is mock-gated for now. When approved, drop this and
+  // the segment switch ships to everyone.
+  const showPlanModes = searchParams?.get("previewAffiliate") === "1";
   const [items, setItems] = useState(initialItems);
+  // Plan mode toggle — "map" (default) or "book" (affiliate CTAs).
+  // Only visible when ?previewAffiliate=1 is on the URL.
+  const [planMode, setPlanMode] = useState<"map" | "book">("map");
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -211,6 +222,68 @@ export function ItineraryBoard({
 
   return (
     <div className={containerCls}>
+      {/* Mode switcher — TikTok-style segment pill at the top, only
+          visible in preview mode for now. Tap to swap between Map and
+          Book views; the Book view is rendered as an overlay so the map
+          state (Mapbox instance, focused day, highlighted marker) is
+          preserved when the user swaps back. */}
+      {showPlanModes && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+          <div className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg p-1">
+            <button
+              type="button"
+              onClick={() => setPlanMode("map")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap ${
+                planMode === "map"
+                  ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              {t("plan.modeMap")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlanMode("book")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap ${
+                planMode === "book"
+                  ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Hotel className="w-3.5 h-3.5" />
+              {t("plan.modeBook")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Book overlay — when active, sits on top of the canvas, opaque
+          so the map underneath disappears visually. We don't unmount the
+          map so swapping back is instant and the Mapbox instance keeps
+          its tiles, camera, etc. */}
+      {showPlanModes && planMode === "book" && (
+        <div className="absolute inset-0 z-30 bg-background overflow-y-auto pt-16">
+          <BookMode
+            tripId={tripId}
+            destination={destination}
+            startDate={days[0] ?? ""}
+            endDate={days[days.length - 1] ?? ""}
+            members={4}
+            currency={currency}
+            locale={locale === "ar" ? "ar" : "en"}
+            days={days}
+            items={items.map((i) => ({
+              id: i.id,
+              type: i.type,
+              dayDate: i.dayDate,
+              title: i.title,
+              locationName: i.locationName ?? null,
+            }))}
+          />
+        </div>
+      )}
+
       {/* ── Map layer ─────────────────────────────────────────────── */}
       <div className="absolute inset-0">
         <MapboxPlanMap
