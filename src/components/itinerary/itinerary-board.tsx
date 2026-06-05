@@ -399,26 +399,30 @@ export function ItineraryBoard({
             </div>
           </button>
 
-          {/* B7b: AI + Hotels live here now (out of the map corner where
-              they collided with the chip rail). Inline action row sits
-              right under the sheet's title strip — discoverable, never in
-              the way. */}
-          <div className="px-4 pb-2 flex items-center gap-2 border-b border-border/40">
-            <button
-              type="button"
-              onClick={() => setAiOpen(true)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 hover:border-primary/40 text-primary px-3 py-1.5 text-[11px] font-bold transition-colors"
-            >
-              <Sparkles className="w-3 h-3" /> {t("itinerary.aiPlan")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setHotelOpen(true)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 text-blue-600 dark:text-blue-400 px-3 py-1.5 text-[11px] font-bold transition-colors"
-            >
-              <Hotel className="w-3 h-3" /> {t("itinerary.findAStay")}
-            </button>
-          </div>
+          {/* B17 (audit fix #9): per-day AI Plan + Find-a-Stay buttons
+              are redundant with the new Book mode (hotels are per-city,
+              not per-day; AI Plan is a one-shot setup, not per-day). We
+              hide them when the preview is on so the new flow reads
+              cleanly. Once we ship preview to everyone, drop the row
+              entirely. */}
+          {!showPlanModes && (
+            <div className="px-4 pb-2 flex items-center gap-2 border-b border-border/40">
+              <button
+                type="button"
+                onClick={() => setAiOpen(true)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 hover:border-primary/40 text-primary px-3 py-1.5 text-[11px] font-bold transition-colors"
+              >
+                <Sparkles className="w-3 h-3" /> {t("itinerary.aiPlan")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setHotelOpen(true)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 text-blue-600 dark:text-blue-400 px-3 py-1.5 text-[11px] font-bold transition-colors"
+              >
+                <Hotel className="w-3 h-3" /> {t("itinerary.findAStay")}
+              </button>
+            </div>
+          )}
 
           {/* Scrollable list — trimmed from 55vh to 45vh so map gets
               the larger share of the viewport when sheet is expanded. */}

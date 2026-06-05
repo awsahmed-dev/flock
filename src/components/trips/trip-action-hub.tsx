@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { fmtAmount } from "@/lib/numerals";
 import { useT } from "@/components/i18n/locale-provider";
+import { useSearchParams } from "next/navigation";
+import { CreditCard } from "lucide-react";
 
 /**
  * Trip Action Hub — rebuild of the trip overview's "what can I do here?"
@@ -52,6 +54,11 @@ interface Props {
 
 export function TripActionHub({ tripId, stats }: Props) {
   const t = useT();
+  const searchParams = useSearchParams();
+  // B17 (audit fix #2): promote Wallet to the action grid so it's a
+  // first-class object alongside Plan/Decide/Money/Pack. Preview-gated
+  // for now; ships to everyone once the booking flow is fully wired.
+  const showWallet = searchParams?.get("previewAffiliate") === "1";
   const suggestion = pickSuggestion(tripId, stats, t);
 
   return (
@@ -88,9 +95,9 @@ export function TripActionHub({ tripId, stats }: Props) {
         </div>
       </Link>
 
-      {/* Action grid — 2x2 on mobile, 4 wide on desktop. Each card opens
-          the corresponding tab. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+      {/* Action grid — 2x2 on mobile, 4 wide on desktop (5 when wallet
+          is enabled). Each card opens the corresponding tab. */}
+      <div className={`grid grid-cols-2 ${showWallet ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2.5`}>
         <ActionCard
           href={`/trips/${tripId}/itinerary`}
           icon={Calendar}
@@ -163,6 +170,16 @@ export function TripActionHub({ tripId, stats }: Props) {
           }
           warn={stats.packingTotal === 0}
         />
+        {showWallet && (
+          <ActionCard
+            href={`/trips/${tripId}/wallet?previewAffiliate=1`}
+            icon={CreditCard}
+            color="fuchsia"
+            label={t("cards.wallet")}
+            headline={t("cards.walletEmpty")}
+            subline={t("cards.walletSubline")}
+          />
+        )}
       </div>
 
       {/* Secondary row — chat + documents */}

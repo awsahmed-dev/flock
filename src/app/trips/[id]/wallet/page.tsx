@@ -28,7 +28,13 @@ export default async function WalletPage({ params }: Props) {
 
   return (
     <div className="p-4 sm:p-6">
-      <WalletBoard userId={user.id} />
+      <WalletBoard
+        userId={user.id}
+        tripName={trip.name}
+        destination={trip.destination}
+        startDate={trip.startDate as string}
+        endDate={trip.endDate as string}
+      />
     </div>
   );
 }

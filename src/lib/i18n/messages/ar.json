@@ -212,7 +212,10 @@
     "moneyLogYourFirst": "سجّل أول مصروف",
     "moneyYoureSettled": "لا شيء عليك ولا لك",
     "packPercentPacked": "{percent}% جاهز",
-    "packCount": "{packed}/{total}"
+    "packCount": "{packed}/{total}",
+    "wallet": "محفظة",
+    "walletEmpty": "تذاكر",
+    "walletSubline": "فنادق، طيران، شرائح"
   },
   "votes": {
     "title": "التصويتات",
@@ -524,6 +527,10 @@
     "forwardSub": "أرسل أي تأكيد إلى trip-abc@paxawa.com وسنضيفه",
     "copyAddress": "انسخ",
     "privacyHint": "حجوزات الطيران والفنادق يراها كل الفريق. الشرائح والحجوزات الخاصة تظهر فقط في محفظتك.",
+    "crewSection": "حجوزات الفريق",
+    "crewSectionMeta": "كل الفريق يراها",
+    "yoursSection": "بنودك الخاصة",
+    "yoursSectionMeta": "أنت فقط تراها",
     "detailHeader": {
       "flight": "بطاقة الصعود",
       "hotel": "قسيمة الفندق",
@@ -570,6 +577,21 @@
     "bookConfirmHeader": "هل حجزت؟",
     "bookConfirmTitle": "نضيف {name} إلى محفظتك؟",
     "confirmAdd": "نعم، أضفه",
-    "confirmNotYet": "ليس بعد"
+    "confirmNotYet": "ليس بعد",
+    "bookHeader": "جاهز للحجز",
+    "bookSubtitle": "ما تحتاج لـ {destination}",
+    "bookExplainer": "Paxawa يربطك بأفضل مزوّد لكل بند — تحجز على موقعه، وتذكرتك تصل إلى محفظتك.",
+    "progressLine": "{booked} من {total} محجوز",
+    "addedToWallet": "أُضيف {name} إلى محفظتك",
+    "disclosure": "بعض الروابط تكسب Paxawa عمولة صغيرة. نعرض فقط مزوّدين نستخدمهم بأنفسنا."
+  },
+  "onboarding": {
+    "howItWorks": "كيف يعمل Paxawa",
+    "step1Title": "خطّط على الخريطة",
+    "step1Body": "أضف محطّات، اقتراحات بالذكاء الاصطناعي، رحلتك كلها على خريطة واحدة.",
+    "step2Title": "احجز ما تحتاج",
+    "step2Body": "بدّل إلى وضع \"احجز\" في تبويب الخطة — فنادق، طيران، شرائح.",
+    "step3Title": "احملها في محفظتك",
+    "step3Body": "كل تذكرة مؤكّدة تصل إلى محفظتك مع رمز شريطي."
   }
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Sparkles, Calendar, Wallet, MessageSquare, FileText } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Sparkles, Calendar, Wallet, MessageSquare, FileText, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/locale-provider";
 
@@ -17,6 +17,7 @@ interface Props {
     expenses?: number;
     chat?: number;
     documents?: number;
+    wallet?: number;
   };
 }
 
@@ -30,14 +31,27 @@ interface Props {
  */
 export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useT();
+  // B17 (audit fix #6): Wallet replaces Pack in the mobile bottom nav
+  // when affiliate preview is on. Pack moves to the top sub-nav (still
+  // reachable via overview action grid). Once we sign affiliates and
+  // ship Wallet to everyone, drop the preview flag.
+  const showWallet = searchParams?.get("previewAffiliate") === "1";
 
-  const tabs = [
-    { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },
-    { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`, icon: Calendar, exact: false },
-    { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,  icon: Wallet,   exact: false },
-    { id: "documents" as const, label: t("nav.pack"),      href: `/trips/${tripId}/documents`, icon: FileText, exact: false },
-  ];
+  const tabs = showWallet
+    ? [
+        { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,                       icon: Sparkles,   exact: true },
+        { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`,             icon: Calendar,   exact: false },
+        { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,              icon: Wallet,     exact: false },
+        { id: "wallet" as const,    label: t("nav.wallet"),    href: `/trips/${tripId}/wallet?previewAffiliate=1`, icon: CreditCard, exact: false },
+      ]
+    : [
+        { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },
+        { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`, icon: Calendar, exact: false },
+        { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,  icon: Wallet,   exact: false },
+        { id: "documents" as const, label: t("nav.pack"),      href: `/trips/${tripId}/documents`, icon: FileText, exact: false },
+      ];
 
   return (
     <div className="sm:hidden fixed left-0 right-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 pointer-events-none">

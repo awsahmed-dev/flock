@@ -212,7 +212,10 @@
     "moneyLogYourFirst": "Log your first",
     "moneyYoureSettled": "You're settled",
     "packPercentPacked": "{percent}% packed",
-    "packCount": "{packed}/{total}"
+    "packCount": "{packed}/{total}",
+    "wallet": "Wallet",
+    "walletEmpty": "Tickets",
+    "walletSubline": "Hotels, flights, eSIM"
   },
   "votes": {
     "title": "Votes",
@@ -524,6 +527,10 @@
     "forwardSub": "Send any confirmation to trip-abc@paxawa.com — we'll add it",
     "copyAddress": "Copy",
     "privacyHint": "Flight + hotel bookings are visible to the whole crew. eSIM + private bookings only show on your wallet.",
+    "crewSection": "Crew bookings",
+    "crewSectionMeta": "Everyone on the trip can see these",
+    "yoursSection": "Your private items",
+    "yoursSectionMeta": "Only you can see these",
     "detailHeader": {
       "flight": "Boarding pass",
       "hotel": "Hotel voucher",
@@ -570,6 +577,21 @@
     "bookConfirmHeader": "Did you book it?",
     "bookConfirmTitle": "Add {name} to your Wallet?",
     "confirmAdd": "Yes, add it",
-    "confirmNotYet": "Not yet"
+    "confirmNotYet": "Not yet",
+    "bookHeader": "Ready to book",
+    "bookSubtitle": "What you still need for {destination}",
+    "bookExplainer": "Paxawa connects you with the best partner for each item — you book on their site, your ticket lands in your Wallet.",
+    "progressLine": "{booked} of {total} booked",
+    "addedToWallet": "{name} added to your Wallet",
+    "disclosure": "Some links earn Paxawa a small commission. We only show partners we'd use ourselves."
+  },
+  "onboarding": {
+    "howItWorks": "How Paxawa works",
+    "step1Title": "Plan it on the map",
+    "step1Body": "Add stops, get AI suggestions, see your trip on one map.",
+    "step2Title": "Book what you need",
+    "step2Body": "Switch to Book mode in the Plan tab — hotels, flights, eSIM.",
+    "step3Title": "Carry it in your Wallet",
+    "step3Body": "Every confirmed ticket lands in your Wallet with a barcode."
   }
 }

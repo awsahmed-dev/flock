@@ -22,9 +22,10 @@ import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
 import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Map as MapIcon, CreditCard as CardIcon, Wallet as WalletIcon, X as XIcon } from "lucide-react";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
-import { AffiliateStrip } from "@/components/affiliate/affiliate-strip";
-import { BookingsRail } from "@/components/affiliate/bookings-rail";
 
 interface Member {
   id: string;
@@ -101,7 +102,9 @@ function getTripStatus(
 
 export function TripOverview({ trip, inviteUrl, stats }: Props) {
   const t = useT();
-  const { locale } = useLocale();
+  // locale kept for future affiliate prefill; no longer needed on this
+  // screen now that affiliate strips moved into Plan/Book mode.
+  useLocale();
   const [copied, setCopied] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
@@ -209,28 +212,17 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
           now surfaces live state — counts, what's pending, what's
           missing — and the Up-next card directs to the highest-leverage
           action right now. */}
-      {/* Affiliate strip (preview/mock) — hotel + eSIM CTAs that deep-link
-          to Booking.com and Airalo with trip context prefilled. Sits
-          above the action grid so it's the first thing visible under the
-          hero, but stays slim so it never dominates the primary actions.
-          Each card is dismissible per-trip via localStorage. Append
-          ?previewAffiliate=1 to force-show regardless of date/dismissal. */}
-      <AffiliateStrip
-        tripId={trip.id}
-        destination={trip.destination}
-        startDate={trip.startDate}
-        endDate={trip.endDate}
-        members={trip.members.length}
-        currency={trip.currency}
-        locale={locale === "ar" ? "ar" : "en"}
-      />
+      {/* B17 (audit fix): Overview now hosts ONLY the calm modules — hero,
+          Up Next, action grid, recent activity, crew. The affiliate
+          strips + Bookings rail that previously lived here were moved
+          into Plan/Book mode (the single source of truth for "things to
+          book") and the Wallet tab (the single source of truth for
+          "things already booked"). This collapses the 4-entry-point
+          confusion into a clean Plan → Book → Wallet loop. */}
+
+      <FirstRunOnboarding tripId={trip.id} />
 
       <TripActionHub tripId={trip.id} stats={stats} />
-
-      {/* Bookings rail (preview/mock) — shows what the trip will look
-          like once parsed booking confirmations land here from the
-          forwarded-email pipeline. Gated by ?previewAffiliate=1. */}
-      <BookingsRail currency={trip.currency} />
 
       {/* ── Smart tools ─────────────────────────────────────────────
           B4: tightened tiles. The dramatic gradient/icon scale that
@@ -359,6 +351,95 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
         tripId={trip.id}
         destination={trip.destination}
       />
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * B17 (audit fix #6): one-time onboarding strip that explains the
+ * Plan → Book → Wallet loop so first-time users understand the mental
+ * model without us writing docs. Three lines, dismissible. Persists
+ * the dismissal per-user in localStorage so it never reappears.
+ *
+ * Currently preview-gated behind ?previewAffiliate=1 — flips on for
+ * everyone once we sign the affiliate programs.
+ */
+function FirstRunOnboarding({ tripId }: { tripId: string }) {
+  const t = useT();
+  const searchParams = useSearchParams();
+  const showPreview = searchParams?.get("previewAffiliate") === "1";
+  const [dismissed, setDismissed] = useState(true);
+
+  useEffect(() => {
+    if (!showPreview) return;
+    const seen = localStorage.getItem("paxawa.onboarding.bookingLoop.seen");
+    setDismissed(seen === "1");
+  }, [showPreview]);
+
+  function dismiss() {
+    localStorage.setItem("paxawa.onboarding.bookingLoop.seen", "1");
+    setDismissed(true);
+  }
+
+  if (!showPreview || dismissed) return null;
+
+  return (
+    <div className="relative rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-violet-500/5 to-fuchsia-500/5 p-4 overflow-hidden">
+      <button
+        type="button"
+        onClick={dismiss}
+        className="absolute top-2 end-2 w-7 h-7 rounded-full hover:bg-foreground/10 flex items-center justify-center"
+        aria-label={t("affiliate.dismiss")}
+      >
+        <XIcon className="w-3.5 h-3.5 text-muted-foreground" />
+      </button>
+      <p className="text-[10px] font-bold tracking-widest uppercase text-primary mb-2">
+        {t("onboarding.howItWorks")}
+      </p>
+      <ol className="space-y-2">
+        <li className="flex items-start gap-3">
+          <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0 mt-0.5">
+            <MapIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">{t("onboarding.step1Title")}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("onboarding.step1Body")}
+            </p>
+          </div>
+        </li>
+        <li className="flex items-start gap-3">
+          <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0 mt-0.5">
+            <CardIcon className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">{t("onboarding.step2Title")}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("onboarding.step2Body")}
+            </p>
+          </div>
+        </li>
+        <li className="flex items-start gap-3">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
+            <WalletIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">
+              <Link
+                href={`/trips/${tripId}/wallet?previewAffiliate=1`}
+                className="hover:underline"
+              >
+                {t("onboarding.step3Title")}
+              </Link>
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("onboarding.step3Body")}
+            </p>
+          </div>
+        </li>
+      </ol>
     </div>
   );
 }

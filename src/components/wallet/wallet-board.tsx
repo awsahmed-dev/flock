@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Sparkles, Filter, Plus, Mail } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Sparkles, Users, Lock, MapPin } from "lucide-react";
+import { format } from "@/lib/i18n/date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import { MOCK_BOOKINGS, type MockBooking } from "./mock-bookings";
 import { WalletCard } from "./wallet-card";
 import { WalletDetailSheet } from "./wallet-detail-sheet";
@@ -17,80 +19,150 @@ import { useT } from "@/components/i18n/locale-provider";
  * Tapping any card opens the detail sheet (the ticket view with
  * barcode + download CTA — matches reference images 2 + 4).
  */
-type ScopeFilter = "all" | "mine" | "crew";
+interface Props {
+  userId: string;
+  tripName?: string;
+  destination?: string;
+  startDate?: string;
+  endDate?: string;
+}
 
-export function WalletBoard({ userId: _userId }: { userId: string }) {
+export function WalletBoard({ userId: _userId, tripName, destination, startDate, endDate }: Props) {
   const t = useT();
-  const [scope, setScope] = useState<ScopeFilter>("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  // Track the most-recently-confirmed booking so we can pulse its card —
+  // the visible "loop close" from Plan/Book mode (audit fix #4).
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    if (scope === "mine") return MOCK_BOOKINGS.filter((b) => b.visibility === "private" || b.addedBy.userId === "u1");
-    if (scope === "crew") return MOCK_BOOKINGS.filter((b) => b.visibility === "crew");
-    return MOCK_BOOKINGS;
-  }, [scope]);
+  useEffect(() => {
+    try {
+      // Look for a fresh-add marker dropped by Book mode's
+      // confirmBooking, scoped to this trip.
+      const raw = Object.keys(localStorage)
+        .filter((k) => k.startsWith("paxawa.walletNew."))
+        .map((k) => localStorage.getItem(k))
+        .filter(Boolean)
+        .map((s) => {
+          try {
+            return JSON.parse(s as string) as { id: string; at: number };
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean) as { id: string; at: number }[];
+      const fresh = raw.find((r) => Date.now() - r.at < 60_000);
+      if (fresh) {
+        // Map a booking-intent id (e.g. "hotel-Kuala Lumpur") to a mock
+        // booking type. We just pulse the matching type for the demo.
+        const target = MOCK_BOOKINGS.find((b) =>
+          fresh.id.startsWith(b.type) || b.id === fresh.id,
+        );
+        if (target) {
+          setHighlightId(target.id);
+          setTimeout(() => setHighlightId(null), 4500);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  // Pull the first upcoming flight out as the hero — everything else
-  // renders in the default grid below it.
-  const heroFlight = filtered.find((b) => b.type === "flight");
-  const rest = filtered.filter((b) => b.id !== heroFlight?.id);
+  // B17 (audit fix #5): group by visibility — "Crew items" (everyone
+  // sees: hotels, group flights, group activities) vs "Your items"
+  // (private to you: eSIM, personal flight). Cleaner mental model than
+  // a flat list with a 3-way scope filter.
+  const crewItems = useMemo(
+    () => MOCK_BOOKINGS.filter((b) => b.visibility === "crew"),
+    [],
+  );
+  const yourItems = useMemo(
+    () => MOCK_BOOKINGS.filter((b) => b.visibility === "private"),
+    [],
+  );
 
-  const totalSpend = filtered.reduce((s, b) => s + b.price, 0);
-  const currency = filtered[0]?.currency ?? "SAR";
+  // Pull the first upcoming flight from crew items as the hero anchor.
+  const heroFlight = crewItems.find((b) => b.type === "flight");
+  const crewRest = crewItems.filter((b) => b.id !== heroFlight?.id);
+
+  const totalSpend = MOCK_BOOKINGS.reduce((s, b) => s + b.price, 0);
+  const currency = MOCK_BOOKINGS[0]?.currency ?? "SAR";
 
   const opened = MOCK_BOOKINGS.find((b) => b.id === openId) ?? null;
 
+  const dateRange = startDate && endDate
+    ? `${format(parseDateOnly(startDate), "d MMM")} – ${format(parseDateOnly(endDate), "d MMM yyyy")}`
+    : "";
+
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      {/* Section header — total + scope filter */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
-            {t("wallet.section")}
-          </p>
-          <p className="text-2xl font-extrabold tabular-nums">
-            {currency} {totalSpend.toLocaleString()}
-          </p>
-          <p className="text-[11px] text-muted-foreground">
-            {t("wallet.totalLine", { count: filtered.length })}
-          </p>
+    <div className="space-y-5 max-w-2xl mx-auto">
+      {/* B17 (audit fix #5): trip context up top so the Wallet doesn't
+          feel adrift. */}
+      {tripName && (
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <MapPin className="w-3 h-3" />
+          <span className="font-bold text-foreground truncate">{tripName}</span>
+          {destination && <span>· {destination}</span>}
+          {dateRange && <span>· {dateRange}</span>}
         </div>
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60">
-          <ScopeChip active={scope === "all"} onClick={() => setScope("all")} label={t("wallet.scopeAll")} />
-          <ScopeChip active={scope === "mine"} onClick={() => setScope("mine")} label={t("wallet.scopeMine")} />
-          <ScopeChip active={scope === "crew"} onClick={() => setScope("crew")} label={t("wallet.scopeCrew")} />
-        </div>
+      )}
+
+      {/* Section header — total spend. The scope filter is gone — we
+          group items by visibility instead, which is the natural mental
+          model and removes the dead-tab feel. */}
+      <div>
+        <p className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
+          {t("wallet.section")}
+        </p>
+        <p className="text-3xl font-extrabold tabular-nums">
+          {currency} {totalSpend.toLocaleString()}
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          {t("wallet.totalLine", { count: MOCK_BOOKINGS.length })}
+        </p>
       </div>
 
-      {/* "Add booking" pill row */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white text-xs font-bold px-3 py-2 hover:opacity-90 transition-opacity"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          {t("wallet.addManual")}
-        </button>
-        <button
-          type="button"
-          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-card hover:border-foreground/15 text-xs font-bold px-3 py-2 transition-colors"
-        >
-          <Mail className="w-3.5 h-3.5" />
-          {t("wallet.forwardEmail")}
-        </button>
-      </div>
+      {/* Crew items — visible to everyone on the trip */}
+      {crewItems.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <p className="text-[11px] font-extrabold tracking-widest uppercase text-blue-600 dark:text-blue-400">
+              {t("wallet.crewSection")}
+            </p>
+            <span className="text-[10px] text-muted-foreground">· {t("wallet.crewSectionMeta")}</span>
+          </div>
+          {heroFlight && (
+            <div className={highlightId === heroFlight.id ? "animate-pulse" : ""}>
+              <WalletCard booking={heroFlight} variant="hero" onOpen={setOpenId} />
+            </div>
+          )}
+          {crewRest.map((b) => (
+            <div key={b.id} className={highlightId === b.id ? "animate-pulse" : ""}>
+              <WalletCard booking={b} onOpen={setOpenId} />
+            </div>
+          ))}
+        </section>
+      )}
 
-      {/* Hero flight + rest of cards */}
-      <div className="space-y-3">
-        {heroFlight && (
-          <WalletCard booking={heroFlight} variant="hero" onOpen={setOpenId} />
-        )}
-        {rest.map((b) => (
-          <WalletCard key={b.id} booking={b} onOpen={setOpenId} />
-        ))}
-      </div>
+      {/* Your private items — only visible to you (eSIM, personal tickets) */}
+      {yourItems.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <p className="text-[11px] font-extrabold tracking-widest uppercase text-amber-600 dark:text-amber-400">
+              {t("wallet.yoursSection")}
+            </p>
+            <span className="text-[10px] text-muted-foreground">· {t("wallet.yoursSectionMeta")}</span>
+          </div>
+          {yourItems.map((b) => (
+            <div key={b.id} className={highlightId === b.id ? "animate-pulse" : ""}>
+              <WalletCard booking={b} onOpen={setOpenId} />
+            </div>
+          ))}
+        </section>
+      )}
 
-      {filtered.length === 0 && (
+      {MOCK_BOOKINGS.length === 0 && (
         <div className="rounded-3xl border border-dashed border-border p-8 text-center space-y-2">
           <Sparkles className="w-8 h-8 mx-auto opacity-30" />
           <p className="text-sm font-bold">{t("wallet.emptyTitle")}</p>
@@ -115,28 +187,7 @@ export function WalletBoard({ userId: _userId }: { userId: string }) {
         </button>
       </div>
 
-      {/* Footnote — explains the privacy chips inline so users get it
-          without an FAQ. */}
-      <p className="text-[10px] text-center text-muted-foreground px-4">
-        {t("wallet.privacyHint")}
-      </p>
-
       <WalletDetailSheet booking={opened} onClose={() => setOpenId(null)} />
-      {void Filter}
     </div>
-  );
-}
-
-function ScopeChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors ${
-        active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      {label}
-    </button>
   );
 }

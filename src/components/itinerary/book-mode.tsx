@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Hotel,
   Plane,
@@ -11,8 +11,10 @@ import {
   Check,
   AlertCircle,
   X,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";
 import { buildBookingLink, buildAiraloLink } from "@/lib/affiliate/build-link";
 import { format } from "@/lib/i18n/date-fns";
@@ -104,14 +106,32 @@ export function BookMode({
   }
 
   function confirmBooking(intentId: string) {
+    const intent = intents.find((i) => i.id === intentId);
     const merged = new Set(confirmed);
     merged.add(intentId);
     setConfirmed(merged);
     localStorage.setItem(CONFIRMED_KEY(tripId), JSON.stringify([...merged]));
+    // Mark a fresh-add timestamp so the Wallet tab can show a "new"
+    // pulse on the just-added card.
+    localStorage.setItem(
+      `paxawa.walletNew.${tripId}`,
+      JSON.stringify({ id: intentId, at: Date.now() }),
+    );
     // Drop the intent — it's confirmed now
     const nextIntents = intents.filter((i) => i.id !== intentId);
     setIntents(nextIntents);
     localStorage.setItem(INTENT_KEY(tripId), JSON.stringify(nextIntents));
+    // B17 (audit fix #4): make the loop visible — toast with a link
+    // back to the Wallet so the user feels the close.
+    toast.success(t("plan.addedToWallet", { name: intent?.title ?? "" }), {
+      action: {
+        label: t("plan.openInWallet"),
+        onClick: () => {
+          window.location.href = `/trips/${tripId}/wallet?previewAffiliate=1`;
+        },
+      },
+      duration: 4500,
+    });
   }
 
   function dismissIntent(intentId: string) {
@@ -140,8 +160,51 @@ export function BookMode({
     (i) => i.type === "activity" || i.type === "meal",
   );
 
+  // Build the to-book list so we can show progress at the top.
+  const toBookCount = useMemo(() => {
+    let n = 0;
+    n += citiesWithoutHotel.length;
+    n += 1; // round-trip flight
+    n += 1; // eSIM
+    n += Math.min(activityItems.length, 3);
+    return n;
+  }, [citiesWithoutHotel.length, activityItems.length]);
+  const bookedCount = confirmed.size;
+  const progress = toBookCount > 0 ? Math.min(100, Math.round((bookedCount / toBookCount) * 100)) : 0;
+
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 pb-20 space-y-5">
+      {/* B17 (audit fix #3): mental anchor at top — explicit framing so
+          users know they're booking from their plan, not entering a
+          marketplace. Status bar shows progress through the list. */}
+      <header className="space-y-2">
+        <p className="text-[10px] font-bold tracking-widest uppercase text-primary">
+          {t("plan.bookHeader")}
+        </p>
+        <h2 className="text-xl font-extrabold leading-tight">
+          {t("plan.bookSubtitle", { destination: cities[0] ?? destination })}
+        </h2>
+        <p className="text-[11px] text-muted-foreground">
+          {t("plan.bookExplainer")}
+        </p>
+        {toBookCount > 0 && (
+          <div className="rounded-xl border border-border bg-card p-2.5">
+            <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
+              <span className="text-muted-foreground">
+                {t("plan.progressLine", { booked: bookedCount, total: toBookCount })}
+              </span>
+              <span className="tabular-nums text-primary">{progress}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-violet-600 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </header>
+
       {/* Pending intents — the "did you book it?" active confirmation banners.
           Show at the top so the user can't miss them. */}
       {intents.length > 0 && (
@@ -387,6 +450,14 @@ export function BookMode({
           <ArrowUpRight className="w-4 h-4 text-primary rtl:rotate-180" />
         </div>
       </Link>
+
+      {/* B17 (audit fix #8): affiliate disclosure — one short line at
+          the bottom so users (and EU/KSA regulators) know we may earn
+          commission on these links. Trust-builder, not buried. */}
+      <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
+        <Info className="w-3 h-3 mt-0.5 shrink-0" />
+        <span>{t("plan.disclosure")}</span>
+      </p>
     </div>
   );
 }
