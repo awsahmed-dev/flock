@@ -1,0 +1,308 @@
+"use client";
+
+import { X, Download, Share2, Plane, Hotel, Train, Bus, Wifi, Ticket, Calendar } from "lucide-react";
+import type { MockBooking } from "./mock-bookings";
+import { FakeBarcode } from "./barcode";
+import { useT } from "@/components/i18n/locale-provider";
+
+/**
+ * Full-screen-ish ticket detail. Slides up from the bottom on mobile,
+ * centered modal on desktop. Visual reference: image 2 (FlixBus ticket)
+ * and image 4 (train ticket with notches + barcode + Download CTA).
+ *
+ * The card uses a notched-edge shape (the classic torn-stub look) to
+ * read as a ticket rather than another generic card. CSS-only, no SVG
+ * masks needed — two pseudo-positioned circles on either side achieve it.
+ */
+interface Props {
+  booking: MockBooking | null;
+  onClose: () => void;
+}
+
+export function WalletDetailSheet({ booking, onClose }: Props) {
+  const t = useT();
+  if (!booking) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-150">
+      <div className="bg-background w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto relative animate-in slide-in-from-bottom duration-200">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center"
+            aria-label={t("common.close")}
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <p className="font-bold text-sm">{t(`wallet.detailHeader.${booking.type}`)}</p>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Ticket body */}
+        <div className="p-4 space-y-4">
+          {/* Hero block — varies by type */}
+          {booking.type === "flight" && booking.flight && (
+            <div className="rounded-3xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 text-white p-5 shadow-lg shadow-blue-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-4xl font-extrabold tabular-nums">{booking.flight.fromCode}</p>
+                  <p className="text-[11px] opacity-80">{booking.flight.fromCity}</p>
+                </div>
+                <Plane className="w-7 h-7 opacity-90 rtl:rotate-180" />
+                <div className="text-end">
+                  <p className="text-4xl font-extrabold tabular-nums">{booking.flight.toCode}</p>
+                  <p className="text-[11px] opacity-80">{booking.flight.toCity}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm font-medium opacity-90 mb-3">
+                <p className="tabular-nums">{booking.flight.depTime}</p>
+                <p className="text-xs bg-white/15 rounded-full px-2 py-0.5 tabular-nums">
+                  {booking.flight.durationLabel}
+                </p>
+                <p className="tabular-nums">{booking.flight.arrTime}</p>
+              </div>
+            </div>
+          )}
+
+          {(booking.type === "bus" || booking.type === "train") && (
+            <RouteHero booking={booking} />
+          )}
+
+          {booking.type === "hotel" && booking.hotel && (
+            <div className="rounded-3xl bg-gradient-to-br from-blue-500 via-cyan-600 to-teal-600 text-white p-5 shadow-lg shadow-blue-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <Hotel className="w-7 h-7" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-lg leading-tight truncate">{booking.title}</p>
+                  <p className="text-[12px] opacity-90 truncate">{booking.hotel.address}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="bg-white/10 rounded-2xl p-2">
+                  <p className="text-[10px] opacity-80 uppercase tracking-wider">{t("wallet.checkIn")}</p>
+                  <p className="font-bold text-sm tabular-nums">{booking.hotel.checkIn}</p>
+                </div>
+                <div className="bg-white/10 rounded-2xl p-2">
+                  <p className="text-[10px] opacity-80 uppercase tracking-wider">{t("wallet.checkOut")}</p>
+                  <p className="font-bold text-sm tabular-nums">{booking.hotel.checkOut}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {booking.type === "esim" && booking.esim && (
+            <div className="rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 shadow-lg shadow-emerald-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <Wifi className="w-7 h-7" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-lg truncate">{booking.esim.country}</p>
+                  <p className="text-[12px] opacity-90">{booking.partner}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-center mb-3">
+                <div className="bg-white/10 rounded-2xl p-2">
+                  <p className="text-[10px] opacity-80 uppercase tracking-wider">{t("wallet.data")}</p>
+                  <p className="font-bold text-lg">{booking.esim.dataAllowance}</p>
+                </div>
+                <div className="bg-white/10 rounded-2xl p-2">
+                  <p className="text-[10px] opacity-80 uppercase tracking-wider">{t("wallet.validity")}</p>
+                  <p className="font-bold text-lg">{booking.esim.validity}</p>
+                </div>
+              </div>
+              <p className="text-[10px] opacity-80 uppercase tracking-wider mb-1">
+                {t("wallet.activationCode")}
+              </p>
+              <p className="text-[10px] font-mono bg-black/20 rounded-lg p-2 break-all">
+                {booking.esim.activationCode}
+              </p>
+            </div>
+          )}
+
+          {booking.type === "activity" && booking.activity && (
+            <div className="rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 shadow-lg shadow-amber-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <Ticket className="w-7 h-7" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-lg leading-tight truncate">{booking.title}</p>
+                  <p className="text-[12px] opacity-90 truncate">{booking.activity.venue}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4" />
+                <p className="font-medium">{booking.activity.startTime}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Passenger / room / etc. — type-specific fields */}
+          <DetailFields booking={booking} />
+
+          {/* Notched barcode card — the classic ticket look */}
+          <div className="relative bg-card border border-border rounded-3xl p-5">
+            {/* notches */}
+            <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-background rtl:translate-x-1/2 rtl:-end-0 rtl:start-auto" />
+            <div className="absolute end-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-background rtl:-translate-x-1/2 rtl:start-0 rtl:end-auto" />
+
+            <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground text-center mb-2">
+              {booking.type === "esim" ? t("wallet.scanQr") : t("wallet.boardingCode")}
+            </p>
+            <div className="flex justify-center mb-2">
+              {booking.type === "esim" ? (
+                <FakeBarcode seed={booking.reference} kind="qr" />
+              ) : (
+                <FakeBarcode seed={booking.reference} />
+              )}
+            </div>
+            <p className="text-center text-[11px] font-mono tabular-nums tracking-widest text-muted-foreground">
+              {booking.reference}
+            </p>
+          </div>
+
+          {/* Price + source row */}
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                {t("wallet.totalPaid")}
+              </p>
+              <p className="text-xl font-extrabold tabular-nums">
+                {booking.currency} {booking.price.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-end">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                {t("wallet.purchasedAt")}
+              </p>
+              <p className="text-xs font-bold">{booking.partner}</p>
+            </div>
+          </div>
+
+          {/* Download CTA */}
+          <button
+            type="button"
+            className="w-full rounded-full bg-foreground text-background font-bold py-3.5 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+          >
+            <Download className="w-4 h-4" />
+            {booking.type === "esim"
+              ? t("wallet.downloadEsim")
+              : booking.type === "hotel"
+                ? t("wallet.downloadVoucher")
+                : t("wallet.downloadTicket")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RouteHero({ booking }: { booking: MockBooking }) {
+  const t = useT();
+  const isBus = booking.type === "bus";
+  const r = isBus ? booking.bus! : booking.train!;
+  const fromCode = isBus ? (r as NonNullable<MockBooking["bus"]>).fromCode : booking.train!.fromStation.slice(0, 3).toUpperCase();
+  const toCode = isBus ? (r as NonNullable<MockBooking["bus"]>).toCode : booking.train!.toStation.slice(0, 3).toUpperCase();
+  const fromCity = isBus ? (r as NonNullable<MockBooking["bus"]>).fromCity : booking.train!.fromStation;
+  const toCity = isBus ? (r as NonNullable<MockBooking["bus"]>).toCity : booking.train!.toStation;
+  const Icon = isBus ? Bus : Train;
+  const grad = isBus
+    ? "from-rose-500 via-pink-600 to-fuchsia-700 shadow-rose-500/20"
+    : "from-emerald-500 via-teal-600 to-cyan-700 shadow-emerald-500/20";
+
+  return (
+    <div className={`rounded-3xl bg-gradient-to-br ${grad} text-white p-5 shadow-lg`}>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <p className="text-3xl font-extrabold tabular-nums">{fromCode}</p>
+          <p className="text-[11px] opacity-80 truncate">{fromCity}</p>
+        </div>
+        <Icon className="w-6 h-6 opacity-90" />
+        <div className="text-end">
+          <p className="text-3xl font-extrabold tabular-nums">{toCode}</p>
+          <p className="text-[11px] opacity-80 truncate">{toCity}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between text-sm font-medium opacity-90 mb-1">
+        <p className="tabular-nums">{r.depTime}</p>
+        <p className="text-xs bg-white/15 rounded-full px-2 py-0.5 tabular-nums">{r.durationLabel}</p>
+        <p className="tabular-nums">{r.arrTime}</p>
+      </div>
+      <p className="text-[11px] opacity-80 text-center mt-2">
+        {r.operator} {(("trainNumber" in r) ? `· ${r.trainNumber}` : "")}
+      </p>
+      {void t}
+    </div>
+  );
+}
+
+function DetailFields({ booking }: { booking: MockBooking }) {
+  const t = useT();
+  if (booking.type === "flight" && booking.flight) {
+    const f = booking.flight;
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("wallet.passenger")} value={f.passenger} />
+        <Field label={t("wallet.flightNo")} value={f.flightNumber} />
+        <Field label={t("wallet.cabin")} value={f.cabin ?? "—"} />
+        <Field label={t("wallet.seat")} value={f.seat ?? "—"} />
+      </div>
+    );
+  }
+  if (booking.type === "hotel" && booking.hotel) {
+    const h = booking.hotel;
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("wallet.room")} value={h.roomType} />
+        <Field label={t("wallet.guests")} value={`${h.guests}`} />
+        <Field label={t("wallet.nights")} value={`${h.nights}`} />
+        <Field label={t("wallet.confirmation")} value={booking.reference} />
+      </div>
+    );
+  }
+  if (booking.type === "train" && booking.train) {
+    const tr = booking.train;
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("wallet.passenger")} value={tr.passenger} />
+        <Field label={t("wallet.trainNo")} value={tr.trainNumber} />
+        <Field label={t("wallet.car")} value={tr.car} />
+        <Field label={t("wallet.seat")} value={tr.seat} />
+      </div>
+    );
+  }
+  if (booking.type === "bus" && booking.bus) {
+    const b = booking.bus;
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("wallet.operator")} value={b.operator} />
+        <Field label={t("wallet.seat")} value={b.seat ?? "—"} />
+      </div>
+    );
+  }
+  if (booking.type === "activity" && booking.activity) {
+    const a = booking.activity;
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("wallet.duration")} value={a.duration} />
+        <Field label={t("wallet.guests")} value={`${a.guests}`} />
+      </div>
+    );
+  }
+  return null;
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/60 px-3 py-2.5">
+      <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-0.5">
+        {label}
+      </p>
+      <p className="font-bold text-sm truncate">{value}</p>
+    </div>
+  );
+}

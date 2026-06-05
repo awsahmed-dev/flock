@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,6 +22,7 @@ import {
   Wallet,
   FileText,
   Backpack,
+  CreditCard,
   Settings,
   ChevronLeft,
   MessageSquare,
@@ -105,6 +106,14 @@ const NAV_TABS = [
 export function TripShell({ trip, isOwner, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // Mock-gate: the Wallet tab only appears when ?previewAffiliate=1 is
+  // on the URL, OR when the user is already on the wallet route (so the
+  // tab stays highlighted while you browse). Once approved for launch,
+  // drop the gate and the tab becomes permanent.
+  const showWalletTab =
+    searchParams?.get("previewAffiliate") === "1" ||
+    pathname.includes(`/trips/${trip.id}/wallet`);
   const t = useT();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
@@ -420,8 +429,19 @@ export function TripShell({ trip, isOwner, children }: Props) {
         {/* Sub-nav tabs — hidden on mobile (the bottom MobileNav already
             covers navigation, so the duplicate top tabs are noise). */}
         <div className="hidden sm:flex max-w-6xl mx-auto px-4 sm:px-6 gap-1 overflow-x-auto pb-0 scrollbar-none">
-          {NAV_TABS.map((tab) => {
-            const href = `/trips/${trip.id}${tab.href}`;
+          {[
+            ...NAV_TABS,
+            ...(showWalletTab
+              ? [{ key: "nav.wallet", href: "/wallet", icon: CreditCard }]
+              : []),
+          ].map((tab) => {
+            // Preserve the preview flag on the Wallet tab so the user
+            // stays in mock mode when they click into it.
+            const previewSuffix =
+              tab.href === "/wallet" && searchParams?.get("previewAffiliate") === "1"
+                ? "?previewAffiliate=1"
+                : "";
+            const href = `/trips/${trip.id}${tab.href}${previewSuffix}`;
             const isActive =
               tab.href === ""
                 ? pathname === `/trips/${trip.id}`
