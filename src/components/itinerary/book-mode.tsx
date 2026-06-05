@@ -121,10 +121,20 @@ export function BookMode({
   }
 
   // ── Derive what's missing from the itinerary ──────────────────────────
+  // Hotels: 1 CTA per city, not per night — a user usually books one
+  // hotel for the whole stay in a single destination. For multi-city
+  // trips ("Tokyo, Osaka, Kyoto") we surface a CTA per city. Today we
+  // infer cities from the trip destination string split by commas;
+  // future: cluster itinerary items by lat/lng to detect city changes
+  // automatically.
   const accommodationItems = items.filter((i) => i.type === "accommodation");
-  const accommodationDays = new Set(accommodationItems.map((i) => i.dayDate));
-  // Only nights where we'll sleep need a hotel — the last day is checkout, skip it
-  const nightsWithoutHotel = days.slice(0, -1).filter((d) => !accommodationDays.has(d));
+  const cities = destination
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .slice(0, 5); // safety cap
+  const accommodationCount = accommodationItems.length;
+  const citiesWithoutHotel = accommodationCount === 0 ? cities : [];
 
   const activityItems = items.filter(
     (i) => i.type === "activity" || i.type === "meal",
@@ -185,24 +195,31 @@ export function BookMode({
         </div>
       )}
 
-      {/* HOTELS section */}
+      {/* HOTELS section — one CTA per city (not per night). Most users
+          book one hotel for their whole stay in a destination; per-night
+          CTAs felt overwhelming. */}
       <Section
         title={t("plan.sectionHotels")}
-        meta={t("plan.hotelsMeta", { count: nightsWithoutHotel.length })}
+        meta={t("plan.hotelsMeta", { count: citiesWithoutHotel.length || accommodationCount })}
         icon={Hotel}
         tone="blue"
       >
-        {nightsWithoutHotel.length === 0 ? (
+        {citiesWithoutHotel.length === 0 ? (
           <EmptyDone label={t("plan.allHotelsBooked")} />
         ) : (
-          nightsWithoutHotel.map((d, idx) => {
-            const intentId = `hotel-${d}`;
+          citiesWithoutHotel.map((city) => {
+            const intentId = `hotel-${city}`;
             const isConfirmed = confirmed.has(intentId);
-            const label = t("plan.nightN", { n: idx + 1, date: format(parseISO(d), "d MMM") });
+            const nights = days.length - 1;
+            const subtitle = t("plan.hotelCityNights", {
+              nights,
+              start: format(parseISO(startDate), "d MMM"),
+              end: format(parseISO(endDate), "d MMM"),
+            });
             const href = buildBookingLink({
-              destination,
-              startDate: d,
-              endDate: addOneDay(d),
+              destination: city,
+              startDate,
+              endDate,
               members,
               surface: "itinerary_day_empty",
               tripId,
@@ -211,17 +228,17 @@ export function BookMode({
             });
             return (
               <NeedRow
-                key={d}
-                title={label}
-                subtitle={t("plan.hotelSub", { destination, currency, price: 280 })}
+                key={city}
+                title={city}
+                subtitle={subtitle}
                 href={href}
                 ctaLabel={t("plan.ctaBookHotel")}
                 onClick={() =>
                   recordIntent({
                     id: intentId,
                     partner: "booking",
-                    title: label,
-                    meta: `${destination} · ${format(parseISO(d), "d MMM")}`,
+                    title: t("plan.hotelInCity", { city }),
+                    meta: subtitle,
                   })
                 }
                 booked={isConfirmed}
@@ -233,65 +250,47 @@ export function BookMode({
         )}
       </Section>
 
-      {/* FLIGHTS section */}
+      {/* FLIGHTS section — one CTA for round-trip. Deep-links to Google
+          Flights for now (no affiliate, just compare); when we sign a
+          flight affiliate (Kiwi/Duffel/Skyscanner partner), swap the URL
+          and the click immediately starts earning. */}
       <Section
         title={t("plan.sectionFlights")}
-        meta={t("plan.flightsMeta", { count: 2 })}
+        meta={t("plan.flightsMetaSingle")}
         icon={Plane}
         tone="violet"
       >
         {(() => {
-          const outIntent = "flight-outbound";
-          const retIntent = "flight-return";
-          const outBooked = confirmed.has(outIntent);
-          const retBooked = confirmed.has(retIntent);
-          const outHref = buildBookingLink({
-            destination,
-            startDate,
-            endDate,
-            members,
-            surface: "trip_overview_hero",
-            tripId,
-            currency,
-            locale,
-          });
+          const intentId = "flight-roundtrip";
+          const isBooked = confirmed.has(intentId);
+          const dest = cities[0] ?? destination;
+          // Google Flights deep link — uses the city name; no affiliate
+          // attribution today but stable and reliable for users.
+          const href =
+            `https://www.google.com/travel/flights?q=` +
+            encodeURIComponent(`flights to ${dest} on ${startDate} returning ${endDate}`);
           return (
-            <>
-              <NeedRow
-                title={t("plan.flightOutbound", { destination })}
-                subtitle={t("plan.flightSub", { date: format(parseISO(startDate), "d MMM"), currency, price: 1280 })}
-                href={outHref}
-                ctaLabel={t("plan.ctaCompareFlights")}
-                onClick={() =>
-                  recordIntent({
-                    id: outIntent,
-                    partner: "booking",
-                    title: t("plan.flightOutbound", { destination }),
-                    meta: format(parseISO(startDate), "d MMM yyyy"),
-                  })
-                }
-                booked={outBooked}
-                icon={Plane}
-                tone="violet"
-              />
-              <NeedRow
-                title={t("plan.flightReturn", { destination })}
-                subtitle={t("plan.flightSub", { date: format(parseISO(endDate), "d MMM"), currency, price: 1280 })}
-                href={outHref}
-                ctaLabel={t("plan.ctaCompareFlights")}
-                onClick={() =>
-                  recordIntent({
-                    id: retIntent,
-                    partner: "booking",
-                    title: t("plan.flightReturn", { destination }),
-                    meta: format(parseISO(endDate), "d MMM yyyy"),
-                  })
-                }
-                booked={retBooked}
-                icon={Plane}
-                tone="violet"
-              />
-            </>
+            <NeedRow
+              title={t("plan.flightRoundTrip", { destination: dest })}
+              subtitle={t("plan.flightSubSingle", {
+                start: format(parseISO(startDate), "d MMM"),
+                end: format(parseISO(endDate), "d MMM"),
+              })}
+              href={href}
+              ctaLabel={t("plan.ctaCompareFlights")}
+              onClick={() =>
+                recordIntent({
+                  id: intentId,
+                  partner: "booking",
+                  title: t("plan.flightRoundTrip", { destination: dest }),
+                  meta: `${format(parseISO(startDate), "d MMM")} → ${format(parseISO(endDate), "d MMM yyyy")}`,
+                })
+              }
+              booked={isBooked}
+              icon={Plane}
+              tone="violet"
+              privateChip
+            />
           );
         })()}
       </Section>
