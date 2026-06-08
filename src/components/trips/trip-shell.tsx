@@ -107,13 +107,9 @@ export function TripShell({ trip, isOwner, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // Mock-gate: the Wallet tab only appears when ?previewAffiliate=1 is
-  // on the URL, OR when the user is already on the wallet route (so the
-  // tab stays highlighted while you browse). Once approved for launch,
-  // drop the gate and the tab becomes permanent.
-  const showWalletTab =
-    searchParams?.get("previewAffiliate") === "1" ||
-    pathname.includes(`/trips/${trip.id}/wallet`);
+  // B18: Wallet tab is permanent for everyone now.
+  const showWalletTab = true;
+  void searchParams;
   const t = useT();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
@@ -435,13 +431,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
               ? [{ key: "nav.wallet", href: "/wallet", icon: CreditCard }]
               : []),
           ].map((tab) => {
-            // Preserve the preview flag on the Wallet tab so the user
-            // stays in mock mode when they click into it.
-            const previewSuffix =
-              tab.href === "/wallet" && searchParams?.get("previewAffiliate") === "1"
-                ? "?previewAffiliate=1"
-                : "";
-            const href = `/trips/${trip.id}${tab.href}${previewSuffix}`;
+            const href = `/trips/${trip.id}${tab.href}`;
             const isActive =
               tab.href === ""
                 ? pathname === `/trips/${trip.id}`

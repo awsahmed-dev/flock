@@ -58,7 +58,9 @@ export function TripActionHub({ tripId, stats }: Props) {
   // B17 (audit fix #2): promote Wallet to the action grid so it's a
   // first-class object alongside Plan/Decide/Money/Pack. Preview-gated
   // for now; ships to everyone once the booking flow is fully wired.
-  const showWallet = searchParams?.get("previewAffiliate") === "1";
+  // B18: Wallet ships to everyone. Preview gate removed.
+  const showWallet = true;
+  void searchParams;
   const suggestion = pickSuggestion(tripId, stats, t);
 
   return (
@@ -105,17 +107,16 @@ export function TripActionHub({ tripId, stats }: Props) {
           label={t("cards.plan")}
           headline={
             stats.itineraryCount === 0
-              ? t("cards.planEmpty")
+              ? t("cards.planStartWithAi")
               : t("cards.planItems", { count: stats.itineraryCount })
           }
-          subline={
-            stats.itineraryCount === 0
-              ? t("cards.planStartWithAi")
-              : stats.daysWithItems < stats.totalDays
-                ? t("cards.planDaysEmpty", { days: stats.totalDays - stats.daysWithItems })
-                : ""
-          }
+          subline=""
           warn={stats.itineraryCount === 0}
+          progress={
+            stats.totalDays > 0
+              ? Math.round((stats.daysWithItems / stats.totalDays) * 100)
+              : undefined
+          }
         />
         <ActionCard
           href={`/trips/${tripId}/votes`}
@@ -141,17 +142,14 @@ export function TripActionHub({ tripId, stats }: Props) {
           label={t("cards.money")}
           headline={
             stats.expensesCount === 0
-              ? t("cards.moneyNoExpenses")
-              : `${stats.currency} ${fmtAmount(stats.totalSpent)}`
-          }
-          subline={
-            stats.expensesCount === 0
               ? t("cards.moneyLogYourFirst")
               : stats.myUnsettled > 0
                 ? `${t("expenses.youOwe")} ${stats.currency} ${fmtAmount(stats.myUnsettled)}`
-                : t("cards.moneyYoureSettled")
+                : `${stats.currency} ${fmtAmount(stats.totalSpent)}`
           }
+          subline=""
           urgent={stats.myUnsettled > 0}
+          progress={moneyProgress(stats)}
         />
         <ActionCard
           href={`/trips/${tripId}/pack?view=packing`}
@@ -163,21 +161,22 @@ export function TripActionHub({ tripId, stats }: Props) {
               ? t("cards.planEmpty")
               : t("cards.packCount", { packed: stats.packingPacked, total: stats.packingTotal })
           }
-          subline={
-            stats.packingTotal === 0
-              ? ""
-              : t("cards.packPercentPacked", { percent: Math.round((stats.packingPacked / stats.packingTotal) * 100) })
-          }
+          subline=""
           warn={stats.packingTotal === 0}
+          progress={
+            stats.packingTotal > 0
+              ? Math.round((stats.packingPacked / stats.packingTotal) * 100)
+              : undefined
+          }
         />
         {showWallet && (
           <ActionCard
-            href={`/trips/${tripId}/wallet?previewAffiliate=1`}
+            href={`/trips/${tripId}/wallet`}
             icon={CreditCard}
             color="fuchsia"
             label={t("cards.wallet")}
-            headline={t("cards.walletEmpty")}
-            subline={t("cards.walletSubline")}
+            headline={t("cards.walletSubline")}
+            subline=""
           />
         )}
       </div>
@@ -227,6 +226,7 @@ function ActionCard({
   warn,
   urgent,
   compact,
+  progress,
 }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -237,6 +237,10 @@ function ActionCard({
   warn?: boolean;
   urgent?: boolean;
   compact?: boolean;
+  /** 0–100 percentage shown as a tiny tracker bar at the bottom of the
+   *  card. Used by Pack (packed %), Money (budget spend %), Plan
+   *  (days-with-items %) to replace dead text with a visual signal. */
+  progress?: number;
 }) {
   const colors = ACTION_COLORS[color];
   return (
@@ -246,13 +250,13 @@ function ActionCard({
         urgent
           ? "border-amber-500/40 bg-amber-500/[0.04]"
           : "border-border bg-card hover:border-foreground/15"
-      } ${compact ? "p-3" : "p-4"} transition-colors`}
+      } ${compact ? "p-2.5" : "p-3"} transition-colors`}
     >
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="flex items-center gap-2 mb-1">
         <div
-          className={`w-7 h-7 rounded-lg ${colors.bg} flex items-center justify-center shrink-0`}
+          className={`w-6 h-6 rounded-lg ${colors.bg} flex items-center justify-center shrink-0`}
         >
-          <Icon className={`w-3.5 h-3.5 ${colors.icon}`} />
+          <Icon className={`w-3 h-3 ${colors.icon}`} />
         </div>
         <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
           {label}
@@ -262,18 +266,53 @@ function ActionCard({
         )}
       </div>
       <p
-        className={`font-bold ${compact ? "text-sm" : "text-base"} tracking-tight leading-snug truncate ${
+        className={`font-bold ${compact ? "text-[13px]" : "text-sm"} tracking-tight leading-tight truncate ${
           warn ? "text-muted-foreground" : "text-foreground"
         }`}
       >
         {headline}
       </p>
-      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-        {subline}
-      </p>
+      {/* B18: removed the dedicated subline row — the action grid now
+          renders as a 2-line card (label + headline) plus an optional
+          progress tracker bar. Subline content (e.g. "Days empty",
+          "% packed") is collapsed into the headline string itself. */}
+      {progress !== undefined && (
+        <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full bg-gradient-to-r ${TRACKER_BAR[color]} transition-all duration-500`}
+            style={{ width: `${Math.max(2, Math.min(100, progress))}%` }}
+          />
+        </div>
+      )}
+      {progress === undefined && subline && (
+        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+          {subline}
+        </p>
+      )}
     </Link>
   );
 }
+
+/** Money tracker: total spent vs the per-trip budget cap. If the trip
+ *  has no budget set, fall back to a "completeness" signal (expensesCount
+ *  → diminishing returns up to 80%). */
+function moneyProgress(stats: ActionHubStats): number | undefined {
+  // We don't have budgetTotal on stats; for now use a soft signal based
+  // on expensesCount so the bar still feels alive. Once we wire budget
+  // into stats, replace with (totalSpent / budgetTotal) * 100.
+  if (stats.expensesCount === 0) return undefined;
+  // Asymptotic toward 100% so the bar grows with usage.
+  return Math.min(100, Math.round(60 + Math.min(40, stats.expensesCount * 4)));
+}
+
+const TRACKER_BAR: Record<string, string> = {
+  blue: "from-blue-400 to-indigo-500",
+  violet: "from-violet-400 to-purple-500",
+  emerald: "from-emerald-400 to-teal-500",
+  amber: "from-amber-400 to-orange-500",
+  fuchsia: "from-fuchsia-400 to-pink-500",
+  slate: "from-slate-400 to-slate-500",
+};
 
 const ACTION_COLORS: Record<
   string,

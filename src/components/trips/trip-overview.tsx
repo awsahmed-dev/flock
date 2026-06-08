@@ -369,7 +369,9 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
 function FirstRunOnboarding({ tripId }: { tripId: string }) {
   const t = useT();
   const searchParams = useSearchParams();
-  const showPreview = searchParams?.get("previewAffiliate") === "1";
+  // B18: onboarding strip ships to everyone now.
+  const showPreview = true;
+  void searchParams;
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
@@ -428,7 +430,7 @@ function FirstRunOnboarding({ tripId }: { tripId: string }) {
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm">
               <Link
-                href={`/trips/${tripId}/wallet?previewAffiliate=1`}
+                href={`/trips/${tripId}/wallet`}
                 className="hover:underline"
               >
                 {t("onboarding.step3Title")}

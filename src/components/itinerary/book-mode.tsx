@@ -127,7 +127,7 @@ export function BookMode({
       action: {
         label: t("plan.openInWallet"),
         onClick: () => {
-          window.location.href = `/trips/${tripId}/wallet?previewAffiliate=1`;
+          window.location.href = `/trips/${tripId}/wallet`;
         },
       },
       duration: 4500,
@@ -434,7 +434,7 @@ export function BookMode({
 
       {/* Hint to the Wallet tab — closes the loop on the mental model. */}
       <Link
-        href={`/trips/${tripId}/wallet?previewAffiliate=1`}
+        href={`/trips/${tripId}/wallet`}
         className="block rounded-2xl border border-dashed border-border bg-muted/20 p-4 hover:border-primary/40 hover:bg-muted/40 transition-colors"
       >
         <div className="flex items-center gap-3">

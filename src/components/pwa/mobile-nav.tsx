@@ -37,14 +37,16 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
   // when affiliate preview is on. Pack moves to the top sub-nav (still
   // reachable via overview action grid). Once we sign affiliates and
   // ship Wallet to everyone, drop the preview flag.
-  const showWallet = searchParams?.get("previewAffiliate") === "1";
+  // B18: Wallet ships to everyone. Preview gate removed.
+  const showWallet = true;
+  void searchParams;
 
   const tabs = showWallet
     ? [
         { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,                       icon: Sparkles,   exact: true },
         { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`,             icon: Calendar,   exact: false },
         { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,              icon: Wallet,     exact: false },
-        { id: "wallet" as const,    label: t("nav.wallet"),    href: `/trips/${tripId}/wallet?previewAffiliate=1`, icon: CreditCard, exact: false },
+        { id: "wallet" as const,    label: t("nav.wallet"),    href: `/trips/${tripId}/wallet`, icon: CreditCard, exact: false },
       ]
     : [
         { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },

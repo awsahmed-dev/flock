@@ -104,7 +104,9 @@ export function ItineraryBoard({
   const searchParams = useSearchParams();
   // Plan-mode swipe is mock-gated for now. When approved, drop this and
   // the segment switch ships to everyone.
-  const showPlanModes = searchParams?.get("previewAffiliate") === "1";
+  // B18: Plan/Book mode ships to everyone. Preview gate removed.
+  const showPlanModes = true;
+  void searchParams;
   const [items, setItems] = useState(initialItems);
   // Plan mode toggle — "map" (default) or "book" (affiliate CTAs).
   // Only visible when ?previewAffiliate=1 is on the URL.
