@@ -593,5 +593,27 @@
     "step2Body": "Switch to Book mode in the Plan tab — hotels, flights, eSIM.",
     "step3Title": "Carry it in your Wallet",
     "step3Body": "Every confirmed ticket lands in your Wallet with a barcode."
+  },
+  "profile": {
+    "menuLink": "Profile",
+    "section": "Account",
+    "title": "Profile",
+    "back": "Back",
+    "nameLabel": "Display name",
+    "namePlaceholder": "What should friends call you?",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "One line about you — coffee snob, mountain person, etc.",
+    "emailLabel": "Email",
+    "avatarHint": "Tap to upload a photo",
+    "avatarMustBeImage": "Please pick an image file",
+    "avatarTooBig": "Image must be under 5MB",
+    "avatarUploaded": "Avatar updated",
+    "avatarUploadFailed": "Couldn't upload — try again",
+    "uploading": "Uploading…",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Profile saved",
+    "savedJustNow": "Saved",
+    "saveFailed": "Couldn't save — try again"
   }
 }

@@ -64,6 +64,7 @@ export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(), // matches auth.users.id
   displayName: text("display_name").notNull(),
   avatarUrl: text("avatar_url"),
+  bio: text("bio"),
   email: text("email"),
   // B13c: per-channel notification opt-outs. Defaults are all-on so a
   // brand-new account hears about everything until they tune it down.
@@ -91,6 +92,11 @@ export const trips = pgTable("trips", {
   budgetTotal: real("budget_total"),
   currency: text("currency").default("USD").notNull(),
   coverImage: text("cover_image"),
+  // B19: Unsplash hero image cached at trip-view time. credit fields
+  // store the photographer attribution required by Unsplash API rules.
+  heroImageUrl: text("hero_image_url"),
+  heroImageCreditName: text("hero_image_credit_name"),
+  heroImageCreditLink: text("hero_image_credit_link"),
   shareToken: text("share_token").unique(), // non-null = public share enabled
   createdBy: uuid("created_by")
     .notNull()

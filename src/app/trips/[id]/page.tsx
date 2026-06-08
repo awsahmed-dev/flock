@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { TripOverview } from "@/components/trips/trip-overview";
+import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 import { getBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import {
@@ -34,6 +35,17 @@ export default async function TripPage({ params }: Props) {
 
   const invite = trip.invites[0];
   const inviteUrl = invite ? `${getBaseUrl()}/invite/${invite.token}` : null;
+
+  // B19: ensure a hero image (Unsplash) — populated once per trip, then
+  // cached forever on the trips row. Fire-and-pass through so the
+  // first render after creation still shows a real image.
+  const hero = await ensureTripHeroImage({
+    tripId: trip.id,
+    destination: trip.destination,
+    existingUrl: trip.heroImageUrl,
+    existingCreditName: trip.heroImageCreditName,
+    existingCreditLink: trip.heroImageCreditLink,
+  });
 
   // ── Action-hub stats: run in parallel so the dashboard composes from a
   // single fast batch. None of these are heavy — all single-table scans on
@@ -132,6 +144,7 @@ export default async function TripPage({ params }: Props) {
       inviteUrl={inviteUrl}
       userId={user.id}
       stats={stats}
+      hero={hero}
     />
   );
 }

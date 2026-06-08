@@ -34,6 +34,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  UserCircle,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
@@ -318,12 +319,19 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 >
                   <LayoutDashboard className="w-4 h-4" /> All trips
                 </DropdownMenuItem>
+                {/* B19: profile (name + avatar + bio). */}
+                <DropdownMenuItem
+                  render={<Link href="/account/profile" />}
+                  className="gap-2"
+                >
+                  <UserCircle className="w-4 h-4" /> {t("profile.menuLink")}
+                </DropdownMenuItem>
                 {/* B13c: account-level notification preferences. */}
                 <DropdownMenuItem
                   render={<Link href="/account/notifications" />}
                   className="gap-2"
                 >
-                  <Bell className="w-4 h-4" /> Notification settings
+                  <Bell className="w-4 h-4" /> {t("nav.notificationSettings")}
                 </DropdownMenuItem>
                 {/* B15: language switcher — sits next to the
                     settings link so the most personal toggles are

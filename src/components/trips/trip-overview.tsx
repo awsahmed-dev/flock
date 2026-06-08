@@ -49,6 +49,9 @@ interface Props {
   inviteUrl: string | null;
   userId: string;
   stats: ActionHubStats;
+  /** B19: Unsplash hero photo for the trip's destination. When present
+   *  it replaces the gradient placeholder behind the hero card. */
+  hero?: { url: string; creditName: string; creditLink: string } | null;
 }
 
 const AVATAR_COLORS = [
@@ -100,7 +103,7 @@ function getTripStatus(
   };
 }
 
-export function TripOverview({ trip, inviteUrl, stats }: Props) {
+export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
   const t = useT();
   // locale kept for future affiliate prefill; no longer needed on this
   // screen now that affiliate strips moved into Plan/Book mode.
@@ -133,10 +136,36 @@ export function TripOverview({ trip, inviteUrl, stats }: Props) {
           inline with destination, meta row collapses to 2 lines on
           narrow screens with smaller text. The orbs are smaller and
           fewer so the card reads as a header strip rather than a poster. */}
-      <div className={`relative rounded-2xl bg-gradient-to-br ${gradient} overflow-hidden`}>
-        {/* Decorative orbs */}
-        <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
-        <div className="absolute -left-4 bottom-0 w-20 h-20 rounded-full bg-black/8 pointer-events-none" />
+      <div className={`relative rounded-2xl ${hero ? "" : `bg-gradient-to-br ${gradient}`} overflow-hidden min-h-[180px]`}>
+        {/* B19: real destination photo behind the hero. The dark overlay
+            keeps text legible regardless of what Unsplash returned, and
+            the gradient placeholder still shows while the image lazy-
+            loads or when Unsplash isn't configured. */}
+        {hero && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={hero.url}
+              alt={trip.destination}
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/65 via-black/45 to-black/65" />
+            {/* Photographer attribution — required by Unsplash ToS. */}
+            <a
+              href={hero.creditLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-1.5 end-2 text-[9px] text-white/60 hover:text-white/90 z-20"
+            >
+              📸 {hero.creditName}
+            </a>
+          </>
+        )}
+        {/* Decorative orbs — kept on top of the image for the signature
+            paxawa shape language; toned down a bit when we have a photo. */}
+        <div className={`absolute -right-8 -top-8 w-36 h-36 rounded-full ${hero ? "bg-white/8" : "bg-white/10"} pointer-events-none`} />
+        <div className={`absolute -left-4 bottom-0 w-20 h-20 rounded-full ${hero ? "bg-black/15" : "bg-black/8"} pointer-events-none`} />
 
         <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-3 min-w-0">

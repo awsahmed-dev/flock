@@ -92,12 +92,24 @@ export function TripGrid({ trips }: Props) {
         return (
           <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
             <div className="group flex items-center gap-3 ps-0 pe-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
-              {/* Color stripe + emoji tile — replaces the old gradient hero */}
+              {/* Color stripe + photo (or emoji fallback) — Unsplash hero
+                  for the destination gives each trip its own visual hook
+                  in the list. */}
               <div className="flex items-center gap-2.5 shrink-0">
                 <div className={`w-1 self-stretch rounded-full bg-gradient-to-b ${gradient}`} />
-                <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center text-lg shrink-0">
-                  {emoji}
-                </div>
+                {trip.heroImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={trip.heroImageUrl}
+                    alt={trip.destination}
+                    className="w-10 h-10 rounded-xl object-cover shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center text-lg shrink-0">
+                    {emoji}
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 min-w-0">

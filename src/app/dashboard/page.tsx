@@ -157,7 +157,20 @@ export default async function DashboardPage() {
           </div>
 
           <Link href={`/trips/${spotlight.id}`}>
-            <div className={`group relative rounded-2xl bg-gradient-to-br ${getGradient(spotlight.id)} p-6 overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-200`}>
+            <div className={`group relative rounded-2xl ${spotlight.heroImageUrl ? "" : `bg-gradient-to-br ${getGradient(spotlight.id)}`} p-6 overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-200 min-h-[160px]`}>
+              {/* B19: destination photo behind the spotlight card */}
+              {spotlight.heroImageUrl && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={spotlight.heroImageUrl}
+                    alt={spotlight.destination}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/35 to-black/55" />
+                </>
+              )}
               {/* Decorative orbs */}
               <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
               <div className="absolute right-12 -bottom-6 w-24 h-24 rounded-full bg-white/8" />
