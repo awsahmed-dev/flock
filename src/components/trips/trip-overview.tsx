@@ -255,46 +255,27 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
 
       <TripActionHub tripId={trip.id} stats={stats} />
 
-      {/* ── Smart tools ─────────────────────────────────────────────
-          B4: tightened tiles. The dramatic gradient/icon scale that
-          made these tower over the Action Hub is dialed back so they
-          read as a continuation of the dashboard, not a competing
-          surface. */}
-      <div className="grid sm:grid-cols-2 gap-2.5">
-        <button
-          type="button"
-          onClick={() => setAiOpen(true)}
-          className="group text-left rounded-2xl border border-primary/20 hover:border-primary/40 bg-gradient-to-br from-primary/5 to-violet-500/5 hover:shadow-md hover:shadow-primary/10 transition-all p-3 flex items-center gap-3"
-        >
-          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">{t("itinerary.aiPlan")}</p>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {trip.destination}
-            </p>
-          </div>
-          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setHotelOpen(true)}
-          className="group text-left rounded-2xl border border-blue-500/20 hover:border-blue-500/40 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 hover:shadow-md hover:shadow-blue-500/10 transition-all p-3 flex items-center gap-3"
-        >
-          <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-            <Hotel className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">{t("itinerary.findAStay")}</p>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {trip.destination}
-            </p>
-          </div>
-          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
-        </button>
-      </div>
+      {/* B21: Find-a-Stay smart-tool card removed — fully redundant with
+          Plan/Book mode now. AI Plan card kept as the one-tap entry to
+          the wizard for users who want a fresh itinerary without going
+          through Plan tab. Sits below the action grid as a single full-
+          width prompt rather than a 2-up tile pair. */}
+      <button
+        type="button"
+        onClick={() => setAiOpen(true)}
+        className="w-full group text-left rounded-2xl border border-primary/20 hover:border-primary/40 bg-gradient-to-br from-primary/5 to-violet-500/5 hover:shadow-md hover:shadow-primary/10 transition-all p-3 flex items-center gap-3"
+      >
+        <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+          <Sparkles className="w-4 h-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm">{t("itinerary.aiPlan")}</p>
+          <p className="text-[11px] text-muted-foreground truncate">
+            {trip.destination}
+          </p>
+        </div>
+        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
+      </button>
 
       {/* ── Crew + invite ───────────────────────────────────────────
           B4: merged into one card. Two side-by-side cards (one for
@@ -369,19 +350,27 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
         )}
       </div>
 
-      {/* Panels */}
-      <AiPlannerPanel
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        tripId={trip.id}
-        destination={trip.destination}
-      />
-      <HotelSearchPanel
-        open={hotelOpen}
-        onClose={() => setHotelOpen(false)}
-        tripId={trip.id}
-        destination={trip.destination}
-      />
+      {/* B21: lazy-mount panels — previously they rendered (with all
+          their state + fetch effects) on every overview load even when
+          closed. Both are heavy: AiPlannerPanel has the questionnaire
+          state + Anthropic client init, HotelSearchPanel auto-fires a
+          Foursquare search on mount. Now they unmount when closed. */}
+      {aiOpen && (
+        <AiPlannerPanel
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          tripId={trip.id}
+          destination={trip.destination}
+        />
+      )}
+      {hotelOpen && (
+        <HotelSearchPanel
+          open={hotelOpen}
+          onClose={() => setHotelOpen(false)}
+          tripId={trip.id}
+          destination={trip.destination}
+        />
+      )}
     </div>
   );
 }

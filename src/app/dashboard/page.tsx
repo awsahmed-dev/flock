@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { trips, tripMembers } from "@/lib/db/schema";
+import { trips, tripMembers, profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { TripGrid, SuggestedTrips } from "@/components/trips/trip-grid";
@@ -45,7 +45,15 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
+  // B21: prefer the user's profile.display_name (editable from /account/
+  // profile) over the Supabase user_metadata. Falls back to first word of
+  // email only when nothing else is set.
+  const profileRow = await db.query.profiles.findFirst({
+    where: eq(profiles.id, user.id),
+    columns: { displayName: true },
+  });
   const firstName =
+    profileRow?.displayName?.split(" ")[0] ||
     (user.user_metadata?.display_name as string | undefined)?.split(" ")[0] ||
     user.email?.split("@")[0] ||
     "Traveler";

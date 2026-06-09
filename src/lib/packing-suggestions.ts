@@ -85,9 +85,9 @@ export function buildPackingSuggestions(
     { label: "First-aid kit", category: "medical" },
     { label: "Painkillers", category: "medical" },
     // Clothing essentials
-    { label: "Underwear (one per day)", category: "clothing" },
-    { label: "Socks (one per day)", category: "clothing" },
-    { label: "Comfortable walking shoes", category: "clothing" },
+    { label: "Underwear (one per day)", category: "clothes" },
+    { label: "Socks (one per day)", category: "clothes" },
+    { label: "Comfortable walking shoes", category: "clothes" },
     // General
     { label: "Reusable water bottle", category: "general" },
     { label: "Day bag / backpack", category: "general" },
@@ -97,39 +97,39 @@ export function buildPackingSuggestions(
   const extras: PackingSuggestion[] = [];
   if (/(beach|bali|maldives|hawaii|cancun|phuket|santorini)/.test(dest)) {
     extras.push(
-      { label: "Swimsuit", category: "clothing" },
-      { label: "Sandals / flip-flops", category: "clothing" },
-      { label: "Sunglasses", category: "clothing" },
+      { label: "Swimsuit", category: "clothes" },
+      { label: "Sandals / flip-flops", category: "clothes" },
+      { label: "Sunglasses", category: "clothes" },
       { label: "Beach towel", category: "general" },
       { label: "After-sun lotion", category: "toiletries" },
     );
   }
   if (/(ski|snow|alps|aspen|whistler|hokkaido)/.test(dest)) {
     extras.push(
-      { label: "Ski gloves", category: "clothing" },
-      { label: "Thermal base layers", category: "clothing" },
-      { label: "Wool socks", category: "clothing" },
+      { label: "Ski gloves", category: "clothes" },
+      { label: "Thermal base layers", category: "clothes" },
+      { label: "Wool socks", category: "clothes" },
       { label: "Lip balm with SPF", category: "toiletries" },
     );
   }
   if (/(hike|trek|mountain|patagonia|kilimanjaro|nepal|himalaya)/.test(dest)) {
     extras.push(
-      { label: "Hiking boots", category: "clothing" },
-      { label: "Rain jacket", category: "clothing" },
+      { label: "Hiking boots", category: "clothes" },
+      { label: "Rain jacket", category: "clothes" },
       { label: "Headlamp", category: "tech" },
       { label: "Blister kit", category: "medical" },
     );
   }
   if (/(japan|korea|taiwan|thailand|vietnam|indonesia|china|hong kong|singapore|asia)/.test(dest)) {
     extras.push(
-      { label: "Slip-on shoes (temple visits)", category: "clothing" },
+      { label: "Slip-on shoes (temple visits)", category: "clothes" },
       { label: "Pocket tissue / wet wipes", category: "general" },
     );
   }
   if (/(europe|paris|rome|barcelona|prague|london|berlin)/.test(dest)) {
     extras.push(
       { label: "Compact umbrella", category: "general" },
-      { label: "Scarf / shawl", category: "clothing" },
+      { label: "Scarf / shawl", category: "clothes" },
     );
   }
   // B12: Malaysia / SAR-region travelers

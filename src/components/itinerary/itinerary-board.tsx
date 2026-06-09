@@ -229,43 +229,43 @@ export function ItineraryBoard({
           stripe alone, and the bottom corners hold the mode toggle
           (left) and the Add-place FAB (right) — three corners, three
           jobs, no visual collision at the top of the canvas. */}
-      {showPlanModes && (
-        <div className="absolute z-40 start-3 bottom-[120px] sm:bottom-[88px] pointer-events-none">
-          <div className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg p-1">
-            <button
-              type="button"
-              onClick={() => setPlanMode("map")}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors whitespace-nowrap ${
-                planMode === "map"
-                  ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <MapPin className="w-3 h-3" />
-              {t("plan.modeMap")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPlanMode("book")}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors whitespace-nowrap ${
-                planMode === "book"
-                  ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Hotel className="w-3 h-3" />
-              {t("plan.modeBook")}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* B21: Map/Book toggle moved into the bottom-sheet control strip
+          (see header below). The previous floating-bottom pill felt
+          static — it stayed glued to the canvas while the sheet's drag
+          gesture moved the panel above it. Inside the sheet it moves
+          WITH the sheet for a natural feel. Book mode renders the
+          overlay with its own sticky bar carrying the same toggle so
+          the user can swap back when the sheet is hidden underneath. */}
 
       {/* Book overlay — when active, sits on top of the canvas, opaque
           so the map underneath disappears visually. We don't unmount the
           map so swapping back is instant and the Mapbox instance keeps
           its tiles, camera, etc. */}
       {showPlanModes && planMode === "book" && (
-        <div className="absolute inset-0 z-30 bg-background overflow-y-auto pt-16">
+        <div className="absolute inset-0 z-30 bg-background overflow-y-auto">
+          {/* B21: sticky in-overlay mode toggle so the user can flip
+              back to Map. Sheet is hidden under the overlay; the toggle
+              in the sheet's control strip isn't reachable here. */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 flex items-center justify-center">
+            <div className="inline-flex items-center gap-1 rounded-full bg-muted/60 p-1">
+              <button
+                type="button"
+                onClick={() => setPlanMode("map")}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <MapPin className="w-3 h-3" />
+                {t("plan.modeMap")}
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
+                disabled
+              >
+                <Hotel className="w-3 h-3" />
+                {t("plan.modeBook")}
+              </button>
+            </div>
+          </div>
           <BookMode
             tripId={tripId}
             destination={destination}
@@ -298,58 +298,12 @@ export function ItineraryBoard({
         />
       </div>
 
-      {/* ── Day chip rail (always visible at top of map) ─────────── */}
-      <div className="absolute top-3 left-3 right-3 sm:left-4 sm:right-4 z-20 flex items-center gap-2 overflow-x-auto scrollbar-none pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg p-1 max-w-full overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setFocusedDay(null)}
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
-              focusedDay === null
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t("itinerary.all")}
-          </button>
-          {days.map((day, idx) => {
-            const count = getItemsForDay(day).length;
-            const active = focusedDay === day;
-            const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
-            return (
-              <button
-                key={day}
-                type="button"
-                onClick={() => setFocusedDay(day)}
-                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
-                  active
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
-                D{idx + 1}
-                {count > 0 && <span className="opacity-70 tabular-nums">·{count}</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* B21: day chip rail moved into the bottom-sheet control strip
+          below. Top of canvas is now clean — map gets the full surface,
+          no floating chrome competing with the trip topbar. */}
 
-      {/* B20: Add-place control — collapsed from a labeled pill at top-
-          right (which competed with day chips + mode toggle) to a small
-          circular icon FAB at bottom-right above the sheet. Same target,
-          fraction of the visual weight. Title attr keeps it
-          discoverable on desktop hover. */}
-      <button
-        type="button"
-        onClick={() => openAddFor(focusedDay)}
-        className="absolute z-30 end-4 sm:end-6 bottom-[120px] sm:bottom-[88px] w-11 h-11 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white flex items-center justify-center shadow-lg shadow-primary/30 hover:opacity-90 hover:scale-105 transition-all"
-        title={t("itinerary.addPlace")}
-        aria-label={t("itinerary.addPlace")}
-      >
-        <Plus className="w-5 h-5" />
-      </button>
+      {/* B21: Add-place control moved into the bottom-sheet control
+          strip (see header below). Single + icon on the end. */}
 
       {/* ── Bottom sheet (B11: motion-driven drag-to-expand) ────────
           Was a click-to-toggle button which made the sheet feel like a
@@ -372,32 +326,131 @@ export function ItineraryBoard({
         }}
       >
         <div className="mx-auto max-w-3xl bg-card/95 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl overflow-hidden">
-          {/* Handle + summary header — drag target. Tap still works. */}
+          {/* B21: drag handle (small) — the previous double-strip header
+              was busy. The drag handle is now just the slim pill at the
+              top; tapping it still toggles the sheet. */}
           <button
             type="button"
             onClick={() => setSheetOpen((o) => !o)}
-            className="w-full px-5 pt-2.5 pb-2 flex flex-col items-stretch text-left hover:bg-accent/20 transition-colors cursor-grab active:cursor-grabbing touch-none"
+            className="w-full pt-2.5 pb-1.5 flex justify-center cursor-grab active:cursor-grabbing touch-none"
+            aria-label={sheetOpen ? "Collapse" : "Expand"}
           >
-            <div className="flex justify-center mb-1">
-              <span className="block w-10 h-1 rounded-full bg-muted-foreground/30" />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-bold text-sm truncate">
-                  {focusedDay
-                    ? `${t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
-                    : t("itinerary.all")}
-                </p>
-                <p className="text-[11px] text-muted-foreground truncate">
-                  {focusedDay
-                    ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
-                    : t("itinerary.items", { count: items.length })}
-                </p>
+            <span className="block w-10 h-1 rounded-full bg-muted-foreground/30" />
+          </button>
+
+          {/* B21: unified control strip — Map/Book mode toggle (start),
+              day chips (horizontal scroll, middle), Add place + icon
+              (end). All Plan controls in one row inside the sheet so
+              they move with the drag gesture. Floating-bottom buttons
+              are gone — the map gets the full canvas above. */}
+          <div className="px-3 pb-2 flex items-center gap-2">
+            {/* Map/Book mode toggle — preview-gated as before */}
+            {showPlanModes && (
+              <div className="inline-flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setPlanMode("map")}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                    planMode === "map"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={t("plan.modeMap")}
+                  aria-label={t("plan.modeMap")}
+                >
+                  <MapPin className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlanMode("book")}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                    planMode === "book"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={t("plan.modeBook")}
+                  aria-label={t("plan.modeBook")}
+                >
+                  <Hotel className="w-3 h-3" />
+                </button>
               </div>
-              <span className="shrink-0 text-muted-foreground">
-                {sheetOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-              </span>
+            )}
+
+            {/* Day chips — horizontal scroll in the middle. Take all
+                available space; clip overflow with scrollbar-none so it
+                feels like a swipeable rail. */}
+            <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
+              <div className="inline-flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setFocusedDay(null)}
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
+                    focusedDay === null
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("itinerary.all")}
+                </button>
+                {days.map((day, idx) => {
+                  const count = getItemsForDay(day).length;
+                  const active = focusedDay === day;
+                  const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setFocusedDay(day)}
+                      className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
+                        active
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+                      D{idx + 1}
+                      {count > 0 && (
+                        <span className="opacity-70 tabular-nums">·{count}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Add place + icon (end) */}
+            <button
+              type="button"
+              onClick={() => openAddFor(focusedDay)}
+              className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white flex items-center justify-center shadow-md shadow-primary/30 hover:scale-105 transition-transform"
+              title={t("itinerary.addPlace")}
+              aria-label={t("itinerary.addPlace")}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Day title + items count row — tap to toggle sheet expand */}
+          <button
+            type="button"
+            onClick={() => setSheetOpen((o) => !o)}
+            className="w-full px-5 pb-2 flex items-center justify-between gap-2 text-left hover:bg-accent/20 transition-colors"
+          >
+            <div className="min-w-0">
+              <p className="font-bold text-sm truncate">
+                {focusedDay
+                  ? `${t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
+                  : t("itinerary.all")}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {focusedDay
+                  ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
+                  : t("itinerary.items", { count: items.length })}
+              </p>
+            </div>
+            <span className="shrink-0 text-muted-foreground">
+              {sheetOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </span>
           </button>
 
           {/* B17 (audit fix #9): per-day AI Plan + Find-a-Stay buttons
@@ -587,19 +640,24 @@ export function ItineraryBoard({
         />
       )}
 
-      <AiPlannerPanel
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        tripId={tripId}
-        destination={destination}
-      />
-
-      <HotelSearchPanel
-        open={hotelOpen}
-        onClose={() => setHotelOpen(false)}
-        tripId={tripId}
-        destination={destination}
-      />
+      {/* B21: lazy-mount panels (same fix as trip-overview). Neither
+          panel deserves to run its mount effects on every itinerary view. */}
+      {aiOpen && (
+        <AiPlannerPanel
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          tripId={tripId}
+          destination={destination}
+        />
+      )}
+      {hotelOpen && (
+        <HotelSearchPanel
+          open={hotelOpen}
+          onClose={() => setHotelOpen(false)}
+          tripId={tripId}
+          destination={destination}
+        />
+      )}
     </div>
   );
 }

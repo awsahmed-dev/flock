@@ -10,13 +10,37 @@ import { randomBytes } from "crypto";
 import { getLocale } from "@/lib/i18n";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 
+function titleCase(s: string): string {
+  if (!s) return s;
+  // Leave Arabic / non-Latin strings alone — case rules don't apply.
+  if (/[֐-ࣿऀ-෿一-鿿]/.test(s)) return s.replace(/\s+/g, " ");
+  return s
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((w) =>
+      w
+        .split("-")
+        .map((part) =>
+          part.length === 0 ? part : part[0].toUpperCase() + part.slice(1).toLowerCase(),
+        )
+        .join("-"),
+    )
+    .join(" ");
+}
+
 export async function createTrip(formData: FormData) {
   const user = await getCurrentUser();
 
   if (!user) redirect("/auth/login");
 
-  const name = formData.get("name") as string;
-  const destination = formData.get("destination") as string;
+  // B21: normalize user input so dashboard/hero pills don't read as
+  // "malaysia" or "Taiz, yemen". Title-case each word; collapse runs of
+  // whitespace; preserve internal punctuation (commas, hyphens). Skips
+  // Arabic-script strings since case doesn't apply.
+  const rawName = (formData.get("name") as string).trim();
+  const rawDestination = (formData.get("destination") as string).trim();
+  const name = titleCase(rawName);
+  const destination = titleCase(rawDestination);
   const startDate = formData.get("startDate") as string;
   const endDate = formData.get("endDate") as string;
   const budgetTotal = formData.get("budgetTotal")

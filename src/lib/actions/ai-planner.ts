@@ -70,21 +70,61 @@ export async function addPlannedItems(tripId: string, items: PlannedActivity[]) 
     }),
   );
 
-  const rows = items.map((a, idx) => ({
-    tripId,
-    dayDate: addDays(trip.startDate as string, a.day - 1),
-    title: a.title,
-    type: sanitizeType(a.type),
-    startTime: sanitizeTime(a.startTime), // AI returns "morning"/"evening" which breaks TIME columns
-    locationName: a.locationName ?? null,
-    locationLat: geos[idx]?.lat ?? null,
-    locationLng: geos[idx]?.lng ?? null,
-    costEstimate: a.costEstimate ?? null,
-    notes: a.notes ?? null,
-    status: "proposed" as const,
-    sortOrder: idx,
-    createdBy: user.id,
-  }));
+  // B21: fill missing startTimes from the slot template — the AI
+  // occasionally emits empty TIME for an item, leaving it un-timed at
+  // the top of the day list. We assign a sensible default based on the
+  // item's position within its day (every-3h spacing from 09:00).
+  const itemsByDay = new Map<number, number>();
+  const enriched = items.map((a) => {
+    const cleaned = sanitizeTime(a.startTime);
+    if (cleaned) return { ...a, startTime: cleaned };
+    const positionInDay = itemsByDay.get(a.day) ?? 0;
+    itemsByDay.set(a.day, positionInDay + 1);
+    const hour = 9 + positionInDay * 3; // 09:00, 12:00, 15:00, 18:00...
+    return { ...a, startTime: `${String(hour).padStart(2, "0")}:00` };
+  });
+
+  // B21: sort each day chronologically so the bottom-sheet list reads
+  // morning → noon → evening. Previously items rendered in raw insert
+  // order which meant the model's "stay first, dinner second, lunch
+  // third" output stayed in that scrambled sequence.
+  const sortedItems = [...enriched].sort((a, b) => {
+    if (a.day !== b.day) return a.day - b.day;
+    const tA = (a.startTime ?? "23:59").replace(":", "");
+    const tB = (b.startTime ?? "23:59").replace(":", "");
+    return parseInt(tA) - parseInt(tB);
+  });
+  // Build an index map so we can re-index sortOrder per day for the
+  // final insert.
+  const perDayCounter = new Map<number, number>();
+  const indexed = sortedItems.map((a) => {
+    const count = perDayCounter.get(a.day) ?? 0;
+    perDayCounter.set(a.day, count + 1);
+    return { item: a, sortOrder: count };
+  });
+
+  // Re-align geocode results to the new sorted order.
+  const originalIndex = new Map(items.map((a, i) => [a, i]));
+  const rows = indexed.map(({ item: a, sortOrder }) => {
+    const origIdx = originalIndex.get(items.find((orig) =>
+      orig.day === a.day && orig.title === a.title && orig.locationName === a.locationName,
+    )!) ?? 0;
+    return {
+      tripId,
+      dayDate: addDays(trip.startDate as string, a.day - 1),
+      title: a.title,
+      type: sanitizeType(a.type),
+      startTime: a.startTime,
+      locationName: a.locationName ?? null,
+      locationLat: geos[origIdx]?.lat ?? null,
+      locationLng: geos[origIdx]?.lng ?? null,
+      costEstimate: a.costEstimate ?? null,
+      notes: a.notes ?? null,
+      status: "proposed" as const,
+      sortOrder,
+      createdBy: user.id,
+    };
+  });
 
   await db.insert(itineraryItems).values(rows);
 
