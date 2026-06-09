@@ -548,7 +548,7 @@
     "modeMap": "الخريطة",
     "modeBook": "الحجوزات",
     "sectionHotels": "الفنادق",
-    "hotelsMeta": "{count} مدن بحاجة لفندق",
+    "hotelsMeta": "{count, plural, =0 {كل الفنادق محجوزة} one {مدينة واحدة بحاجة لفندق} two {مدينتان بحاجتان لفندق} few {{count} مدن بحاجة لفندق} many {{count} مدينة بحاجة لفندق} other {{count} مدينة بحاجة لفندق}}",
     "hotelCityNights": "{nights} ليالٍ · من {start} إلى {end}",
     "hotelInCity": "فندق في {city}",
     "flightsMetaSingle": "تذاكر الطيران",

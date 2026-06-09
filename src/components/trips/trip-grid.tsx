@@ -65,13 +65,28 @@ function getTripStatus(trip: Trip) {
   const now = new Date();
   const start = parseDateOnly(trip.startDate);
   const end = parseDateOnly(trip.endDate);
-  if (now >= start && now <= end)
-    return { label: "Ongoing", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
-  if (isPast(end))
+  // B23: vocabulary unified with trip-overview's status labels. Was a
+  // mix of "Ongoing / Today / In 7d / 29 days / Upcoming / Past" which
+  // didn't match the inside-trip "Happening now / Starts in N days /
+  // Just ended / Past" the user sees once they tap in.
+  if (now >= start && now <= end) {
+    return { label: "Happening now", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
+  }
+  if (isPast(end)) {
+    const daysSinceEnd = differenceInDays(now, end);
+    if (daysSinceEnd <= 14) {
+      return { label: "Just ended", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" };
+    }
     return { label: "Past", color: "bg-muted text-muted-foreground border-border" };
+  }
   const daysAway = differenceInDays(start, now);
   return {
-    label: daysAway <= 0 ? "Today" : daysAway <= 7 ? `In ${daysAway}d` : daysAway <= 30 ? `${daysAway} days` : "Upcoming",
+    label:
+      daysAway <= 1
+        ? "Tomorrow"
+        : daysAway <= 30
+          ? `In ${daysAway} days`
+          : "Upcoming",
     color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30",
   };
 }

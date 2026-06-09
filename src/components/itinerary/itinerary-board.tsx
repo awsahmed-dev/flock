@@ -338,105 +338,93 @@ export function ItineraryBoard({
             <span className="block w-10 h-1 rounded-full bg-muted-foreground/30" />
           </button>
 
-          {/* B21: unified control strip — Map/Book mode toggle (start),
-              day chips (horizontal scroll, middle), Add place + icon
-              (end). All Plan controls in one row inside the sheet so
-              they move with the drag gesture. Floating-bottom buttons
-              are gone — the map gets the full canvas above. */}
-          <div className="px-3 pb-2 flex items-center gap-2">
-            {/* Map/Book mode toggle — preview-gated as before */}
-            {showPlanModes && (
-              <div className="inline-flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5 shrink-0">
+          {/* B23: three rows instead of one cramped row. Each control
+              gets proper breathing room: Map/Book toggle gets a wide
+              labeled pill, day chips own their own line, and Add is an
+              inline tappable button next to the day title. The previous
+              one-row layout squished icon-only Map/Book + chips + +FAB
+              into ~360px on mobile — felt tight and the icons had no
+              labels so the toggle was opaque. */}
+
+          {/* Row 1: Map / Book toggle — full labeled segments, centered */}
+          {showPlanModes && (
+            <div className="px-4 pb-2 flex items-center justify-center">
+              <div className="inline-flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
                 <button
                   type="button"
                   onClick={() => setPlanMode("map")}
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
                     planMode === "map"
                       ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
-                  title={t("plan.modeMap")}
-                  aria-label={t("plan.modeMap")}
                 >
                   <MapPin className="w-3 h-3" />
+                  {t("plan.modeMap")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPlanMode("book")}
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
                     planMode === "book"
                       ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
-                  title={t("plan.modeBook")}
-                  aria-label={t("plan.modeBook")}
                 >
                   <Hotel className="w-3 h-3" />
+                  {t("plan.modeBook")}
                 </button>
-              </div>
-            )}
-
-            {/* Day chips — horizontal scroll in the middle. Take all
-                available space; clip overflow with scrollbar-none so it
-                feels like a swipeable rail. */}
-            <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
-              <div className="inline-flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setFocusedDay(null)}
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
-                    focusedDay === null
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t("itinerary.all")}
-                </button>
-                {days.map((day, idx) => {
-                  const count = getItemsForDay(day).length;
-                  const active = focusedDay === day;
-                  const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => setFocusedDay(day)}
-                      className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
-                        active
-                          ? "bg-foreground text-background"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
-                      D{idx + 1}
-                      {count > 0 && (
-                        <span className="opacity-70 tabular-nums">·{count}</span>
-                      )}
-                    </button>
-                  );
-                })}
               </div>
             </div>
+          )}
 
-            {/* Add place + icon (end) */}
-            <button
-              type="button"
-              onClick={() => openAddFor(focusedDay)}
-              className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white flex items-center justify-center shadow-md shadow-primary/30 hover:scale-105 transition-transform"
-              title={t("itinerary.addPlace")}
-              aria-label={t("itinerary.addPlace")}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+          {/* Row 2: day chips — own row, horizontal scroll, full width */}
+          <div className="px-3 pb-2 overflow-x-auto scrollbar-none">
+            <div className="inline-flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFocusedDay(null)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                  focusedDay === null
+                    ? "bg-foreground text-background"
+                    : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("itinerary.all")}
+              </button>
+              {days.map((day, idx) => {
+                const count = getItemsForDay(day).length;
+                const active = focusedDay === day;
+                const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setFocusedDay(day)}
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                      active
+                        ? "bg-foreground text-background"
+                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+                    D{idx + 1}
+                    {count > 0 && (
+                      <span className="opacity-70 tabular-nums">·{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Day title + items count row — tap to toggle sheet expand */}
-          <button
-            type="button"
-            onClick={() => setSheetOpen((o) => !o)}
-            className="w-full px-5 pb-2 flex items-center justify-between gap-2 text-left hover:bg-accent/20 transition-colors"
-          >
-            <div className="min-w-0">
+          {/* Row 3: day title (tap to expand sheet) + Add place inline */}
+          <div className="w-full px-4 pb-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSheetOpen((o) => !o)}
+              className="flex-1 min-w-0 text-left hover:bg-accent/20 rounded-lg -mx-1 px-1 py-0.5 transition-colors"
+            >
               <p className="font-bold text-sm truncate">
                 {focusedDay
                   ? `${t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
@@ -447,11 +435,25 @@ export function ItineraryBoard({
                   ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
                   : t("itinerary.items", { count: items.length })}
               </p>
-            </div>
-            <span className="shrink-0 text-muted-foreground">
+            </button>
+            <button
+              type="button"
+              onClick={() => openAddFor(focusedDay)}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white px-3 py-2 text-[11px] font-bold shadow-md shadow-primary/30 hover:opacity-90 transition-opacity"
+              title={t("itinerary.addPlace")}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {t("itinerary.addPlace")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSheetOpen((o) => !o)}
+              className="shrink-0 w-6 h-6 flex items-center justify-center text-muted-foreground"
+              aria-label={sheetOpen ? "Collapse" : "Expand"}
+            >
               {sheetOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-            </span>
-          </button>
+            </button>
+          </div>
 
           {/* B17 (audit fix #9): per-day AI Plan + Find-a-Stay buttons
               are redundant with the new Book mode (hotels are per-city,

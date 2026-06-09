@@ -247,7 +247,7 @@ export function AddPlaceSearch({
       open={open}
       onClose={onClose}
       title={t("itinerary.addToItinerary")}
-      subtitle={t("itinerary.tripToDestination", { destination })}
+      subtitle={destination}
       size="md"
       footer={
         <div className="flex items-center gap-2">

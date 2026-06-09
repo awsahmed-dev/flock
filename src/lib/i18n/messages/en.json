@@ -548,7 +548,7 @@
     "modeMap": "Map",
     "modeBook": "Book",
     "sectionHotels": "Hotels",
-    "hotelsMeta": "{count} city to book",
+    "hotelsMeta": "{count, plural, =0 {All hotels booked} one {1 city to book} other {# cities to book}}",
     "hotelCityNights": "{nights} nights · {start} – {end}",
     "hotelInCity": "Hotel in {city}",
     "flightsMetaSingle": "Round trip — not booked",

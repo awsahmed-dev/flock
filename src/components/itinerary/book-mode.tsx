@@ -141,20 +141,27 @@ export function BookMode({
   }
 
   // ── Derive what's missing from the itinerary ──────────────────────────
-  // Hotels: 1 CTA per city, not per night — a user usually books one
-  // hotel for the whole stay in a single destination. For multi-city
-  // trips ("Tokyo, Osaka, Kyoto") we surface a CTA per city. Today we
-  // infer cities from the trip destination string split by commas;
-  // future: cluster itinerary items by lat/lng to detect city changes
-  // automatically.
+  // Hotels: 1 CTA per city. Per-city accommodation check — for each city
+  // we look for any accommodation item whose locationName mentions the
+  // city. A city without any matching accommodation needs a hotel CTA.
+  // Previously this was a single boolean (any accommodation === all
+  // booked) which made multi-city trips show "All booked" after just one
+  // hotel was added, and showed "4 CITY TO BOOK · All nights booked" on
+  // single-city trips with multiple accommodation rows.
   const accommodationItems = items.filter((i) => i.type === "accommodation");
   const cities = destination
     .split(",")
     .map((c) => c.trim())
     .filter(Boolean)
     .slice(0, 5); // safety cap
-  const accommodationCount = accommodationItems.length;
-  const citiesWithoutHotel = accommodationCount === 0 ? cities : [];
+  const citiesWithoutHotel = cities.filter((city) => {
+    const cityLower = city.toLowerCase();
+    return !accommodationItems.some(
+      (a) =>
+        a.locationName?.toLowerCase().includes(cityLower) ||
+        a.title.toLowerCase().includes(cityLower),
+    );
+  });
 
   const activityItems = items.filter(
     (i) => i.type === "activity" || i.type === "meal",
@@ -263,7 +270,7 @@ export function BookMode({
           CTAs felt overwhelming. */}
       <Section
         title={t("plan.sectionHotels")}
-        meta={t("plan.hotelsMeta", { count: citiesWithoutHotel.length || accommodationCount })}
+        meta={t("plan.hotelsMeta", { count: citiesWithoutHotel.length })}
         icon={Hotel}
         tone="blue"
       >
@@ -555,7 +562,10 @@ function NeedRow({
         <Icon className={`w-4 h-4 ${c.text}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm truncate">{title}</p>
+        {/* B23: allow titles to wrap to 2 lines instead of hard truncate
+            so multi-word activity names ("Traditional Terengganu cuisine
+            cooking class") stay readable. Subtitle still truncates. */}
+        <p className="font-bold text-sm leading-snug line-clamp-2">{title}</p>
         <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
         {privateChip && (
           <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">
