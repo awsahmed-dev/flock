@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Sparkles, Calendar, Wallet, MessageSquare, FileText, CreditCard } from "lucide-react";
+import { Sparkles, Calendar, Wallet, MessageSquare, CreditCard, Backpack } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/locale-provider";
 
@@ -41,19 +41,18 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
   const showWallet = true;
   void searchParams;
 
-  const tabs = showWallet
-    ? [
-        { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,                       icon: Sparkles,   exact: true },
-        { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`,             icon: Calendar,   exact: false },
-        { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,              icon: Wallet,     exact: false },
-        { id: "wallet" as const,    label: t("nav.wallet"),    href: `/trips/${tripId}/wallet`, icon: CreditCard, exact: false },
-      ]
-    : [
-        { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles, exact: true },
-        { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`, icon: Calendar, exact: false },
-        { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,  icon: Wallet,   exact: false },
-        { id: "documents" as const, label: t("nav.pack"),      href: `/trips/${tripId}/documents`, icon: FileText, exact: false },
-      ];
+  // B20: bottom nav holds exactly 5 primary tabs — Home / Plan / Money /
+  // Wallet / Pack. Chat moves out of the bottom nav into the More sheet
+  // (top-right ⋯ icon in the trip header). Pack returns as a first-class
+  // tab so users on a trip can reach packing in one tap.
+  void showWallet;
+  const tabs = [
+    { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles,   exact: true },
+    { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`, icon: Calendar,   exact: false },
+    { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,  icon: Wallet,     exact: false },
+    { id: "wallet" as const,    label: t("nav.wallet"),    href: `/trips/${tripId}/wallet`,    icon: CreditCard, exact: false },
+    { id: "documents" as const, label: t("nav.pack"),      href: `/trips/${tripId}/pack`,      icon: Backpack,   exact: false },
+  ];
 
   return (
     <div className="sm:hidden fixed left-0 right-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 pointer-events-none">
@@ -97,33 +96,8 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
           );
         })}
 
-        {/* Chat toggle — same visual as the other tabs but driven by chatOpen prop */}
-        <button
-          type="button"
-          onClick={onChatToggle}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 rounded-full m-1 transition-all relative",
-            chatOpen
-              ? "bg-primary/15 text-primary font-extrabold"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="relative">
-            <MessageSquare
-              className={cn(
-                "transition-transform",
-                chatOpen ? "w-[22px] h-[22px]" : "w-5 h-5"
-              )}
-              strokeWidth={chatOpen ? 2.5 : 2}
-            />
-            {(badges.chat ?? 0) > 0 && !chatOpen && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-destructive border-[1.5px] border-card flex items-center justify-center text-[9px] font-black text-white leading-none">
-                {(badges.chat ?? 0) > 99 ? "99+" : badges.chat}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] tracking-wider">Chat</span>
-        </button>
+        {/* B20: Chat moved into the More sheet (top-right ⋯ icon in the
+            trip header). Bottom nav stays at 5 primary tabs. */}
       </nav>
     </div>
   );

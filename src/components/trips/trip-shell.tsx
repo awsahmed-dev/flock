@@ -35,9 +35,11 @@ import {
   Moon,
   Monitor,
   UserCircle,
+  MoreHorizontal,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { TripMoreSheet } from "@/components/trips/trip-more-sheet";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -117,6 +119,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
   const { theme, setTheme } = useTheme();
   const [chatOpen, setChatOpen] = useState(false);
   const [crewOpen, setCrewOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   // B19: load the signed-in user's avatar so the dropdown trigger shows
   // a personal touch instead of the generic "Me" label.
@@ -298,29 +301,22 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 header. */}
             <NotificationBell />
 
+            {/* B20: single ··· More button replaces the previous Crew +
+                Settings header icons. Opens the TripMoreSheet which
+                holds Chat / Votes / Crew / Share / Trip settings and
+                the future Photos / Documents / Calendar / Full map. */}
             <button
-              onClick={() => setCrewOpen(true)}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Crew"
+              onClick={() => setMoreOpen(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors relative"
+              title={t("more.title")}
             >
-              <Users className="w-4 h-4" />
+              <MoreHorizontal className="w-4 h-4" />
+              {/* Tiny unread/open-vote indicator dot — gives the user a
+                  reason to open the sheet without making them count. */}
+              {(badges.chat > 0 || badges.itinerary > 0) && (
+                <span className="absolute top-1 end-1 w-1.5 h-1.5 rounded-full bg-destructive" />
+              )}
             </button>
-
-            {/* B3-a: owner-only Settings button. Pulled out of the avatar
-                dropdown so trip configuration is one click away. Members
-                don't see it — they'd be redirected anyway. */}
-            {isOwner && (
-              <Link
-                href={`/trips/${trip.id}/settings`}
-                title="Trip settings"
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
-            )}
-
-            {/* B4: chat icon removed from header. Desktop chat opens via the
-                right-edge handle below; mobile uses the bottom nav. */}
 
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -592,6 +588,20 @@ export function TripShell({ trip, isOwner, children }: Props) {
           <CrewSheetContent tripId={trip.id} shareToken={trip.shareToken ?? null} />
         </SidePanel>
       )}
+
+      {/* B20: trip More sheet — secondary trip surfaces consolidated
+          under one ⋯ icon to keep the topbar clean. Chat opens via the
+          existing chatOpen state; Crew via crewOpen. */}
+      <TripMoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        tripId={trip.id}
+        isOwner={isOwner}
+        shareToken={trip.shareToken ?? null}
+        onCrewOpen={() => setCrewOpen(true)}
+        onChatOpen={() => setChatOpen(true)}
+        badges={{ chat: badges.chat, votes: 0 }}
+      />
 
       {/* PWA install prompt */}
       <InstallPrompt />

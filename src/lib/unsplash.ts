@@ -55,20 +55,33 @@ export async function getDestinationHero(
   });
 
   try {
+    // B20: 5s hard timeout so a slow Unsplash response can't take down
+    // the trip page render. Falls through to the existing gradient.
     const res = await fetch(`${SEARCH_ENDPOINT}?${params.toString()}`, {
       headers: {
         Authorization: `Client-ID ${accessKey}`,
         "Accept-Version": "v1",
       },
+      signal: AbortSignal.timeout(5_000),
       // Cache aggressively — we only want one fetch per destination
       // string for our entire user base, and the cached row in the DB
       // is the long-term store.
       next: { revalidate: 86_400, tags: ["unsplash"] },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Surface the failure mode so the next 502 is debuggable. Most
+      // common: 401 (bad key) and 403 (demo-tier rate limit).
+      console.warn(
+        `[unsplash] search failed: HTTP ${res.status} for query "${query}"`,
+      );
+      return null;
+    }
     const data: UnsplashSearchResponse = await res.json();
     const photo = data.results?.[0];
-    if (!photo) return null;
+    if (!photo) {
+      console.warn(`[unsplash] no results for query "${query}"`);
+      return null;
+    }
 
     // Fire-and-forget the download tracking ping. Required by Unsplash
     // ToS but doesn't need to succeed for us to use the photo.
@@ -83,7 +96,11 @@ export async function getDestinationHero(
       // analytics — also required by their attribution rules.
       creditLink: `https://unsplash.com/@${photo.user.username}?utm_source=paxawa&utm_medium=referral`,
     };
-  } catch {
+  } catch (err) {
+    console.warn(
+      `[unsplash] fetch error for query "${query}":`,
+      err instanceof Error ? err.message : err,
+    );
     return null;
   }
 }

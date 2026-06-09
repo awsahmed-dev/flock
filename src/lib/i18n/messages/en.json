@@ -174,6 +174,8 @@
     "sgAllDoneBody": "Hop into chat to keep the crew in the loop."
   },
   "trip": {
+    "shareNotReady": "Share link isn't ready yet",
+    "copyFailed": "Couldn't copy — try again",
     "inDays": "In {days} days",
     "startsIn": "Starts in {days} days",
     "endsIn": "Ends in {days} days",
@@ -615,5 +617,29 @@
     "saved": "Profile saved",
     "savedJustNow": "Saved",
     "saveFailed": "Couldn't save — try again"
+  },
+  "more": {
+    "section": "Trip",
+    "title": "More",
+    "chat": "Chat",
+    "chatMeta": "Talk with your crew",
+    "votes": "Votes",
+    "votesMeta": "Decide together",
+    "crew": "Crew",
+    "crewMeta": "Everyone on this trip",
+    "share": "Share invite link",
+    "shareMeta": "Tap to copy",
+    "comingSoon": "Soon",
+    "photos": "Photos & memories",
+    "photosMeta": "Capture the trip — coming soon",
+    "docs": "Documents",
+    "docsMeta": "Tickets, visas, bookings",
+    "calendar": "Add to calendar",
+    "calendarMeta": "Export trip dates as .ics",
+    "fullMap": "Open full map",
+    "fullMapMeta": "All pins, no sheet",
+    "ownerSection": "Owner only",
+    "tripSettings": "Trip settings",
+    "tripSettingsMeta": "Name, dates, budget, members"
   }
 }
