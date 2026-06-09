@@ -224,36 +224,36 @@ export function ItineraryBoard({
 
   return (
     <div className={containerCls}>
-      {/* Mode switcher — TikTok-style segment pill at the top, only
-          visible in preview mode for now. Tap to swap between Map and
-          Book views; the Book view is rendered as an overlay so the map
-          state (Mapbox instance, focused day, highlighted marker) is
-          preserved when the user swaps back. */}
+      {/* B20: Map/Book mode switcher moved from top-center to BOTTOM-LEFT
+          above the sheet handle. The day chip rail now owns the top
+          stripe alone, and the bottom corners hold the mode toggle
+          (left) and the Add-place FAB (right) — three corners, three
+          jobs, no visual collision at the top of the canvas. */}
       {showPlanModes && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+        <div className="absolute z-40 start-3 bottom-[120px] sm:bottom-[88px] pointer-events-none">
           <div className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg p-1">
             <button
               type="button"
               onClick={() => setPlanMode("map")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors whitespace-nowrap ${
                 planMode === "map"
                   ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <MapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-3 h-3" />
               {t("plan.modeMap")}
             </button>
             <button
               type="button"
               onClick={() => setPlanMode("book")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors whitespace-nowrap ${
                 planMode === "book"
                   ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Hotel className="w-3.5 h-3.5" />
+              <Hotel className="w-3 h-3" />
               {t("plan.modeBook")}
             </button>
           </div>
@@ -336,20 +336,19 @@ export function ItineraryBoard({
         </div>
       </div>
 
-      {/* ── Add FAB ───────────────────────────────────────────────
-          B12: was sitting low-right above the sheet handle, covering
-          part of the day-list peek. Moved to top-right of the map
-          area (just under the AI/Hotels chips that were already up
-          there) so the entire sheet column is unobstructed. Smaller,
-          icon-led, label still readable but doesn't fight the list. */}
+      {/* B20: Add-place control — collapsed from a labeled pill at top-
+          right (which competed with day chips + mode toggle) to a small
+          circular icon FAB at bottom-right above the sheet. Same target,
+          fraction of the visual weight. Title attr keeps it
+          discoverable on desktop hover. */}
       <button
         type="button"
         onClick={() => openAddFor(focusedDay)}
-        className="absolute z-30 right-4 sm:right-6 top-16 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white ps-2.5 pe-3 py-2 text-xs font-bold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
-        title={t("itinerary.addToItinerary")}
+        className="absolute z-30 end-4 sm:end-6 bottom-[120px] sm:bottom-[88px] w-11 h-11 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white flex items-center justify-center shadow-lg shadow-primary/30 hover:opacity-90 hover:scale-105 transition-all"
+        title={t("itinerary.addPlace")}
+        aria-label={t("itinerary.addPlace")}
       >
-        <Plus className="w-3.5 h-3.5" />
-        {t("itinerary.addPlace")}
+        <Plus className="w-5 h-5" />
       </button>
 
       {/* ── Bottom sheet (B11: motion-driven drag-to-expand) ────────

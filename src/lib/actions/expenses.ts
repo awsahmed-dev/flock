@@ -3,7 +3,8 @@
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { expenses, expenseSplits, profiles, tripMembers, chatMessages } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
+import { PermissionError } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
@@ -246,6 +247,56 @@ export async function deleteExpense(formData: FormData) {
 
   await db.delete(expenses).where(eq(expenses.id, expenseId));
   revalidatePath(`/trips/${tripId}/expenses`);
+}
+
+// ─── Bulk settle: every split that represents money owed between two
+//     trip members (debtor → creditor). Powers the "Mark as paid"
+//     button in the balances settlement view, where one row aggregates
+//     many splits across many expenses. B20.
+
+export async function settleAllBetween(formData: FormData) {
+  const user = await getAuthenticatedUser();
+  const tripId = formData.get("tripId") as string;
+  const fromUserId = formData.get("fromUserId") as string;
+  const toUserId = formData.get("toUserId") as string;
+  if (!tripId || !fromUserId || !toUserId) {
+    throw new Error("Missing parameters");
+  }
+  // Either party in the transfer can mark it paid — settles a common
+  // friction where the creditor confirms cash receipt.
+  if (user.id !== fromUserId && user.id !== toUserId) {
+    throw new PermissionError("Only the parties involved can mark this paid");
+  }
+
+  // Find all unsettled splits where this user owes the other.
+  const splits = await db
+    .select({
+      id: expenseSplits.id,
+      expenseId: expenseSplits.expenseId,
+    })
+    .from(expenseSplits)
+    .innerJoin(expenses, eq(expenses.id, expenseSplits.expenseId))
+    .where(
+      and(
+        eq(expenses.tripId, tripId),
+        eq(expenseSplits.userId, fromUserId),
+        eq(expenses.paidBy, toUserId),
+        eq(expenseSplits.settled, false),
+      ),
+    );
+
+  if (splits.length === 0) {
+    return { settled: 0 };
+  }
+
+  await db
+    .update(expenseSplits)
+    .set({ settled: true, settledAt: new Date() })
+    .where(inArray(expenseSplits.id, splits.map((s) => s.id)));
+
+  revalidatePath(`/trips/${tripId}/expenses`);
+  revalidatePath(`/trips/${tripId}/expenses/balances`);
+  return { settled: splits.length };
 }
 
 // ─── Mark split as settled ────────────────────────────────────────────────────

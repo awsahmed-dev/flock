@@ -640,6 +640,20 @@
     "fullMapMeta": "All pins, no sheet",
     "ownerSection": "Owner only",
     "tripSettings": "Trip settings",
-    "tripSettingsMeta": "Name, dates, budget, members"
+    "tripSettingsMeta": "Name, dates, budget, members",
+    "clearPlan": "Clear all itinerary items",
+    "clearPlanMeta": "Wipe every day's items — start fresh",
+    "clearConfirm": "Tap again to confirm",
+    "clearWarning": "This can't be undone — all items removed",
+    "clearingPlan": "Clearing…",
+    "planCleared": "Itinerary cleared",
+    "clearFailed": "Couldn't clear — try again"
+  },
+  "balances": {
+    "markPaid": "Mark as paid",
+    "settling": "Settling…",
+    "settledCount": "Settled {count} splits",
+    "nothingToSettle": "Nothing was owed",
+    "settleFailed": "Couldn't settle — try again"
   }
 }

@@ -1,9 +1,50 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { X, Download, Share2, Plane, Hotel, Train, Bus, Wifi, Ticket, Calendar } from "lucide-react";
 import type { MockBooking } from "./mock-bookings";
 import { FakeBarcode } from "./barcode";
 import { useT } from "@/components/i18n/locale-provider";
+
+interface WalletImage {
+  url: string;
+  creditName: string;
+  creditLink: string;
+}
+
+/**
+ * Cache wallet detail photos for the session so opening the same
+ * booking twice doesn't re-hit Unsplash. Keyed by the search query.
+ */
+const imageCache = new Map<string, WalletImage | null>();
+
+function useWalletImage(query: string | null): WalletImage | null {
+  const [photo, setPhoto] = useState<WalletImage | null>(
+    query ? imageCache.get(query) ?? null : null,
+  );
+  useEffect(() => {
+    if (!query) return;
+    if (imageCache.has(query)) {
+      setPhoto(imageCache.get(query) ?? null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/wallet/image?q=${encodeURIComponent(query)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const value: WalletImage | null = data && data.url ? data : null;
+        imageCache.set(query, value);
+        if (!cancelled) setPhoto(value);
+      })
+      .catch(() => {
+        imageCache.set(query, null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
+  return photo;
+}
 
 /**
  * Full-screen-ish ticket detail. Slides up from the bottom on mobile,
@@ -21,6 +62,16 @@ interface Props {
 
 export function WalletDetailSheet({ booking, onClose }: Props) {
   const t = useT();
+  // B20: Unsplash photo for the hotel / activity / hotel-like cards.
+  // Returns null for flight/train/bus/eSIM (they already have strong
+  // gradient identity, photos would compete with the boarding-pass feel).
+  const imageQuery =
+    booking?.type === "hotel"
+      ? `${booking.title} ${booking.hotel?.address?.split(",")[1] ?? ""}`.trim()
+      : booking?.type === "activity"
+        ? `${booking.activity?.venue ?? booking.title}`
+        : null;
+  const photo = useWalletImage(imageQuery);
   if (!booking) return null;
 
   return (
@@ -76,23 +127,52 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
           )}
 
           {booking.type === "hotel" && booking.hotel && (
-            <div className="rounded-3xl bg-gradient-to-br from-blue-500 via-cyan-600 to-teal-600 text-white p-5 shadow-lg shadow-blue-500/20">
-              <div className="flex items-center gap-3 mb-3">
-                <Hotel className="w-7 h-7" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-extrabold text-lg leading-tight truncate">{booking.title}</p>
-                  <p className="text-[12px] opacity-90 truncate">{booking.hotel.address}</p>
+            <div className="rounded-3xl overflow-hidden relative text-white shadow-lg shadow-blue-500/20">
+              {/* B20: real hotel photo from Unsplash behind the gradient.
+                  Falls back to the original gradient when the API hasn't
+                  responded yet (or fails) so the card never looks broken. */}
+              {photo ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt={booking.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-700/70 via-cyan-700/55 to-teal-800/70" />
+                </>
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-cyan-600 to-teal-600" />
+              )}
+              <div className="relative p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <Hotel className="w-7 h-7" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-extrabold text-lg leading-tight truncate">{booking.title}</p>
+                    <p className="text-[12px] opacity-90 truncate">{booking.hotel.address}</p>
+                  </div>
                 </div>
-              </div>
               <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="bg-white/10 rounded-2xl p-2">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-2">
                   <p className="text-[10px] opacity-80 uppercase tracking-wider">{t("wallet.checkIn")}</p>
                   <p className="font-bold text-sm tabular-nums">{booking.hotel.checkIn}</p>
                 </div>
-                <div className="bg-white/10 rounded-2xl p-2">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-2">
                   <p className="text-[10px] opacity-80 uppercase tracking-wider">{t("wallet.checkOut")}</p>
                   <p className="font-bold text-sm tabular-nums">{booking.hotel.checkOut}</p>
                 </div>
+              </div>
+              {photo && (
+                <a
+                  href={photo.creditLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[9px] opacity-50 hover:opacity-90 mt-2 inline-block"
+                >
+                  📸 {photo.creditName}
+                </a>
+              )}
               </div>
             </div>
           )}
@@ -126,17 +206,45 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
           )}
 
           {booking.type === "activity" && booking.activity && (
-            <div className="rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 shadow-lg shadow-amber-500/20">
-              <div className="flex items-center gap-3 mb-3">
-                <Ticket className="w-7 h-7" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-extrabold text-lg leading-tight truncate">{booking.title}</p>
-                  <p className="text-[12px] opacity-90 truncate">{booking.activity.venue}</p>
+            <div className="rounded-3xl overflow-hidden relative text-white shadow-lg shadow-amber-500/20">
+              {/* B20: venue photo behind the gradient — same pattern as
+                  the hotel card. */}
+              {photo ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt={booking.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-700/70 to-orange-800/70" />
+                </>
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600" />
+              )}
+              <div className="relative p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <Ticket className="w-7 h-7" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-extrabold text-lg leading-tight truncate">{booking.title}</p>
+                    <p className="text-[12px] opacity-90 truncate">{booking.activity.venue}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4" />
-                <p className="font-medium">{booking.activity.startTime}</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4" />
+                  <p className="font-medium">{booking.activity.startTime}</p>
+                </div>
+                {photo && (
+                  <a
+                    href={photo.creditLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[9px] opacity-50 hover:opacity-90 mt-2 inline-block"
+                  >
+                    📸 {photo.creditName}
+                  </a>
+                )}
               </div>
             </div>
           )}

@@ -640,6 +640,20 @@
     "fullMapMeta": "كل النقاط، بدون لوحة سفلية",
     "ownerSection": "للمالك فقط",
     "tripSettings": "إعدادات الرحلة",
-    "tripSettingsMeta": "الاسم، التواريخ، الميزانية، الأعضاء"
+    "tripSettingsMeta": "الاسم، التواريخ، الميزانية، الأعضاء",
+    "clearPlan": "احذف كل عناصر الخطة",
+    "clearPlanMeta": "امسح ما في كل الأيام وابدأ من جديد",
+    "clearConfirm": "اضغط مرة أخرى للتأكيد",
+    "clearWarning": "لا يمكن التراجع — ستُحذف جميع العناصر",
+    "clearingPlan": "جارٍ الحذف…",
+    "planCleared": "تم مسح الخطة",
+    "clearFailed": "تعذّر الحذف — حاول مرة أخرى"
+  },
+  "balances": {
+    "markPaid": "تم الدفع",
+    "settling": "جارٍ التسوية…",
+    "settledCount": "سُوّيت {count} مصاريف",
+    "nothingToSettle": "لا شيء مستحق",
+    "settleFailed": "تعذّرت التسوية — حاول مرة أخرى"
   }
 }

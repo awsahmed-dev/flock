@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { settleAllBetween } from "@/lib/actions/expenses";
+import { useT } from "@/components/i18n/locale-provider";
 
 const AVATAR_COLORS = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
@@ -46,6 +49,32 @@ interface Props {
  */
 export function BalancesPage({ tripId, userId, currency, expenses, members, fxRates }: Props) {
   const [view, setView] = useState<"net" | "settle">("net");
+  const t = useT();
+  const [settling, setSettling] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  function markPaid(from: string, to: string) {
+    const key = `${from}->${to}`;
+    setSettling(key);
+    startTransition(async () => {
+      try {
+        const fd = new FormData();
+        fd.set("tripId", tripId);
+        fd.set("fromUserId", from);
+        fd.set("toUserId", to);
+        const result = await settleAllBetween(fd);
+        toast.success(
+          result.settled > 0
+            ? t("balances.settledCount", { count: result.settled })
+            : t("balances.nothingToSettle"),
+        );
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : t("balances.settleFailed"));
+      } finally {
+        setSettling(null);
+      }
+    });
+  }
 
   const data = useMemo(() => {
     function toBase(amount: number, ccy: string) {
@@ -209,29 +238,52 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
         </div>
       ) : (
         <ul className="space-y-2">
-          {data.transfers.map((t, idx) => {
-            const fromIsMe = t.from === userId;
-            const toIsMe = t.to === userId;
+          {data.transfers.map((tr, idx) => {
+            const fromIsMe = tr.from === userId;
+            const toIsMe = tr.to === userId;
+            const involvesMe = fromIsMe || toIsMe;
+            const key = `${tr.from}->${tr.to}`;
+            const isSettling = settling === key;
             return (
               <li
                 key={idx}
-                className="rounded-2xl border border-border/60 bg-card px-4 py-3 flex items-center gap-3"
+                className="rounded-2xl border border-border/60 bg-card px-4 py-3 space-y-3"
               >
-                <div className={`w-8 h-8 rounded-full ${avatarColor(t.from)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                  {t.fromName.slice(0, 2).toUpperCase()}
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${avatarColor(tr.from)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
+                    {tr.fromName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0 text-center">
+                    <p className="text-sm font-bold">
+                      {fromIsMe ? "You" : tr.fromName} → {toIsMe ? "You" : tr.toName}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">
+                      {currency} {fmt(tr.amount)}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 rtl:rotate-180" />
+                  <div className={`w-8 h-8 rounded-full ${avatarColor(tr.to)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
+                    {tr.toName.slice(0, 2).toUpperCase()}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0 text-center">
-                  <p className="text-sm font-bold">
-                    {fromIsMe ? "You" : t.fromName} → {toIsMe ? "You" : t.toName}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground tabular-nums">
-                    {currency} {fmt(t.amount)}
-                  </p>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 rtl:rotate-180" />
-                <div className={`w-8 h-8 rounded-full ${avatarColor(t.to)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                  {t.toName.slice(0, 2).toUpperCase()}
-                </div>
+                {/* B20: Mark-as-paid CTA — visible only to the two parties
+                    involved in the transfer. Bulk-settles every split
+                    that represents money from→to in this trip. */}
+                {involvesMe && (
+                  <button
+                    type="button"
+                    onClick={() => markPaid(tr.from, tr.to)}
+                    disabled={isSettling}
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold py-1.5 transition-colors disabled:opacity-50"
+                  >
+                    {isSettling ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Check className="w-3 h-3" />
+                    )}
+                    {isSettling ? t("balances.settling") : t("balances.markPaid")}
+                  </button>
+                )}
               </li>
             );
           })}

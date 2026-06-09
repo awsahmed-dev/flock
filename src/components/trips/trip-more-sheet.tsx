@@ -13,12 +13,15 @@ import {
   Image as ImageIcon,
   Check,
   ChevronRight,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";
+import { clearAllItineraryItems } from "@/lib/actions/itinerary";
 
 /**
  * B20: trip-scoped "More" sheet. Opens from the ⋯ icon in the trip-shell
@@ -67,7 +70,32 @@ export function TripMoreSheet({
   badges = {},
 }: Props) {
   const t = useT();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  function handleClearPlan() {
+    if (!confirmClear) {
+      // First tap → arm the destructive intent. UI shifts to a red
+      // "Tap again to confirm" state so the user can't fat-finger it.
+      setConfirmClear(true);
+      setTimeout(() => setConfirmClear(false), 4_000);
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await clearAllItineraryItems(tripId);
+        toast.success(t("more.planCleared"));
+        setConfirmClear(false);
+        onClose();
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t("more.clearFailed"));
+        setConfirmClear(false);
+      }
+    });
+  }
 
   // ESC to close
   useEffect(() => {
@@ -218,13 +246,33 @@ export function TripMoreSheet({
                 {t("more.ownerSection")}
               </p>
             </div>
-            <div className="p-2">
+            <div className="p-2 space-y-1">
               <Row
                 icon={Settings}
                 label={t("more.tripSettings")}
                 meta={t("more.tripSettingsMeta")}
                 href={`/trips/${tripId}/settings`}
                 onClick={onClose}
+              />
+              {/* B20: destructive bulk action with a two-tap arming gate.
+                  Sits at the bottom of the owner section so it isn't the
+                  first thing a tester sees. */}
+              <Row
+                icon={Trash2}
+                label={
+                  isPending
+                    ? t("more.clearingPlan")
+                    : confirmClear
+                      ? t("more.clearConfirm")
+                      : t("more.clearPlan")
+                }
+                meta={
+                  confirmClear
+                    ? t("more.clearWarning")
+                    : t("more.clearPlanMeta")
+                }
+                onClick={handleClearPlan}
+                tone="danger"
               />
             </div>
           </>
@@ -235,14 +283,17 @@ export function TripMoreSheet({
 }
 
 function Row({ icon: Icon, label, meta, badge, href, onClick, tone }: RowProps) {
+  const isDanger = tone === "danger";
   const inner = (
     <div
-      className={`group flex items-center gap-3 rounded-2xl border border-transparent hover:border-border hover:bg-muted/40 p-3 transition-colors cursor-pointer ${
-        tone === "danger" ? "text-destructive" : ""
-      }`}
+      className={`group flex items-center gap-3 rounded-2xl border ${
+        isDanger
+          ? "border-destructive/30 hover:border-destructive/60 bg-destructive/5 hover:bg-destructive/10"
+          : "border-transparent hover:border-border hover:bg-muted/40"
+      } p-3 transition-colors cursor-pointer ${isDanger ? "text-destructive" : ""}`}
     >
-      <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-foreground" />
+      <div className={`w-9 h-9 rounded-xl ${isDanger ? "bg-destructive/15" : "bg-muted/60"} flex items-center justify-center shrink-0`}>
+        <Icon className={`w-4 h-4 ${isDanger ? "text-destructive" : "text-foreground"}`} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm truncate">{label}</p>

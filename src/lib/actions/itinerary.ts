@@ -3,12 +3,12 @@
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { itineraryItems, profiles, chatMessages } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
 import { geocode } from "@/lib/geocode";
-import { canManageItem, PermissionError } from "@/lib/permissions";
+import { canManageItem, isOwner, PermissionError } from "@/lib/permissions";
 
 const TYPE_EMOJI: Record<string, string> = {
   activity: "✨", accommodation: "🏨", transport: "✈️", meal: "🍽️", other: "📍",
@@ -268,6 +268,36 @@ export async function deleteItineraryItem(itemId: string, tripId: string) {
     .where(and(eq(itineraryItems.id, itemId), eq(itineraryItems.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/itinerary`);
+}
+
+/**
+ * B20: nuke every itinerary item for a trip. Owner-only — this is a
+ * destructive bulk action used when the user wants to start over (e.g.
+ * after a bad AI Plan run or a major itinerary pivot). Wipes the
+ * matching chat cards too so the timeline isn't haunted by ghost
+ * references.
+ */
+export async function clearAllItineraryItems(tripId: string) {
+  const user = await getAuthenticatedUser();
+  const trip = await getTripWithMembership(tripId, user.id);
+  if (!trip) throw new Error("Access denied");
+  if (!isOwner(trip, user.id)) {
+    throw new PermissionError("Only the trip owner can clear the plan");
+  }
+
+  await db.delete(itineraryItems).where(eq(itineraryItems.tripId, tripId));
+  // Drop the auto-posted itinerary_card + vote_card chat messages so
+  // the chat feed doesn't show items that no longer exist.
+  await db
+    .delete(chatMessages)
+    .where(and(
+      eq(chatMessages.tripId, tripId),
+      inArray(chatMessages.type, ["itinerary_card", "vote_card"]),
+    ))
+    .catch(() => {});
+
+  revalidatePath(`/trips/${tripId}/itinerary`);
+  revalidatePath(`/trips/${tripId}`);
 }
 
 export async function updateItemSortOrders(
