@@ -320,6 +320,10 @@ function safeStationCode(stationName: string): string {
     if (!STOP_WORDS.has(c)) return c;
   }
   const words = stationName.replace(/[()]/g, "").split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    const initials = words.map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 3);
+    if (initials.length >= 2 && !STOP_WORDS.has(initials)) return initials;
+  }
   for (const w of words) {
     const c = w.slice(0, 3).toUpperCase();
     if (c.length === 3 && !STOP_WORDS.has(c) && /^[A-Z]+$/.test(c)) return c;

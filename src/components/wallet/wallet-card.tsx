@@ -50,15 +50,20 @@ function stationCode(stationName: string): string {
     const c = paren[1].trim().slice(0, 3).toUpperCase();
     if (!STATION_BLOCKLIST.has(c)) return c;
   }
-  // Try each word's first 3 letters until one isn't a stop-word
   const words = stationName.replace(/[()]/g, "").split(/\s+/).filter(Boolean);
+  // Multi-word: prefer initials so "KL Sentral" → "KLS",
+  // "Kuala Lumpur Central" → "KLC". Reads as a real station code.
+  if (words.length >= 2) {
+    const initials = words.map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 3);
+    if (initials.length >= 2 && !STATION_BLOCKLIST.has(initials)) return initials;
+  }
+  // Single word: take first 3, skipping stop-words like "BUT".
   for (const w of words) {
     const c = w.slice(0, 3).toUpperCase();
     if (c.length === 3 && !STATION_BLOCKLIST.has(c) && /^[A-Z]+$/.test(c)) {
       return c;
     }
   }
-  // Last resort — use first 3 chars even if it's a stop-word
   return stationName.slice(0, 3).toUpperCase();
 }
 
