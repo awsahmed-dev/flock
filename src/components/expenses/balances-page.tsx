@@ -206,12 +206,15 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate">{isMe ? "You" : b.displayName}</p>
+                    {/* B22: Each row is a full sentence so the relationship
+                        is unambiguous when scanning. Wraps the amount and
+                        currency directly into the verb phrase. */}
                     <p className="text-[11px] text-muted-foreground">
                       {b.net > 0.005
-                        ? "Should be reimbursed"
+                        ? `${isMe ? "You're" : "They're"} owed ${currency} ${fmt(b.net)}`
                         : b.net < -0.005
-                          ? "Owes the group"
-                          : "Settled up"}
+                          ? `${isMe ? "You owe" : "Owes"} the group ${currency} ${fmt(-b.net)}`
+                          : `${isMe ? "You're" : "They're"} settled up`}
                     </p>
                   </div>
                   <div className="text-right">

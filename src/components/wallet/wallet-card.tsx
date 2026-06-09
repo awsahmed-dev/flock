@@ -31,6 +31,37 @@ interface Props {
   onOpen: (id: string) => void;
 }
 
+/**
+ * B22: turn a station name into a clean 3-letter code. Avoids picking
+ * abbreviations that read as English words ("BUT", "AND", "FOR") — when
+ * the natural prefix lands on a stop-word we pull from the second word
+ * instead. Falls back to the city after the parenthesis ("Butterworth
+ * (Penang)" → "PEN") when the station includes a city tag.
+ */
+const STATION_BLOCKLIST = new Set([
+  "BUT", "AND", "FOR", "THE", "ARE", "WAS", "HAS", "HAD", "OUT", "OFF",
+  "OWN", "TWO", "OUR", "ONE",
+]);
+
+function stationCode(stationName: string): string {
+  // Prefer a city in parentheses — "Butterworth (Penang)" → "PEN"
+  const paren = stationName.match(/\(([^)]+)\)/);
+  if (paren) {
+    const c = paren[1].trim().slice(0, 3).toUpperCase();
+    if (!STATION_BLOCKLIST.has(c)) return c;
+  }
+  // Try each word's first 3 letters until one isn't a stop-word
+  const words = stationName.replace(/[()]/g, "").split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    const c = w.slice(0, 3).toUpperCase();
+    if (c.length === 3 && !STATION_BLOCKLIST.has(c) && /^[A-Z]+$/.test(c)) {
+      return c;
+    }
+  }
+  // Last resort — use first 3 chars even if it's a stop-word
+  return stationName.slice(0, 3).toUpperCase();
+}
+
 const ICONS: Record<BookingType, React.ComponentType<{ className?: string }>> = {
   flight: Plane,
   hotel: Hotel,
@@ -97,7 +128,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
     const r =
       booking.type === "bus"
         ? booking.bus!
-        : { fromCode: booking.train!.fromStation.slice(0, 3).toUpperCase(), toCode: booking.train!.toStation.slice(0, 3).toUpperCase(), depTime: booking.train!.depTime, arrTime: booking.train!.arrTime, durationLabel: booking.train!.durationLabel, operator: booking.train!.operator, seat: booking.train!.seat, rating: undefined as number | undefined };
+        : { fromCode: stationCode(booking.train!.fromStation), toCode: stationCode(booking.train!.toStation), depTime: booking.train!.depTime, arrTime: booking.train!.arrTime, durationLabel: booking.train!.durationLabel, operator: booking.train!.operator, seat: booking.train!.seat, rating: undefined as number | undefined };
 
     return (
       <button

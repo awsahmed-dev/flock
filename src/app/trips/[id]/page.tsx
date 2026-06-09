@@ -136,6 +136,7 @@ export default async function TripPage({ params }: Props) {
     packingPacked: packingRows.filter((p) => p.packed).length,
     packingTotal: packingRows.length,
     documentsCount: docRows.length,
+    memberCount: trip.members.length,
   };
 
   return (

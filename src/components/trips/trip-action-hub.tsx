@@ -45,6 +45,9 @@ export interface ActionHubStats {
   packingPacked: number;
   packingTotal: number;
   documentsCount: number;
+  /** B22: how many people are on this trip. Drives copy decisions like
+   *  hiding "Settle a debate" on solo trips where voting makes no sense. */
+  memberCount: number;
 }
 
 interface Props {
@@ -126,12 +129,14 @@ export function TripActionHub({ tripId, stats }: Props) {
           headline={
             stats.votesOpen > 0
               ? t("cards.decideOpen", { count: stats.votesOpen })
-              : t("cards.decideNoVotes")
+              : stats.memberCount > 1
+                ? t("cards.decideNoVotes")
+                : t("cards.decideSoloEmpty")
           }
           subline={
             stats.votesOpen > 0
               ? t("cards.decideNeedsYourVote")
-              : t("cards.decideSettleADebate")
+              : ""
           }
           urgent={stats.votesOpen > 0}
         />

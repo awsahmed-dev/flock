@@ -341,8 +341,10 @@ export function ExpensesBoard({
         </ul>
       </SectionCard>
 
-      {/* ── Spending breakdown preview (top 3 categories) ──────────── */}
-      {derived.topCategories.length > 0 && (
+      {/* B22: hide breakdown until there are at least 3 expenses — with
+          only one or two entries the chart shows a single 100% bar that
+          adds visual noise without informing the user. */}
+      {expenseList.length >= 3 && derived.topCategories.length > 0 && (
         <SectionCard
           title={t("expenses.spendingBreakdown")}
           subtitle={t("expenses.topCategories")}
@@ -385,8 +387,10 @@ export function ExpensesBoard({
         </SectionCard>
       )}
 
-      {/* ── Balances preview ──────────────────────────────────────── */}
-      {derived.balances.length > 0 && (
+      {/* B22: hide balances preview on solo trips (no one to owe) and on
+          trips with fewer than 3 expenses where the "Recent" feed already
+          shows everything that matters. */}
+      {members.length > 1 && expenseList.length >= 3 && derived.balances.length > 0 && (
         <SectionCard
           title={t("expenses.balances")}
           subtitle={t("expenses.whoOwesWho")}

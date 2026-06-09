@@ -27,9 +27,13 @@ import { useSearchParams } from "next/navigation";
 import { Map as MapIcon, CreditCard as CardIcon, Wallet as WalletIcon, X as XIcon } from "lucide-react";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { MemberStatsSheet } from "@/components/trips/member-stats-sheet";
 
 interface Member {
   id: string;
+  // B22: trip_members row carries user_id directly (besides the join).
+  // Needed by MemberStatsSheet for the per-user roll-up query.
+  userId?: string;
   displayName: string;
   role: "owner" | "member";
   // B19: avatar from the joined profiles row (when the join is included).
@@ -98,7 +102,16 @@ function getTripStatus(
   const start = parseISO(startDate);
   const end = parseISO(endDate);
   if (now >= start && now <= end) return { label: t("trip.happeningNow"), color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" };
-  if (isPast(end)) return { label: t("trip.past"), color: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
+  if (isPast(end)) {
+    // B22: trips that ended within the last 14 days get a warmer
+    // "Just ended" label — they're still fresh in users' minds and the
+    // dead-grey "Past" felt cold for a trip that wrapped a week ago.
+    const daysSinceEnd = differenceInCalendarDays(now, end);
+    if (daysSinceEnd <= 14) {
+      return { label: t("trip.justEnded"), color: "bg-amber-500/20 text-amber-300 border-amber-500/30" };
+    }
+    return { label: t("trip.past"), color: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
+  }
   const days = differenceInCalendarDays(start, now);
   return {
     label: t("trip.startsIn", { days }),
@@ -112,6 +125,9 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
   // screen now that affiliate strips moved into Plan/Book mode.
   useLocale();
   const [copied, setCopied] = useState(false);
+  // B22: tap a crew chip → opens MemberStatsSheet with that member's
+  // roll-up of items / expenses / packing / balance.
+  const [statsMember, setStatsMember] = useState<Member | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [hotelOpen, setHotelOpen] = useState(false);
 
@@ -302,9 +318,11 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
             unbounded with big groups. */}
         <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none mb-3">
           {trip.members.map((member) => (
-            <div
+            <button
+              type="button"
               key={member.id}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background ps-1 pe-2.5 py-1"
+              onClick={() => setStatsMember(member)}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background hover:border-primary/40 hover:bg-primary/5 ps-1 pe-2.5 py-1 transition-colors"
               title={member.displayName}
             >
               <UserAvatar
@@ -321,7 +339,7 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
                   {t("trip.owner")}
                 </span>
               )}
-            </div>
+            </button>
           ))}
         </div>
 
@@ -371,6 +389,24 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
           destination={trip.destination}
         />
       )}
+
+      {/* B22: crew member roll-up sheet — tap any crew chip in the
+          Crew section above to see that member's contribution stats. */}
+      <MemberStatsSheet
+        open={statsMember !== null}
+        onClose={() => setStatsMember(null)}
+        tripId={trip.id}
+        member={
+          statsMember
+            ? {
+                userId: statsMember.userId ?? statsMember.user?.id ?? statsMember.id,
+                displayName: statsMember.displayName,
+                avatarUrl: statsMember.user?.avatarUrl ?? null,
+                role: statsMember.role,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

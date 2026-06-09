@@ -309,12 +309,30 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
   );
 }
 
+// B22: same disambiguation logic as wallet-card stationCode — kept
+// inline to avoid a shared helper. If we grow more places that need it,
+// hoist into src/lib/wallet/.
+const STOP_WORDS = new Set(["BUT", "AND", "FOR", "THE", "ARE", "WAS", "HAS", "OUT", "OFF", "OWN", "TWO", "OUR", "ONE"]);
+function safeStationCode(stationName: string): string {
+  const paren = stationName.match(/\(([^)]+)\)/);
+  if (paren) {
+    const c = paren[1].trim().slice(0, 3).toUpperCase();
+    if (!STOP_WORDS.has(c)) return c;
+  }
+  const words = stationName.replace(/[()]/g, "").split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    const c = w.slice(0, 3).toUpperCase();
+    if (c.length === 3 && !STOP_WORDS.has(c) && /^[A-Z]+$/.test(c)) return c;
+  }
+  return stationName.slice(0, 3).toUpperCase();
+}
+
 function RouteHero({ booking }: { booking: MockBooking }) {
   const t = useT();
   const isBus = booking.type === "bus";
   const r = isBus ? booking.bus! : booking.train!;
-  const fromCode = isBus ? (r as NonNullable<MockBooking["bus"]>).fromCode : booking.train!.fromStation.slice(0, 3).toUpperCase();
-  const toCode = isBus ? (r as NonNullable<MockBooking["bus"]>).toCode : booking.train!.toStation.slice(0, 3).toUpperCase();
+  const fromCode = isBus ? (r as NonNullable<MockBooking["bus"]>).fromCode : safeStationCode(booking.train!.fromStation);
+  const toCode = isBus ? (r as NonNullable<MockBooking["bus"]>).toCode : safeStationCode(booking.train!.toStation);
   const fromCity = isBus ? (r as NonNullable<MockBooking["bus"]>).fromCity : booking.train!.fromStation;
   const toCity = isBus ? (r as NonNullable<MockBooking["bus"]>).toCity : booking.train!.toStation;
   const Icon = isBus ? Bus : Train;
