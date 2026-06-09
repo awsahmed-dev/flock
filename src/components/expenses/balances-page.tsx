@@ -5,6 +5,7 @@ import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
 import { ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 const AVATAR_COLORS = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
@@ -30,7 +31,7 @@ interface Props {
   userId: string;
   currency: string;
   expenses: Expense[];
-  members: { userId: string; displayName: string }[];
+  members: { userId: string; displayName: string; avatarUrl?: string | null }[];
   fxRates: RateBundle | null;
 }
 
@@ -55,9 +56,14 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
 
     const shared = expenses.filter((e) => e.scope !== "personal");
 
-    const map = new Map<string, { userId: string; displayName: string; net: number }>();
+    const map = new Map<string, { userId: string; displayName: string; avatarUrl: string | null; net: number }>();
     for (const m of members) {
-      map.set(m.userId, { userId: m.userId, displayName: m.displayName, net: 0 });
+      map.set(m.userId, {
+        userId: m.userId,
+        displayName: m.displayName,
+        avatarUrl: m.avatarUrl ?? null,
+        net: 0,
+      });
     }
     for (const e of shared) {
       const p = map.get(e.paidBy);
@@ -163,9 +169,12 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
               const isMe = b.userId === userId;
               return (
                 <li key={b.userId} className="flex items-center gap-3 px-4 py-3">
-                  <div className={`w-9 h-9 rounded-full ${avatarColor(b.userId)} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
-                    {b.displayName.slice(0, 2).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={b.displayName}
+                    avatarUrl={b.avatarUrl}
+                    seed={b.userId}
+                    size="lg"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate">{isMe ? "You" : b.displayName}</p>
                     <p className="text-[11px] text-muted-foreground">

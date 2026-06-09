@@ -25,6 +25,7 @@ import {
 } from "@/lib/actions/packing";
 import { PageHeader } from "@/components/ui/page-header";
 import { useT } from "@/components/i18n/locale-provider";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Item {
   id: string;
@@ -39,6 +40,7 @@ interface Item {
 interface Member {
   userId: string;
   displayName: string;
+  avatarUrl?: string | null;
 }
 
 interface Props {
@@ -520,9 +522,12 @@ function CrewView({
           <section key={m.userId} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold shrink-0">
-                  {m.displayName.charAt(0).toUpperCase()}
-                </div>
+                <UserAvatar
+                  name={m.displayName}
+                  avatarUrl={m.avatarUrl}
+                  seed={m.userId}
+                  size="md"
+                />
                 <p className="text-sm font-bold truncate">{m.displayName}</p>
               </div>
               <span className="text-xs font-bold tabular-nums text-muted-foreground shrink-0">

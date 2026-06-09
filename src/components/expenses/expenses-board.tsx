@@ -14,6 +14,7 @@ import { fmtAmount as fmt } from "@/lib/numerals";
 import type { RateBundle } from "@/lib/fx";
 import { convert } from "@/lib/fx";
 import { useT } from "@/components/i18n/locale-provider";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 /* ─── Static configs ─────────────────────────────────────────────────── */
 
@@ -72,7 +73,7 @@ interface Props {
   tripBudget: number | null;
   personalBudget: number | null;
   expenses: Expense[];
-  members: { userId: string; displayName: string }[];
+  members: { userId: string; displayName: string; avatarUrl?: string | null }[];
   fxRates: RateBundle | null;
   startDate: string;
   endDate: string;
@@ -141,9 +142,9 @@ export function ExpensesBoard({
       return s + (sp ? toBase(sp.amountOwed, e.currency) : 0);
     }, 0);
 
-    const balanceMap = new Map<string, { userId: string; displayName: string; net: number }>();
+    const balanceMap = new Map<string, { userId: string; displayName: string; avatarUrl: string | null; net: number }>();
     for (const m of members) {
-      balanceMap.set(m.userId, { userId: m.userId, displayName: m.displayName, net: 0 });
+      balanceMap.set(m.userId, { userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl ?? null, net: 0 });
     }
     for (const e of sharedExpenses) {
       const p = balanceMap.get(e.paidBy);
@@ -400,9 +401,12 @@ export function ExpensesBoard({
                 const isMe = b.userId === userId;
                 return (
                   <li key={b.userId} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                    <div className={`w-8 h-8 rounded-full ${avatarColor(b.userId)} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
-                      {b.displayName.slice(0, 2).toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      name={b.displayName}
+                      avatarUrl={b.avatarUrl}
+                      seed={b.userId}
+                      size="md"
+                    />
                     <span className="text-sm font-medium flex-1 truncate">
                       {isMe ? "You" : b.displayName}
                     </span>

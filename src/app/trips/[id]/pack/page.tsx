@@ -73,6 +73,7 @@ export default async function PackRoute({ params, searchParams }: Props) {
       members={trip.members.map((m) => ({
         userId: m.userId,
         displayName: m.displayName,
+        avatarUrl: m.user?.avatarUrl ?? null,
       }))}
     />
   );

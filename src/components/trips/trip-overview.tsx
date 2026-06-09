@@ -26,11 +26,14 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Map as MapIcon, CreditCard as CardIcon, Wallet as WalletIcon, X as XIcon } from "lucide-react";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Member {
   id: string;
   displayName: string;
   role: "owner" | "member";
+  // B19: avatar from the joined profiles row (when the join is included).
+  user?: { avatarUrl?: string | null; id?: string } | null;
 }
 
 interface Trip {
@@ -211,20 +214,19 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
               </div>
             </div>
 
-            {/* Member stack — smaller avatars to match the shorter hero */}
+            {/* Member stack — uses UserAvatar so uploaded photos surface
+                automatically alongside initials fallbacks. */}
             <div className="flex items-center -space-x-1.5 shrink-0">
-              {trip.members.slice(0, 4).map((m) => {
-                const c = getMemberColor(m.id);
-                return (
-                  <div
-                    key={m.id}
-                    title={m.displayName}
-                    className={`w-7 h-7 rounded-full ${c.bg} ${c.text} border-2 border-white/30 flex items-center justify-center text-[10px] font-bold shrink-0`}
-                  >
-                    {m.displayName.slice(0, 2).toUpperCase()}
-                  </div>
-                );
-              })}
+              {trip.members.slice(0, 4).map((m) => (
+                <UserAvatar
+                  key={m.id}
+                  name={m.displayName}
+                  avatarUrl={m.user?.avatarUrl}
+                  seed={m.id}
+                  size="md"
+                  className="border-2 border-white/30"
+                />
+              ))}
               {trip.members.length > 4 && (
                 <div className="w-7 h-7 rounded-full bg-black/25 text-white border-2 border-white/30 flex items-center justify-center text-[10px] font-bold shrink-0">
                   +{trip.members.length - 4}
@@ -318,28 +320,28 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
         {/* Roster — horizontal-scroll chips so the card doesn't grow
             unbounded with big groups. */}
         <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none mb-3">
-          {trip.members.map((member) => {
-            const c = getMemberColor(member.id);
-            return (
-              <div
-                key={member.id}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background ps-1 pe-2.5 py-1"
-                title={member.displayName}
-              >
-                <div className={`w-5 h-5 rounded-full ${c.bg} ${c.text} flex items-center justify-center text-[9px] font-bold shrink-0`}>
-                  {member.displayName.slice(0, 2).toUpperCase()}
-                </div>
-                <span className="text-[11px] font-medium truncate max-w-[110px]">
-                  {member.displayName}
+          {trip.members.map((member) => (
+            <div
+              key={member.id}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background ps-1 pe-2.5 py-1"
+              title={member.displayName}
+            >
+              <UserAvatar
+                name={member.displayName}
+                avatarUrl={member.user?.avatarUrl}
+                seed={member.id}
+                size="xs"
+              />
+              <span className="text-[11px] font-medium truncate max-w-[110px]">
+                {member.displayName}
+              </span>
+              {member.role === "owner" && (
+                <span className="text-[9px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400">
+                  {t("trip.owner")}
                 </span>
-                {member.role === "owner" && (
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400">
-                    {t("trip.owner")}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Invite row */}

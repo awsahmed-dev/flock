@@ -34,6 +34,9 @@ export async function loadMoneyPageData(tripId: string) {
   const members = trip.members.map((m) => ({
     userId: m.userId,
     displayName: m.displayName,
+    // B19: thread the joined profile's avatar so expense balance rows +
+    // money page chips show the real photo.
+    avatarUrl: m.user?.avatarUrl ?? null,
   }));
 
   const myMembership = trip.members.find((m) => m.userId === user.id);

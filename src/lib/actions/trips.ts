@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
 import { getLocale } from "@/lib/i18n";
+import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 
 export async function createTrip(formData: FormData) {
   const user = await getCurrentUser();
@@ -34,7 +35,7 @@ export async function createTrip(formData: FormData) {
       id: user.id,
       displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "Traveler",
       email: user.email,
-      avatarUrl: user.user_metadata?.avatar_url,
+      avatarUrl: user.user_metadata?.avatar_url ?? null,
     })
     .onConflictDoNothing();
 
@@ -59,6 +60,14 @@ export async function createTrip(formData: FormData) {
       user.user_metadata?.display_name || user.email?.split("@")[0] || "Traveler",
     role: "owner",
   });
+
+  // B19: pre-warm the Unsplash hero photo so the brand-new trip already
+  // has a real image before anyone opens it. Best-effort — failure leaves
+  // the trip with the gradient placeholder, which still looks fine.
+  ensureTripHeroImage({
+    tripId: trip.id,
+    destination,
+  }).catch(() => {});
 
   // Create a permanent invite token
   const token = randomBytes(16).toString("hex");

@@ -37,6 +37,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,31 @@ export function TripShell({ trip, isOwner, children }: Props) {
   const [chatOpen, setChatOpen] = useState(false);
   const [crewOpen, setCrewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // B19: load the signed-in user's avatar so the dropdown trigger shows
+  // a personal touch instead of the generic "Me" label.
+  const [myProfile, setMyProfile] = useState<{ displayName: string; avatarUrl: string | null }>({
+    displayName: "",
+    avatarUrl: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setMyProfile({
+        displayName: profile?.display_name ?? user.email ?? "",
+        avatarUrl: profile?.avatar_url ?? null,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [supabase]);
 
   // Persist desktop chat-open state per trip. Mobile is always closed
   // by default (it's a fullscreen overlay so opening on landing is jarring).
@@ -301,13 +327,13 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 render={
                   <button
                     className="rounded-full shrink-0"
-                    title="Settings & profile"
+                    title={myProfile.displayName || "Profile"}
                   >
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                        Me
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      name={myProfile.displayName || "Me"}
+                      avatarUrl={myProfile.avatarUrl}
+                      size="md"
+                    />
                   </button>
                 }
               />
@@ -591,7 +617,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
 function CrewSheetContent({ tripId, shareToken }: { tripId: string; shareToken: string | null }) {
   const supabase = createClient();
   const [members, setMembers] = useState<Array<{
-    userId: string; displayName: string; role: string;
+    userId: string; displayName: string; role: string; avatarUrl: string | null;
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -599,14 +625,19 @@ function CrewSheetContent({ tripId, shareToken }: { tripId: string; shareToken: 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // B19: include the joined profile so each crew row shows the
+      // member's uploaded avatar (when they have one).
       const { data } = await supabase
         .from("trip_members")
-        .select("user_id, display_name, role")
+        .select("user_id, display_name, role, profiles:user_id (avatar_url)")
         .eq("trip_id", tripId);
       if (cancelled) return;
       setMembers(
         (data ?? []).map((m: any) => ({
-          userId: m.user_id, displayName: m.display_name, role: m.role,
+          userId: m.user_id,
+          displayName: m.display_name,
+          role: m.role,
+          avatarUrl: m.profiles?.avatar_url ?? null,
         })),
       );
       setLoading(false);
@@ -676,9 +707,12 @@ function CrewSheetContent({ tripId, shareToken }: { tripId: string; shareToken: 
               key={m.userId}
               className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
             >
-              <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold">
-                {m.displayName.charAt(0).toUpperCase()}
-              </div>
+              <UserAvatar
+                name={m.displayName}
+                avatarUrl={m.avatarUrl}
+                seed={m.userId}
+                size="lg"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">{m.displayName}</p>
                 <p className="text-xs text-muted-foreground">
