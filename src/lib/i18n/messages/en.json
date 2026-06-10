@@ -497,7 +497,15 @@
     "todoTitle": "Still to book",
     "todoSub": "Hotels, flights, eSIM + activities derived from your plan",
     "bookedTitle": "Booked",
-    "bookedSub": "{count, plural, =0 {Nothing booked yet} one {1 confirmed ticket} other {# confirmed tickets}}"
+    "bookedSub": "{count, plural, =0 {Nothing booked yet} one {1 confirmed ticket} other {# confirmed tickets}}",
+    "showAmount": "Show amount",
+    "hideAmount": "Hide amount",
+    "snapshotBooked": "Booked",
+    "snapshotBookedSub": "Tickets in your wallet",
+    "snapshotTodo": "To book",
+    "snapshotTodoSub": "Hotels, flights, more",
+    "tabBooked": "Booked",
+    "tabTodo": "To book"
   },
   "wallet": {
     "section": "Wallet",

@@ -497,7 +497,15 @@
     "todoTitle": "ما زال يحتاج حجز",
     "todoSub": "فنادق وطيران وشريحة eSIM وأنشطة مستخرجة من خطّتك",
     "bookedTitle": "محجوز",
-    "bookedSub": "{count, plural, =0 {لا حجوزات بعد} one {تذكرة واحدة مؤكَّدة} two {تذكرتان مؤكَّدتان} few {{count} تذاكر مؤكَّدة} many {{count} تذكرة مؤكَّدة} other {{count} تذكرة مؤكَّدة}}"
+    "bookedSub": "{count, plural, =0 {لا حجوزات بعد} one {تذكرة واحدة مؤكَّدة} two {تذكرتان مؤكَّدتان} few {{count} تذاكر مؤكَّدة} many {{count} تذكرة مؤكَّدة} other {{count} تذكرة مؤكَّدة}}",
+    "showAmount": "إظهار المبلغ",
+    "hideAmount": "إخفاء المبلغ",
+    "snapshotBooked": "محجوز",
+    "snapshotBookedSub": "تذاكر في محفظتك",
+    "snapshotTodo": "للحجز",
+    "snapshotTodoSub": "فنادق وطيران وغيرها",
+    "tabBooked": "محجوز",
+    "tabTodo": "للحجز"
   },
   "wallet": {
     "section": "المحفظة",

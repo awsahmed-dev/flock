@@ -5,9 +5,11 @@ import {
   MapPin,
   Calendar,
   Sparkles,
-  ChevronDown,
-  ChevronUp,
   Info,
+  CheckCircle2,
+  Clock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
@@ -37,102 +39,151 @@ interface Props {
 }
 
 /**
- * B24-followup: unified Bookings page. Replaces the earlier stacked
- * BookMode + WalletBoard layout (which the user correctly called a lazy
- * stitch — two competing page headers, two separate max-w wrappers, no
- * shared spend metric).
+ * B24-r2: full Bookings redesign. The previous accordion version still
+ * showed both lists at once (just collapsed) and the to-book CTAs
+ * fought the booked cards for visual attention — the user called the
+ * page "unusable" and "too crowded."
  *
- * Architecture:
- *   - One trip-context header at the top (name · destination · dates)
- *   - One large spend tile + progress (booked vs to-book)
- *   - Two collapsible-by-section blocks:
- *       1. "Still to book" — wraps BookMode in embedded mode
- *       2. "Booked" — wraps WalletBoard in embedded mode
- *   - One forward-emails footer hint
+ * New layout, inspired by the wallet/fintech references the user
+ * shared:
+ *   1. Trip-context breadcrumb (tiny, top)
+ *   2. Hero spend card — clean white card with the total trip spend,
+ *      eye-toggle for privacy, and a two-column snapshot of
+ *      "Booked / To book" so the page communicates state at a glance
+ *      without forcing the user to switch tabs first.
+ *   3. Segmented pill control — [Booked · N][To book · N] — focuses
+ *      attention. Only one section visible at a time = no more
+ *      crowding.
+ *   4. Filtered list area. Booked = beautiful WalletCards. To book =
+ *      compact action rows (BookMode embedded).
+ *   5. Forward-email hint + disclosure footer.
  *
- * BookMode + WalletBoard both grew an `embedded` prop that suppresses
- * their own page-level headers/totals/footers so they slot in cleanly.
+ * Padding is fixed: this component no longer adds its own outer
+ * `px-4 sm:px-6 py-6` — the trip shell already does that. We now slot
+ * cleanly into the shell's `max-w-5xl` container with our own
+ * `max-w-2xl` reading width.
  */
+type Tab = "booked" | "todo";
+
 export function BookingsBoard(props: Props) {
   const t = useT();
-  const [openSection, setOpenSection] = useState<"todo" | "booked">("todo");
+  const [tab, setTab] = useState<Tab>("booked");
+  const [hideAmount, setHideAmount] = useState(false);
 
   const totalSpend = MOCK_BOOKINGS.reduce((s, b) => s + b.price, 0);
   const walletCurrency = MOCK_BOOKINGS[0]?.currency ?? props.currency;
   const bookedCount = MOCK_BOOKINGS.length;
+  const todoCount = computeTodoCount(props);
 
   const dateRange = `${format(parseDateOnly(props.startDate), "d MMM")} – ${format(parseDateOnly(props.endDate), "d MMM yyyy")}`;
+  const formattedSpend = `${walletCurrency} ${totalSpend.toLocaleString()}`;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
-      <header className="space-y-3">
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
           <MapPin className="w-3 h-3" />
           <span className="font-bold text-foreground truncate">{props.tripName}</span>
-          <span>·</span>
-          <span className="truncate">{props.destination}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        </span>
+        <span>·</span>
+        <span className="truncate">{props.destination}</span>
+        <span>·</span>
+        <span className="inline-flex items-center gap-1">
           <Calendar className="w-3 h-3" />
           {dateRange}
+        </span>
+      </div>
+
+      <div className="rounded-3xl bg-card border border-border/60 shadow-sm overflow-hidden">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5">
+                {t("bookings.totalLabel")}
+              </p>
+              <p className="text-3xl sm:text-4xl font-extrabold tabular-nums leading-none">
+                {hideAmount ? "••••••" : formattedSpend}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHideAmount((v) => !v)}
+              className="w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground shrink-0"
+              aria-label={hideAmount ? t("bookings.showAmount") : t("bookings.hideAmount")}
+            >
+              {hideAmount ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
-        <div className="rounded-3xl bg-gradient-to-br from-primary/10 via-violet-500/8 to-fuchsia-500/10 border border-primary/20 p-5 sm:p-6">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-primary mb-1">
-            {t("bookings.totalLabel")}
-          </p>
-          <p className="text-4xl sm:text-5xl font-extrabold tabular-nums leading-none">
-            {walletCurrency} {totalSpend.toLocaleString()}
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            {t("bookings.totalSubline", { count: bookedCount })}
-          </p>
+        <div className="grid grid-cols-2 border-t border-border/60 divide-x divide-border/60 rtl:divide-x-reverse">
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-700 dark:text-emerald-400">
+                {t("bookings.snapshotBooked")}
+              </p>
+            </div>
+            <p className="text-2xl font-extrabold tabular-nums leading-none">{bookedCount}</p>
+            <p className="text-[10px] text-muted-foreground mt-1 truncate">
+              {t("bookings.snapshotBookedSub")}
+            </p>
+          </div>
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <p className="text-[10px] font-bold tracking-widest uppercase text-amber-700 dark:text-amber-400">
+                {t("bookings.snapshotTodo")}
+              </p>
+            </div>
+            <p className="text-2xl font-extrabold tabular-nums leading-none">{todoCount}</p>
+            <p className="text-[10px] text-muted-foreground mt-1 truncate">
+              {t("bookings.snapshotTodoSub")}
+            </p>
+          </div>
         </div>
-      </header>
+      </div>
 
-      <SectionBlock
-        id="todo"
-        open={openSection === "todo"}
-        onToggle={(id) => setOpenSection((s) => (s === id ? "booked" : id))}
-        accent="from-primary to-violet-600"
-        accentBg="bg-primary/10"
-        accentText="text-primary"
-        title={t("bookings.todoTitle")}
-        subtitle={t("bookings.todoSub")}
-      >
-        <BookMode
-          tripId={props.tripId}
-          destination={props.destination}
-          startDate={props.startDate}
-          endDate={props.endDate}
-          members={props.members}
-          currency={props.currency}
-          locale={props.locale}
-          days={props.days}
-          items={props.items}
-          embedded
+      <div className="inline-flex w-full items-center gap-1 rounded-full bg-muted/60 p-1">
+        <SegmentButton
+          active={tab === "booked"}
+          onClick={() => setTab("booked")}
+          label={t("bookings.tabBooked")}
+          count={bookedCount}
         />
-      </SectionBlock>
+        <SegmentButton
+          active={tab === "todo"}
+          onClick={() => setTab("todo")}
+          label={t("bookings.tabTodo")}
+          count={todoCount}
+        />
+      </div>
 
-      <SectionBlock
-        id="booked"
-        open={openSection === "booked"}
-        onToggle={(id) => setOpenSection((s) => (s === id ? "todo" : id))}
-        accent="from-emerald-500 to-teal-600"
-        accentBg="bg-emerald-500/10"
-        accentText="text-emerald-600 dark:text-emerald-400"
-        title={t("bookings.bookedTitle")}
-        subtitle={t("bookings.bookedSub", { count: bookedCount })}
-      >
-        <WalletBoard
-          userId={props.userId}
-          tripName={props.tripName}
-          destination={props.destination}
-          startDate={props.startDate}
-          endDate={props.endDate}
-          embedded
-        />
-      </SectionBlock>
+      <div>
+        {tab === "booked" ? (
+          <WalletBoard
+            userId={props.userId}
+            tripName={props.tripName}
+            destination={props.destination}
+            startDate={props.startDate}
+            endDate={props.endDate}
+            embedded
+          />
+        ) : (
+          <BookMode
+            tripId={props.tripId}
+            destination={props.destination}
+            startDate={props.startDate}
+            endDate={props.endDate}
+            members={props.members}
+            currency={props.currency}
+            locale={props.locale}
+            days={props.days}
+            items={props.items}
+            embedded
+          />
+        )}
+      </div>
 
       <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
@@ -150,65 +201,73 @@ export function BookingsBoard(props: Props) {
         </button>
       </div>
 
-      <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
-        <Info className="w-3 h-3 mt-0.5 shrink-0" />
-        <span>{t("plan.disclosure")}</span>
-      </p>
+      {tab === "todo" && (
+        <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
+          <Info className="w-3 h-3 mt-0.5 shrink-0" />
+          <span>{t("plan.disclosure")}</span>
+        </p>
+      )}
     </div>
   );
 }
 
-function SectionBlock({
-  id,
-  open,
-  onToggle,
-  accent,
-  accentBg,
-  accentText,
-  title,
-  subtitle,
-  children,
+function SegmentButton({
+  active,
+  onClick,
+  label,
+  count,
 }: {
-  id: "todo" | "booked";
-  open: boolean;
-  onToggle: (id: "todo" | "booked") => void;
-  accent: string;
-  accentBg: string;
-  accentText: string;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
 }) {
   return (
-    <section className="rounded-3xl border border-border bg-card overflow-hidden">
-      <button
-        type="button"
-        onClick={() => onToggle(id)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-muted/40 transition-colors text-start"
-        aria-expanded={open}
-      >
-        <div className={`w-9 h-9 rounded-2xl bg-gradient-to-br ${accent} flex items-center justify-center shrink-0 text-white text-xs font-extrabold shadow-md`}>
-          {id === "todo" ? "1" : "2"}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-[10px] font-bold tracking-widest uppercase ${accentText}`}>
-            {title}
-          </p>
-          <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-        </div>
-        <div className={`w-7 h-7 rounded-full ${accentBg} flex items-center justify-center shrink-0`}>
-          {open ? (
-            <ChevronUp className={`w-3.5 h-3.5 ${accentText}`} />
-          ) : (
-            <ChevronDown className={`w-3.5 h-3.5 ${accentText}`} />
-          )}
-        </div>
-      </button>
-      {open && (
-        <div className="border-t border-border/60 p-4 sm:p-5 bg-background/40">
-          {children}
-        </div>
-      )}
-    </section>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2 text-xs font-bold transition-all ${
+        active
+          ? "bg-card shadow-sm text-foreground"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+      aria-pressed={active}
+    >
+      <span>{label}</span>
+      <span className={`tabular-nums text-[10px] px-1.5 py-0.5 rounded-full ${
+        active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+      }`}>{count}</span>
+    </button>
   );
+}
+
+/**
+ * Mirrors the to-book accounting that BookMode does internally — keeps
+ * the snapshot tile + segmented control's count in sync with what the
+ * user will actually see when they switch to the to-book tab.
+ */
+function computeTodoCount(props: Props): number {
+  const accommodationItems = props.items.filter((i) => i.type === "accommodation");
+  const cities = props.destination
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  const citiesWithoutHotel = cities.filter((city) => {
+    const cityLower = city.toLowerCase();
+    return !accommodationItems.some(
+      (a) =>
+        a.locationName?.toLowerCase().includes(cityLower) ||
+        a.title.toLowerCase().includes(cityLower),
+    );
+  });
+  const activityItems = props.items.filter(
+    (i) => i.type === "activity" || i.type === "meal",
+  );
+  let n = 0;
+  n += citiesWithoutHotel.length;
+  n += 1;
+  n += 1;
+  n += Math.min(activityItems.length, 3);
+  return n;
 }
