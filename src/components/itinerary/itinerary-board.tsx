@@ -61,11 +61,11 @@ const DAY_PALETTE = [
 ];
 
 const TYPE_CONFIG = {
-  activity:      { icon: Ticket,    text: "text-violet-600 dark:text-violet-400", label: "Activity" },
-  accommodation: { icon: Bed,       text: "text-blue-600 dark:text-blue-400",     label: "Stay" },
-  transport:     { icon: Car,       text: "text-orange-600 dark:text-orange-400", label: "Transport" },
-  meal:          { icon: Utensils,  text: "text-green-600 dark:text-green-400",   label: "Meal" },
-  other:         { icon: HelpCircle,text: "text-muted-foreground",                label: "Other" },
+  activity:      { icon: Ticket,    text: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/12", label: "Activity" },
+  accommodation: { icon: Bed,       text: "text-blue-600 dark:text-blue-400",     bg: "bg-blue-500/12",   label: "Stay" },
+  transport:     { icon: Car,       text: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/12", label: "Transport" },
+  meal:          { icon: Utensils,  text: "text-green-600 dark:text-green-400",   bg: "bg-green-500/12",  label: "Meal" },
+  other:         { icon: HelpCircle,text: "text-muted-foreground",                bg: "bg-muted/60",      label: "Other" },
 } as const;
 
 function MapPlaceholder() {
@@ -378,22 +378,22 @@ export function ItineraryBoard({
           <button
             type="button"
             onClick={() => setSheetOpen((o) => !o)}
-            className="w-full px-4 pb-2 flex items-center justify-between gap-2 text-left hover:bg-accent/20 transition-colors"
+            className="w-full px-4 pb-3 flex items-center justify-between gap-3 text-left hover:bg-accent/20 transition-colors"
           >
             <div className="min-w-0">
-              <p className="font-bold text-sm truncate">
+              <p className="font-extrabold text-base truncate">
                 {focusedDay
                   ? `${t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
                   : t("itinerary.all")}
               </p>
-              <p className="text-[11px] text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
                 {focusedDay
                   ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
                   : t("itinerary.items", { count: items.length })}
               </p>
             </div>
             <span className="shrink-0 text-muted-foreground">
-              {sheetOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              {sheetOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
             </span>
           </button>
 
@@ -411,53 +411,60 @@ export function ItineraryBoard({
                 const dayIdx = days.indexOf(day);
                 const palette = DAY_PALETTE[dayIdx % DAY_PALETTE.length];
                 const today = isToday(parseISO(day));
+                // B25-r2: when only one day is in view the sheet's pinned
+                // header already shows "Day N · day-of-week, date · X
+                // items" — repeating the same info as a richer card here
+                // was the duplication seen in the screenshot. Hide it in
+                // single-day mode. The bottom-right FAB picker still owns
+                // adding, so we don't need the per-day Add button either.
+                const showDayHeader = focusedDay == null;
                 return (
-                  <div key={day} className="mb-4">
-                    {/* Day header — restores the richer card style */}
-                    <div className="flex items-center gap-3 mb-2.5 px-1">
-                      <div
-                        className={`flex flex-col items-center justify-center w-11 h-11 rounded-xl border-2 shrink-0 ${
-                          today
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : `border-transparent ${palette.dot} text-white`
-                        }`}
-                      >
-                        <span className="text-[9px] font-bold leading-none tracking-widest uppercase">
-                          {format(parseISO(day), "EEE")}
-                        </span>
-                        <span className="text-base font-bold leading-tight tabular-nums">
-                          {format(parseISO(day), "d")}
-                        </span>
+                  <div key={day} className="mb-6">
+                    {showDayHeader && (
+                      <div className="flex items-center gap-3 mb-3 px-1">
+                        <div
+                          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl border-2 shrink-0 ${
+                            today
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : `border-transparent ${palette.dot} text-white`
+                          }`}
+                        >
+                          <span className="text-[10px] font-bold leading-none tracking-widest uppercase">
+                            {format(parseISO(day), "EEE")}
+                          </span>
+                          <span className="text-base font-bold leading-tight tabular-nums">
+                            {format(parseISO(day), "d")}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm">
+                            {t("itinerary.dayN", { n: dayIdx + 1 })}
+                            {today && (
+                              <span className="ms-1.5 text-[10px] font-bold tracking-widest uppercase text-primary">
+                                {t("itinerary.today")}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {format(parseISO(day), "MMMM d, yyyy")} · {t("itinerary.items", { count: dayItems.length })}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openAddFor(day)}
+                          title={t("itinerary.addToThisDay")}
+                          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-3 py-1.5 text-xs font-bold tracking-wide text-muted-foreground transition-colors"
+                        >
+                          <Plus className="w-4 h-4" /> {t("itinerary.add")}
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm">
-                          Day {dayIdx + 1}{" "}
-                          {today && (
-                            <span className="ms-1.5 text-[9px] font-bold tracking-widest uppercase text-primary">
-                              {t("itinerary.today")}
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {format(parseISO(day), "MMMM d, yyyy")} · {t("itinerary.items", { count: dayItems.length })}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => openAddFor(day)}
-                        title={t("itinerary.addToThisDay")}
-                        className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground transition-colors"
-                      >
-                        <Plus className="w-3 h-3" /> {t("itinerary.add")}
-                      </button>
-                    </div>
+                    )}
 
-                    {/* Items */}
                     <SortableContext
                       items={dayItems.map((i) => i.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <ul className="space-y-2 ms-2 ps-3 border-l-2 border-border/40">
+                      <ul className="space-y-2.5 ms-2 ps-3 border-l-2 border-border/40">
                         {dayItems.map((item, idx) => (
                           <SortableItemRow
                             key={item.id}
@@ -621,6 +628,15 @@ function SortableItemRow({
         }`
       : null;
 
+  /* B25-r2: redesigned hierarchy. All icons hit the user's 16px floor
+   * (was 10-14px / w-2.5 to w-3.5 — actively hard to tap on mobile).
+   * Item shape now reads in two visual rows:
+   *   Row 1 — title + type pill on the right
+   *   Row 2 — meta strip (time · location · price) with breathing room
+   * Padding bumped from p-2.5 → p-3.5, list gap from space-y-2 →
+   * space-y-2.5. The TYPE pill moved next to the actions so it stops
+   * fighting the title for the first line.
+   */
   return (
     <li
       ref={setNodeRef}
@@ -632,25 +648,22 @@ function SortableItemRow({
         isDragging ? "opacity-40" : ""
       } ${highlighted ? "border-primary/60 shadow-md shadow-primary/20" : "border-border hover:border-foreground/20"}`}
     >
-      {/* Numbered marker chip — matches the map pin */}
       <div
-        className={`absolute -left-[1.65rem] top-3 w-6 h-6 ${paletteDot} text-white rounded-full flex items-center justify-center text-[10px] font-extrabold shadow ring-2 ring-card`}
+        className={`absolute -left-[1.85rem] top-3.5 w-7 h-7 ${paletteDot} text-white rounded-full flex items-center justify-center text-[11px] font-extrabold shadow ring-2 ring-card`}
       >
         {number}
       </div>
 
-      <div className="flex items-stretch gap-2.5 p-2.5">
-        {/* Drag handle */}
+      <div className="flex items-stretch gap-3 p-3.5">
         <button
           {...attributes}
           {...listeners}
           className="self-stretch flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
           aria-label="Drag to reorder"
         >
-          <GripVertical className="w-3.5 h-3.5" />
+          <GripVertical className="w-4 h-4" />
         </button>
 
-        {/* Optional photo */}
         {item.photoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -661,109 +674,108 @@ function SortableItemRow({
           />
         )}
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
           <div className="flex items-start gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={onStatusCycle}
-                  title={`${item.status} — tap to cycle`}
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    item.status === "confirmed"
-                      ? "bg-emerald-500"
-                      : item.status === "rejected"
-                        ? "bg-red-400"
-                        : "bg-amber-400"
-                  }`}
-                />
-                <p
-                  className={`font-bold text-[13px] leading-tight ${
-                    item.status === "rejected" ? "line-through text-muted-foreground" : ""
-                  }`}
-                >
-                  {item.title}
-                </p>
-                <span
-                  className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-widest uppercase ${TypeCfg.text}`}
-                >
-                  <TypeIcon className="w-2.5 h-2.5" />
-                  {TypeCfg.label}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 mt-1 flex-wrap text-[10px] text-muted-foreground">
-                {item.startTime && (
-                  <span className="inline-flex items-center gap-0.5 tabular-nums">
-                    <Clock className="w-2.5 h-2.5" /> {item.startTime.slice(0, 5)}
-                  </span>
-                )}
-                {item.rating != null && (
-                  <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-bold">
-                    ★ {item.rating.toFixed(1)}
-                  </span>
-                )}
-                {item.costEstimate != null && (
-                  <span className="tabular-nums">
-                    {currencySymbol(currency)}
-                    {fmtAmount(item.costEstimate)}
-                    {localPrice != null && (
-                      <span className="ms-1 opacity-70">
-                        · {currencySymbol(localCurrency!)}
-                        {fmtAmount(localPrice)}
-                      </span>
-                    )}
-                  </span>
-                )}
-                {item.locationName && (
-                  <span className="inline-flex items-center gap-0.5 truncate max-w-[160px]">
-                    <MapPin className="w-2.5 h-2.5" /> {item.locationName}
-                  </span>
-                )}
-              </div>
-
-              {item.topTip && (
-                <p className="mt-1 text-[10px] italic text-muted-foreground line-clamp-1">
-                  💡 {item.topTip}
-                </p>
-              )}
+            <div className="flex-1 min-w-0 flex items-start gap-2">
+              <button
+                type="button"
+                onClick={onStatusCycle}
+                title={`${item.status} — tap to cycle`}
+                className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
+                  item.status === "confirmed"
+                    ? "bg-emerald-500"
+                    : item.status === "rejected"
+                      ? "bg-red-400"
+                      : "bg-amber-400"
+                }`}
+              />
+              <p
+                className={`font-bold text-sm leading-snug ${
+                  item.status === "rejected" ? "line-through text-muted-foreground" : ""
+                }`}
+              >
+                {item.title}
+              </p>
             </div>
 
-            <div className="shrink-0 flex items-center gap-0.5">
-              {directionsUrl && (
-                <a
-                  href={directionsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open in Google Maps"
-                  className="opacity-60 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
-              {canManage && (
-                <>
-                  <button
-                    type="button"
-                    onClick={onEdit}
-                    title="Edit"
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onDelete}
-                    title="Delete"
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-all"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </>
-              )}
-            </div>
+            <span
+              className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase`}
+            >
+              <TypeIcon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{TypeCfg.label}</span>
+            </span>
           </div>
+
+          {(item.startTime || item.rating != null || item.costEstimate != null || item.locationName) && (
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground">
+              {item.startTime && (
+                <span className="inline-flex items-center gap-1 tabular-nums">
+                  <Clock className="w-4 h-4" /> {item.startTime.slice(0, 5)}
+                </span>
+              )}
+              {item.rating != null && (
+                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                  ★ {item.rating.toFixed(1)}
+                </span>
+              )}
+              {item.locationName && (
+                <span className="inline-flex items-center gap-1 truncate max-w-[180px]">
+                  <MapPin className="w-4 h-4" /> {item.locationName}
+                </span>
+              )}
+              {item.costEstimate != null && (
+                <span className="inline-flex items-center gap-1 tabular-nums font-bold text-foreground">
+                  {currencySymbol(currency)}{fmtAmount(item.costEstimate)}
+                  {localPrice != null && (
+                    <span className="opacity-60 font-normal">
+                      · {currencySymbol(localCurrency!)}{fmtAmount(localPrice)}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+          )}
+
+          {item.topTip && (
+            <p className="text-xs italic text-muted-foreground line-clamp-1">
+              💡 {item.topTip}
+            </p>
+          )}
+        </div>
+
+        <div className="shrink-0 flex items-start gap-1">
+          {directionsUrl && (
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open in Google Maps"
+              className="opacity-60 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+          {canManage && (
+            <>
+              <button
+                type="button"
+                onClick={onEdit}
+                title="Edit"
+                className="opacity-0 group-hover:opacity-100 sm:focus:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                title="Delete"
+                className="opacity-0 group-hover:opacity-100 sm:focus:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-destructive transition-all"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </li>

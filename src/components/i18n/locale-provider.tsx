@@ -89,8 +89,15 @@ function lookup(dict: unknown, key: string): string | null {
   return typeof cur === "string" ? cur : null;
 }
 
+/* B25-followup: sync with the server parser in lib/i18n/index.ts —
+ * support `=N` exact-match branches as well as the keyword categories
+ * (one/two/few/many/zero/other). Previously the client copy was forked
+ * BEFORE the B24 server fix, so any translation using `=0 {No items}`
+ * rendered the raw ICU template on screen. Spotted on the Plan day
+ * sheet where `itinerary.items` was showing as
+ * `{count, plural, =0 {No items} ...}` to the user. */
 const PLURAL_RE =
-  /\{(\w+),\s*plural,\s*((?:\w+\s*\{[^}]*\}\s*)+)\}/g;
+  /\{(\w+),\s*plural,\s*((?:=?\w+\s*\{[^}]*\}\s*)+)\}/g;
 
 function interpolate(
   template: string,
@@ -103,13 +110,17 @@ function interpolate(
       const value = Number(params[name]);
       const category = new Intl.PluralRules(locale).select(value);
       const branches: Record<string, string> = {};
-      const branchRe = /(\w+)\s*\{([^}]*)\}/g;
+      const branchRe = /(=?\w+)\s*\{([^}]*)\}/g;
       let m: RegExpExecArray | null;
       while ((m = branchRe.exec(cases)) !== null) {
         branches[m[1]] = m[2];
       }
       const chosen =
-        branches[category] ?? branches.other ?? branches.one ?? "";
+        branches[`=${value}`] ??
+        branches[category] ??
+        branches.other ??
+        branches.one ??
+        "";
       return chosen.replace(/#/g, String(value));
     },
   );
