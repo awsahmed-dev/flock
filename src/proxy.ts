@@ -58,8 +58,17 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthRoute = path.startsWith("/auth");
   const isInviteRoute = path.startsWith("/invite");
-  // Public landing + public share view + public guest accept routes.
-  const isPublicPage = path === "/" || path.startsWith("/share/");
+  // Public marketing surface. B26: extended to /blog + /privacy + /terms
+  // — these were being silently redirected to /auth/login by this guard,
+  // so Googlebot was getting a 307 → login on every blog URL and indexing
+  // nothing.
+  const isPublicPage =
+    path === "/" ||
+    path === "/blog" ||
+    path.startsWith("/blog/") ||
+    path === "/privacy" ||
+    path === "/terms" ||
+    path.startsWith("/share/");
   // Internal endpoints that gate themselves (cron secret, health probe).
   // These must be reachable without a session.
   const isPublicApi =
