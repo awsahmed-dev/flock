@@ -248,11 +248,15 @@ export function ItineraryBoard({
           picker offering AI Plan or manual Add. The previous in-sheet +
           button felt fiddly on mobile and didn't expose AI Plan from
           the same spot. */}
-      {/* B25-r3: FAB moved from bottom-right → bottom-left so it stops
-          overlapping the page Feedback widget on the right + so right-
-          handed thumbs reach 'Add' on phones held single-handed without
-          stretching. Items align off the START edge accordingly. */}
-      <div className="absolute z-40 start-4 sm:start-6 bottom-[120px] sm:bottom-[88px] flex flex-col items-start gap-2 pointer-events-none">
+      {/* B25-r4: FAB back to bottom-RIGHT — the bottom-left placement
+          felt orphaned from the sheet content + competed with where the
+          eye lands after reading a left-anchored card list. Now sitting
+          just above the collapsed sheet handle (bottom-[80px], was 120px
+          on mobile / 88px on desktop) so the + button reads as part of
+          the sheet's control strip rather than floating in dead space.
+          Feedback widget is gone from trip pages so there's no longer a
+          right-side collision to dodge. */}
+      <div className="absolute z-40 end-4 sm:end-6 bottom-[80px] flex flex-col items-end gap-2 pointer-events-none">
         {addPickerOpen && (
           <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
             <button
@@ -756,11 +760,18 @@ function SortableItemRow({
           )}
           {canManage && (
             <>
+              {/* Edit stays hover-only on desktop — the row is already
+                  tappable, and most users edit far less than they delete.
+                  Delete is now always visible: requested by user, and
+                  hiding destructive actions behind hover doesn't work on
+                  touch devices anyway. Tinted destructive-red so it's
+                  immediately recognizable but not loud enough to invite
+                  mis-tap. */}
               <button
                 type="button"
                 onClick={onEdit}
                 title="Edit"
-                className="opacity-0 group-hover:opacity-100 sm:focus:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                className="hidden sm:inline-flex opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
               >
                 <Pencil className="w-4 h-4" />
               </button>
@@ -768,7 +779,7 @@ function SortableItemRow({
                 type="button"
                 onClick={onDelete}
                 title="Delete"
-                className="opacity-0 group-hover:opacity-100 sm:focus:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-destructive transition-all"
+                className="p-1.5 rounded-lg text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-all"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
