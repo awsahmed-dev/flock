@@ -74,7 +74,6 @@ const InstallPrompt = dynamicImport(
 );
 import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
 import { Logo } from "@/components/ui/logo";
-import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 
 interface Trip {
   id: string;
@@ -606,9 +605,11 @@ export function TripShell({ trip, isOwner, children }: Props) {
       {/* PWA install prompt */}
       <InstallPrompt />
 
-      {/* Pre-launch feedback widget — floating button bottom-right.
-          Renders only on authenticated trip pages. */}
-      <FeedbackWidget />
+      {/* B25-r3: pre-launch feedback widget dropped from trip pages.
+          The floating bottom-right button competed with the Plan FAB +
+          the Bookings forward-email hint + the Pack add button. Feedback
+          still lives on the dashboard, which is the entry point for
+          every session — that's the right place for app-wide feedback. */}
 
       {/* Trip-scoped keyboard shortcuts (?, c, /, g+i/v/e/d/s/h) */}
       <KeyboardShortcuts

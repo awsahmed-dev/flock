@@ -248,7 +248,11 @@ export function ItineraryBoard({
           picker offering AI Plan or manual Add. The previous in-sheet +
           button felt fiddly on mobile and didn't expose AI Plan from
           the same spot. */}
-      <div className="absolute z-40 end-4 sm:end-6 bottom-[120px] sm:bottom-[88px] flex flex-col items-end gap-2 pointer-events-none">
+      {/* B25-r3: FAB moved from bottom-right → bottom-left so it stops
+          overlapping the page Feedback widget on the right + so right-
+          handed thumbs reach 'Add' on phones held single-handed without
+          stretching. Items align off the START edge accordingly. */}
+      <div className="absolute z-40 start-4 sm:start-6 bottom-[120px] sm:bottom-[88px] flex flex-col items-start gap-2 pointer-events-none">
         {addPickerOpen && (
           <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
             <button
@@ -464,7 +468,7 @@ export function ItineraryBoard({
                       items={dayItems.map((i) => i.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <ul className="space-y-2.5 ms-2 ps-3 border-l-2 border-border/40">
+                      <ul className="space-y-2.5">
                         {dayItems.map((item, idx) => (
                           <SortableItemRow
                             key={item.id}
@@ -628,14 +632,20 @@ function SortableItemRow({
         }`
       : null;
 
-  /* B25-r2: redesigned hierarchy. All icons hit the user's 16px floor
-   * (was 10-14px / w-2.5 to w-3.5 — actively hard to tap on mobile).
-   * Item shape now reads in two visual rows:
-   *   Row 1 — title + type pill on the right
-   *   Row 2 — meta strip (time · location · price) with breathing room
-   * Padding bumped from p-2.5 → p-3.5, list gap from space-y-2 →
-   * space-y-2.5. The TYPE pill moved next to the actions so it stops
-   * fighting the title for the first line.
+  /* B25-r3: card is now a clean 3-column flex row:
+   *   [ number + drag handle ]  |  [ content ]  |  [ directions ]
+   * Was: a floating numbered chip OUTSIDE the card's left edge (sat in
+   * the gap between the timeline border and the card creating a stair-
+   * step look in the screenshot); the drag handle was inline at the
+   * start of the content column making the title appear offset; the
+   * directions link was a tiny w-3 icon crammed between the type pill
+   * and the edit/delete buttons.
+   *
+   * Now the number lives INSIDE the card as a left-edge badge column,
+   * vertically centered with the row, with the drag handle directly
+   * underneath it. The directions link is a real right-edge action
+   * column, separated by a divider, big enough to tap (w-5). Edit /
+   * delete are pinned next to it but stay hover-only on desktop.
    */
   return (
     <li
@@ -644,116 +654,104 @@ function SortableItemRow({
       id={`item-${item.id}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`group relative rounded-xl border bg-card transition-all ${
+      className={`group relative flex items-stretch rounded-xl border bg-card overflow-hidden transition-all ${
         isDragging ? "opacity-40" : ""
       } ${highlighted ? "border-primary/60 shadow-md shadow-primary/20" : "border-border hover:border-foreground/20"}`}
     >
-      <div
-        className={`absolute -left-[1.85rem] top-3.5 w-7 h-7 ${paletteDot} text-white rounded-full flex items-center justify-center text-[11px] font-extrabold shadow ring-2 ring-card`}
-      >
-        {number}
-      </div>
-
-      <div className="flex items-stretch gap-3 p-3.5">
+      <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-3 border-e border-border/40 shrink-0">
+        <div
+          className={`w-7 h-7 ${paletteDot} text-white rounded-full flex items-center justify-center text-xs font-extrabold`}
+        >
+          {number}
+        </div>
         <button
           {...attributes}
           {...listeners}
-          className="self-stretch flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
+          className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5"
           aria-label="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
         </button>
+      </div>
 
-        {item.photoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.photoUrl}
-            alt=""
-            className="w-14 h-14 rounded-lg object-cover shrink-0"
-            loading="lazy"
+      <div className="flex-1 min-w-0 p-3.5 flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={onStatusCycle}
+            title={`${item.status} — tap to cycle`}
+            className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
+              item.status === "confirmed"
+                ? "bg-emerald-500"
+                : item.status === "rejected"
+                  ? "bg-red-400"
+                  : "bg-amber-400"
+            }`}
           />
-        )}
-
-        <div className="flex-1 min-w-0 flex flex-col gap-2">
-          <div className="flex items-start gap-2">
-            <div className="flex-1 min-w-0 flex items-start gap-2">
-              <button
-                type="button"
-                onClick={onStatusCycle}
-                title={`${item.status} — tap to cycle`}
-                className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
-                  item.status === "confirmed"
-                    ? "bg-emerald-500"
-                    : item.status === "rejected"
-                      ? "bg-red-400"
-                      : "bg-amber-400"
-                }`}
-              />
-              <p
-                className={`font-bold text-sm leading-snug ${
-                  item.status === "rejected" ? "line-through text-muted-foreground" : ""
-                }`}
-              >
-                {item.title}
-              </p>
-            </div>
-
-            <span
-              className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase`}
-            >
-              <TypeIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{TypeCfg.label}</span>
-            </span>
-          </div>
-
-          {(item.startTime || item.rating != null || item.costEstimate != null || item.locationName) && (
-            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground">
-              {item.startTime && (
-                <span className="inline-flex items-center gap-1 tabular-nums">
-                  <Clock className="w-4 h-4" /> {item.startTime.slice(0, 5)}
-                </span>
-              )}
-              {item.rating != null && (
-                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
-                  ★ {item.rating.toFixed(1)}
-                </span>
-              )}
-              {item.locationName && (
-                <span className="inline-flex items-center gap-1 truncate max-w-[180px]">
-                  <MapPin className="w-4 h-4" /> {item.locationName}
-                </span>
-              )}
-              {item.costEstimate != null && (
-                <span className="inline-flex items-center gap-1 tabular-nums font-bold text-foreground">
-                  {currencySymbol(currency)}{fmtAmount(item.costEstimate)}
-                  {localPrice != null && (
-                    <span className="opacity-60 font-normal">
-                      · {currencySymbol(localCurrency!)}{fmtAmount(localPrice)}
-                    </span>
-                  )}
-                </span>
-              )}
-            </div>
-          )}
-
-          {item.topTip && (
-            <p className="text-xs italic text-muted-foreground line-clamp-1">
-              💡 {item.topTip}
-            </p>
-          )}
+          <p
+            className={`flex-1 min-w-0 font-bold text-sm leading-snug ${
+              item.status === "rejected" ? "line-through text-muted-foreground" : ""
+            }`}
+          >
+            {item.title}
+          </p>
+          <span
+            className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase`}
+          >
+            <TypeIcon className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{TypeCfg.label}</span>
+          </span>
         </div>
 
-        <div className="shrink-0 flex items-start gap-1">
+        {(item.startTime || item.rating != null || item.costEstimate != null || item.locationName) && (
+          <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground">
+            {item.startTime && (
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock className="w-4 h-4" /> {item.startTime.slice(0, 5)}
+              </span>
+            )}
+            {item.rating != null && (
+              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                ★ {item.rating.toFixed(1)}
+              </span>
+            )}
+            {item.locationName && (
+              <span className="inline-flex items-center gap-1 truncate max-w-[180px]">
+                <MapPin className="w-4 h-4" /> {item.locationName}
+              </span>
+            )}
+            {item.costEstimate != null && (
+              <span className="inline-flex items-center gap-1 tabular-nums font-bold text-foreground">
+                {currencySymbol(currency)}{fmtAmount(item.costEstimate)}
+                {localPrice != null && (
+                  <span className="opacity-60 font-normal">
+                    · {currencySymbol(localCurrency!)}{fmtAmount(localPrice)}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+        )}
+
+        {item.topTip && (
+          <p className="text-xs italic text-muted-foreground line-clamp-1">
+            💡 {item.topTip}
+          </p>
+        )}
+      </div>
+
+      {(directionsUrl || canManage) && (
+        <div className="flex flex-col items-center justify-center gap-1 px-1.5 border-s border-border/40 shrink-0">
           {directionsUrl && (
             <a
               href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
               title="Open in Google Maps"
-              className="opacity-60 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+              className="p-2 rounded-lg hover:bg-muted text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all"
               onClick={(e) => e.stopPropagation()}
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-5 h-5" />
             </a>
           )}
           {canManage && (
@@ -777,7 +775,7 @@ function SortableItemRow({
             </>
           )}
         </div>
-      </div>
+      )}
     </li>
   );
 }
