@@ -150,3 +150,94 @@
     word-break: normal;
   }
 }
+
+/* B26: blog content typography. Replaces @tailwindcss/typography which
+   we don't install — small + tuned for the dark marketing surface. */
+.blog-content {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.78);
+}
+.blog-content > * + * {
+  margin-top: 1.25em;
+}
+.blog-content h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #fff;
+  margin-top: 3rem;
+  margin-bottom: 0.75rem;
+}
+.blog-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: #fff;
+  margin-top: 2.25rem;
+  margin-bottom: 0.5rem;
+}
+.blog-content strong {
+  color: #fff;
+  font-weight: 600;
+}
+.blog-content a {
+  color: #f0abfc;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(240, 171, 252, 0.35);
+  transition: color 0.15s, border-color 0.15s;
+}
+.blog-content a:hover {
+  color: #f5d0fe;
+  border-bottom-color: rgba(240, 171, 252, 0.7);
+}
+.blog-content ul,
+.blog-content ol {
+  padding-left: 1.5rem;
+}
+.blog-content ul { list-style-type: disc; }
+.blog-content ol { list-style-type: decimal; }
+.blog-content li {
+  margin: 0.4rem 0;
+  padding-left: 0.25rem;
+}
+.blog-content li::marker {
+  color: rgba(255, 255, 255, 0.35);
+}
+.blog-content blockquote {
+  border-left: 3px solid rgba(240, 171, 252, 0.5);
+  padding-left: 1.25rem;
+  margin-left: 0;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.85);
+}
+.blog-content figure {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+.blog-content figure img {
+  border-radius: 1rem;
+  width: 100%;
+  height: auto;
+}
+.blog-content figcaption {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+.blog-content .callout {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+.blog-content .callout strong {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.7rem;
+  color: #f0abfc;
+  margin-bottom: 0.25rem;
+}

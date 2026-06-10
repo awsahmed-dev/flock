@@ -90,13 +90,18 @@ export default async function HomePage({ searchParams }: PageProps) {
             <Logo variant="full" size="sm" />
           </Link>
 
-          {/* Centered anchor nav — desktop only. B25: dropped 'Try it'
-              (was a duplicate of #features) and renamed 'Pricing' to
-              'Get started' since the section it points to is the free
-              signup CTA, not a tiered pricing table. */}
+          {/* Centered anchor nav — desktop only. B26: added /blog so the
+              long-form posts surface in the main nav (and so Google sees
+              an internal link from the homepage to the blog hub). */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             <NavAnchor href="#features">Features</NavAnchor>
             <NavAnchor href="#destinations">Destinations</NavAnchor>
+            <Link
+              href="/blog"
+              className="text-sm text-white/60 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors"
+            >
+              Blog
+            </Link>
             <NavAnchor href="#pricing">Get started</NavAnchor>
           </nav>
 
@@ -121,6 +126,70 @@ export default async function HomePage({ searchParams }: PageProps) {
       <LandingHero />
       <Scrollytelling />
       <LandingClosing />
+
+      {/* B26: structured data for rich results in Google. Organization
+          tells search engines who runs the site; WebSite enables the
+          sitelinks search box; SoftwareApplication marks Paxawa up as
+          a free app so it can surface in 'best group travel apps'
+          style queries with stars / pricing / description prefilled. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Organization",
+                "@id": "https://paxawa.com/#org",
+                name: "Paxawa",
+                url: "https://paxawa.com",
+                logo: "https://paxawa.com/icons/icon-512x512.png",
+                sameAs: [],
+              },
+              {
+                "@type": "WebSite",
+                "@id": "https://paxawa.com/#site",
+                url: "https://paxawa.com",
+                name: "Paxawa",
+                description:
+                  "Group travel planning that doesn't end in three split conversations and a spreadsheet.",
+                publisher: { "@id": "https://paxawa.com/#org" },
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate:
+                      "https://paxawa.com/blog?q={search_term_string}",
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+              {
+                "@type": "SoftwareApplication",
+                name: "Paxawa",
+                applicationCategory: "TravelApplication",
+                operatingSystem: "Web, iOS, Android",
+                description:
+                  "Plan group trips together: shared itinerary, voting, multi-currency expense splitting, packing lists, and AI-assisted planning.",
+                offers: {
+                  "@type": "Offer",
+                  price: "0",
+                  priceCurrency: "USD",
+                  availability: "https://schema.org/InStock",
+                },
+                featureList: [
+                  "Shared itinerary planning",
+                  "Group voting on options",
+                  "Multi-currency expense splitting",
+                  "Shared + personal packing lists",
+                  "AI itinerary suggestions",
+                  "One-link invite for the crew",
+                ],
+              },
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }

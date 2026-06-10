@@ -25,10 +25,36 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
+
 export const metadata: Metadata = {
-  title: "Paxawa — Plan trips together",
+  // Required so OG image / canonical / alternates URLs resolve absolutely.
+  // Without it, Next emits relative URLs in <head> which Twitter/Facebook
+  // crawlers won't follow.
+  metadataBase: new URL(SITE_URL),
+  // Title template: every sub-page can set its own title and it'll
+  // automatically suffix " · Paxawa". Pages can opt out with title.absolute.
+  title: {
+    default: "Paxawa — Plan group trips, vote together, split expenses",
+    template: "%s · Paxawa",
+  },
   description:
-    "The place where group travel decisions get made and remembered. Plan itineraries, vote on options, and split expenses with your crew.",
+    "Paxawa is where group travel decisions get made and remembered. Plan a shared itinerary, vote on options, split multi-currency expenses, and pack as a crew — without the WhatsApp chaos.",
+  applicationName: "Paxawa",
+  keywords: [
+    "group travel planning",
+    "split expenses with friends",
+    "trip itinerary app",
+    "group trip planner",
+    "vacation expense splitter",
+    "multi-currency expense tracker",
+    "travel voting app",
+    "group packing list",
+    "AI trip planner",
+  ],
+  authors: [{ name: "Paxawa" }],
+  creator: "Paxawa",
+  publisher: "Paxawa",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -36,11 +62,42 @@ export const metadata: Metadata = {
     title: "Paxawa",
   },
   formatDetection: { telephone: false },
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
-    title: "Paxawa — Plan trips together",
-    description: "Group travel planning. Itinerary, votes, expenses — all in one place.",
+    url: "/",
+    title: "Paxawa — Plan group trips, vote together, split expenses",
+    description:
+      "Group travel planning that doesn't end in three split conversations and a spreadsheet. Itinerary, votes, multi-currency expenses, packing — all in one place.",
     siteName: "Paxawa",
+    locale: "en_US",
+    images: [
+      {
+        url: "/og-default.png",
+        width: 1200,
+        height: 630,
+        alt: "Paxawa — group travel planning",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Paxawa — Plan group trips, vote together, split expenses",
+    description:
+      "Itinerary, votes, multi-currency expenses, packing — all in one place. Free to start.",
+    images: ["/og-default.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

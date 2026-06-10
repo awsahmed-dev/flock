@@ -63,6 +63,9 @@ export function LandingClosing() {
             </span>
           </div>
           <nav className="flex items-center gap-5 text-xs text-white/40">
+            <Link href="/blog" className="hover:text-white transition-colors">
+              Blog
+            </Link>
             <Link href="/terms" className="hover:text-white transition-colors">
               Terms
             </Link>
