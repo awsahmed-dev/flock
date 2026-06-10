@@ -68,6 +68,12 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/blog/") ||
     path === "/privacy" ||
     path === "/terms" ||
+    // SEO essentials — these MUST be reachable by crawlers without auth,
+    // otherwise Googlebot gets a 307 → login on the discovery URLs and
+    // never finds the rest of the site.
+    path === "/sitemap.xml" ||
+    path === "/robots.txt" ||
+    path === "/manifest.json" ||
     path.startsWith("/share/");
   // Internal endpoints that gate themselves (cron secret, health probe).
   // These must be reachable without a session.
