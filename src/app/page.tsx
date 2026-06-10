@@ -90,12 +90,14 @@ export default async function HomePage({ searchParams }: PageProps) {
             <Logo variant="full" size="sm" />
           </Link>
 
-          {/* Centered anchor nav — desktop only. */}
+          {/* Centered anchor nav — desktop only. B25: dropped 'Try it'
+              (was a duplicate of #features) and renamed 'Pricing' to
+              'Get started' since the section it points to is the free
+              signup CTA, not a tiered pricing table. */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             <NavAnchor href="#features">Features</NavAnchor>
-            <NavAnchor href="#try-it">Try it</NavAnchor>
             <NavAnchor href="#destinations">Destinations</NavAnchor>
-            <NavAnchor href="#pricing">Pricing</NavAnchor>
+            <NavAnchor href="#pricing">Get started</NavAnchor>
           </nav>
 
           <nav className="flex items-center gap-1 shrink-0">

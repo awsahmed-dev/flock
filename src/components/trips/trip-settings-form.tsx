@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Trash2, AlertTriangle, Globe, Copy, RefreshCw, EyeOff, Check, Link2 } from "lucide-react";
+import { Trash2, AlertTriangle, Globe, Copy, RefreshCw, EyeOff, Check, Link2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Props {
   tripId: string;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function TripSettingsForm({ tripId, name, destination, startDate, endDate, budgetTotal, currency, shareToken: initialShareToken }: Props) {
+  const t = useT();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -45,9 +47,9 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
     startTransition(async () => {
       try {
         await updateTrip(fd);
-        toast.success("Trip updated");
+        toast.success(t("trip.settingsUpdated"));
       } catch {
-        toast.error("Failed to update trip");
+        toast.error(t("trip.settingsUpdateFailed"));
       }
     });
   }
@@ -60,7 +62,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
         await deleteTrip(fd);
         router.push("/dashboard");
       } catch {
-        toast.error("Failed to delete trip");
+        toast.error(t("trip.settingsDeleteFailed"));
       }
     });
   }
@@ -70,9 +72,9 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
       try {
         const token = await enableSharing(tripId);
         setShareToken(token);
-        toast.success("Share link enabled");
+        toast.success(t("trip.settingsShareEnabled"));
       } catch {
-        toast.error("Failed to enable sharing");
+        toast.error(t("trip.settingsShareEnableFailed"));
       }
     });
   }
@@ -82,9 +84,9 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
       try {
         await disableSharing(tripId);
         setShareToken(null);
-        toast.success("Share link disabled");
+        toast.success(t("trip.settingsShareDisabled"));
       } catch {
-        toast.error("Failed to disable sharing");
+        toast.error(t("trip.settingsShareDisableFailed"));
       }
     });
   }
@@ -94,9 +96,9 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
       try {
         const token = await regenerateShareToken(tripId);
         setShareToken(token);
-        toast.success("New link generated");
+        toast.success(t("trip.settingsShareRegenerated"));
       } catch {
-        toast.error("Failed to regenerate link");
+        toast.error(t("trip.settingsShareRegenerateFailed"));
       }
     });
   }
@@ -113,29 +115,29 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
     // B8: bumped max-width from 2xl to 3xl so the form isn't half-width
     // on desktop. The shared PageHeader replaces the inline icon header.
     <div className="max-w-3xl mx-auto space-y-6">
-      <PageHeader title="Trip settings" subtitle="Update trip details and sharing" />
+      <PageHeader title={t("trip.settingsTitle")} subtitle={t("trip.settingsSubtitle")} />
 
       {/* Edit form */}
       <form onSubmit={handleUpdate} className="rounded-xl border bg-card p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2 space-y-1.5">
-            <Label htmlFor="name">Trip name</Label>
+            <Label htmlFor="name">{t("trip.tripName")}</Label>
             <Input id="name" name="name" defaultValue={name} required />
           </div>
           <div className="sm:col-span-2 space-y-1.5">
-            <Label htmlFor="destination">Destination</Label>
+            <Label htmlFor="destination">{t("trip.destination")}</Label>
             <Input id="destination" name="destination" defaultValue={destination} required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="startDate">Start date</Label>
+            <Label htmlFor="startDate">{t("trip.startDate")}</Label>
             <Input id="startDate" name="startDate" type="date" defaultValue={startDate} required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="endDate">End date</Label>
+            <Label htmlFor="endDate">{t("trip.endDate")}</Label>
             <Input id="endDate" name="endDate" type="date" defaultValue={endDate} required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="budgetTotal">Budget (optional)</Label>
+            <Label htmlFor="budgetTotal">{t("trip.settingsBudget")}</Label>
             <Input
               id="budgetTotal"
               name="budgetTotal"
@@ -143,11 +145,11 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
               min="0"
               step="0.01"
               defaultValue={budgetTotal ?? ""}
-              placeholder="e.g. 3000"
+              placeholder="3000"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="currency">Currency</Label>
+            <Label htmlFor="currency">{t("trip.currency")}</Label>
             <select
               id="currency"
               name="currency"
@@ -162,7 +164,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
         </div>
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Saving…" : "Save changes"}
+            {isPending ? t("trip.settingsSaving") : t("trip.settingsSaveChanges")}
           </Button>
         </div>
       </form>
@@ -174,9 +176,9 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h2 className="font-semibold text-sm">Share your trip</h2>
+            <h2 className="font-semibold text-sm">{t("trip.settingsShareTitle")}</h2>
             <p className="text-xs text-muted-foreground">
-              {shareToken ? "Anyone with the link can view your itinerary" : "Create a public link to share your itinerary"}
+              {shareToken ? t("trip.settingsShareSubOn") : t("trip.settingsShareSubOff")}
             </p>
           </div>
         </div>
@@ -190,11 +192,10 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             disabled={isPending}
           >
             <Link2 className="w-3.5 h-3.5" />
-            Generate share link
+            {t("trip.settingsGenerateLink")}
           </Button>
         ) : (
           <div className="space-y-3">
-            {/* Link box */}
             <div className="flex items-center gap-2">
               <div className="flex-1 rounded-lg border bg-muted/30 px-3 py-2 text-xs font-mono text-muted-foreground truncate">
                 {shareUrl}
@@ -206,12 +207,11 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
                 className="shrink-0 gap-1.5"
                 onClick={handleCopy}
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "Copied!" : "Copy"}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? t("common.copied") : t("common.copy")}
               </Button>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -222,7 +222,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
                 disabled={isPending}
               >
                 <RefreshCw className="w-3 h-3" />
-                New link
+                {t("trip.settingsNewLink")}
               </Button>
               <Button
                 type="button"
@@ -233,31 +233,29 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
                 disabled={isPending}
               >
                 <EyeOff className="w-3 h-3" />
-                Disable sharing
+                {t("trip.settingsDisableSharing")}
               </Button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Danger zone */}
       <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 space-y-3">
         <div className="flex items-center gap-2 text-destructive">
           <AlertTriangle className="w-4 h-4" />
-          <h2 className="font-medium text-sm">Danger zone</h2>
+          <h2 className="font-medium text-sm">{t("trip.settingsDangerZone")}</h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          Deleting the trip permanently removes all itinerary items, votes, expenses, and chat messages.
-          This cannot be undone.
+          {t("trip.settingsDangerWarning")}
         </p>
         {showDeleteConfirm ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-destructive">Are you sure?</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium text-destructive">{t("trip.settingsAreYouSure")}</span>
             <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isPending}>
-              {isPending ? "Deleting…" : "Yes, delete trip"}
+              {isPending ? t("trip.settingsDeleting") : t("trip.settingsConfirmDelete")}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         ) : (
@@ -268,7 +266,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             onClick={() => setShowDeleteConfirm(true)}
           >
             <Trash2 className="w-3.5 h-3.5 me-1.5" />
-            Delete trip
+            {t("trip.settingsDeleteTrip")}
           </Button>
         )}
       </div>

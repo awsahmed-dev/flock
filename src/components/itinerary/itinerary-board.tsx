@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import {
-  Plus, Sparkles, Hotel, ChevronUp, ChevronDown, ExternalLink, Search,
+  Plus, Sparkles, ChevronUp, ChevronDown, ExternalLink, Search,
   Bed, Plane, Car, Utensils, Ticket, HelpCircle, Trash2, Pencil, GripVertical, MapPin, Clock,
 } from "lucide-react";
 import dynamicImport from "next/dynamic";
@@ -19,14 +19,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { AddPlaceSearch } from "./add-place-search";
 import { EditItemDialog } from "./edit-item-dialog";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
-import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { PlanModeSwitch } from "./plan-mode-switch";
 import { BookMode } from "./book-mode";
-import { useSearchParams } from "next/navigation";
 import { convert, type RateBundle } from "@/lib/fx";
 import { toast } from "sonner";
 import type { InferSelectModel } from "drizzle-orm";
@@ -101,19 +99,12 @@ export function ItineraryBoard({
 }: Props) {
   const t = useT();
   const { locale } = useLocale();
-  const searchParams = useSearchParams();
-  // Plan-mode swipe is mock-gated for now. When approved, drop this and
-  // the segment switch ships to everyone.
-  // B18: Plan/Book mode ships to everyone. Preview gate removed.
-  const showPlanModes = true;
-  void searchParams;
   const [items, setItems] = useState(initialItems);
   // B24: planMode removed — Book mode merged into the Bookings tab.
   const [addPickerOpen, setAddPickerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
-  const [hotelOpen, setHotelOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [focusedDay, setFocusedDay] = useState<string | null>(days[0] ?? null);
@@ -406,31 +397,6 @@ export function ItineraryBoard({
             </span>
           </button>
 
-          {/* B17 (audit fix #9): per-day AI Plan + Find-a-Stay buttons
-              are redundant with the new Book mode (hotels are per-city,
-              not per-day; AI Plan is a one-shot setup, not per-day). We
-              hide them when the preview is on so the new flow reads
-              cleanly. Once we ship preview to everyone, drop the row
-              entirely. */}
-          {!showPlanModes && (
-            <div className="px-4 pb-2 flex items-center gap-2 border-b border-border/40">
-              <button
-                type="button"
-                onClick={() => setAiOpen(true)}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 hover:border-primary/40 text-primary px-3 py-1.5 text-[11px] font-bold transition-colors"
-              >
-                <Sparkles className="w-3 h-3" /> {t("itinerary.aiPlan")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setHotelOpen(true)}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 text-blue-600 dark:text-blue-400 px-3 py-1.5 text-[11px] font-bold transition-colors"
-              >
-                <Hotel className="w-3 h-3" /> {t("itinerary.findAStay")}
-              </button>
-            </div>
-          )}
-
           {/* Scrollable list — trimmed from 55vh to 45vh so map gets
               the larger share of the viewport when sheet is expanded. */}
           <div className="max-h-[45vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
@@ -468,22 +434,21 @@ export function ItineraryBoard({
                           Day {dayIdx + 1}{" "}
                           {today && (
                             <span className="ms-1.5 text-[9px] font-bold tracking-widest uppercase text-primary">
-                              today
+                              {t("itinerary.today")}
                             </span>
                           )}
                         </p>
                         <p className="text-[11px] text-muted-foreground truncate">
-                          {format(parseISO(day), "MMMM d, yyyy")} · {dayItems.length} item
-                          {dayItems.length !== 1 ? "s" : ""}
+                          {format(parseISO(day), "MMMM d, yyyy")} · {t("itinerary.items", { count: dayItems.length })}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => openAddFor(day)}
-                        title="Add to this day"
+                        title={t("itinerary.addToThisDay")}
                         className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground transition-colors"
                       >
-                        <Plus className="w-3 h-3" /> Add
+                        <Plus className="w-3 h-3" /> {t("itinerary.add")}
                       </button>
                     </div>
 
@@ -593,20 +558,13 @@ export function ItineraryBoard({
         />
       )}
 
-      {/* B21: lazy-mount panels (same fix as trip-overview). Neither
-          panel deserves to run its mount effects on every itinerary view. */}
+      {/* Lazy-mount the AI planner — same pattern as trip-overview;
+          it carries the questionnaire state + Anthropic client init
+          and shouldn't run on every Plan view. */}
       {aiOpen && (
         <AiPlannerPanel
           open={aiOpen}
           onClose={() => setAiOpen(false)}
-          tripId={tripId}
-          destination={destination}
-        />
-      )}
-      {hotelOpen && (
-        <HotelSearchPanel
-          open={hotelOpen}
-          onClose={() => setHotelOpen(false)}
           tripId={tripId}
           destination={destination}
         />

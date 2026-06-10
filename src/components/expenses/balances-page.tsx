@@ -236,8 +236,8 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
         </ul>
       ) : data.transfers.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
-          <p className="text-sm font-semibold mb-1">Everyone's settled</p>
-          <p className="text-xs text-muted-foreground">No transfers needed.</p>
+          <p className="text-sm font-semibold mb-1">{t("expenses.everyoneSettled")}</p>
+          <p className="text-xs text-muted-foreground">{t("expenses.noBalancesSub")}</p>
         </div>
       ) : (
         <ul className="space-y-2">

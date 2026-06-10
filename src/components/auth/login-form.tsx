@@ -19,9 +19,28 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const supabase = createClient();
   const router = useRouter();
+
+  async function handleForgot() {
+    if (!email) {
+      toast.error("Enter your email first, then tap Forgot password");
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setResetLoading(false);
+    if (error) toast.error(error.message);
+    else
+      toast.success("Magic link sent — check your email to sign back in", {
+        duration: 6000,
+      });
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +112,17 @@ export function LoginForm() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">{t("auth.password")}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">{t("auth.password")}</Label>
+              <button
+                type="button"
+                onClick={handleForgot}
+                disabled={resetLoading}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+              >
+                {resetLoading ? "…" : t("auth.forgotPassword")}
+              </button>
+            </div>
             <div className="relative">
               <Input
                 id="password"
@@ -108,7 +137,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground rtl:right-auto rtl:left-3"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>

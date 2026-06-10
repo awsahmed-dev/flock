@@ -7,17 +7,26 @@ import {
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
 import { PageHeader } from "@/components/ui/page-header";
+import { useT } from "@/components/i18n/locale-provider";
 
 const CATEGORY_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; bg: string; text: string; dot: string; tint: string }
+  { icon: React.ElementType; bg: string; text: string; dot: string; tint: string }
 > = {
-  accommodation: { label: "Stay",      icon: Bed,           bg: "bg-blue-100 dark:bg-blue-950/40",     text: "text-blue-700 dark:text-blue-300",     dot: "bg-blue-500",    tint: "from-blue-500/20 to-blue-500/5" },
-  transport:     { label: "Transport", icon: Plane,         bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500",  tint: "from-orange-500/20 to-orange-500/5" },
-  food:          { label: "Food",      icon: Utensils,      bg: "bg-green-100 dark:bg-green-950/40",   text: "text-green-700 dark:text-green-300",   dot: "bg-green-500",   tint: "from-green-500/20 to-green-500/5" },
-  activity:      { label: "Activity",  icon: Ticket,        bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500",  tint: "from-purple-500/20 to-purple-500/5" },
-  shopping:      { label: "Shopping",  icon: ShoppingBag,   bg: "bg-pink-100 dark:bg-pink-950/40",     text: "text-pink-700 dark:text-pink-300",     dot: "bg-pink-500",    tint: "from-pink-500/20 to-pink-500/5" },
-  other:         { label: "Other",     icon: MoreHorizontal,bg: "bg-muted/60",                         text: "text-muted-foreground",                dot: "bg-slate-400",   tint: "from-slate-400/20 to-slate-400/5" },
+  accommodation: { icon: Bed,           bg: "bg-blue-100 dark:bg-blue-950/40",     text: "text-blue-700 dark:text-blue-300",     dot: "bg-blue-500",    tint: "from-blue-500/20 to-blue-500/5" },
+  transport:     { icon: Plane,         bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500",  tint: "from-orange-500/20 to-orange-500/5" },
+  food:          { icon: Utensils,      bg: "bg-green-100 dark:bg-green-950/40",   text: "text-green-700 dark:text-green-300",   dot: "bg-green-500",   tint: "from-green-500/20 to-green-500/5" },
+  activity:      { icon: Ticket,        bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500",  tint: "from-purple-500/20 to-purple-500/5" },
+  shopping:      { icon: ShoppingBag,   bg: "bg-pink-100 dark:bg-pink-950/40",     text: "text-pink-700 dark:text-pink-300",     dot: "bg-pink-500",    tint: "from-pink-500/20 to-pink-500/5" },
+  other:         { icon: MoreHorizontal,bg: "bg-muted/60",                         text: "text-muted-foreground",                dot: "bg-slate-400",   tint: "from-slate-400/20 to-slate-400/5" },
+};
+const CATEGORY_LABEL_KEY: Record<string, string> = {
+  accommodation: "expenses.catStay",
+  transport: "expenses.catTransport",
+  food: "expenses.catFood",
+  activity: "expenses.catActivity",
+  shopping: "expenses.catShopping",
+  other: "expenses.catOther",
 };
 
 interface Expense {
@@ -51,6 +60,8 @@ interface Props {
  * on Stay, you're mostly on Food).
  */
 export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
+  const t = useT();
+  const sharedCount = expenses.filter((e) => e.scope !== "personal").length;
   const data = useMemo(() => {
     function toBase(amount: number, ccy: string) {
       if (ccy === currency) return amount;
@@ -85,15 +96,19 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
     <div className="space-y-5">
       <PageHeader
         backHref={`/trips/${tripId}/expenses`}
-        title="Spending breakdown"
-        subtitle={`${currency} ${fmt(data.totalBase)} across ${expenses.filter((e) => e.scope !== "personal").length} shared expense${expenses.filter((e) => e.scope !== "personal").length !== 1 ? "s" : ""}`}
+        title={t("expenses.spendingBreakdown")}
+        subtitle={t("expenses.breakdownSubtitle", {
+          currency,
+          total: fmt(data.totalBase),
+          count: sharedCount,
+        })}
       />
 
       {data.cats.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
-          <p className="text-sm font-semibold mb-1">Nothing to break down yet</p>
+          <p className="text-sm font-semibold mb-1">{t("expenses.breakdownEmptyTitle")}</p>
           <p className="text-xs text-muted-foreground">
-            Log a few shared expenses to see your spending profile.
+            {t("expenses.breakdownEmptySub")}
           </p>
         </div>
       ) : (
@@ -111,9 +126,11 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
                     <CatIcon className={`w-4 h-4 ${cfg.text}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm">{cfg.label}</p>
+                    <p className="font-bold text-sm">
+                      {t(CATEGORY_LABEL_KEY[cat] ?? CATEGORY_LABEL_KEY.other)}
+                    </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {count} transaction{count !== 1 ? "s" : ""}
+                      {t("expenses.transactionsCount", { count })}
                     </p>
                   </div>
                   <p className="text-xs font-bold tabular-nums text-right">
@@ -125,7 +142,7 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
                   {currency} {fmt(total)}
                 </p>
                 <p className="text-[11px] text-muted-foreground tabular-nums">
-                  Avg {currency} {fmt(avg)} per expense
+                  {t("expenses.avgPerExpense", { currency, amount: fmt(avg) })}
                 </p>
 
                 <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">

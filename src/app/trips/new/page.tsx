@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { CreateTripForm } from "@/components/trips/create-trip-form";
@@ -18,9 +20,19 @@ export default async function NewTripPage() {
   return (
     <DashboardShell>
       <div className="max-w-xl mx-auto">
+        <Link
+          href="/dashboard"
+          prefetch
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+          {t("nav.dashboard")}
+        </Link>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold">{t("trip.createNew")}</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            {t("trip.createNew")}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1.5">
             {t("trip.setupBasics")}
           </p>
         </div>

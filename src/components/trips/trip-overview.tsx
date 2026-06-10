@@ -12,7 +12,6 @@ import {
   Clock,
   Link2,
   Sparkles,
-  Hotel,
 } from "lucide-react";
 import { parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -20,7 +19,6 @@ import { parseDateOnly } from "@/lib/date-only";
 import Link from "next/link";
 import { toast } from "sonner";
 import { AiPlannerPanel } from "./ai-planner-panel";
-import { HotelSearchPanel } from "@/components/hotels/hotel-search-panel";
 import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -129,7 +127,6 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
   // roll-up of items / expenses / packing / balance.
   const [statsMember, setStatsMember] = useState<Member | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
-  const [hotelOpen, setHotelOpen] = useState(false);
 
   const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
   const gradient = getGradient(trip.id);
@@ -360,31 +357,21 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
               }`}
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              {copied ? "Copied" : "Copy invite"}
+              {copied ? t("common.copied") : t("trip.copyInvite")}
             </button>
           </div>
         ) : (
-          <p className="text-[11px] text-muted-foreground italic">No invite token set.</p>
+          <p className="text-[11px] text-muted-foreground italic">{t("trip.noInviteToken")}</p>
         )}
       </div>
 
-      {/* B21: lazy-mount panels — previously they rendered (with all
-          their state + fetch effects) on every overview load even when
-          closed. Both are heavy: AiPlannerPanel has the questionnaire
-          state + Anthropic client init, HotelSearchPanel auto-fires a
-          Foursquare search on mount. Now they unmount when closed. */}
+      {/* Lazy-mount the AI planner — its mount cost includes the
+          questionnaire state + Anthropic client init, so we only pay
+          it once the user opens the panel. */}
       {aiOpen && (
         <AiPlannerPanel
           open={aiOpen}
           onClose={() => setAiOpen(false)}
-          tripId={trip.id}
-          destination={trip.destination}
-        />
-      )}
-      {hotelOpen && (
-        <HotelSearchPanel
-          open={hotelOpen}
-          onClose={() => setHotelOpen(false)}
           tripId={trip.id}
           destination={trip.destination}
         />

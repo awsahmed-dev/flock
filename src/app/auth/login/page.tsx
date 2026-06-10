@@ -7,8 +7,17 @@ import { Logo } from "@/components/ui/logo";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-muted/20">
-      <div className="fixed top-4 right-4">
+    <div className="min-h-screen relative flex flex-col items-center justify-center px-4 overflow-hidden">
+      {/* B25-2: soft aurora backdrop instead of flat bg-muted/20 — gives
+          the auth screens a sense of place that matches the landing's
+          warm closing. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none -z-10 [mask-image:radial-gradient(70%_70%_at_50%_50%,black_40%,transparent_85%)]"
+      >
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full bg-gradient-to-br from-primary/20 via-violet-500/15 to-fuchsia-500/10 blur-[100px]" />
+      </div>
+      <div className="fixed top-4 end-4">
         <ThemeToggle />
       </div>
       <div className="w-full max-w-sm">

@@ -14,7 +14,7 @@ import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import Link from "next/link";
-import { Calendar, MapPin, Clock, ArrowRight, Plus, Globe2 } from "lucide-react";
+import { Calendar, Clock, ArrowRight, Plus, Globe2, Plane } from "lucide-react";
 import type { InferSelectModel } from "drizzle-orm";
 import type { trips as tripsTable } from "@/lib/db/schema";
 
@@ -165,12 +165,25 @@ export default async function DashboardPage() {
       {spotlight && (
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className={`text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
               ongoingTrips.length > 0
                 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
                 : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
             }`}>
-              {ongoingTrips.length > 0 ? "🟢 Ongoing now" : "🔵 Up next"}
+              {ongoingTrips.length > 0 ? (
+                <>
+                  <span className="relative flex w-2 h-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
+                  </span>
+                  Ongoing now
+                </>
+              ) : (
+                <>
+                  <Plane className="w-3 h-3" />
+                  Up next
+                </>
+              )}
             </span>
           </div>
 

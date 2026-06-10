@@ -18,16 +18,26 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 
 /* ─── Static configs ─────────────────────────────────────────────────── */
 
+/* Category visual configs. Label is looked up via i18n at render time
+ * (CATEGORY_LABELS) so this map only carries icon + colors. */
 const CATEGORY_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; bg: string; text: string; dot: string }
+  { icon: React.ElementType; bg: string; text: string; dot: string }
 > = {
-  accommodation: { label: "Stay", icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
-  transport:     { label: "Transport", icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },
-  food:          { label: "Food", icon: Utensils, bg: "bg-green-100 dark:bg-green-950/40", text: "text-green-700 dark:text-green-300", dot: "bg-green-500" },
-  activity:      { label: "Activity", icon: Ticket, bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
-  shopping:      { label: "Shopping", icon: ShoppingBag, bg: "bg-pink-100 dark:bg-pink-950/40", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
-  other:         { label: "Other", icon: MoreHorizontal, bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-slate-400" },
+  accommodation: { icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
+  transport:     { icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },
+  food:          { icon: Utensils, bg: "bg-green-100 dark:bg-green-950/40", text: "text-green-700 dark:text-green-300", dot: "bg-green-500" },
+  activity:      { icon: Ticket, bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
+  shopping:      { icon: ShoppingBag, bg: "bg-pink-100 dark:bg-pink-950/40", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
+  other:         { icon: MoreHorizontal, bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-slate-400" },
+};
+const CATEGORY_LABEL_KEY: Record<string, string> = {
+  accommodation: "expenses.catStay",
+  transport: "expenses.catTransport",
+  food: "expenses.catFood",
+  activity: "expenses.catActivity",
+  shopping: "expenses.catShopping",
+  other: "expenses.catOther",
 };
 
 const AVATAR_COLORS = [
@@ -209,7 +219,7 @@ export function ExpensesBoard({
               type="button"
               onClick={() => setShowAmounts((s) => !s)}
               className="text-white/80 hover:text-white transition-colors"
-              aria-label={showAmounts ? "Hide amounts" : "Show amounts"}
+              aria-label={showAmounts ? t("expenses.hideAmounts") : t("expenses.showAmounts")}
             >
               {showAmounts ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
@@ -286,11 +296,13 @@ export function ExpensesBoard({
                 >
                   {personalBudget && personalBudget > 0 ? (
                     <>
-                      Personal cap {currency} {fmt(personalBudget)} ·{" "}
-                      {Math.round(
-                        (derived.personalSpentBase / personalBudget) * 100,
-                      )}
-                      % used
+                      {t("expenses.personalCap", {
+                        currency,
+                        amount: fmt(personalBudget),
+                        percent: Math.round(
+                          (derived.personalSpentBase / personalBudget) * 100,
+                        ),
+                      })}
                     </>
                   ) : (
                     <>{t("expenses.setPersonalCap")}</>
@@ -365,7 +377,9 @@ export function ExpensesBoard({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium">{cfg.label}</span>
+                      <span className="text-xs font-medium">
+                        {t(CATEGORY_LABEL_KEY[cat] ?? CATEGORY_LABEL_KEY.other)}
+                      </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {currency} {fmt(amount)}
                       </span>
@@ -508,10 +522,13 @@ function SlimExpenseRow({
   baseAmount: number | null;
   onClick: () => void;
 }) {
+  const t = useT();
   const cat = CATEGORY_CONFIG[expense.category] ?? CATEGORY_CONFIG.other;
   const CatIcon = cat.icon;
   const isPayer = expense.paidBy === userId;
-  const payerName = isPayer ? "You" : (expense.payer?.displayName ?? "Someone");
+  const payerName = isPayer
+    ? t("expenses.payerYou")
+    : (expense.payer?.displayName ?? t("expenses.payerSomeone"));
   const mySplit = expense.splits.find((s) => s.userId === userId);
   const iOwe = !isPayer && mySplit && !mySplit.settled;
 

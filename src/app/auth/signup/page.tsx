@@ -7,8 +7,14 @@ import { Logo } from "@/components/ui/logo";
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-muted/20">
-      <div className="fixed top-4 right-4">
+    <div className="min-h-screen relative flex flex-col items-center justify-center px-4 overflow-hidden">
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none -z-10 [mask-image:radial-gradient(70%_70%_at_50%_50%,black_40%,transparent_85%)]"
+      >
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full bg-gradient-to-br from-fuchsia-500/15 via-primary/20 to-amber-500/10 blur-[100px]" />
+      </div>
+      <div className="fixed top-4 end-4">
         <ThemeToggle />
       </div>
       <div className="w-full max-w-sm">

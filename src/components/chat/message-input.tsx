@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition, useCallback } from "react";
 import { sendMessage } from "@/lib/actions/chat";
 import { toast } from "sonner";
+import { useT } from "@/components/i18n/locale-provider";
 import {
   Send,
   X,
@@ -41,6 +42,7 @@ function ExpenseForm({
   onSent: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("food");
   const [description, setDescription] = useState("");
@@ -58,7 +60,7 @@ function ExpenseForm({
         await sendMessage(fd);
         onSent();
       } catch {
-        toast.error("Failed to post expense");
+        toast.error(t("chat.failedToPostExpense"));
       }
     });
   }
@@ -126,6 +128,7 @@ function VoteForm({
   onSent: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [isPending, startTransition] = useTransition();
@@ -135,8 +138,6 @@ function VoteForm({
     const validOptions = options.filter((o) => o.trim());
     if (!question || validOptions.length < 2) return;
 
-    // We'll post a vote_card directly via sendMessage using /vote command
-    // Options will be set after the card is created
     const fd = new FormData();
     fd.set("tripId", tripId);
     fd.set("body", `/vote ${question}`);
@@ -145,7 +146,7 @@ function VoteForm({
         await sendMessage(fd);
         onSent();
       } catch {
-        toast.error("Failed to post vote");
+        toast.error(t("chat.failedToPostVote"));
       }
     });
   }
@@ -227,6 +228,7 @@ function ItineraryForm({
   onSent: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [title, setTitle] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -241,7 +243,7 @@ function ItineraryForm({
         await sendMessage(fd);
         onSent();
       } catch {
-        toast.error("Failed to post");
+        toast.error(t("chat.failedToPost"));
       }
     });
   }
@@ -299,6 +301,7 @@ interface Props {
 }
 
 export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyping, compact }: Props) {
+  const t = useT();
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
@@ -333,7 +336,7 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
         onAfterSend?.();
       } catch {
         setBody(body);
-        toast.error("Failed to send message");
+        toast.error(t("chat.failedToSend"));
       }
     });
   }

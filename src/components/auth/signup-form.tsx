@@ -128,7 +128,11 @@ export function SignupForm() {
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
+            disabled={loading}
+          >
             {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             {t("auth.signUp")}
           </Button>

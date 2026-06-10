@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
 import { Pin } from "lucide-react";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Reaction {
   id: string;
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
+  const t = useT();
   const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
@@ -64,10 +66,10 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
   function formatDateLabel(date: Date): string {
     const today = new Date();
     const d = new Date(date);
-    if (d.toDateString() === today.toDateString()) return "Today";
+    if (d.toDateString() === today.toDateString()) return t("chat.today");
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (d.toDateString() === yesterday.toDateString()) return t("chat.yesterday");
     return d.toLocaleDateString(undefined, { month: "long", day: "numeric" });
   }
 
@@ -80,11 +82,11 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
         <div className="border-b bg-amber-50 dark:bg-amber-950/20 px-4 py-2 space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
             <Pin className="w-3 h-3" />
-            Pinned ({pinnedMessages.length})
+            {t("chat.pinnedCount", { count: pinnedMessages.length })}
           </div>
           {pinnedMessages.slice(0, 2).map((m) => (
             <div key={m.id} className="text-xs text-muted-foreground truncate">
-              <span className="font-medium">{m.author?.displayName ?? "Unknown"}: </span>
+              <span className="font-medium">{m.author?.displayName ?? t("chat.unknownAuthor")}: </span>
               {m.body ?? `[${m.type.replace("_", " ")}]`}
             </div>
           ))}
