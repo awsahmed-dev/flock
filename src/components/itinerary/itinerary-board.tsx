@@ -108,9 +108,8 @@ export function ItineraryBoard({
   const showPlanModes = true;
   void searchParams;
   const [items, setItems] = useState(initialItems);
-  // Plan mode toggle — "map" (default) or "book" (affiliate CTAs).
-  // Only visible when ?previewAffiliate=1 is on the URL.
-  const [planMode, setPlanMode] = useState<"map" | "book">("map");
+  // B24: planMode removed — Book mode merged into the Bookings tab.
+  const [addPickerOpen, setAddPickerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -237,55 +236,6 @@ export function ItineraryBoard({
           overlay with its own sticky bar carrying the same toggle so
           the user can swap back when the sheet is hidden underneath. */}
 
-      {/* Book overlay — when active, sits on top of the canvas, opaque
-          so the map underneath disappears visually. We don't unmount the
-          map so swapping back is instant and the Mapbox instance keeps
-          its tiles, camera, etc. */}
-      {showPlanModes && planMode === "book" && (
-        <div className="absolute inset-0 z-30 bg-background overflow-y-auto">
-          {/* B21: sticky in-overlay mode toggle so the user can flip
-              back to Map. Sheet is hidden under the overlay; the toggle
-              in the sheet's control strip isn't reachable here. */}
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 flex items-center justify-center">
-            <div className="inline-flex items-center gap-1 rounded-full bg-muted/60 p-1">
-              <button
-                type="button"
-                onClick={() => setPlanMode("map")}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <MapPin className="w-3 h-3" />
-                {t("plan.modeMap")}
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
-                disabled
-              >
-                <Hotel className="w-3 h-3" />
-                {t("plan.modeBook")}
-              </button>
-            </div>
-          </div>
-          <BookMode
-            tripId={tripId}
-            destination={destination}
-            startDate={days[0] ?? ""}
-            endDate={days[days.length - 1] ?? ""}
-            members={4}
-            currency={currency}
-            locale={locale === "ar" ? "ar" : "en"}
-            days={days}
-            items={items.map((i) => ({
-              id: i.id,
-              type: i.type,
-              dayDate: i.dayDate,
-              title: i.title,
-              locationName: i.locationName ?? null,
-            }))}
-          />
-        </div>
-      )}
-
       {/* ── Map layer ─────────────────────────────────────────────── */}
       <div className="absolute inset-0">
         <MapboxPlanMap
@@ -302,8 +252,47 @@ export function ItineraryBoard({
           below. Top of canvas is now clean — map gets the full surface,
           no floating chrome competing with the trip topbar. */}
 
-      {/* B21: Add-place control moved into the bottom-sheet control
-          strip (see header below). Single + icon on the end. */}
+      {/* B24: Add controls live on a floating + FAB at bottom-right
+          again, sitting just above the sheet. Tapping opens a small
+          picker offering AI Plan or manual Add. The previous in-sheet +
+          button felt fiddly on mobile and didn't expose AI Plan from
+          the same spot. */}
+      <div className="absolute z-40 end-4 sm:end-6 bottom-[120px] sm:bottom-[88px] flex flex-col items-end gap-2 pointer-events-none">
+        {addPickerOpen && (
+          <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAddPickerOpen(false);
+                setAiOpen(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-card border border-border shadow-lg px-4 py-2 text-xs font-bold hover:border-primary/40 hover:bg-primary/5 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              {t("itinerary.aiPlan")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAddPickerOpen(false);
+                openAddFor(focusedDay);
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-card border border-border shadow-lg px-4 py-2 text-xs font-bold hover:border-primary/40 hover:bg-primary/5 transition-colors"
+            >
+              <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              {t("itinerary.addPlace")}
+            </button>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setAddPickerOpen((o) => !o)}
+          className={`pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white flex items-center justify-center shadow-xl shadow-primary/40 hover:scale-105 transition-all ${addPickerOpen ? "rotate-45" : ""}`}
+          aria-label={addPickerOpen ? "Close" : "Add"}
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      </div>
 
       {/* ── Bottom sheet (B11: motion-driven drag-to-expand) ────────
           Was a click-to-toggle button which made the sheet feel like a
@@ -346,39 +335,13 @@ export function ItineraryBoard({
               into ~360px on mobile — felt tight and the icons had no
               labels so the toggle was opaque. */}
 
-          {/* Row 1: Map / Book toggle — full labeled segments, centered */}
-          {showPlanModes && (
-            <div className="px-4 pb-2 flex items-center justify-center">
-              <div className="inline-flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setPlanMode("map")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
-                    planMode === "map"
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <MapPin className="w-3 h-3" />
-                  {t("plan.modeMap")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPlanMode("book")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
-                    planMode === "book"
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Hotel className="w-3 h-3" />
-                  {t("plan.modeBook")}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* B24: Map/Book mode toggle removed. The Plan tab is now purely
+              the map + day sheet. Booking lives in the new Bookings tab
+              (renamed from Wallet) which holds both 'to book' suggestions
+              and already-booked tickets. Cleaner mental model: Plan =
+              what you're doing, Bookings = what you're spending on. */}
 
-          {/* Row 2: day chips — own row, horizontal scroll, full width */}
+          {/* Day chips — own row, horizontal scroll, full width */}
           <div className="px-3 pb-2 overflow-x-auto scrollbar-none">
             <div className="inline-flex items-center gap-1.5">
               <button
@@ -418,13 +381,15 @@ export function ItineraryBoard({
             </div>
           </div>
 
-          {/* Row 3: day title (tap to expand sheet) + Add place inline */}
-          <div className="w-full px-4 pb-2 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSheetOpen((o) => !o)}
-              className="flex-1 min-w-0 text-left hover:bg-accent/20 rounded-lg -mx-1 px-1 py-0.5 transition-colors"
-            >
+          {/* Row 3: day title (tap to expand sheet) — Add controls moved
+              to a floating + FAB at bottom-right which opens a picker
+              offering AI Plan or manual Add. */}
+          <button
+            type="button"
+            onClick={() => setSheetOpen((o) => !o)}
+            className="w-full px-4 pb-2 flex items-center justify-between gap-2 text-left hover:bg-accent/20 transition-colors"
+          >
+            <div className="min-w-0">
               <p className="font-bold text-sm truncate">
                 {focusedDay
                   ? `${t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })} · ${format(parseISO(focusedDay), "EEE, MMM d")}`
@@ -435,25 +400,11 @@ export function ItineraryBoard({
                   ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
                   : t("itinerary.items", { count: items.length })}
               </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => openAddFor(focusedDay)}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white px-3 py-2 text-[11px] font-bold shadow-md shadow-primary/30 hover:opacity-90 transition-opacity"
-              title={t("itinerary.addPlace")}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {t("itinerary.addPlace")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSheetOpen((o) => !o)}
-              className="shrink-0 w-6 h-6 flex items-center justify-center text-muted-foreground"
-              aria-label={sheetOpen ? "Collapse" : "Expand"}
-            >
+            </div>
+            <span className="shrink-0 text-muted-foreground">
               {sheetOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-            </button>
-          </div>
+            </span>
+          </button>
 
           {/* B17 (audit fix #9): per-day AI Plan + Find-a-Stay buttons
               are redundant with the new Book mode (hotels are per-city,

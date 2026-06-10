@@ -96,8 +96,12 @@ function lookup(dict: unknown, key: string): string | null {
   return typeof cur === "string" ? cur : null;
 }
 
+// B23: branch key can be a plural category (one, two, few, many, zero,
+// other) OR an exact-match like `=0` / `=1`. Both forms appear in real
+// ICU plural strings; previously only the keyword form matched, so any
+// translation using `=0 {All hotels booked}` rendered the raw template.
 const PLURAL_RE =
-  /\{(\w+),\s*plural,\s*((?:\w+\s*\{[^}]*\}\s*)+)\}/g;
+  /\{(\w+),\s*plural,\s*((?:=?\w+\s*\{[^}]*\}\s*)+)\}/g;
 
 function interpolate(
   template: string,
@@ -112,13 +116,19 @@ function interpolate(
       const value = Number(params[name]);
       const category = pluralCategory(value, locale);
       const branches: Record<string, string> = {};
-      const branchRe = /(\w+)\s*\{([^}]*)\}/g;
+      const branchRe = /(=?\w+)\s*\{([^}]*)\}/g;
       let m: RegExpExecArray | null;
       while ((m = branchRe.exec(cases)) !== null) {
         branches[m[1]] = m[2];
       }
+      // Exact-match `=N` wins over category. Falls back to category,
+      // then `other`, then `one` so missing branches degrade gracefully.
       const chosen =
-        branches[category] ?? branches.other ?? branches.one ?? "";
+        branches[`=${value}`] ??
+        branches[category] ??
+        branches.other ??
+        branches.one ??
+        "";
       // `#` inside a branch is the numeric value.
       return chosen.replace(/#/g, String(value));
     },

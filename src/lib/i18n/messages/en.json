@@ -127,7 +127,7 @@
     "votes": "Votes",
     "expenses": "Expenses",
     "pack": "Pack",
-    "wallet": "Wallet",
+    "wallet": "Bookings",
     "dashboard": "Dashboard",
     "allTrips": "All trips",
     "notificationSettings": "Notification settings",
@@ -149,6 +149,8 @@
     "pastTrips": "past trips",
     "newTrip": "New trip",
     "allTripsHeading": "All trips",
+    "activeTripsHeading": "Your trips",
+    "pastTripsHeading": "Memories",
     "openTrip": "Open trip"
   },
   "actionHub": {
@@ -217,9 +219,9 @@
     "moneyYoureSettled": "All settled up",
     "packPercentPacked": "{percent}% packed",
     "packCount": "{packed}/{total}",
-    "wallet": "Wallet",
+    "wallet": "Bookings",
     "walletEmpty": "Tickets",
-    "walletSubline": "Hotels, flights, eSIM"
+    "walletSubline": "Book + manage all tickets"
   },
   "votes": {
     "title": "Votes",

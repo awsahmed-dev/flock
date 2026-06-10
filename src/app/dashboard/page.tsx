@@ -7,6 +7,8 @@ import { trips, tripMembers, profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { TripGrid, SuggestedTrips } from "@/components/trips/trip-grid";
+import { PastTripsRow } from "@/components/dashboard/past-trips-row";
+import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
 import { parseISO, differenceInDays, isPast, isFuture } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
@@ -50,7 +52,7 @@ export default async function DashboardPage() {
   // email only when nothing else is set.
   const profileRow = await db.query.profiles.findFirst({
     where: eq(profiles.id, user.id),
-    columns: { displayName: true },
+    columns: { displayName: true, avatarUrl: true },
   });
   const firstName =
     profileRow?.displayName?.split(" ")[0] ||
@@ -117,22 +119,33 @@ export default async function DashboardPage() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
             {t(`greeting.${timeOfDay}`, { name: firstName })}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {allTrips.length === 0
-              ? t("greeting.tripsSummaryEmpty")
-              : upcomingTrips.length > 0
-              ? t("greeting.tripsSummary", { upcoming: upcomingTrips.length, next: upcomingTrips[0].name })
-              : t("greeting.tripsSummaryEmpty")}
-          </p>
+          {/* B24: the "4 upcoming · Next: Roadtrip" subline duplicated
+              what the stat tiles + Up-Next hero card already show. Hidden
+              when there's >0 trips since the hero already calls it out. */}
+          {allTrips.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t("greeting.tripsSummaryEmpty")}
+            </p>
+          )}
         </div>
-        <Link
-          href="/trips/new"
-          prefetch
-          className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3 py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-opacity"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          {t("dashboard.newTrip")}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/trips/new"
+            prefetch
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3 py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-opacity"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {t("dashboard.newTrip")}
+          </Link>
+          {/* B24: profile + account menu lifted out of the trip-shell
+              dropdown so it lives on the main dashboard where overall
+              app settings belong. */}
+          <DashboardAccountMenu
+            displayName={profileRow?.displayName ?? firstName}
+            avatarUrl={profileRow?.avatarUrl ?? null}
+            userId={user.id}
+          />
+        </div>
       </div>
 
       {/* B11: metrics inline as small chips. Single line on most viewports,
@@ -222,18 +235,27 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ── All trips grid ─────────────────────────────────────────── */}
+      {/* B24: active trips list (upcoming + ongoing). Past trips moved
+          to their own horizontal-scroll row below so the main list isn't
+          dominated by finished trips. */}
       <div>
-        {allTrips.length > 0 && (
+        {allTrips.filter((t) => !isPast(parseDateOnly(t.endDate))).length > 0 && (
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-              {t("dashboard.allTripsHeading")} · {allTrips.length}
+              {t("dashboard.activeTripsHeading")}
             </h2>
             <div className="flex-1 h-px bg-border/60" />
           </div>
         )}
-        <TripGrid trips={allTrips} />
+        <TripGrid trips={allTrips.filter((t) => !isPast(parseDateOnly(t.endDate)))} />
       </div>
+
+      {/* B24: past trips — horizontal scroll cards, styled like the
+          inspiration row so finished trips feel like memories instead of
+          clutter in the active list. */}
+      {pastTrips.length > 0 && (
+        <PastTripsRow trips={pastTrips} />
+      )}
 
       {/* B4: Paxawa-curated inspiration — horizontal scroll teaser. Placeholder
           until the suggestions backend lands. Hidden when the user has zero

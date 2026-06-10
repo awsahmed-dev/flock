@@ -127,7 +127,7 @@
     "votes": "التصويتات",
     "expenses": "المصاريف",
     "pack": "أمتعة",
-    "wallet": "المحفظة",
+    "wallet": "الحجوزات",
     "dashboard": "اللوحة",
     "allTrips": "كل الرحلات",
     "notificationSettings": "إعدادات الإشعارات",
@@ -149,6 +149,8 @@
     "pastTrips": "رحلات سابقة",
     "newTrip": "رحلة جديدة",
     "allTripsHeading": "كل الرحلات",
+    "activeTripsHeading": "رحلاتك",
+    "pastTripsHeading": "ذكرياتك",
     "openTrip": "افتح الرحلة"
   },
   "actionHub": {
@@ -217,9 +219,9 @@
     "moneyYoureSettled": "لا شيء عليك ولا لك",
     "packPercentPacked": "{percent}% جاهز",
     "packCount": "{packed}/{total}",
-    "wallet": "محفظة",
+    "wallet": "الحجوزات",
     "walletEmpty": "تذاكر",
-    "walletSubline": "فنادق، طيران، شرائح"
+    "walletSubline": "احجز وتابع تذاكرك"
   },
   "votes": {
     "title": "التصويتات",
