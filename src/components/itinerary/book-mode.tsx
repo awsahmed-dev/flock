@@ -58,6 +58,15 @@ interface Props {
   locale: "en" | "ar";
   days: string[];
   items: ItineraryItemRef[];
+  /**
+   * B24-followup: when embedded inside the unified Bookings page, skip
+   * the standalone page-level header (title/subtitle/progress) + outer
+   * wrapper padding + trailing wallet link, since the parent
+   * BookingsBoard renders those once for the whole page. Without this
+   * flag the page had two competing headers stacked on top of each
+   * other.
+   */
+  embedded?: boolean;
 }
 
 interface PendingIntent {
@@ -81,6 +90,7 @@ export function BookMode({
   locale,
   days,
   items,
+  embedded = false,
 }: Props) {
   const t = useT();
   const [intents, setIntents] = useState<PendingIntent[]>([]);
@@ -180,37 +190,36 @@ export function BookMode({
   const progress = toBookCount > 0 ? Math.min(100, Math.round((bookedCount / toBookCount) * 100)) : 0;
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 pb-20 space-y-5">
-      {/* B17 (audit fix #3): mental anchor at top — explicit framing so
-          users know they're booking from their plan, not entering a
-          marketplace. Status bar shows progress through the list. */}
-      <header className="space-y-2">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-primary">
-          {t("plan.bookHeader")}
-        </p>
-        <h2 className="text-xl font-extrabold leading-tight">
-          {t("plan.bookSubtitle", { destination: cities[0] ?? destination })}
-        </h2>
-        <p className="text-[11px] text-muted-foreground">
-          {t("plan.bookExplainer")}
-        </p>
-        {toBookCount > 0 && (
-          <div className="rounded-xl border border-border bg-card p-2.5">
-            <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
-              <span className="text-muted-foreground">
-                {t("plan.progressLine", { booked: bookedCount, total: toBookCount })}
-              </span>
-              <span className="tabular-nums text-primary">{progress}%</span>
+    <div className={embedded ? "space-y-5" : "max-w-2xl mx-auto p-4 sm:p-6 pb-20 space-y-5"}>
+      {!embedded && (
+        <header className="space-y-2">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-primary">
+            {t("plan.bookHeader")}
+          </p>
+          <h2 className="text-xl font-extrabold leading-tight">
+            {t("plan.bookSubtitle", { destination: cities[0] ?? destination })}
+          </h2>
+          <p className="text-[11px] text-muted-foreground">
+            {t("plan.bookExplainer")}
+          </p>
+          {toBookCount > 0 && (
+            <div className="rounded-xl border border-border bg-card p-2.5">
+              <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
+                <span className="text-muted-foreground">
+                  {t("plan.progressLine", { booked: bookedCount, total: toBookCount })}
+                </span>
+                <span className="tabular-nums text-primary">{progress}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-violet-600 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-violet-600 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </header>
+          )}
+        </header>
+      )}
 
       {/* Pending intents — the "did you book it?" active confirmation banners.
           Show at the top so the user can't miss them. */}
@@ -439,32 +448,32 @@ export function BookMode({
         </Section>
       )}
 
-      {/* Hint to the Wallet tab — closes the loop on the mental model. */}
-      <Link
-        href={`/trips/${tripId}/wallet`}
-        className="block rounded-2xl border border-dashed border-border bg-muted/20 p-4 hover:border-primary/40 hover:bg-muted/40 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-primary" />
+      {!embedded && (
+        <Link
+          href={`/trips/${tripId}/wallet`}
+          className="block rounded-2xl border border-dashed border-border bg-muted/20 p-4 hover:border-primary/40 hover:bg-muted/40 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">{t("plan.walletLinkTitle")}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("plan.walletLinkSub")}
+              </p>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-primary rtl:rotate-180" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">{t("plan.walletLinkTitle")}</p>
-            <p className="text-[11px] text-muted-foreground">
-              {t("plan.walletLinkSub")}
-            </p>
-          </div>
-          <ArrowUpRight className="w-4 h-4 text-primary rtl:rotate-180" />
-        </div>
-      </Link>
+        </Link>
+      )}
 
-      {/* B17 (audit fix #8): affiliate disclosure — one short line at
-          the bottom so users (and EU/KSA regulators) know we may earn
-          commission on these links. Trust-builder, not buried. */}
-      <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
-        <Info className="w-3 h-3 mt-0.5 shrink-0" />
-        <span>{t("plan.disclosure")}</span>
-      </p>
+      {!embedded && (
+        <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
+          <Info className="w-3 h-3 mt-0.5 shrink-0" />
+          <span>{t("plan.disclosure")}</span>
+        </p>
+      )}
     </div>
   );
 }

@@ -491,6 +491,14 @@
     "forwardSub": "Send any confirmation to trip-abc@paxawa.com — we'll add it",
     "copyAddress": "Copy address"
   },
+  "bookings": {
+    "totalLabel": "Total trip spend",
+    "totalSubline": "{count, plural, =0 {No bookings yet} one {1 booking confirmed} other {# bookings confirmed}}",
+    "todoTitle": "Still to book",
+    "todoSub": "Hotels, flights, eSIM + activities derived from your plan",
+    "bookedTitle": "Booked",
+    "bookedSub": "{count, plural, =0 {Nothing booked yet} one {1 confirmed ticket} other {# confirmed tickets}}"
+  },
   "wallet": {
     "section": "Wallet",
     "totalLine": "{count, plural, one {1 booking} other {# bookings}} · total spend",

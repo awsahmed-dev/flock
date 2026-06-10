@@ -1,96 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { LogOut, LayoutDashboard, Settings } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Logo } from "@/components/ui/logo";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 interface Props {
   children: React.ReactNode;
+  /**
+   * B24-followup: profile/account menu rendered in the top-right of the
+   * global header. The placeholder "Me" avatar that lived here was a
+   * leftover from the early scaffold — the dashboard page now passes a
+   * real DashboardAccountMenu with the signed-in user's avatar +
+   * Profile / Notifications / Theme / Sign-out. When this prop is
+   * omitted (sub-pages that don't fetch user info) the slot is empty.
+   */
+  accountMenu?: React.ReactNode;
 }
 
-export function DashboardShell({ children }: Props) {
-  const router = useRouter();
-  const supabase = createClient();
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
-
+export function DashboardShell({ children, accountMenu }: Props) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Top nav */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
-            className="flex items-center text-foreground"
+            className="flex items-center text-foreground shrink-0"
             aria-label="Paxawa dashboard"
           >
             <Logo variant="full" size="sm" />
           </Link>
-
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <NotificationBell />
-            <ThemeToggle />
+            {accountMenu}
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                      Me
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              }
-            />
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem
-                render={<Link href="/dashboard" />}
-                className="gap-2"
-              >
-                <LayoutDashboard className="w-4 h-4" /> Dashboard
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                render={<Link href="/account/notifications" />}
-                className="gap-2"
-              >
-                <Settings className="w-4 h-4" /> Notification settings
-              </DropdownMenuItem>
-              {/* B15: language switcher. Rendered outside a
-                  DropdownMenuItem because the LanguageSwitcher *is*
-                  the interactive control — wrapping would steal its
-                  click + double the focus ring. */}
-              <div className="px-1.5 py-0.5">
-                <LanguageSwitcher />
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="gap-2 text-destructive focus:text-destructive"
-              >
-                <LogOut className="w-4 h-4" /> Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 

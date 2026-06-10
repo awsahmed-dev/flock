@@ -3,8 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
-import { WalletBoard } from "@/components/wallet/wallet-board";
-import { BookMode } from "@/components/itinerary/book-mode";
+import { BookingsBoard } from "@/components/wallet/bookings-board";
 import { getLocale } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { itineraryItems } from "@/lib/db/schema";
@@ -18,12 +17,13 @@ interface Props {
 }
 
 /**
- * B24: Bookings — combined "what you still need to book" + "what you've
- * already booked" + private items. Replaces the standalone Book mode
- * inside Plan. User mental model: Plan = what you're doing, Bookings =
- * what you're spending on. The "to book" section above shows affiliate
- * CTAs derived from the itinerary; the cards below show parsed/
- * confirmed tickets that landed in the wallet.
+ * B24-followup: unified Bookings page. The previous version just stacked
+ * <BookMode /> + <WalletBoard /> which gave the page two competing
+ * headers, two duplicated max-w containers, and no shared spend metric.
+ * The whole page is now owned by <BookingsBoard>, which renders one
+ * trip-context header, one big spend tile, and an accordion of "Still
+ * to book" + "Booked" sections so the user sees the bookings flow as
+ * one continuous surface.
  */
 export default async function WalletPage({ params }: Props) {
   const { id } = await params;
@@ -46,34 +46,24 @@ export default async function WalletPage({ params }: Props) {
   }).map((d) => format(d, "yyyy-MM-dd"));
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      {/* Top: 'to book' suggestions derived from the itinerary */}
-      <BookMode
-        tripId={trip.id}
-        destination={trip.destination}
-        startDate={trip.startDate as string}
-        endDate={trip.endDate as string}
-        members={trip.members.length}
-        currency={trip.currency}
-        locale={locale === "ar" ? "ar" : "en"}
-        days={days}
-        items={itinRows.map((i) => ({
-          id: i.id,
-          type: i.type,
-          dayDate: i.dayDate,
-          title: i.title,
-          locationName: i.locationName ?? null,
-        }))}
-      />
-
-      {/* Below: parsed/confirmed booking cards (Wallet section) */}
-      <WalletBoard
-        userId={user.id}
-        tripName={trip.name}
-        destination={trip.destination}
-        startDate={trip.startDate as string}
-        endDate={trip.endDate as string}
-      />
-    </div>
+    <BookingsBoard
+      tripId={trip.id}
+      tripName={trip.name}
+      destination={trip.destination}
+      startDate={trip.startDate as string}
+      endDate={trip.endDate as string}
+      members={trip.members.length}
+      currency={trip.currency}
+      locale={locale === "ar" ? "ar" : "en"}
+      userId={user.id}
+      days={days}
+      items={itinRows.map((i) => ({
+        id: i.id,
+        type: i.type,
+        dayDate: i.dayDate,
+        title: i.title,
+        locationName: i.locationName ?? null,
+      }))}
+    />
   );
 }

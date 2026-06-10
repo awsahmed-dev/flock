@@ -491,6 +491,14 @@
     "forwardSub": "حوِّل أي تأكيد إلى trip-abc@paxawa.com وسنضيفه",
     "copyAddress": "انسخ العنوان"
   },
+  "bookings": {
+    "totalLabel": "إجمالي مصاريف الرحلة",
+    "totalSubline": "{count, plural, =0 {لا حجوزات بعد} one {حجز واحد مؤكَّد} two {حجزان مؤكَّدان} few {{count} حجوزات مؤكَّدة} many {{count} حجزًا مؤكَّدًا} other {{count} حجز مؤكَّد}}",
+    "todoTitle": "ما زال يحتاج حجز",
+    "todoSub": "فنادق وطيران وشريحة eSIM وأنشطة مستخرجة من خطّتك",
+    "bookedTitle": "محجوز",
+    "bookedSub": "{count, plural, =0 {لا حجوزات بعد} one {تذكرة واحدة مؤكَّدة} two {تذكرتان مؤكَّدتان} few {{count} تذاكر مؤكَّدة} many {{count} تذكرة مؤكَّدة} other {{count} تذكرة مؤكَّدة}}"
+  },
   "wallet": {
     "section": "المحفظة",
     "totalLine": "{count, plural, one {حجز واحد} two {حجزان} few {{count} حجوزات} many {{count} حجزًا} other {{count} حجز}} · إجمالي الصرف",

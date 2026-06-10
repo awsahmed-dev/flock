@@ -108,65 +108,62 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <DashboardShell>
-      {/* ── Greeting ─────────────────────────────────────────────────
-          B11: tighter top section. Was: large h1 + paragraph + 4 huge
-          stat tiles taking ~280px of vertical space. Now: h1 with
-          metrics inline as small pills, freeing the fold for actual
-          trip cards. */}
-      <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-            {t(`greeting.${timeOfDay}`, { name: firstName })}
-          </h1>
-          {/* B24: the "4 upcoming · Next: Roadtrip" subline duplicated
-              what the stat tiles + Up-Next hero card already show. Hidden
-              when there's >0 trips since the hero already calls it out. */}
-          {allTrips.length === 0 && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t("greeting.tripsSummaryEmpty")}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
+    <DashboardShell
+      accountMenu={
+        <DashboardAccountMenu
+          displayName={profileRow?.displayName ?? firstName}
+          avatarUrl={profileRow?.avatarUrl ?? null}
+          userId={user.id}
+        />
+      }
+    >
+      {/* B24-followup: consistent vertical rhythm between sections. Was a
+          chaotic mix of mb-4 / mb-6 / mb-8 / no-margin that made the
+          Memories row sit flush against the trips grid. Now every
+          section is a child of one space-y wrapper. */}
+      <div className="space-y-10 sm:space-y-12">
+      <div className="space-y-4">
+        {/* ── Greeting row: name + new-trip CTA only. Profile lives in
+            the global header now, not next to the action button. */}
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              {t(`greeting.${timeOfDay}`, { name: firstName })}
+            </h1>
+            {allTrips.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("greeting.tripsSummaryEmpty")}
+              </p>
+            )}
+          </div>
           <Link
             href="/trips/new"
             prefetch
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3 py-2 text-xs font-bold text-white shadow-md shadow-primary/20 transition-opacity"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3.5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-opacity"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             {t("dashboard.newTrip")}
           </Link>
-          {/* B24: profile + account menu lifted out of the trip-shell
-              dropdown so it lives on the main dashboard where overall
-              app settings belong. */}
-          <DashboardAccountMenu
-            displayName={profileRow?.displayName ?? firstName}
-            avatarUrl={profileRow?.avatarUrl ?? null}
-            userId={user.id}
-          />
         </div>
-      </div>
 
-      {/* B11: metrics inline as small chips. Single line on most viewports,
-          wraps on phones. No more 4-tile-grid that dominated the fold. */}
-      {allTrips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 mb-6">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2.5 py-1 text-[11px]"
-            >
-              <span className={`font-bold tabular-nums ${s.color}`}>{s.value}</span>
-              <span className="text-muted-foreground">{s.label.toLowerCase()}</span>
-            </div>
-          ))}
-        </div>
-      )}
+        {allTrips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {stats.map((s) => (
+              <div
+                key={s.label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2.5 py-1 text-[11px]"
+              >
+                <span className={`font-bold tabular-nums ${s.color}`}>{s.value}</span>
+                <span className="text-muted-foreground">{s.label.toLowerCase()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Spotlight: ongoing or soonest upcoming ─────────────────── */}
       {spotlight && (
-        <div className="mb-8">
+        <div>
           <div className="flex items-center gap-2 mb-3">
             <span className={`text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
               ongoingTrips.length > 0
@@ -235,32 +232,24 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* B24: active trips list (upcoming + ongoing). Past trips moved
-          to their own horizontal-scroll row below so the main list isn't
-          dominated by finished trips. */}
-      <div>
-        {allTrips.filter((t) => !isPast(parseDateOnly(t.endDate))).length > 0 && (
-          <div className="flex items-center gap-2 mb-4">
+      {allTrips.filter((t) => !isPast(parseDateOnly(t.endDate))).length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
               {t("dashboard.activeTripsHeading")}
             </h2>
             <div className="flex-1 h-px bg-border/60" />
           </div>
-        )}
-        <TripGrid trips={allTrips.filter((t) => !isPast(parseDateOnly(t.endDate)))} />
-      </div>
+          <TripGrid trips={allTrips.filter((t) => !isPast(parseDateOnly(t.endDate)))} />
+        </section>
+      )}
 
-      {/* B24: past trips — horizontal scroll cards, styled like the
-          inspiration row so finished trips feel like memories instead of
-          clutter in the active list. */}
       {pastTrips.length > 0 && (
         <PastTripsRow trips={pastTrips} />
       )}
 
-      {/* B4: Paxawa-curated inspiration — horizontal scroll teaser. Placeholder
-          until the suggestions backend lands. Hidden when the user has zero
-          trips so the empty state stays focused on creating one. */}
       {allTrips.length > 0 && <SuggestedTrips />}
+      </div>
     </DashboardShell>
   );
 }

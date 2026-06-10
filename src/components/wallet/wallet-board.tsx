@@ -25,9 +25,29 @@ interface Props {
   destination?: string;
   startDate?: string;
   endDate?: string;
+  /**
+   * B24-followup: embedded mode for the unified Bookings page. Skips the
+   * page-level trip context line, the big "WALLET / total spend" tile,
+   * and the forward-emails footer hint — the parent BookingsBoard owns
+   * those so the page reads as one coherent surface instead of two
+   * stacked sub-pages.
+   */
+  embedded?: boolean;
+  /**
+   * When embedded, the wrapper passes the dollar total down so the page
+   * header can show one unified spend figure instead of two.
+   */
+  onTotalsReady?: (total: number, currency: string, count: number) => void;
 }
 
-export function WalletBoard({ userId: _userId, tripName, destination, startDate, endDate }: Props) {
+export function WalletBoard({
+  userId: _userId,
+  tripName,
+  destination,
+  startDate,
+  endDate,
+  embedded = false,
+}: Props) {
   const t = useT();
   const [openId, setOpenId] = useState<string | null>(null);
   // Track the most-recently-confirmed booking so we can pulse its card —
@@ -94,10 +114,8 @@ export function WalletBoard({ userId: _userId, tripName, destination, startDate,
     : "";
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
-      {/* B17 (audit fix #5): trip context up top so the Wallet doesn't
-          feel adrift. */}
-      {tripName && (
+    <div className={embedded ? "space-y-5" : "space-y-5 max-w-2xl mx-auto"}>
+      {!embedded && tripName && (
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <MapPin className="w-3 h-3" />
           <span className="font-bold text-foreground truncate">{tripName}</span>
@@ -106,20 +124,19 @@ export function WalletBoard({ userId: _userId, tripName, destination, startDate,
         </div>
       )}
 
-      {/* Section header — total spend. The scope filter is gone — we
-          group items by visibility instead, which is the natural mental
-          model and removes the dead-tab feel. */}
-      <div>
-        <p className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
-          {t("wallet.section")}
-        </p>
-        <p className="text-3xl font-extrabold tabular-nums">
-          {currency} {totalSpend.toLocaleString()}
-        </p>
-        <p className="text-[11px] text-muted-foreground">
-          {t("wallet.totalLine", { count: MOCK_BOOKINGS.length })}
-        </p>
-      </div>
+      {!embedded && (
+        <div>
+          <p className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
+            {t("wallet.section")}
+          </p>
+          <p className="text-3xl font-extrabold tabular-nums">
+            {currency} {totalSpend.toLocaleString()}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {t("wallet.totalLine", { count: MOCK_BOOKINGS.length })}
+          </p>
+        </div>
+      )}
 
       {/* Crew items — visible to everyone on the trip */}
       {crewItems.length > 0 && (
@@ -170,22 +187,23 @@ export function WalletBoard({ userId: _userId, tripName, destination, startDate,
         </div>
       )}
 
-      {/* Forward-emails footer hint — the gateway to the future parser flow */}
-      <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-          <Sparkles className="w-4 h-4 text-primary" />
+      {!embedded && (
+        <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold leading-snug">{t("wallet.forwardTitle")}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{t("wallet.forwardSub")}</p>
+          </div>
+          <button
+            type="button"
+            className="text-[11px] font-bold text-primary hover:opacity-80 shrink-0"
+          >
+            {t("wallet.copyAddress")}
+          </button>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold leading-snug">{t("wallet.forwardTitle")}</p>
-          <p className="text-[11px] text-muted-foreground truncate">{t("wallet.forwardSub")}</p>
-        </div>
-        <button
-          type="button"
-          className="text-[11px] font-bold text-primary hover:opacity-80 shrink-0"
-        >
-          {t("wallet.copyAddress")}
-        </button>
-      </div>
+      )}
 
       <WalletDetailSheet booking={opened} onClose={() => setOpenId(null)} />
     </div>
