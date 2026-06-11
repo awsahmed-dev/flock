@@ -95,7 +95,10 @@ export function MembersBoard({
           </h3>
           <div className="flex-1 h-px bg-border/60" />
         </div>
-        <div className="space-y-2">
+        {/* B27-r2: desktop grid of member cards (2 col on lg, 3 on xl) so
+            the page fills its width and shows multiple travelers at once.
+            Mobile stays as a single-column stack. */}
+        <div className="space-y-2 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
           {owner && (
             <MemberRow
               member={owner}

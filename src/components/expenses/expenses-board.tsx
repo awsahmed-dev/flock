@@ -331,7 +331,12 @@ export function ExpensesBoard({
         />
       </div>
 
-      {/* ── Activity preview (with View all → /transactions) ──────── */}
+      {/* B27-r2: desktop 2-col content. Mobile keeps the single
+          stacked column. Activity is the user's primary scan target so
+          it gets the main column; breakdown + balances are reference
+          views and stack on the sticky right rail. */}
+      <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-5 lg:items-start">
+      <div className="space-y-5 min-w-0">
       <SectionCard
         title={`${t("expenses.activity")}${expenseList.length > 0 ? ` · ${expenseList.length}` : ""}`}
         subtitle={t("expenses.mostRecent")}
@@ -352,6 +357,8 @@ export function ExpensesBoard({
           ))}
         </ul>
       </SectionCard>
+      </div>
+      <div className="space-y-5 lg:sticky lg:top-6 mt-5 lg:mt-0">
 
       {/* B22: hide breakdown until there are at least 3 expenses — with
           only one or two entries the chart shows a single 100% bar that
@@ -451,6 +458,8 @@ export function ExpensesBoard({
           </ul>
         </SectionCard>
       )}
+      </div>
+      </div>
 
       <ExpenseSheet
         expense={selected}

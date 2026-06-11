@@ -79,7 +79,9 @@ export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) 
             <CreateVoteDialog tripId={tripId} />
           </div>
         ) : (
-          <div className="space-y-3">
+          // B27-r2: desktop uses a 2-col grid so multiple open votes don't
+          // produce an awkward tall scroll. Mobile keeps the single column.
+          <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
             {openVotes.map((vote) => (
               <VoteCard key={vote.id} vote={vote} userId={userId} isOwner={isOwner} currency={currency} />
             ))}
@@ -96,7 +98,7 @@ export function VotesBoard({ tripId, userId, isOwner, currency, votes }: Props) 
             </h3>
             <div className="flex-1 h-px bg-border/60" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
             {closedVotes.map((vote) => (
               <VoteCard key={vote.id} vote={vote} userId={userId} isOwner={isOwner} currency={currency} />
             ))}

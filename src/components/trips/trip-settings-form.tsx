@@ -112,9 +112,11 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
   }
 
   return (
-    // B8: bumped max-width from 2xl to 3xl so the form isn't half-width
-    // on desktop. The shared PageHeader replaces the inline icon header.
-    <div className="max-w-3xl mx-auto space-y-6">
+    // B27-r2: full-width on lg+ with sectioned cards in a 2-col layout.
+    // Edit form (left, 2/3) + Share section + Danger zone (right rail, 1/3).
+    // Mobile still gets the stacked single column.
+    <div className="space-y-6 lg:max-w-none lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start lg:space-y-0">
+      <div className="space-y-6 min-w-0">
       <PageHeader title={t("trip.settingsTitle")} subtitle={t("trip.settingsSubtitle")} />
 
       {/* Edit form */}
@@ -168,6 +170,8 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
           </Button>
         </div>
       </form>
+      </div>
+      <div className="space-y-6 lg:sticky lg:top-6">
 
       {/* Share section */}
       <div className="rounded-xl border bg-card p-6 space-y-4">
@@ -269,6 +273,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             {t("trip.settingsDeleteTrip")}
           </Button>
         )}
+      </div>
       </div>
     </div>
   );

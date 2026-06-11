@@ -504,8 +504,13 @@ export function TripShell({ trip, isOwner, children }: Props) {
 
       {/* Body row — content + chat side by side */}
       <div className="flex flex-1 overflow-hidden w-full max-w-full">
-        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 pb-24 sm:pb-6">
-          <div className="max-w-5xl mx-auto w-full">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 pb-24 sm:pb-6 lg:px-8 lg:py-8">
+          {/* B27-r2: cap was max-w-5xl (1024px). On wide desktops with the
+              new 256px sidebar that left ~768px for content — too narrow
+              for proper 2-col grids on Expenses / Bookings / Settings.
+              Bumped to 7xl (1280px) so the multi-column layouts have
+              real room to breathe. */}
+          <div className="max-w-5xl lg:max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>
