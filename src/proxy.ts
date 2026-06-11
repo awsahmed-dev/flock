@@ -70,10 +70,15 @@ export async function proxy(request: NextRequest) {
     path === "/terms" ||
     // SEO essentials — these MUST be reachable by crawlers without auth,
     // otherwise Googlebot gets a 307 → login on the discovery URLs and
-    // never finds the rest of the site.
+    // never finds the rest of the site. Includes the dynamic OG image
+    // route exported from src/app/opengraph-image.tsx (Next ships it as
+    // /opengraph-image with a content-hash querystring) and any blog-
+    // specific OG / twitter image variants we add later.
     path === "/sitemap.xml" ||
     path === "/robots.txt" ||
     path === "/manifest.json" ||
+    path === "/opengraph-image" ||
+    path === "/twitter-image" ||
     path.startsWith("/share/");
   // Internal endpoints that gate themselves (cron secret, health probe).
   // These must be reachable without a session.
