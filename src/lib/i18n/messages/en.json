@@ -151,7 +151,15 @@
     "notificationSettings": "Notification settings",
     "tripSettings": "Trip settings",
     "signOut": "Sign out",
-    "backToTrips": "Back to trips"
+    "backToTrips": "Back to trips",
+    "tripContextLabel": "Current trip",
+    "addToCalendar": "Add to calendar",
+    "accountMenu": "Account",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "matchSystem": "Match system",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "blogLink": "Blog & guides"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",

@@ -116,6 +116,11 @@ export default async function DashboardPage() {
           userId={user.id}
         />
       }
+      user={{
+        displayName: profileRow?.displayName ?? firstName,
+        avatarUrl: profileRow?.avatarUrl ?? null,
+        userId: user.id,
+      }}
     >
       {/* B24-followup: consistent vertical rhythm between sections. Was a
           chaotic mix of mb-4 / mb-6 / mb-8 / no-margin that made the

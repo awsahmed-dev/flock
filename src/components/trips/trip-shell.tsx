@@ -74,6 +74,7 @@ const InstallPrompt = dynamicImport(
 );
 import { KeyboardShortcuts } from "@/components/trips/keyboard-shortcuts";
 import { Logo } from "@/components/ui/logo";
+import { DesktopTripSidebar } from "@/components/trips/desktop-trip-sidebar";
 
 interface Trip {
   id: string;
@@ -263,9 +264,20 @@ export function TripShell({ trip, isOwner, children }: Props) {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Top bar */}
-      <header className="border-b border-border/50 bg-background shrink-0 z-40">
+    <div className="h-screen flex flex-col overflow-hidden lg:ps-64">
+      {/* B27: persistent desktop sidebar. Replaces the mobile-pattern
+          top bar + sub-nav tabs + bottom-nav stack on lg+. Renders
+          nothing under lg so mobile is untouched. */}
+      <DesktopTripSidebar
+        trip={trip}
+        isOwner={isOwner}
+        badges={badges}
+        onChatOpen={() => setChatOpen(true)}
+        onMoreOpen={() => setMoreOpen(true)}
+      />
+
+      {/* Top bar — mobile only on lg+. Desktop nav lives in the sidebar. */}
+      <header className="border-b border-border/50 bg-background shrink-0 z-40 lg:hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/dashboard">
@@ -498,15 +510,15 @@ export function TripShell({ trip, isOwner, children }: Props) {
           </div>
         </main>
 
-        {/* B4: right-edge chat handle (desktop). Replaces the header icon
-            so the toolbar stays clean. Tap-target sits 1/3 down the
-            viewport — easy to find with the right hand. Hidden while
-            chat is open. */}
+        {/* B4: right-edge chat handle. On lg+ the sidebar already has a
+            Chat entry so this floating handle would be a redundant
+            third entry point — kept for sm+ where the sidebar is hidden
+            but the bottom nav doesn't render either. */}
         {!chatOpen && (
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="hidden sm:flex fixed right-0 top-1/3 z-30 items-center gap-1.5 rounded-l-full bg-primary text-primary-foreground ps-3 pe-2 py-2 shadow-lg shadow-primary/30 hover:pe-3 hover:translate-x-0 transition-all"
+            className="hidden sm:flex lg:hidden fixed right-0 top-1/3 z-30 items-center gap-1.5 rounded-l-full bg-primary text-primary-foreground ps-3 pe-2 py-2 shadow-lg shadow-primary/30 hover:pe-3 hover:translate-x-0 transition-all"
             title="Open chat"
             aria-label="Open chat"
           >

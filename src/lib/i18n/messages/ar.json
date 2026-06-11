@@ -151,7 +151,15 @@
     "notificationSettings": "إعدادات الإشعارات",
     "tripSettings": "إعدادات الرحلة",
     "signOut": "تسجيل الخروج",
-    "backToTrips": "رجوع للرحلات"
+    "backToTrips": "رجوع للرحلات",
+    "tripContextLabel": "الرحلة الحالية",
+    "addToCalendar": "أضف للتقويم",
+    "accountMenu": "الحساب",
+    "lightMode": "الوضع الفاتح",
+    "darkMode": "الوضع الداكن",
+    "matchSystem": "حسب النظام",
+    "keyboardShortcuts": "اختصارات لوحة المفاتيح",
+    "blogLink": "المدوّنة والأدلّة"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",
