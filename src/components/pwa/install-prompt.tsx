@@ -62,9 +62,12 @@ export function InstallPrompt() {
 
   return (
     <>
-      {/* Android install banner */}
+      {/* Android install banner. B28: hidden on lg+ (desktop has a real
+          tab/url + the PWA install lives in the browser's URL bar
+          install icon there anyway) so it stops blocking the bottom-
+          right of every page. */}
       {installPrompt && (
-        <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 rounded-2xl border bg-background shadow-xl shadow-black/10 p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4">
+        <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 rounded-2xl border bg-background shadow-xl shadow-black/10 p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4 lg:hidden">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0 shadow-sm">
             <span className="text-white text-lg">✈</span>
           </div>
@@ -90,9 +93,9 @@ export function InstallPrompt() {
         </div>
       )}
 
-      {/* iOS install guide */}
+      {/* iOS install guide — same lg:hidden treatment as Android. */}
       {isIOS && !showIOSGuide && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 rounded-2xl border bg-background shadow-xl shadow-black/10 p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4">
+        <div className="fixed bottom-20 left-4 right-4 z-50 rounded-2xl border bg-background shadow-xl shadow-black/10 p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4 lg:hidden">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0">
             <span className="text-white text-lg">✈</span>
           </div>

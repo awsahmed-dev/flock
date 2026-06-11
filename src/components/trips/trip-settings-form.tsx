@@ -112,10 +112,11 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
   }
 
   return (
-    // B27-r2: full-width on lg+ with sectioned cards in a 2-col layout.
-    // Edit form (left, 2/3) + Share section + Danger zone (right rail, 1/3).
-    // Mobile still gets the stacked single column.
-    <div className="space-y-6 lg:max-w-none lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start lg:space-y-0">
+    // B28: max-w-4xl on the form column on lg+ so the long horizontal
+    // inputs don't stretch the full 1fr; the right rail keeps its 360px
+    // width. Was: 1fr left rail = ~800-900px wide which made the date
+    // inputs comically long.
+    <div className="space-y-6 lg:max-w-none lg:grid lg:grid-cols-[minmax(0,640px)_360px] lg:gap-6 lg:items-start lg:space-y-0 lg:justify-center">
       <div className="space-y-6 min-w-0">
       <PageHeader title={t("trip.settingsTitle")} subtitle={t("trip.settingsSubtitle")} />
 

@@ -331,11 +331,13 @@ export function ExpensesBoard({
         />
       </div>
 
-      {/* B27-r2: desktop 2-col content. Mobile keeps the single
-          stacked column. Activity is the user's primary scan target so
-          it gets the main column; breakdown + balances are reference
-          views and stack on the sticky right rail. */}
-      <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-5 lg:items-start">
+      {/* B28: only render the 2-col grid when the right rail will
+          actually have content. With <3 expenses neither Breakdown nor
+          Balances render, so the rail would be empty and the activity
+          card would float in a thin 1fr column with 360px of empty
+          space beside it — exactly the screenshot the user flagged.
+          When the rail is empty we collapse back to a single column. */}
+      <div className={`${expenseList.length >= 3 ? "lg:grid lg:grid-cols-[1fr_360px] lg:gap-5 lg:items-start" : ""}`}>
       <div className="space-y-5 min-w-0">
       <SectionCard
         title={`${t("expenses.activity")}${expenseList.length > 0 ? ` · ${expenseList.length}` : ""}`}

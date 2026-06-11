@@ -100,9 +100,11 @@ export function TripActionHub({ tripId, stats }: Props) {
         </div>
       </Link>
 
-      {/* Action grid — 2x2 on mobile, 4 wide on desktop (5 when wallet
-          is enabled). Each card opens the corresponding tab. */}
-      <div className={`grid grid-cols-2 ${showWallet ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2.5`}>
+      {/* Action grid — 2 cols on mobile, 3 on lg (~1280px content area),
+          5 on xl when the wallet card is enabled. lg-grid-cols-5 jammed
+          5 cards into ~900px each = 180px-wide cards that read like
+          phone tiles. */}
+      <div className={`grid grid-cols-2 lg:grid-cols-3 ${showWallet ? "xl:grid-cols-5" : "xl:grid-cols-4"} gap-3 lg:gap-4`}>
         <ActionCard
           href={`/trips/${tripId}/itinerary`}
           icon={Calendar}

@@ -132,7 +132,13 @@ export default async function DashboardPage() {
             the global header now, not next to the action button. */}
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            {/* B28: contextual date label above the greeting — the
+                Mondays-style 'Thursday, 20th February' touch that makes
+                the dashboard feel like a real workspace product. */}
+            <p className="hidden lg:block text-xs font-medium text-muted-foreground mb-2 tabular-nums">
+              {format(new Date(), "EEEE, d MMMM yyyy")}
+            </p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
               {t(`greeting.${timeOfDay}`, { name: firstName })}
             </h1>
             {allTrips.length === 0 && (
@@ -144,7 +150,7 @@ export default async function DashboardPage() {
           <Link
             href="/trips/new"
             prefetch
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3.5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-opacity"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3.5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-opacity lg:px-4 lg:py-3"
           >
             <Plus className="w-4 h-4" />
             {t("dashboard.newTrip")}
@@ -193,24 +199,33 @@ export default async function DashboardPage() {
           </div>
 
           <Link href={`/trips/${spotlight.id}`}>
-            <div className={`group relative rounded-2xl ${spotlight.heroImageUrl ? "" : `bg-gradient-to-br ${getGradient(spotlight.id)}`} p-6 overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-200 min-h-[160px]`}>
-              {/* B19: destination photo behind the spotlight card */}
+            <div className={`group relative rounded-2xl ${spotlight.heroImageUrl ? "" : `bg-gradient-to-br ${getGradient(spotlight.id)}`} p-6 lg:p-8 overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-200 min-h-[200px] lg:min-h-[240px]`}>
+              {/* B19: destination photo behind the spotlight card.
+                  B28: previous overlay was bg-gradient-to-br from-black/60
+                  via-black/35 to-black/55 which painted the photo nearly
+                  uniformly dark — the city skyline was invisible behind a
+                  60% black wash. New overlay: bottom-up gradient that
+                  keeps the upper 2/3 of the photo bright and only darkens
+                  near the text at the bottom. */}
               {spotlight.heroImageUrl && (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={spotlight.heroImageUrl}
                     alt={spotlight.destination}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/35 to-black/55" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
                 </>
               )}
-              {/* Decorative orbs */}
-              <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
-              <div className="absolute right-12 -bottom-6 w-24 h-24 rounded-full bg-white/8" />
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-black/5" />
+              {/* Decorative orbs — fewer + softer on photo backgrounds. */}
+              {!spotlight.heroImageUrl && (
+                <>
+                  <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
+                  <div className="absolute right-12 -bottom-6 w-24 h-24 rounded-full bg-white/8" />
+                </>
+              )}
 
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
