@@ -362,7 +362,9 @@
   "itinerary": {
     "add": "Add",
     "today": "Today",
+    "allDays": "All days",
     "addPlace": "Add place",
+    "nothingPlanned": "Nothing planned · tap to add",
     "addToThisDay": "Add to this day",
     "aiPlan": "AI Plan",
     "findAStay": "Find a Stay",

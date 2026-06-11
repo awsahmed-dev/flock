@@ -93,10 +93,9 @@ export function PackBoard({
         subtitle={t("pack.subtitle")}
       />
 
-      {/* B6: segmented control between Docs and Packing. The active tab
-          shows live counts so the user can see at a glance whether
-          either side has anything in it. */}
-      <div className="inline-flex items-center rounded-full border border-border p-0.5 bg-muted/40">
+      {/* Mobile only: segmented control between Docs and Packing.
+          On lg+ both render side by side so the toggle is unnecessary. */}
+      <div className="lg:hidden inline-flex items-center rounded-full border border-border p-0.5 bg-muted/40">
         <button
           type="button"
           onClick={() => switchTo("docs")}
@@ -131,26 +130,45 @@ export function PackBoard({
         </button>
       </div>
 
-      {/* B6: render the existing boards inside. They already have their
-          own tabs (All / Photos / Files for docs; Shared / Yours / Crew
-          for packing) and dialogs. We just hide whichever isn't active. */}
-      <div className={view === "docs" ? "block" : "hidden"}>
-        <DocumentsBoard
-          tripId={tripId}
-          userId={userId}
-          isOwner={isOwner}
-          documents={documents}
-          embedded
-        />
-      </div>
-      <div className={view === "packing" ? "block" : "hidden"}>
-        <PackingBoard
-          tripId={tripId}
-          userId={userId}
-          items={packing}
-          members={members}
-          embedded
-        />
+      {/* On lg+ render both panels side by side with a small section
+          header strip for each. Mobile keeps the segmented control above
+          and shows one panel at a time. */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-6">
+        <div className={view === "docs" ? "block" : "hidden lg:block"}>
+          <div className="hidden lg:flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center">
+              <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {t("pack.docs")} · {docsCount}
+            </h3>
+          </div>
+          <DocumentsBoard
+            tripId={tripId}
+            userId={userId}
+            isOwner={isOwner}
+            documents={documents}
+            embedded
+          />
+        </div>
+        <div className={view === "packing" ? "block" : "hidden lg:block"}>
+          <div className="hidden lg:flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center">
+              <Backpack className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {t("pack.packing")} ·{" "}
+              {totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}
+            </h3>
+          </div>
+          <PackingBoard
+            tripId={tripId}
+            userId={userId}
+            items={packing}
+            members={members}
+            embedded
+          />
+        </div>
       </div>
     </div>
   );

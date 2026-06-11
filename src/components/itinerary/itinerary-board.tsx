@@ -228,7 +228,10 @@ export function ItineraryBoard({
           the user can swap back when the sheet is hidden underneath. */}
 
       {/* ── Map layer ─────────────────────────────────────────────── */}
-      <div className="absolute inset-0">
+      {/* B27: on lg+ the map yields 420px on the start edge for the
+          persistent desktop side panel (rendered below). Mobile keeps
+          the full-bleed map under the draggable bottom sheet. */}
+      <div className="absolute inset-y-0 end-0 start-0 lg:start-[420px]">
         <MapboxPlanMap
           items={mapItems}
           destinationCenter={destinationCenter}
@@ -238,6 +241,225 @@ export function ItineraryBoard({
           days={days}
         />
       </div>
+
+      {/* ── Desktop persistent side panel (lg+) ────────────────────
+          Replaces the draggable bottom sheet on lg+. Always visible,
+          no sheetOpen state, no drag. Day chips at top, inline AI Plan
+          + Add Place buttons, items list scrollable, per-day "+ Add"
+          header for each day. The map is constrained to start-[420px]
+          above so this panel doesn't sit ON TOP of the map but BESIDE
+          it — that's the difference between feeling like a real desktop
+          app and a phone overlay. */}
+      <aside className="hidden lg:flex absolute inset-y-0 start-0 w-[420px] z-30 bg-card border-e border-border/60 flex-col">
+        <div className="px-5 pt-5 pb-3 border-b border-border/40">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                {focusedDay
+                  ? format(parseISO(focusedDay), "EEEE, MMMM d")
+                  : t("itinerary.all")}
+              </p>
+              <p className="font-extrabold text-xl tracking-tight mt-0.5">
+                {focusedDay
+                  ? t("itinerary.dayN", { n: days.indexOf(focusedDay) + 1 })
+                  : t("itinerary.allDays")}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {focusedDay
+                  ? t("itinerary.items", { count: getItemsForDay(focusedDay).length })
+                  : t("itinerary.items", { count: items.length })}
+              </p>
+            </div>
+          </div>
+
+          {/* Inline action buttons — AI Plan + Add place. No FAB needed on
+              desktop; the controls live where the eye is. */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAiOpen(true)}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 text-white px-3 py-2 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="w-4 h-4" />
+              {t("itinerary.aiPlan")}
+            </button>
+            <button
+              type="button"
+              onClick={() => openAddFor(focusedDay)}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-primary/5 text-foreground px-3 py-2 text-xs font-bold transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              {t("itinerary.addPlace")}
+            </button>
+          </div>
+
+          {/* Day chips — horizontal scroll if many days */}
+          <div className="mt-3 -mx-1 px-1 overflow-x-auto scrollbar-none">
+            <div className="inline-flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFocusedDay(null)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                  focusedDay === null
+                    ? "bg-foreground text-background"
+                    : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("itinerary.all")}
+              </button>
+              {days.map((day, idx) => {
+                const count = getItemsForDay(day).length;
+                const active = focusedDay === day;
+                const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setFocusedDay(day)}
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                      active
+                        ? "bg-foreground text-background"
+                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+                    D{idx + 1}
+                    {count > 0 && (
+                      <span className="opacity-70 tabular-nums">·{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Items list — scrollable */}
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            {(focusedDay ? [focusedDay] : days).map((day) => {
+              const dayItems = getItemsForDay(day);
+              const dayIdx = days.indexOf(day);
+              const palette = DAY_PALETTE[dayIdx % DAY_PALETTE.length];
+              const today = isToday(parseISO(day));
+              const showDayHeader = focusedDay == null;
+              return (
+                <div key={day} className="mb-6">
+                  {showDayHeader && (
+                    <div className="flex items-center gap-3 mb-3 px-1">
+                      <div
+                        className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl border-2 shrink-0 ${
+                          today
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : `border-transparent ${palette.dot} text-white`
+                        }`}
+                      >
+                        <span className="text-[10px] font-bold leading-none tracking-widest uppercase">
+                          {format(parseISO(day), "EEE")}
+                        </span>
+                        <span className="text-base font-bold leading-tight tabular-nums">
+                          {format(parseISO(day), "d")}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm">
+                          {t("itinerary.dayN", { n: dayIdx + 1 })}
+                          {today && (
+                            <span className="ms-1.5 text-[10px] font-bold tracking-widest uppercase text-primary">
+                              {t("itinerary.today")}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {format(parseISO(day), "MMMM d, yyyy")} · {t("itinerary.items", { count: dayItems.length })}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openAddFor(day)}
+                        title={t("itinerary.addToThisDay")}
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-3 py-1.5 text-xs font-bold tracking-wide text-muted-foreground transition-colors"
+                      >
+                        <Plus className="w-4 h-4" /> {t("itinerary.add")}
+                      </button>
+                    </div>
+                  )}
+
+                  <SortableContext
+                    items={dayItems.map((i) => i.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <ul className="space-y-2.5">
+                      {dayItems.map((item, idx) => (
+                        <SortableItemRow
+                          key={item.id}
+                          item={item}
+                          number={idx + 1}
+                          paletteDot={palette.dot}
+                          currency={currency}
+                          localCurrency={localCurrency}
+                          fxRates={fxRates}
+                          canManage={isOwner || item.createdBy === userId}
+                          highlighted={highlightedItemId === item.id}
+                          onMouseEnter={() => setHighlightedItemId(item.id)}
+                          onMouseLeave={() =>
+                            setHighlightedItemId((p) => (p === item.id ? null : p))
+                          }
+                          onEdit={() => setEditingItem(item)}
+                          onDelete={() => {
+                            const id = item.id;
+                            setItems((p) => p.filter((i) => i.id !== id));
+                            startTransition(async () => {
+                              try {
+                                await deleteItineraryItem(id, tripId);
+                              } catch (err) {
+                                toast.error(err instanceof Error ? err.message : "Failed to delete");
+                              }
+                            });
+                          }}
+                          onStatusCycle={() => {
+                            const next =
+                              item.status === "proposed"
+                                ? "confirmed"
+                                : item.status === "confirmed"
+                                  ? "rejected"
+                                  : "proposed";
+                            setItems((p) =>
+                              p.map((i) =>
+                                i.id === item.id ? { ...i, status: next } : i,
+                              ),
+                            );
+                            startTransition(() => {
+                              updateItemStatus(item.id, tripId, next).catch(() =>
+                                toast.error("Failed to update status"),
+                              );
+                            });
+                          }}
+                        />
+                      ))}
+                    </ul>
+                  </SortableContext>
+
+                  {dayItems.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openAddFor(day)}
+                      className="ms-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center"
+                    >
+                      {t("itinerary.nothingPlanned")}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </DndContext>
+        </div>
+      </aside>
 
       {/* B21: day chip rail moved into the bottom-sheet control strip
           below. Top of canvas is now clean — map gets the full surface,
@@ -256,7 +478,7 @@ export function ItineraryBoard({
           the sheet's control strip rather than floating in dead space.
           Feedback widget is gone from trip pages so there's no longer a
           right-side collision to dodge. */}
-      <div className="absolute z-40 end-4 sm:end-6 bottom-[80px] flex flex-col items-end gap-2 pointer-events-none">
+      <div className="absolute z-40 end-4 sm:end-6 bottom-[80px] flex flex-col items-end gap-2 pointer-events-none lg:hidden">
         {addPickerOpen && (
           <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
             <button
@@ -300,7 +522,7 @@ export function ItineraryBoard({
           to collapse. Click still works as a fallback for fat-finger
           users / non-touch devices. */}
       <motion.div
-        className="absolute left-0 right-0 bottom-0 z-20"
+        className="absolute left-0 right-0 bottom-0 z-20 lg:hidden"
         animate={{ y: sheetOpen ? 0 : "calc(100% - 3.75rem)" }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
         drag="y"

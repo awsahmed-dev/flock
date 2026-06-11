@@ -362,7 +362,9 @@
   "itinerary": {
     "add": "إضافة",
     "today": "اليوم",
+    "allDays": "كل الأيام",
     "addPlace": "أضف مكانًا",
+    "nothingPlanned": "لا شيء مخطّط · انقر للإضافة",
     "addToThisDay": "أضف لهذا اليوم",
     "aiPlan": "خطّة AI",
     "findAStay": "ابحث عن إقامة",

@@ -146,7 +146,9 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
   // the hero card.
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
+      {/* Left column on lg+: hero + onboarding + action hub + AI plan */}
+      <div className="space-y-6 min-w-0">
       {/* ── Hero card ──────────────────────────────────────────────────
           B4: trimmed ~30% in height. Padding tightened, status pip lives
           inline with destination, meta row collapses to 2 lines on
@@ -290,6 +292,11 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
         <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
       </button>
 
+      </div>
+      {/* Right rail on lg+: crew + invite + helpful trip metrics. On mobile
+          this still renders below the action hub thanks to the grid
+          collapsing to a single column under lg. */}
+      <div className="space-y-6 lg:sticky lg:top-6">
       {/* ── Crew + invite ───────────────────────────────────────────
           B4: merged into one card. Two side-by-side cards (one for
           listing, one for inviting) was the redundancy testers
@@ -363,6 +370,7 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
         ) : (
           <p className="text-[11px] text-muted-foreground italic">{t("trip.noInviteToken")}</p>
         )}
+      </div>
       </div>
 
       {/* Lazy-mount the AI planner — its mount cost includes the

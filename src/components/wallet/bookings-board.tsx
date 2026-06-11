@@ -79,7 +79,8 @@ export function BookingsBoard(props: Props) {
   const formattedSpend = `${walletCurrency} ${totalSpend.toLocaleString()}`;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 lg:max-w-none lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start lg:space-y-0">
+      <div className="space-y-6 min-w-0">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <MapPin className="w-3 h-3" />
@@ -184,6 +185,12 @@ export function BookingsBoard(props: Props) {
           />
         )}
       </div>
+      </div>
+      {/* Right rail on lg+ — forward-email hint stacked over the
+          affiliate disclosure. Sticks to the top of the viewport as
+          the main list scrolls. On mobile both still flow under the
+          list because the grid collapses. */}
+      <div className="space-y-3 lg:sticky lg:top-6 lg:space-y-4">
 
       <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
@@ -207,6 +214,7 @@ export function BookingsBoard(props: Props) {
           <span>{t("plan.disclosure")}</span>
         </p>
       )}
+      </div>
     </div>
   );
 }
