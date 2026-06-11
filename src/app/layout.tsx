@@ -64,6 +64,16 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
   alternates: {
     canonical: "/",
+    // B26-r2: hreflang for the two locales we support. Tells Google
+    // which version to surface in EN vs AR SERPs. x-default points to
+    // the canonical / so locale-agnostic crawlers don't 404 on a
+    // missing /en. We keep one URL per locale and switch content
+    // server-side via the cookie + Accept-Language sniff in lib/i18n.
+    languages: {
+      en: "/",
+      ar: "/",
+      "x-default": "/",
+    },
   },
   openGraph: {
     type: "website",
@@ -73,21 +83,17 @@ export const metadata: Metadata = {
       "Group travel planning that doesn't end in three split conversations and a spreadsheet. Itinerary, votes, multi-currency expenses, packing — all in one place.",
     siteName: "Paxawa",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "Paxawa — group travel planning",
-      },
-    ],
+    // og:image is injected automatically by src/app/opengraph-image.tsx
+    // — Next discovers the file convention and renders the meta tag at
+    // build time. Listing a static /og-default.png here on top would
+    // produce duplicate <meta> tags and Facebook/Twitter would pick
+    // arbitrarily between them.
   },
   twitter: {
     card: "summary_large_image",
     title: "Paxawa — Plan group trips, vote together, split expenses",
     description:
       "Itinerary, votes, multi-currency expenses, packing — all in one place. Free to start.",
-    images: ["/og-default.png"],
   },
   robots: {
     index: true,
@@ -97,6 +103,17 @@ export const metadata: Metadata = {
       follow: true,
       "max-image-preview": "large",
       "max-snippet": -1,
+    },
+  },
+  // B26-r2: search-engine ownership verification. Codes come from env
+  // so we can ship them per-deploy without committing the values.
+  // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION + NEXT_PUBLIC_BING_SITE_VERIFICATION
+  // in Vercel project settings; both are public anyway (they end up
+  // verbatim in <head>).
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: {
+      "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION ?? "",
     },
   },
 };

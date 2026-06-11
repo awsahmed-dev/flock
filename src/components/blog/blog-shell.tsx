@@ -3,6 +3,8 @@ import { ArrowRight, ArrowLeft, Calendar, Clock } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import type { BlogPostMeta } from "@/lib/blog/posts";
 
+const SITE = "https://paxawa.com";
+
 interface Props {
   post: BlogPostMeta;
   children: React.ReactNode;
@@ -187,6 +189,30 @@ export function BlogShell({ post, children, related }: Props) {
           </nav>
         </div>
       </footer>
+
+      {/* B26-r2: BreadcrumbList JSON-LD. Tells Google how the URL nests
+          (Home › Blog › Post Title) so the SERP shows a clean breadcrumb
+          trail instead of the raw URL. Rendered once per post by the
+          shared shell so every post inherits it automatically. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/` },
+              { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE}/blog` },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: post.title,
+                item: `${SITE}/blog/${post.slug}`,
+              },
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }
