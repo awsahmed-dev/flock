@@ -79,6 +79,10 @@ export async function proxy(request: NextRequest) {
     path === "/manifest.json" ||
     path === "/opengraph-image" ||
     path === "/twitter-image" ||
+    // Bing Webmaster Tools file-based verification. The token in
+    // public/BingSiteAuth.xml is fetched by Bing directly at this URL;
+    // if the proxy 307s, verification fails silently.
+    path === "/BingSiteAuth.xml" ||
     path.startsWith("/share/");
   // Internal endpoints that gate themselves (cron secret, health probe).
   // These must be reachable without a session.
