@@ -169,6 +169,14 @@ export const itineraryItems = pgTable("itinerary_items", {
   priceLevel: integer("price_level"),
   hoursSummary: text("hours_summary"),
   topTip: text("top_tip"),
+  // v2 Discovery (additive): a discovered Google place carries its durable id +
+  // richer metadata so the item lands on the map with full data. provider
+  // disambiguates google vs the legacy fsq vs a manual entry.
+  googlePlaceId: text("google_place_id"),
+  provider: text("provider").default("manual"),
+  userRatingsTotal: integer("user_ratings_total"),
+  placeTypes: jsonb("place_types"),
+  address: text("address"),
   status: itineraryItemStatusEnum("status").default("proposed").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdBy: uuid("created_by")
@@ -500,3 +508,92 @@ export const messageReactionsRelations = relations(messageReactions, ({ one }) =
   }),
   user: one(profiles, { fields: [messageReactions.userId], references: [profiles.id] }),
 }));
+
+// ─── v2 Discovery (Phase A) ────────────────────────────────────────────────────
+// All additive: new tables + nullable cols. Nothing in the current app reads
+// these, so applying the migration is non-destructive for live testers.
+// Specs: docs/v2-discovery-{planning,logic,build-spec}.md
+
+/**
+ * Shared cross-user cache of resolved Google places. Everyone planning the same
+ * city hits the same restaurants → cache once, serve many. The single biggest
+ * lever on Google Places spend. `snapshot` holds the normalized Place object;
+ * `fetched_at` drives the ~30-day TTL + stale-while-revalidate refresh.
+ */
+export const cachedPlaces = pgTable("cached_places", {
+  placeId: text("place_id").primaryKey(),
+  snapshot: jsonb("snapshot").notNull(),
+  fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+});
+
+/**
+ * The in-session signal log — the raw events that feed the taste engine
+ * (build-spec Part A). One row per micro-interaction (dwell, open, add, vote,
+ * expense…). `features` denormalizes the place's feature vector at event time
+ * so the engine updates the taste vector without re-fetching the place.
+ */
+export const placeEvents = pgTable("place_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id),
+  placeId: text("place_id"),
+  /** Event kind: card_dwell · card_open · place_add · decision_vote · expense_at_place … */
+  type: text("type").notNull(),
+  /** Event-specific payload (dwell_ms, vote, day, amount…). */
+  payload: jsonb("payload"),
+  /** Place feature vector at event time (for the engine update). */
+  features: jsonb("features"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/**
+ * Persisted taste vectors. One row per (trip, user) for the personal/durable
+ * vector; user_id NULL = the crew-aggregate vector for the trip. The fast
+ * session vector lives in memory/edge during a session; what persists here is
+ * the slow durable vector (build-spec §2.1).
+ */
+export const tasteProfiles = pgTable("taste_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  /** NULL = crew-aggregate vector for the trip. */
+  userId: uuid("user_id").references(() => profiles.id),
+  /** Sparse durable preference vector { tag: weight } + scalar axes. */
+  vector: jsonb("vector"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/**
+ * Crew decisions (the chat-embedded vote that replaces the Votes page).
+ * A discovered place a member/owner proposed; votes accrue inline on the chat
+ * card. Pass → auto-commit to a day; fail → stays as a record. (logic §6.)
+ */
+export const decisions = pgTable("decisions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  placeId: text("place_id"),
+  /** Denormalized place snapshot so the card renders without a Google call. */
+  snapshot: jsonb("snapshot"),
+  proposedBy: uuid("proposed_by")
+    .notNull()
+    .references(() => profiles.id),
+  proposedDay: date("proposed_day"),
+  /** The chat message this decision card is attached to. */
+  chatMessageId: uuid("chat_message_id").references(() => chatMessages.id, {
+    onDelete: "set null",
+  }),
+  /** open · passed · failed · no_quorum · cancelled */
+  status: text("status").default("open").notNull(),
+  /** Per-member votes: { userId: "yes" | "no" }. */
+  votes: jsonb("votes"),
+  closesAt: timestamp("closes_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});

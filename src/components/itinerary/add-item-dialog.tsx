@@ -80,6 +80,12 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           priceLevel: null,
           hoursSummary: null,
           topTip: null,
+          // v2 Discovery additive cols — stubbed for the optimistic shape.
+          googlePlaceId: null,
+          provider: "manual",
+          userRatingsTotal: null,
+          placeTypes: null,
+          address: null,
         };
         onAdded(fake);
         toast.success("Item added");
