@@ -226,6 +226,10 @@ export async function createItineraryItemFromGooglePlace(input: {
     hoursSummary: string | null;
     topTip: string | null;
   };
+  /** Optional planning fields from the Plan "Add place" flow. */
+  startTime?: string | null;
+  costEstimate?: number | null;
+  notes?: string | null;
 }) {
   const user = await getAuthenticatedUser();
   const trip = await getTripWithMembership(input.tripId, user.id);
@@ -261,6 +265,9 @@ export async function createItineraryItemFromGooglePlace(input: {
     locationName: p.name,
     locationLat: p.coords[1],
     locationLng: p.coords[0],
+    startTime: input.startTime || null,
+    costEstimate: input.costEstimate ?? null,
+    notes: input.notes || null,
     status: "confirmed",
     sortOrder,
     createdBy: user.id,

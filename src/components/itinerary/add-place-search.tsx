@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition } from "react";
-import { Search, MapPin, Loader2, X, Calendar, Sparkles, ChevronDown, Clock, Tag } from "lucide-react";
+import { Search, MapPin, Loader2, X, Calendar, Sparkles, ChevronDown, Clock, Tag, PencilLine } from "lucide-react";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { createItineraryItemFromPlace } from "@/lib/actions/itinerary";
-import { searchPlaces, type GeoSuggestion } from "@/lib/mapbox-geocode";
-import { useLocale, useT } from "@/components/i18n/locale-provider";
+import {
+  createItineraryItemFromGooglePlace,
+  createItineraryItemFromPlace,
+} from "@/lib/actions/itinerary";
+import type { Place, PlacePrediction } from "@/lib/places/types";
+import { RatingPill, PriceLevel, PoweredByGoogle } from "@/components/discover/primitives";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Props {
   open: boolean;
@@ -23,18 +27,15 @@ interface Props {
 }
 
 /**
- * B7: "Add a place" rebuilt around tester feedback — search is a
- * *suggestion*, not a requirement.
+ * S1.3 — "Add a place" rebuilt on **Google Autocomplete** (planning §4).
  *
- * The free-text title input is the primary control. As the user types,
- * Mapbox geocoding suggestions appear inline. They can:
- *   - Pick a suggestion → name, address, coords prefilled.
- *   - Ignore suggestions and just type → manual entry, no coords.
- * Either way, they then pick a day, optional time/cost/notes, and Add.
+ * Type → real Google predictions (session-tokened, trip-biased). Pick one → we
+ * resolve full Place details and the item lands on the map with its pin, photo,
+ * and rating already attached. The dead-text bug — a place you found but the
+ * old search couldn't pin — becomes structurally impossible.
  *
- * Foursquare metadata enrichment runs *after* the row exists, in the
- * background — best-effort, fails silently. Photos and ratings show up
- * the next time the page revalidates.
+ * Free-text still survives as a deliberate **"add manually"** fallback for the
+ * rare place Google misses (planning §2/§4).
  */
 export function AddPlaceSearch({
   open,
@@ -45,63 +46,56 @@ export function AddPlaceSearch({
   days,
   defaultDay,
 }: Props) {
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  // Picked-from-suggestion coordinates. NULL when the user is typing
-  // free-text. Set on suggestion pick, cleared on title edit.
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  // Foursquare id of the picked suggestion, if any. Lets us short-circuit
-  // the background enrichment pass — we already have category + coords.
-  const [pickedFsqId, setPickedFsqId] = useState<string | null>(null);
-  const [pickedFsqCategory, setPickedFsqCategory] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<GeoSuggestion[]>([]);
+  const t = useT();
+  const [query, setQuery] = useState("");
+  const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [searching, setSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  // The resolved place after the user picks a prediction. null = manual/empty.
+  const [picked, setPicked] = useState<Place | null>(null);
+  const [resolving, setResolving] = useState(false);
+
   const [dayDate, setDayDate] = useState<string>(defaultDay ?? days[0] ?? "");
   const [startTime, setStartTime] = useState("");
   const [costEstimate, setCostEstimate] = useState("");
   const [notes, setNotes] = useState("");
   const [isPending, startTransition] = useTransition();
+
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  // B15: pass the viewer's locale to both Foursquare (via the /api
-  // route which reads cookie server-side) and Mapbox (passed directly
-  // since the call is client-side).
-  const { locale } = useLocale();
-  const t = useT();
+  // One Google autocomplete session token per search session — keystrokes + the
+  // following detail fetch bill as one (cost lever, planning §5.1).
+  const sessionRef = useRef<string>("");
+  function newSession() {
+    sessionRef.current =
+      typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+  }
 
-  // Reset on close
+  // Reset the form when the sheet closes; start a fresh autocomplete session
+  // when it opens. Intentional prop→state sync on the open toggle.
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- deliberate form reset on open/close */
     if (!open) {
-      setTitle("");
-      setLocation("");
-      setCoords(null);
-      setPickedFsqId(null);
-      setPickedFsqCategory(null);
-      setSuggestions([]);
+      setQuery("");
+      setPredictions([]);
       setShowSuggestions(false);
+      setPicked(null);
+      setResolving(false);
       setDayDate(defaultDay ?? days[0] ?? "");
       setStartTime("");
       setCostEstimate("");
       setNotes("");
+    } else {
+      newSession();
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, days, defaultDay]);
 
-  // Debounced place autocomplete on title typing.
-  //
-  // B12-followup-3: hit Foursquare *first* via /api/places/search — it's
-  // a real POI database, so "KLCC Towers", "Petronas Twin Towers",
-  // restaurants, museums all resolve to the actual landmark instead of
-  // a same-name street. Fall back to Mapbox geocoder if Foursquare
-  // returns nothing (free-form addresses, obscure locations).
+  // Debounced Google autocomplete on typing (min 2 chars, ~300ms; planning §5.4).
   useEffect(() => {
-    if (!open) return;
-    const q = title.trim();
-    if (q.length < 2) {
-      setSuggestions([]);
-      setSearching(false);
-      return;
-    }
+    if (!open || picked) return;
+    const q = query.trim();
+    if (q.length < 2) return; // predictions cleared in onChange (no setState-in-effect)
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     if (abortRef.current) abortRef.current.abort();
     debounceRef.current = window.setTimeout(async () => {
@@ -109,138 +103,107 @@ export function AddPlaceSearch({
       abortRef.current = ctrl;
       setSearching(true);
       try {
-        // ── 1. Foursquare POI search (server route — keeps API key off the
-        //    client). Biased by trip center lat/lng so "ramen" in a Tokyo
-        //    trip returns Tokyo ramen, not Brooklyn.
-        const fsqParams = new URLSearchParams({ q });
+        const params = new URLSearchParams({ q, session: sessionRef.current });
         if (destinationCenter) {
-          fsqParams.set("lng", String(destinationCenter[0]));
-          fsqParams.set("lat", String(destinationCenter[1]));
-        } else if (destination) {
-          fsqParams.set("near", destination);
+          params.set("lng", String(destinationCenter[0]));
+          params.set("lat", String(destinationCenter[1]));
         }
-        let fsqResults: GeoSuggestion[] = [];
-        try {
-          const res = await fetch(`/api/places/search?${fsqParams}`, {
-            signal: ctrl.signal,
-          });
-          if (res.ok) {
-            const data = (await res.json()) as {
-              results?: Array<{
-                fsqId: string;
-                name: string;
-                category: string | null;
-                address: string | null;
-                lat: number | null;
-                lng: number | null;
-              }>;
-            };
-            fsqResults = (data.results ?? [])
-              .filter((r) => r.lat != null && r.lng != null)
-              .map((r) => ({
-                id: r.fsqId,
-                name: r.name,
-                context: r.address ?? r.category,
-                lat: r.lat!,
-                lng: r.lng!,
-                category: r.category,
-              }));
-          }
-        } catch {
-          // Network/abort — drop to Mapbox fallback below.
-        }
-
-        // ── 2. Mapbox fallback for free-form text + addresses when FSQ
-        //    came back empty. Keeps the "just type anything" promise.
-        let mbResults: GeoSuggestion[] = [];
-        if (fsqResults.length === 0) {
-          const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-          if (token) {
-            mbResults = await searchPlaces({
-              query: q,
-              proximity: destinationCenter ?? undefined,
-              token,
-              signal: ctrl.signal,
-              limit: 6,
-              language: locale,
-            });
-          }
-        }
-
-        setSuggestions(fsqResults.length > 0 ? fsqResults : mbResults);
+        const res = await fetch(`/api/discover/autocomplete?${params}`, { signal: ctrl.signal });
+        const data = (await res.json().catch(() => ({}))) as { predictions?: PlacePrediction[] };
+        setPredictions(data.predictions ?? []);
         setShowSuggestions(true);
+      } catch {
+        /* aborted or network — keep the manual fallback available */
       } finally {
         setSearching(false);
       }
-    }, 220);
+    }, 300);
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [title, destinationCenter, destination, open]);
+  }, [query, destinationCenter, open, picked]);
 
-  function handlePickSuggestion(s: GeoSuggestion) {
-    setTitle(s.name);
-    setLocation(s.context ?? "");
-    setCoords({ lat: s.lat, lng: s.lng });
-    // FSQ ids are short alphanumeric — Mapbox ids start with "poi.", etc.
-    // We treat anything that isn't a Mapbox-shaped id as a Foursquare hit
-    // so the server can fetch photo/rating later.
-    if (!/^[a-z]+\.[a-z0-9]+/i.test(s.id)) {
-      setPickedFsqId(s.id);
-      setPickedFsqCategory(s.category);
-    } else {
-      setPickedFsqId(null);
-      setPickedFsqCategory(null);
-    }
-    setSuggestions([]);
+  async function handlePick(pred: PlacePrediction) {
     setShowSuggestions(false);
+    setPredictions([]);
+    setQuery(pred.primary);
+    setResolving(true);
+    try {
+      const res = await fetch(
+        `/api/discover/details?id=${encodeURIComponent(pred.placeId)}&session=${sessionRef.current}`,
+      );
+      const data = (await res.json().catch(() => ({}))) as { place?: Place };
+      if (data.place) setPicked(data.place);
+      else toast.error(t("itinerary.placeUnavailable"));
+    } catch {
+      toast.error(t("itinerary.placeUnavailable"));
+    } finally {
+      setResolving(false);
+      newSession(); // the autocomplete session ended with the detail fetch
+    }
   }
 
-  function handleTitleChange(value: string) {
-    setTitle(value);
-    // If user edits the title after picking a suggestion, drop the picked
-    // coords — we don't want to attach Tokyo coords to a free-text entry.
-    if (coords) setCoords(null);
-    if (pickedFsqId) {
-      setPickedFsqId(null);
-      setPickedFsqCategory(null);
-    }
+  function clearPicked() {
+    setPicked(null);
+    setQuery("");
+    setPredictions([]);
   }
 
   function handleSubmit() {
-    if (!title.trim() || !dayDate) {
-      toast.error("Add a name and pick a day");
+    if (!dayDate) {
+      toast.error(t("itinerary.pickADay"));
       return;
     }
+    const cost = costEstimate.trim() ? parseFloat(costEstimate.replace(",", ".")) : null;
+    const costVal = cost != null && Number.isFinite(cost) ? cost : null;
+
     startTransition(async () => {
       try {
-        const cost = costEstimate.trim() ? parseFloat(costEstimate.replace(",", ".")) : null;
-        await createItineraryItemFromPlace({
-          tripId,
-          dayDate,
-          title: title.trim(),
-          // Pass through coords + location when we have them; server still
-          // works fine with NULLs for the manual path.
-          locationName: location.trim() || null,
-          locationLat: coords?.lat ?? null,
-          locationLng: coords?.lng ?? null,
-          // B12-followup-3: when the user picked a Foursquare suggestion
-          // we have the real fsq id + category — pass them through so
-          // the server can skip the background re-search and go straight
-          // to photo/rating enrichment.
-          fsqId: pickedFsqId ?? "",
-          fsqCategory: pickedFsqCategory,
-          costEstimate: cost && Number.isFinite(cost) ? cost : null,
-        });
-        toast.success(`Added "${title.trim()}" to Day ${days.indexOf(dayDate) + 1}`);
+        if (picked) {
+          await createItineraryItemFromGooglePlace({
+            tripId,
+            dayDate,
+            place: {
+              placeId: picked.placeId,
+              name: picked.name,
+              category: picked.category,
+              placeTypes: picked.placeTypes,
+              rating: picked.rating,
+              userRatingsTotal: picked.userRatingsTotal,
+              priceLevel: picked.priceLevel,
+              coords: picked.coords,
+              address: picked.address,
+              photoRef: picked.photoRef,
+              hoursSummary: picked.hoursSummary,
+              topTip: picked.topTip,
+            },
+            startTime: startTime || null,
+            costEstimate: costVal,
+            notes: notes.trim() || null,
+          });
+          toast.success(t("itinerary.addedToDayN", { name: picked.name, n: days.indexOf(dayDate) + 1 }));
+        } else {
+          const title = query.trim();
+          if (!title) {
+            toast.error(t("itinerary.addNameAndDay"));
+            return;
+          }
+          await createItineraryItemFromPlace({
+            tripId,
+            dayDate,
+            title,
+            costEstimate: costVal,
+          });
+          toast.success(t("itinerary.addedToDayN", { name: title, n: days.indexOf(dayDate) + 1 }));
+        }
         onClose();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to add place");
+        toast.error(err instanceof Error ? err.message : t("itinerary.failedToAdd"));
       }
     });
   }
 
-  const canSubmit = title.trim().length > 0 && !!dayDate;
+  const canSubmit = (!!picked || query.trim().length > 0) && !!dayDate && !resolving;
 
   return (
     <BottomSheet
@@ -272,93 +235,120 @@ export function AddPlaceSearch({
       }
     >
       <div className="space-y-3">
-        {/* Title — primary field, free-text with autocomplete suggestions */}
-        <div className="relative">
-          <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
-            {t("itinerary.whatAreYouAdding")}
-          </label>
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 focus-within:border-primary/40">
-            {searching ? (
-              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin shrink-0" />
-            ) : coords ? (
-              <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
-            ) : (
-              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-            )}
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 160)}
-              placeholder={t("itinerary.typeName")}
-              autoFocus
-              className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground"
-            />
-            {title && (
+        {/* Picked place — resolved, pin-ready */}
+        {picked ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+            <div className="flex items-start gap-2.5">
+              <MapPin className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold leading-snug">{picked.name}</p>
+                {picked.address && (
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{picked.address}</p>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <RatingPill rating={picked.rating} reviews={picked.userRatingsTotal} />
+                  <PriceLevel level={picked.priceLevel} className="text-xs" />
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => { setTitle(""); setCoords(null); setLocation(""); }}
+                onClick={clearPicked}
+                aria-label={t("common.clear")}
                 className="text-muted-foreground hover:text-foreground shrink-0"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
-            )}
-          </div>
-
-          {/* Suggestion dropdown */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-30 left-0 right-0 mt-1 rounded-xl border border-border bg-popover shadow-xl overflow-hidden">
-              <p className="px-3 pt-2 pb-1 text-[9px] font-bold tracking-widest uppercase text-muted-foreground">
-                {t("itinerary.suggestions")}
-              </p>
-              <ul className="max-h-64 overflow-y-auto">
-                {suggestions.map((s) => (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        // Prevent blur from firing before click
-                        e.preventDefault();
-                        handlePickSuggestion(s);
-                      }}
-                      className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-accent/40 text-left transition-colors"
-                    >
-                      <MapPin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{s.name}</p>
-                        {s.context && (
-                          <p className="text-[11px] text-muted-foreground truncate">{s.context}</p>
-                        )}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
             </div>
-          )}
-
-          {/* Hint when no suggestions yet */}
-          {!showSuggestions && title.length < 2 && (
-            <p className="mt-1.5 text-[10px] text-muted-foreground">
-              {t("itinerary.typeForSuggestions")}
-            </p>
-          )}
-        </div>
-
-        {/* Optional manual location override — shows when no suggestion picked */}
-        {!coords && title.length >= 2 && (
-          <div>
+          </div>
+        ) : (
+          /* Search field with Google predictions */
+          <div className="relative">
             <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
-              Location <span className="opacity-60">(optional)</span>
+              {t("itinerary.whatAreYouAdding")}
             </label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Shibuya"
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-primary/40"
-            />
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 focus-within:border-primary/40">
+              {searching || resolving ? (
+                <Loader2 className="w-4 h-4 text-muted-foreground animate-spin shrink-0" />
+              ) : (
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setQuery(v);
+                  if (v.trim().length < 2) setPredictions([]);
+                }}
+                onFocus={() => predictions.length > 0 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 160)}
+                placeholder={t("itinerary.typeName")}
+                autoFocus
+                className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => { setQuery(""); setPredictions([]); }}
+                  className="text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Prediction dropdown */}
+            {showSuggestions && (predictions.length > 0 || query.trim().length >= 2) && (
+              <div className="absolute z-30 inset-x-0 mt-1 rounded-xl border border-border bg-popover shadow-xl overflow-hidden">
+                {predictions.length > 0 && (
+                  <ul className="max-h-64 overflow-y-auto">
+                    {predictions.map((p) => (
+                      <li key={p.placeId}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            void handlePick(p);
+                          }}
+                          className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-accent/40 text-start transition-colors"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold truncate">{p.primary}</p>
+                            {p.secondary && (
+                              <p className="text-[11px] text-muted-foreground truncate">{p.secondary}</p>
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {/* Manual fallback — for the rare place Google misses */}
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setShowSuggestions(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 border-t border-border/60 hover:bg-accent/40 text-start transition-colors"
+                >
+                  <PencilLine className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs text-muted-foreground">
+                    {t("itinerary.addManuallyNamed", { name: query.trim() })}
+                  </span>
+                </button>
+                <div className="px-3 py-1.5 border-t border-border/60 flex justify-end">
+                  <PoweredByGoogle />
+                </div>
+              </div>
+            )}
+
+            {query.trim().length < 2 && (
+              <p className="mt-1.5 text-[10px] text-muted-foreground">
+                {t("itinerary.typeForSuggestions")}
+              </p>
+            )}
           </div>
         )}
 
@@ -389,7 +379,7 @@ export function AddPlaceSearch({
           </div>
         </div>
 
-        {/* Optional time + cost — collapsed under a disclosure to stay clean */}
+        {/* Optional time + cost + notes */}
         <details className="rounded-xl border border-border bg-card/40">
           <summary className="cursor-pointer px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 list-none">
             <ChevronDown className="w-3 h-3" /> {t("itinerary.moreDetails")}
@@ -427,7 +417,7 @@ export function AddPlaceSearch({
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="anything to remember"
+                placeholder={t("itinerary.notesPlaceholder")}
                 className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary/40"
               />
             </div>

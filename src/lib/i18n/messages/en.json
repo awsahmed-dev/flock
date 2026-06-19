@@ -35,7 +35,8 @@
     "costEstimate": "Cost estimate",
     "bookingLink": "Booking link",
     "notes": "Notes",
-    "manage": "Manage"
+    "manage": "Manage",
+    "clear": "Clear"
   },
   "form": {
     "pickFileFirst": "Pick a file first",
@@ -382,7 +383,14 @@
     "moreDetails": "More details (optional)",
     "time": "Time",
     "cost": "Cost",
-    "addedToDay": "Added \"{title}\" to {day}"
+    "addedToDay": "Added \"{title}\" to {day}",
+    "placeUnavailable": "Couldn't load that place — try another.",
+    "pickADay": "Pick a day",
+    "addedToDayN": "Added {name} to Day {n}",
+    "addNameAndDay": "Add a name and pick a day",
+    "failedToAdd": "Couldn't add that — try again.",
+    "addManuallyNamed": "Add “{name}” manually",
+    "notesPlaceholder": "anything to remember"
   },
   "discover": {
     "eyebrow": "Discover",

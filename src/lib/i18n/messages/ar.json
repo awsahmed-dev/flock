@@ -35,7 +35,8 @@
     "costEstimate": "التكلفة المتوقّعة",
     "bookingLink": "رابط الحجز",
     "notes": "ملاحظات",
-    "manage": "إدارة"
+    "manage": "إدارة",
+    "clear": "مسح"
   },
   "form": {
     "pickFileFirst": "اختر ملفًا أولًا",
@@ -382,7 +383,14 @@
     "moreDetails": "تفاصيل أكثر (اختياري)",
     "time": "الوقت",
     "cost": "التكلفة",
-    "addedToDay": "تمت إضافة \"{title}\" إلى {day}"
+    "addedToDay": "تمت إضافة \"{title}\" إلى {day}",
+    "placeUnavailable": "تعذّر تحميل هذا المكان — جرّب غيره.",
+    "pickADay": "اختر يومًا",
+    "addedToDayN": "تمت إضافة {name} إلى اليوم {n}",
+    "addNameAndDay": "أضِف اسمًا واختر يومًا",
+    "failedToAdd": "تعذّرت الإضافة — أعد المحاولة.",
+    "addManuallyNamed": "أضِف “{name}” يدويًا",
+    "notesPlaceholder": "أي شيء تريد تذكّره"
   },
   "discover": {
     "eyebrow": "اكتشف",
