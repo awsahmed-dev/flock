@@ -413,7 +413,9 @@
     "addedToDay": "أُضيف إلى {day}",
     "addError": "تعذّرت إضافة المكان — أعد المحاولة.",
     "addedBadge": "مُضاف",
-    "poweredBy": "مدعوم من"
+    "poweredBy": "مدعوم من",
+    "catAll": "الكل",
+    "priceLevelAria": "مستوى السعر {n} من {max}"
   },
   "pack": {
     "title": "أمتعة",

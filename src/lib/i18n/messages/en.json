@@ -413,7 +413,9 @@
     "addedToDay": "Added to {day}",
     "addError": "Couldn't add that place — try again.",
     "addedBadge": "Added",
-    "poweredBy": "Powered by"
+    "poweredBy": "Powered by",
+    "catAll": "All",
+    "priceLevelAria": "Price level {n} of {max}"
   },
   "pack": {
     "title": "Pack",
