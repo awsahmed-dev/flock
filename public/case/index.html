@@ -27,15 +27,15 @@
     --rose:    #f87171;
     --sky:     #38bdf8;
 
-    --canvas:   #fbfaf7;
-    --surface:  #ffffff;
-    --raised:   #ffffff;
-    --ink:      #0a0a0f;
-    --ink-2:    #1e1e2e;
-    --muted:    #6b7280;
-    --muted-2:  #9ca3af;
-    --line:     #ececec;
-    --pale:     #f6f5f0;
+    --canvas:  #fbfaf7;
+    --surface: #ffffff;
+    --raised:  #ffffff;
+    --ink:     #0a0a0f;
+    --ink-2:   #1e1e2e;
+    --muted:   #6b7280;
+    --muted-2: #9ca3af;
+    --line:    #ececec;
+    --pale:    #f6f5f0;
 
     --font-display: 'DM Serif Display', 'Times New Roman', serif;
     --font-body:    'Sora', system-ui, sans-serif;
@@ -47,7 +47,7 @@
     --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    --content-max: 1180px;
+    --content-max: 1200px;
     --prose-max: 680px;
   }
   html[data-theme="dark"] {
@@ -77,20 +77,21 @@
   html[data-theme="dark"] ::selection { background: var(--indigo-700); color: var(--ink); }
   a { color: inherit; text-decoration: none; }
   button { font: inherit; border: 0; background: 0; color: inherit; cursor: pointer; }
+  img { display: block; max-width: 100%; height: auto; }
 
-  /* ─── Sticky top nav ─────────────────────────────────────────────────── */
+  /* ─── Top nav ────────────────────────────────────────────────────────── */
   .nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 50;
     height: 64px;
     backdrop-filter: saturate(180%) blur(18px);
     -webkit-backdrop-filter: saturate(180%) blur(18px);
-    background: rgba(251, 250, 247, 0.78);
+    background: rgba(251, 250, 247, 0.82);
     border-bottom: 1px solid transparent;
     transition: all .3s var(--ease-out);
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 32px;
   }
-  html[data-theme="dark"] .nav { background: rgba(10, 10, 15, 0.72); }
+  html[data-theme="dark"] .nav { background: rgba(10, 10, 15, 0.78); }
   .nav.scrolled { border-bottom-color: var(--line); }
   .nav-mark {
     display: flex; align-items: center; gap: 10px;
@@ -100,7 +101,7 @@
   .nav-mark svg path { fill: var(--ink); }
   .nav-mark-sub { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 1px; }
   .nav-chapters {
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 2px;
     font-size: 12px;
   }
   .nav-chap {
@@ -109,7 +110,6 @@
     color: var(--muted);
     font-weight: 500;
     transition: all .15s var(--ease-out);
-    position: relative;
   }
   .nav-chap:hover { color: var(--ink); }
   .nav-chap.active { color: var(--ink); background: var(--pale); }
@@ -130,17 +130,16 @@
   .reveal[data-delay="1"] { transition-delay: .08s; }
   .reveal[data-delay="2"] { transition-delay: .16s; }
   .reveal[data-delay="3"] { transition-delay: .24s; }
-  .reveal[data-delay="4"] { transition-delay: .32s; }
   @media (prefers-reduced-motion: reduce) {
     .reveal, .reveal[data-delay] { transition: none; opacity: 1; transform: none; }
     html { scroll-behavior: auto; }
-    .float, .orb, .marquee-track { animation: none !important; }
+    .orb { animation: none !important; }
   }
 
   /* ─── Hero ───────────────────────────────────────────────────────────── */
   .hero {
     position: relative;
-    padding: 180px 32px 100px;
+    padding: 180px 32px 80px;
     overflow: hidden;
     border-bottom: 1px solid var(--line);
   }
@@ -161,8 +160,8 @@
   }
   html[data-theme="dark"] .hero-bg {
     background:
-      radial-gradient(60% 50% at 80% 10%, rgba(139, 92, 246, 0.20), transparent 70%),
-      radial-gradient(50% 40% at 12% 90%, rgba(99, 102, 241, 0.18), transparent 70%);
+      radial-gradient(60% 50% at 80% 10%, rgba(139, 92, 246, 0.22), transparent 70%),
+      radial-gradient(50% 40% at 12% 90%, rgba(99, 102, 241, 0.20), transparent 70%);
   }
   .orb {
     position: absolute; border-radius: 50%;
@@ -181,7 +180,7 @@
     max-width: var(--content-max); margin: 0 auto;
   }
   .hero-meta {
-    display: flex; gap: 28px;
+    display: flex; gap: 28px; flex-wrap: wrap;
     font-family: var(--font-mono); font-size: 11px;
     color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
     margin-bottom: 32px;
@@ -226,10 +225,7 @@
   }
   .hero-lede strong { color: var(--ink); font-weight: 500; }
 
-  .hero-marquee {
-    display: flex; gap: 12px; flex-wrap: wrap;
-    animation: fadeUp 1s var(--ease-out) .3s both;
-  }
+  .chips { display: flex; gap: 12px; flex-wrap: wrap; animation: fadeUp 1s var(--ease-out) .3s both; }
   .chip {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 7px 16px;
@@ -241,21 +237,79 @@
   }
   .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--indigo-500); }
 
-  /* ─── Hero showcase tile (floating screen) ───────────────────────────── */
-  .hero-showcase {
-    position: relative;
-    max-width: var(--content-max);
-    margin: 80px auto 0;
-    padding: 0 32px;
+  /* Hero showcase — three real laptop screenshots fanned ─────────── */
+  .hero-cluster {
+    margin-top: 80px;
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: 28px; flex-wrap: wrap;
+    transition: transform .5s var(--ease-out);
   }
-  .float {
-    transform: translateY(40px);
-    opacity: 0;
-    animation: floatIn 1.4s var(--ease-out) .5s forwards;
-  }
-  @keyframes floatIn { to { opacity: 1; transform: translateY(0); } }
+  .hero-cluster .browser:nth-child(1) { transform: translateY(20px) rotate(-3deg); }
+  .hero-cluster .browser:nth-child(3) { transform: translateY(20px) rotate(3deg); }
+  .hero-cluster .browser { transition: transform .5s var(--ease-out); }
+  .hero-cluster:hover .browser:nth-child(1),
+  .hero-cluster:hover .browser:nth-child(3) { transform: translateY(0) rotate(0); }
 
-  /* ─── Section primitives ─────────────────────────────────────────────── */
+  /* ─── Browser & phone frames (wraps real <img>) ──────────────────────── */
+  .browser {
+    background: #1a1a24;
+    border-radius: 14px;
+    padding: 10px 8px 4px;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 920px;
+  }
+  .browser-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 6px 8px;
+  }
+  .browser-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .browser-dot.r { background: #ff5f57; }
+  .browser-dot.y { background: #febc2e; }
+  .browser-dot.g { background: #28c840; }
+  .browser-bar-url {
+    margin-left: 14px;
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    max-width: 260px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .browser-img {
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--canvas);
+  }
+  .browser-img img { width: 100%; display: block; }
+
+  .phone {
+    background: #16161e;
+    border-radius: 36px;
+    padding: 10px;
+    box-shadow: var(--shadow-lg);
+    width: 280px;
+    position: relative;
+  }
+  .phone::before {
+    content: ""; position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    width: 84px; height: 22px;
+    background: #0a0a0f;
+    border-radius: 0 0 12px 12px;
+    z-index: 2;
+  }
+  .phone-img {
+    border-radius: 28px;
+    overflow: hidden;
+    background: var(--canvas);
+    aspect-ratio: 9 / 19;
+  }
+  .phone-img img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; }
+
+  /* ─── Sections ───────────────────────────────────────────────────────── */
   .section {
     padding: 120px 32px;
     border-bottom: 1px solid var(--line);
@@ -293,13 +347,6 @@
     font-weight: 400;
     margin-bottom: 20px;
   }
-  .h3 {
-    font-family: var(--font-body);
-    font-size: 18px; font-weight: 700;
-    color: var(--ink);
-    letter-spacing: -0.005em;
-    margin-bottom: 12px;
-  }
   .lede {
     font-size: clamp(18px, 1.6vw, 22px);
     line-height: 1.55;
@@ -316,7 +363,7 @@
   .body strong { color: var(--ink); font-weight: 600; }
   .body em { color: var(--indigo-500); font-style: italic; font-weight: 500; }
 
-  /* ─── Stats strip ────────────────────────────────────────────────────── */
+  /* Stats strip */
   .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -340,7 +387,7 @@
   .stat-num em { color: var(--indigo-500); font-style: italic; font-size: 0.6em; vertical-align: super; }
   .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 
-  /* ─── Quote pull ─────────────────────────────────────────────────────── */
+  /* Pull quote */
   .pull {
     border-left: 3px solid var(--indigo-500);
     padding: 4px 0 4px 28px;
@@ -355,12 +402,13 @@
   .pull em { color: var(--indigo-500); font-style: italic; }
   .pull-cite { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-top: 16px; text-transform: uppercase; }
 
-  /* ─── Two-column ─────────────────────────────────────────────────────── */
+  /* Two col header */
   .two-col {
     display: grid;
     grid-template-columns: 320px 1fr;
     gap: 80px;
     align-items: start;
+    margin-bottom: 56px;
   }
   .two-col .label {
     font-family: var(--font-mono);
@@ -370,15 +418,15 @@
     border-top: 1px solid var(--ink);
   }
 
-  /* ─── Problem callouts ────────────────────────────────────────────────── */
+  /* Problem callouts */
   .problems {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 48px;
+    gap: 20px;
+    margin-top: 40px;
   }
   .problem {
-    padding: 32px 28px;
+    padding: 28px 24px;
     background: var(--raised);
     border: 1px solid var(--line);
     border-radius: 16px;
@@ -386,425 +434,118 @@
   }
   .problem:hover { transform: translateY(-2px); border-color: var(--indigo-200); box-shadow: var(--shadow); }
   .problem-icon {
-    width: 48px; height: 48px;
+    width: 44px; height: 44px;
     border-radius: 12px;
     background: linear-gradient(135deg, var(--indigo-500), var(--violet-500));
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     color: white;
   }
-  .problem-icon svg { width: 22px; height: 22px; }
-  .problem-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .problem-icon svg { width: 20px; height: 20px; }
+  .problem-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
   .problem-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
 
-  /* ─── Screen mockups — device frames ─────────────────────────────────── */
-  .device {
-    position: relative;
-    transition: transform .35s var(--ease-out);
-  }
-  .device:hover { transform: translateY(-4px); }
-
-  .phone {
-    width: 320px;
-    background: #16161e;
-    border-radius: 36px;
-    padding: 10px;
-    box-shadow: var(--shadow-lg);
-    position: relative;
-  }
-  .phone::before {
-    content: ""; position: absolute; top: 18px; left: 50%;
-    transform: translateX(-50%);
-    width: 90px; height: 24px;
-    background: #0a0a0f;
-    border-radius: 0 0 12px 12px;
-    z-index: 2;
-  }
-  .phone-screen {
-    background: #fbfaf7;
-    border-radius: 28px;
-    overflow: hidden;
-    height: 640px;
-    position: relative;
-    color: #0a0a0f;
-    font-family: var(--font-body);
-    font-size: 13px;
-  }
-  html[data-theme="dark"] .phone-screen { background: #0a0a0f; color: #f4f4f7; }
-
-  .laptop {
-    width: 100%;
-    max-width: 880px;
-    margin: 0 auto;
-  }
-  .laptop-screen {
-    background: #16161e;
-    border-radius: 14px 14px 0 0;
-    padding: 14px 12px 4px;
-    box-shadow: var(--shadow-lg);
-  }
-  .laptop-window {
-    background: #fbfaf7;
-    border-radius: 6px;
-    overflow: hidden;
-    aspect-ratio: 16 / 10;
-    color: #0a0a0f;
-    font-family: var(--font-body);
-    font-size: 12px;
-    position: relative;
-  }
-  html[data-theme="dark"] .laptop-window { background: #0a0a0f; color: #f4f4f7; }
-  .laptop-base {
-    height: 14px;
-    background: linear-gradient(180deg, #22222d 0%, #16161e 50%, #0a0a0f 100%);
-    border-radius: 0 0 18px 18px;
-    margin: 0 auto;
-    width: 102%;
-    position: relative;
-    transform: translateX(-1%);
-  }
-  .laptop-base::before {
-    content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 80px; height: 4px;
-    background: #0a0a0f;
-    border-radius: 0 0 4px 4px;
-  }
-
-  /* ─── Recreated app UI inside mockups (light theme only — locked) ──── */
-  .app-shell { height: 100%; display: flex; flex-direction: column; background: #fbfaf7; color: #0a0a0f; }
-  .app-shell.app-laptop { background: #ffffff; }
-  .app-status {
-    height: 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 24px;
-    font-size: 10px; font-weight: 600;
-    color: #0a0a0f;
-    margin-top: 14px;
-  }
-  .app-tab-row {
-    display: flex; align-items: center; gap: 4px;
-    padding: 8px 12px;
-    border-bottom: 1px solid #ececec;
-    overflow: hidden;
-  }
-  .app-tab {
-    display: flex; align-items: center; gap: 4px;
-    padding: 4px 8px;
-    font-size: 10px; font-weight: 500;
-    color: #6b7280;
-    white-space: nowrap;
-  }
-  .app-tab.active { color: #6366f1; font-weight: 600; border-bottom: 2px solid #6366f1; padding-bottom: 6px; margin-bottom: -2px; }
-
-  /* Hero card */
-  .trip-hero {
-    margin: 12px;
-    background: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
-    border-radius: 14px;
-    padding: 16px;
-    color: white;
-    position: relative;
-    overflow: hidden;
-  }
-  .trip-hero.indigo { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
-  .trip-hero-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-  .trip-hero-eyebrow::after { content: "● In 38 days"; opacity: 0.9; }
-  .trip-hero-title { font-family: var(--font-display); font-size: 22px; line-height: 1; margin-bottom: 12px; }
-  .trip-hero-meta { display: flex; gap: 12px; font-size: 9px; opacity: 0.85; }
-  .trip-hero-meta span { display: flex; align-items: center; gap: 4px; }
-  .trip-hero-avatar {
-    position: absolute; top: 14px; right: 14px;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.25);
-    border: 1.5px solid rgba(255,255,255,0.5);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 8px; font-weight: 700; color: white;
-  }
-
-  .up-next {
-    margin: 0 12px 12px;
-    background: white;
-    border: 1px solid #ececec;
-    border-radius: 12px;
-    padding: 12px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .up-next-ico {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    background: rgba(99,102,241,0.10);
-    display: flex; align-items: center; justify-content: center;
-    color: #6366f1;
-    font-size: 14px;
-  }
-  .up-next-title { font-size: 11px; font-weight: 700; }
-  .up-next-sub   { font-size: 9px; color: #6b7280; margin-top: 2px; }
-
-  .cards-2x2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 0 12px;
-  }
-  .qcard {
-    background: white;
-    border: 1px solid #ececec;
-    border-radius: 12px;
-    padding: 12px;
-    position: relative;
-  }
-  .qcard.active { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251,191,36,0.15); }
-  .qcard-eyebrow { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; display: flex; align-items: center; gap: 4px; }
-  .qcard-eyebrow.plan::before    { content: "📅"; font-size: 11px; }
-  .qcard-eyebrow.decide::before  { content: "🗳"; font-size: 11px; }
-  .qcard-eyebrow.money::before   { content: "💳"; font-size: 11px; }
-  .qcard-eyebrow.pack::before    { content: "🎒"; font-size: 11px; }
-  .qcard-main { font-size: 14px; font-weight: 700; margin-top: 6px; line-height: 1.2; }
-  .qcard-sub  { font-size: 9px; color: #6b7280; margin-top: 2px; }
-  .qcard-bullet {
-    position: absolute; top: 12px; right: 12px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #fbbf24;
-  }
-
-  /* Map screen */
-  .map-mock {
-    height: 60%;
-    background:
-      radial-gradient(circle at 30% 40%, rgba(167,139,250,0.18) 0%, transparent 35%),
-      radial-gradient(circle at 70% 60%, rgba(99,102,241,0.12) 0%, transparent 35%),
-      linear-gradient(135deg, #e3e0d4 0%, #ede9dd 100%);
-    position: relative;
-    border-bottom: 1px solid #ececec;
-  }
-  .map-mock::after {
-    content: "";
-    position: absolute; inset: 0;
-    background-image:
-      radial-gradient(circle at 28% 38%, #6366f1 0%, #6366f1 1.2%, transparent 1.4%),
-      radial-gradient(circle at 52% 30%, #6366f1 0%, #6366f1 1.0%, transparent 1.2%),
-      radial-gradient(circle at 68% 58%, #8b5cf6 0%, #8b5cf6 1.0%, transparent 1.2%);
-    background-size: 100% 100%;
-  }
-  .map-day-pills {
-    position: absolute; top: 12px; left: 12px;
-    display: flex; gap: 4px;
-    background: rgba(255,255,255,0.92);
-    padding: 4px;
-    border-radius: 999px;
-    box-shadow: 0 4px 12px rgba(15,15,25,0.06);
-  }
-  .map-pill { font-size: 9px; font-weight: 600; color: #6b7280; padding: 4px 8px; border-radius: 999px; }
-  .map-pill.active { background: #0a0a0f; color: white; }
-  .map-cta {
-    position: absolute; top: 12px; right: 12px;
-    background: #6366f1;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 10px; font-weight: 700;
-    box-shadow: 0 6px 18px rgba(99,102,241,0.4);
-  }
-  .day-sheet {
-    height: 40%;
-    padding: 14px;
-    background: white;
-  }
-  .day-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .day-sheet-title { font-size: 13px; font-weight: 700; }
-  .day-sheet-sub   { font-size: 9px; color: #6b7280; }
-  .day-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f2f2f0; }
-  .day-row:last-child { border-bottom: 0; }
-  .day-pin { width: 8px; height: 8px; border-radius: 50%; background: #6366f1; }
-  .day-name { font-size: 11px; font-weight: 600; flex: 1; }
-  .day-time { font-size: 9px; color: #6b7280; }
-
-  /* Money screen */
-  .money-hero {
-    margin: 12px;
-    background: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
-    border-radius: 16px;
-    padding: 16px;
-    color: white;
-  }
-  .money-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; }
-  .money-hero-amt { font-family: var(--font-display); font-size: 32px; line-height: 1; margin-bottom: 6px; }
-  .money-hero-fx  { font-size: 9px; opacity: 0.85; display: flex; align-items: center; gap: 4px; }
-  .money-row-2 {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    margin-top: 12px;
-  }
-  .money-pill { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 8px 10px; }
-  .money-pill-lbl { font-size: 8px; opacity: 0.8; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
-  .money-pill-val { font-size: 14px; font-weight: 700; font-family: var(--font-mono); }
-
-  .activity {
-    padding: 0 12px;
-  }
-  .activity-head { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
-  .activity-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f2f2f0;
-  }
-  .activity-row:last-child { border-bottom: 0; }
-  .activity-ico {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: rgba(99,102,241,0.10);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
-  }
-  .activity-main { flex: 1; min-width: 0; }
-  .activity-title { font-size: 11px; font-weight: 600; }
-  .activity-sub   { font-size: 9px; color: #6b7280; }
-  .activity-amt   { font-size: 11px; font-weight: 700; font-family: var(--font-mono); text-align: right; }
-  .activity-amt-sub { font-size: 8px; color: #6b7280; }
-
-  /* Vote screen */
-  .vote-card { margin: 12px; background: white; border: 1px solid #ececec; border-radius: 14px; padding: 14px; }
-  .vote-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 700; color: #6366f1; }
-  .vote-eyebrow::before { content: "●"; }
-  .vote-title { font-size: 14px; font-weight: 700; margin: 6px 0 12px; }
-  .vote-opt {
-    margin-top: 8px;
-    position: relative;
-    background: #f6f5f0;
-    border-radius: 10px;
-    padding: 10px 12px;
-    overflow: hidden;
-  }
-  .vote-opt.win::before {
-    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-    background: linear-gradient(90deg, rgba(99,102,241,0.18), rgba(99,102,241,0.10));
-    z-index: 0;
-  }
-  .vote-opt-content { position: relative; display: flex; justify-content: space-between; align-items: center; }
-  .vote-opt-name { font-size: 11px; font-weight: 600; }
-  .vote-opt-name b { display: inline-block; background: rgba(99,102,241,0.12); color: #6366f1; padding: 1px 6px; border-radius: 999px; font-size: 8px; font-weight: 700; margin-left: 6px; }
-  .vote-opt-pct { font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
-  .vote-foot { margin-top: 12px; text-align: center; font-size: 9px; color: #6b7280; }
-
-  /* Pack screen */
-  .pack-tabs { display: flex; gap: 4px; padding: 12px; }
-  .pack-tab { padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; color: #6b7280; background: #f6f5f0; }
-  .pack-tab.on { background: #0a0a0f; color: white; }
-  .pack-progress { padding: 0 12px 8px; }
-  .pack-progress-row { display: flex; justify-content: space-between; font-size: 10px; }
-  .pack-progress-row b { font-weight: 700; }
-  .pack-bar { height: 4px; background: #ececec; border-radius: 2px; margin-top: 4px; overflow: hidden; }
-  .pack-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); }
-  .pack-section { padding: 12px; }
-  .pack-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6b7280; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-  .pack-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
-  .pack-check { width: 18px; height: 18px; border: 1.5px solid #d4d4d4; border-radius: 4px; flex-shrink: 0; }
-  .pack-check.on { background: #6366f1; border-color: #6366f1; position: relative; }
-  .pack-check.on::after { content: "✓"; position: absolute; inset: 0; color: white; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-  .pack-item-name { font-size: 11px; flex: 1; }
-  .pack-item-name.done { text-decoration: line-through; color: #9ca3af; }
-
-  /* Notif bell + dropdown */
-  .notif-shell { background: white; border-radius: 16px; box-shadow: var(--shadow); width: 320px; overflow: hidden; }
-  .notif-head { padding: 12px 16px; border-bottom: 1px solid #ececec; display: flex; justify-content: space-between; align-items: center; }
-  .notif-head-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; }
-  .notif-head-last { font-size: 10px; color: #9ca3af; }
-  .notif-row { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #f4f4f4; background: rgba(99,102,241,0.03); }
-  .notif-row:last-child { border-bottom: 0; }
-  .notif-ico { width: 28px; height: 28px; border-radius: 50%; background: rgba(52,211,153,0.14); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-  .notif-ico.vote { background: rgba(139,92,246,0.14); }
-  .notif-ico.check { background: rgba(52,211,153,0.14); }
-  .notif-main { flex: 1; min-width: 0; }
-  .notif-title { font-size: 12px; font-weight: 700; }
-  .notif-sub   { font-size: 10px; color: #6b7280; margin-top: 1px; }
-  .notif-time  { font-size: 9px; color: #9ca3af; margin-top: 3px; }
-  .notif-dot { width: 6px; height: 6px; border-radius: 50%; background: #6366f1; align-self: flex-start; margin-top: 6px; }
-
-  /* AI planner */
-  .ai-panel { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 18px; width: 320px; }
-  .ai-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .ai-ico { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
-  .ai-title { font-size: 13px; font-weight: 700; }
-  .ai-sub   { font-size: 10px; color: #6b7280; }
-  .ai-progress { display: flex; gap: 6px; margin-bottom: 16px; }
-  .ai-progress-seg { flex: 1; height: 3px; background: #ececec; border-radius: 2px; }
-  .ai-progress-seg.on { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
-  .ai-step-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin-bottom: 12px; }
-  .ai-question { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
-  .ai-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-  .ai-choice { padding: 10px 12px; border: 1px solid #ececec; border-radius: 10px; font-size: 11px; font-weight: 600; display: flex; flex-direction: column; gap: 2px; }
-  .ai-choice.on { border-color: #6366f1; background: rgba(99,102,241,0.05); color: #6366f1; }
-  .ai-choice-cap { font-size: 9px; font-weight: 500; color: #6b7280; }
-  .ai-choice.on .ai-choice-cap { color: #6366f1; opacity: 0.8; }
-  .ai-cta { width: 100%; padding: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; }
-
-  /* Expense dialog */
-  .expense-dialog { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 20px; width: 320px; }
-  .ed-title { font-size: 13px; font-weight: 700; margin-bottom: 16px; }
-  .ed-row1 { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f6f5f0; border-radius: 10px; margin-bottom: 10px; }
-  .ed-row1-ico { width: 28px; height: 28px; border-radius: 8px; background: rgba(52,211,153,0.15); display: flex; align-items: center; justify-content: center; font-size: 12px; }
-  .ed-row1-name { font-size: 12px; font-weight: 600; }
-  .ed-amount-box { padding: 12px 14px; background: #f6f5f0; border-radius: 10px; margin-bottom: 12px; }
-  .ed-amount-row { display: flex; align-items: baseline; justify-content: space-between; }
-  .ed-amount { font-family: var(--font-display); font-size: 28px; font-weight: 400; }
-  .ed-currency { font-size: 11px; font-weight: 700; padding: 4px 10px; background: white; border-radius: 999px; border: 1px solid #ececec; }
-  .ed-fx-hint { font-size: 10px; color: #6b7280; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
-  .ed-projection { font-size: 10px; color: #6b7280; padding: 8px 12px; background: rgba(99,102,241,0.06); border-radius: 8px; margin-bottom: 12px; }
-  .ed-projection b { color: #6366f1; }
-  .ed-scope { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-  .ed-scope-btn { padding: 8px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: center; border: 1px solid #ececec; }
-  .ed-scope-btn.on { background: rgba(99,102,241,0.12); color: #6366f1; border-color: rgba(99,102,241,0.3); }
-  .ed-foot { display: flex; gap: 8px; margin-top: 8px; }
-  .ed-btn { flex: 1; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: center; }
-  .ed-btn-secondary { background: white; border: 1px solid #ececec; }
-  .ed-btn-primary   { background: #6366f1; color: white; }
-
-  /* ─── Screen gallery layouts ────────────────────────────────────────── */
-  .screens-row {
-    display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 80px;
-    align-items: center;
+  /* ─── Screens layout ─────────────────────────────────────────────────── */
+  .screen-block {
     margin: 80px 0;
   }
-  .screens-row.flip { grid-template-columns: 1fr 1.1fr; }
-  .screens-row.flip .screens-prose { order: 2; }
-  .screens-row.flip .screens-art   { order: 1; }
-  .screens-prose .label {
-    font-family: var(--font-mono); font-size: 11px;
-    letter-spacing: 0.16em; text-transform: uppercase;
-    color: var(--indigo-600); margin-bottom: 16px;
+  .screen-cap {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
   }
-  html[data-theme="dark"] .screens-prose .label { color: var(--indigo-300); }
-  .screens-art {
-    display: flex; justify-content: center; align-items: center;
-    position: relative;
+  .screen-cap .num {
+    padding: 3px 8px;
+    background: var(--pale);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    font-weight: 600;
   }
-  .stack-2 {
+  .screen-cap .arrow { color: var(--muted-2); }
+
+  .row-prose-img {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    margin-top: 64px;
+    grid-template-columns: 320px 1fr;
+    gap: 64px;
+    align-items: start;
+    margin-bottom: 32px;
   }
-  .stack-2 .device { display: flex; justify-content: center; }
-
-  /* ─── Cluster (3-device showcase) ────────────────────────────────────── */
-  .cluster {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 32px;
-    flex-wrap: wrap;
-    margin: 80px auto 0;
+  .row-prose-img.flip { grid-template-columns: 1fr 320px; }
+  .row-prose-img.flip .row-prose { order: 2; }
+  .row-prose-img.flip .row-art { order: 1; }
+  .row-prose .label {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--indigo-600); margin-bottom: 12px;
   }
-  .cluster .device:nth-child(1) { transform: translateY(20px) rotate(-3deg); }
-  .cluster .device:nth-child(2) { z-index: 2; }
-  .cluster .device:nth-child(3) { transform: translateY(20px) rotate(3deg); }
-  .cluster .device { transition: transform .5s var(--ease-out); }
-  .cluster:hover .device:nth-child(1) { transform: translateY(0) rotate(0); }
-  .cluster:hover .device:nth-child(3) { transform: translateY(0) rotate(0); }
+  html[data-theme="dark"] .row-prose .label { color: var(--indigo-300); }
+  .row-prose h3 {
+    font-family: var(--font-display);
+    font-size: 26px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-weight: 400;
+    margin-bottom: 14px;
+    color: var(--ink);
+  }
+  .row-prose p {
+    font-size: 14px; line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .row-prose p + p { margin-top: 14px; }
+  .row-prose strong { color: var(--ink); font-weight: 600; }
+  .row-prose em { color: var(--indigo-500); font-style: italic; font-weight: 500; }
 
-  /* ─── Process timeline ──────────────────────────────────────────────── */
+  /* Phone + browser side-by-side */
+  .phone-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+    align-items: end;
+  }
+  .phone-row .phone { width: 100%; max-width: 280px; margin: 0 auto; }
+  .phone-row .phone-cap {
+    text-align: center;
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .phone-row .phone-cap b { color: var(--ink); font-weight: 600; }
+
+  /* Chat scenarios */
+  .chat-scenarios {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 32px 0 48px;
+  }
+  .chat-scenario {
+    padding: 20px 22px;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    border-left: 3px solid var(--indigo-500);
+    transition: all .2s var(--ease-out);
+  }
+  .chat-scenario:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .chat-scenario-num {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--indigo-600);
+    margin-bottom: 8px;
+  }
+  html[data-theme="dark"] .chat-scenario-num { color: var(--indigo-300); }
+  .chat-scenario-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .chat-scenario-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* Process timeline */
   .timeline {
     margin-top: 56px;
     position: relative;
@@ -840,31 +581,31 @@
   .tl-content h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--ink); }
   .tl-content p  { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-  /* ─── Final / Reflection ────────────────────────────────────────────── */
+  /* Takeaways */
   .takeaways {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 56px;
+    gap: 20px;
+    margin-top: 48px;
   }
   .takeaway {
-    padding: 32px 28px;
+    padding: 28px 24px;
     background: linear-gradient(180deg, transparent 0%, rgba(99,102,241,0.04) 100%);
     border: 1px solid var(--line);
     border-radius: 16px;
   }
   .takeaway-num {
     font-family: var(--font-display);
-    font-size: 56px;
+    font-size: 48px;
     line-height: 1;
     color: var(--indigo-500);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     font-style: italic;
   }
-  .takeaway-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .takeaway-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
   .takeaway-body  { font-size: 13px; color: var(--muted); line-height: 1.65; }
 
-  /* ─── Footer / Next ─────────────────────────────────────────────────── */
+  /* Footer */
   .doc-foot {
     background: var(--ink);
     color: white;
@@ -888,12 +629,11 @@
     max-width: 920px;
   }
   .foot-h em { color: var(--indigo-300); font-style: italic; }
-  .foot-row { display: flex; justify-content: space-between; align-items: end; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .foot-row { display: flex; justify-content: space-between; align-items: end; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; gap: 32px; }
   .foot-mail { font-size: 14px; color: rgba(255,255,255,0.85); display: inline-flex; align-items: center; gap: 10px; }
   .foot-mail::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--indigo-300); }
   .foot-meta { font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.3); line-height: 1.8; text-align: right; }
 
-  /* Logo footprint */
   .foot-logo-rays {
     position: absolute; right: -40px; bottom: -40px;
     width: 400px; height: 400px;
@@ -902,7 +642,7 @@
     pointer-events: none;
   }
 
-  /* ─── Mobile ────────────────────────────────────────────────────────── */
+  /* Mobile */
   @media (max-width: 980px) {
     .nav-chapters { display: none; }
     .hero { padding: 140px 24px 80px; }
@@ -911,16 +651,16 @@
     .stat:nth-child(2) { border-right: 0; }
     .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--line); }
     .two-col { grid-template-columns: 1fr; gap: 32px; }
-    .problems { grid-template-columns: 1fr; }
-    .screens-row, .screens-row.flip { grid-template-columns: 1fr; gap: 48px; margin: 56px 0; }
-    .screens-row.flip .screens-prose { order: 1; }
-    .screens-row.flip .screens-art   { order: 2; }
-    .stack-2 { grid-template-columns: 1fr; }
-    .takeaways { grid-template-columns: 1fr; }
-    .cluster .device { transform: none !important; }
+    .problems, .chat-scenarios, .takeaways { grid-template-columns: 1fr; }
+    .row-prose-img, .row-prose-img.flip { grid-template-columns: 1fr; gap: 28px; margin-bottom: 24px; }
+    .row-prose-img.flip .row-prose { order: 1; }
+    .row-prose-img.flip .row-art { order: 2; }
+    .phone-row { grid-template-columns: 1fr; }
+    .hero-cluster .browser { transform: none !important; }
     .doc-foot { padding: 80px 24px 48px; }
-    .foot-row { flex-direction: column; gap: 32px; align-items: flex-start; }
+    .foot-row { flex-direction: column; align-items: flex-start; }
     .foot-meta { text-align: left; }
+    .browser-bar-url { display: none; }
   }
 </style>
 </head>
@@ -947,11 +687,13 @@
   <div class="nav-chapters">
     <a class="nav-chap" data-target="intro">Intro</a>
     <a class="nav-chap" data-target="problem">Problem</a>
-    <a class="nav-chap" data-target="solution">Solution</a>
-    <a class="nav-chap" data-target="screens">Screens</a>
+    <a class="nav-chap" data-target="dashboard">Dashboard</a>
+    <a class="nav-chap" data-target="planning">Planning</a>
+    <a class="nav-chap" data-target="decide">Decide</a>
     <a class="nav-chap" data-target="money">Money</a>
+    <a class="nav-chap" data-target="chat">Chat</a>
+    <a class="nav-chap" data-target="pack">Pack</a>
     <a class="nav-chap" data-target="process">Process</a>
-    <a class="nav-chap" data-target="outcome">Outcome</a>
   </div>
   <div class="nav-actions">
     <button class="nav-btn" id="theme-toggle" title="Toggle theme">
@@ -982,146 +724,43 @@
     </div>
     <h1 class="hero-title">Plan the trip.<br>Not the <em>group chat</em>.</h1>
     <p class="hero-lede">A case study on <strong>Paxawa</strong> — the calm, group-aware travel planner. From the noise of WhatsApp threads and spreadsheets, to a single shared source of truth for itineraries, decisions, and money.</p>
-    <div class="hero-marquee">
+    <div class="chips">
       <span class="chip">Group travel</span>
       <span class="chip">Multi-currency money</span>
       <span class="chip">AI-assisted planning</span>
       <span class="chip">Live voting</span>
       <span class="chip">Smart packing</span>
-      <span class="chip">Real-time notifications</span>
+      <span class="chip">Real-time chat &amp; nudges</span>
     </div>
-  </div>
-</section>
 
-<!-- Hero showcase — laptop + phone cluster -->
-<section class="hero-showcase float">
-  <div class="cluster">
-    <!-- Left phone — Trip overview -->
-    <div class="device phone">
-      <div class="phone-screen">
-        <div class="app-shell">
-          <div class="app-status"><span>9:41</span><span>● ●</span></div>
-          <div style="padding: 18px 16px 8px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:10px; color:#6b7280; margin-bottom: 4px;">
-              <span>←</span>
-              <span>Trip</span>
-            </div>
-            <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
-            <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Kuala Lumpur · Jul 10 – Jul 17</div>
-          </div>
-          <div class="app-tab-row">
-            <div class="app-tab active">Overview</div>
-            <div class="app-tab">Itinerary</div>
-            <div class="app-tab">Votes</div>
-            <div class="app-tab">Expenses</div>
-            <div class="app-tab">Pack</div>
-          </div>
-          <div class="trip-hero">
-            <div class="trip-hero-eyebrow">Kuala Lumpur, Malaysia</div>
-            <div class="trip-hero-title">Malaysia<br>adventure</div>
-            <div class="trip-hero-meta">
-              <span>📅 Jul 10 – Jul 17</span>
-              <span>🕒 7n</span>
-            </div>
-            <div class="trip-hero-avatar">AW</div>
-          </div>
-          <div class="up-next">
-            <div class="up-next-ico">✨</div>
-            <div>
-              <div class="up-next-title">1 vote needs your input</div>
-              <div class="up-next-sub">Cast your vote so the group can move on.</div>
-            </div>
-          </div>
-          <div class="cards-2x2">
-            <div class="qcard"><div class="qcard-eyebrow plan">Plan</div><div class="qcard-main">3 items</div><div class="qcard-sub">6 days empty</div></div>
-            <div class="qcard active"><div class="qcard-bullet"></div><div class="qcard-eyebrow decide">Decide</div><div class="qcard-main">1 open</div><div class="qcard-sub">Needs your vote</div></div>
-            <div class="qcard"><div class="qcard-eyebrow money">Money</div><div class="qcard-main">SAR 42</div><div class="qcard-sub">You're settled</div></div>
-            <div class="qcard"><div class="qcard-eyebrow pack">Pack</div><div class="qcard-main">0/20</div><div class="qcard-sub">0% packed</div></div>
-          </div>
+    <!-- Hero showcase — three real laptop shots -->
+    <div class="hero-cluster">
+      <div class="browser">
+        <div class="browser-bar">
+          <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+          <span class="browser-bar-url">paxawa.com / dashboard</span>
         </div>
+        <div class="browser-img"><img src="/case/img/dashboard-desktop.png" alt="Paxawa dashboard" loading="eager"></div>
       </div>
-    </div>
-
-    <!-- Center phone — Itinerary map -->
-    <div class="device phone">
-      <div class="phone-screen">
-        <div class="app-shell">
-          <div class="app-status"><span>9:41</span><span>● ●</span></div>
-          <div style="padding: 18px 16px 8px;">
-            <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
-            <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Kuala Lumpur · Jul 10 – Jul 17</div>
-          </div>
-          <div class="app-tab-row">
-            <div class="app-tab">Overview</div>
-            <div class="app-tab active">Itinerary</div>
-            <div class="app-tab">Votes</div>
-            <div class="app-tab">Expenses</div>
-            <div class="app-tab">Pack</div>
-          </div>
-          <div class="map-mock">
-            <div class="map-day-pills">
-              <div class="map-pill">All</div>
-              <div class="map-pill active">D1</div>
-              <div class="map-pill">D2</div>
-              <div class="map-pill">D3</div>
-              <div class="map-pill">D4</div>
-            </div>
-            <div class="map-cta">+ Add place</div>
-          </div>
-          <div class="day-sheet">
-            <div class="day-sheet-head">
-              <div>
-                <div class="day-sheet-title">Day 1 · Fri, Jul 10</div>
-                <div class="day-sheet-sub">3 items</div>
-              </div>
-              <div style="font-size:14px; color:#9ca3af;">⌃</div>
-            </div>
-            <div class="day-row"><div class="day-pin"></div><div class="day-name">KLCC Twin Towers</div><div class="day-time">10:30</div></div>
-            <div class="day-row"><div class="day-pin" style="background:#a78bfa;"></div><div class="day-name">Jalan Alor street food</div><div class="day-time">19:00</div></div>
-            <div class="day-row"><div class="day-pin" style="background:#34d399;"></div><div class="day-name">Sky Bar</div><div class="day-time">22:00</div></div>
-          </div>
+      <div class="browser">
+        <div class="browser-bar">
+          <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+          <span class="browser-bar-url">paxawa.com / trips / malaysia / itinerary</span>
         </div>
+        <div class="browser-img"><img src="/case/img/itinerary-malaysia-desktop.png" alt="Paxawa itinerary map" loading="eager"></div>
       </div>
-    </div>
-
-    <!-- Right phone — Expenses -->
-    <div class="device phone">
-      <div class="phone-screen">
-        <div class="app-shell">
-          <div class="app-status"><span>9:41</span><span>● ●</span></div>
-          <div style="padding: 18px 16px 8px;">
-            <div style="font-size:16px; font-weight:700;">Japan trip</div>
-            <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Japan · Jun 18 – Jul 2</div>
-          </div>
-          <div class="app-tab-row">
-            <div class="app-tab">Overview</div>
-            <div class="app-tab">Itinerary</div>
-            <div class="app-tab">Votes</div>
-            <div class="app-tab active">Expenses</div>
-            <div class="app-tab">Pack</div>
-          </div>
-          <div class="money-hero">
-            <div class="money-hero-label">Trip total spent</div>
-            <div class="money-hero-amt">USD 130.93</div>
-            <div class="money-hero-fx">⇄ Live FX applied across 3 currencies</div>
-            <div class="money-row-2">
-              <div class="money-pill"><div class="money-pill-lbl">You paid</div><div class="money-pill-val">USD 128.55</div></div>
-              <div class="money-pill"><div class="money-pill-lbl">You owe</div><div class="money-pill-val">USD 0</div></div>
-            </div>
-          </div>
-          <div class="activity">
-            <div class="activity-head">Activity · 6</div>
-            <div class="activity-row"><div class="activity-ico" style="background:rgba(56,189,248,0.16);">✈️</div><div class="activity-main"><div class="activity-title">Bus tickets</div><div class="activity-sub">Jun 25 · Raheem</div></div><div><div class="activity-amt">JPY 380</div><div class="activity-amt-sub">≈ USD 2.38</div></div></div>
-            <div class="activity-row"><div class="activity-ico" style="background:rgba(52,211,153,0.16);">🍱</div><div class="activity-main"><div class="activity-title">Burger</div><div class="activity-sub">Jun 25 · You</div></div><div><div class="activity-amt">JPY 800</div><div class="activity-amt-sub">≈ USD 5.02</div></div></div>
-            <div class="activity-row"><div class="activity-ico" style="background:rgba(52,211,153,0.16);">🥖</div><div class="activity-main"><div class="activity-title">Bread</div><div class="activity-sub">May 28 · You</div></div><div><div class="activity-amt">SAR 100</div><div class="activity-amt-sub">≈ USD 26.67</div></div></div>
-          </div>
+      <div class="browser">
+        <div class="browser-bar">
+          <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+          <span class="browser-bar-url">paxawa.com / trips / japan / expenses</span>
         </div>
+        <div class="browser-img"><img src="/case/img/expenses-japan-desktop.png" alt="Paxawa expenses page" loading="lazy"></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── 01 · INTRO ───────────────────────────────────────────────────── -->
+<!-- ─── INTRO ────────────────────────────────────────────────────────── -->
 <section class="section" id="intro" data-title="Intro">
   <div class="section-inner">
     <div class="chapter-mark">01 · Overview</div>
@@ -1129,27 +768,15 @@
     <p class="lede">Most travel apps are designed for a solo planner who relays decisions to everyone else. Paxawa starts from a different premise — <strong>the group is the user</strong>. Every screen accepts that planning is a collective act, and shapes itself around that.</p>
 
     <div class="stats reveal">
-      <div class="stat">
-        <div class="stat-num">5</div>
-        <div class="stat-label">Surfaces</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">160<em>+</em></div>
-        <div class="stat-label">Live FX currencies</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">6</div>
-        <div class="stat-label">Motion presets</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">14</div>
-        <div class="stat-label">Build iterations</div>
-      </div>
+      <div class="stat"><div class="stat-num">9</div><div class="stat-label">Surfaces</div></div>
+      <div class="stat"><div class="stat-num">160<em>+</em></div><div class="stat-label">Live FX currencies</div></div>
+      <div class="stat"><div class="stat-num">6</div><div class="stat-label">Motion presets</div></div>
+      <div class="stat"><div class="stat-num">15</div><div class="stat-label">Build iterations</div></div>
     </div>
   </div>
 </section>
 
-<!-- ─── 02 · PROBLEM ─────────────────────────────────────────────────── -->
+<!-- ─── PROBLEM ──────────────────────────────────────────────────────── -->
 <section class="section" id="problem" data-title="Problem">
   <div class="section-inner">
     <div class="two-col reveal">
@@ -1165,25 +792,19 @@
 
     <div class="problems">
       <div class="problem reveal" data-delay="1">
-        <div class="problem-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
+        <div class="problem-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
         <div class="problem-title">Decisions get lost in chat</div>
-        <div class="problem-desc">The vote on which Airbnb to book sits at message #847 in a thread of 3,200. Nobody can find it. The host re-books and someone gets the wrong dates.</div>
+        <div class="problem-desc">The vote on which Airbnb to book sits at message #847. Nobody can find it. The host re-books and someone gets the wrong dates.</div>
       </div>
       <div class="problem reveal" data-delay="2">
-        <div class="problem-icon" style="background:linear-gradient(135deg,#34d399,#10b981);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        </div>
+        <div class="problem-icon" style="background:linear-gradient(135deg,#34d399,#10b981);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
         <div class="problem-title">Money math doesn't match memory</div>
-        <div class="problem-desc">Three currencies, four payers, partial settles. The spreadsheet is right. The vibe says someone is owed more. The post-trip "Venmo me ¥3,200" message tanks the friendship.</div>
+        <div class="problem-desc">Three currencies, four payers, partial settles. The spreadsheet is right. The vibe says someone is owed more. Post-trip "Venmo me ¥3,200" tanks the friendship.</div>
       </div>
       <div class="problem reveal" data-delay="3">
-        <div class="problem-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
+        <div class="problem-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
         <div class="problem-title">No one owns the plan</div>
-        <div class="problem-desc">The one friend with a spreadsheet becomes the on-call coordinator. By day three of the trip they're exhausted, mildly resentful, and the group is asking them what's next.</div>
+        <div class="problem-desc">The one friend with a spreadsheet becomes the on-call coordinator. By day three of the trip they're exhausted, mildly resentful, and the group is asking what's next.</div>
       </div>
     </div>
 
@@ -1194,335 +815,451 @@
   </div>
 </section>
 
-<!-- ─── 03 · SOLUTION ────────────────────────────────────────────────── -->
-<section class="section" id="solution" data-title="Solution">
+<!-- ─── DASHBOARD ────────────────────────────────────────────────────── -->
+<section class="section" id="dashboard" data-title="Dashboard">
   <div class="section-inner">
     <div class="two-col reveal">
-      <div class="label">03 · The shape of the answer</div>
+      <div class="label">03 · Home</div>
       <div>
-        <h2 class="h1">Five surfaces. One source of truth.</h2>
+        <h2 class="h1">All trips. One glance.</h2>
         <div class="body">
-          <p>The information architecture earns its weight. Each tab maps to a question a traveller actually asks during a trip — and refuses to leak into another tab's job.</p>
-          <p><strong>Overview</strong> answers <em>"what's the state of this trip?"</em> &nbsp;·&nbsp; <strong>Itinerary</strong> answers <em>"where are we and when?"</em> &nbsp;·&nbsp; <strong>Votes</strong> answers <em>"what hasn't the group decided?"</em> &nbsp;·&nbsp; <strong>Expenses</strong> answers <em>"who paid what, who owes whom?"</em> &nbsp;·&nbsp; <strong>Pack</strong> answers <em>"what do I still need to bring, and which docs do I need?"</em></p>
-          <p>A bell icon in the header (and the dashboard) collects everything you've missed across trips. A side panel hosts the AI planner without taking over the page.</p>
+          <p>The dashboard is the closest Paxawa gets to a launcher. <strong>Ongoing now</strong> bubbles up the trip you're on. Below it, every trip you're part of — past, present, future — sits as a destination tile with its own atmosphere.</p>
+          <p>The four chips up top (<em>total trips, upcoming, days planned, past trips</em>) anchor identity to numbers a frequent traveller wants to brag about quietly.</p>
         </div>
+      </div>
+    </div>
+
+    <div class="browser reveal" data-delay="1" style="max-width: 1100px; margin: 32px auto 0;">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <span class="browser-bar-url">paxawa.com / dashboard</span>
+      </div>
+      <div class="browser-img"><img src="/case/img/dashboard-desktop.png" alt="Dashboard with ongoing trip and trip tiles" loading="lazy"></div>
+    </div>
+    <div class="screen-cap"><span class="num">3.1</span><span class="arrow">→</span><span>Dashboard · dark · 1440 viewport</span></div>
+
+    <div class="phone-row" style="margin-top: 80px;">
+      <div>
+        <div class="phone"><div class="phone-img"><img src="/case/img/dashboard-mobile.png" alt="Dashboard on mobile" loading="lazy"></div></div>
+        <div class="phone-cap"><b>Mobile dashboard</b><br>Up next · trip stack</div>
+      </div>
+      <div>
+        <div class="phone"><div class="phone-img"><img src="/case/img/overview-malaysia-mobile.png" alt="Trip overview on mobile" loading="lazy"></div></div>
+        <div class="phone-cap"><b>Trip overview</b><br>Action hub: Plan · Decide · Money · Pack</div>
+      </div>
+      <div>
+        <div class="phone"><div class="phone-img"><img src="/case/img/overview-japan-mobile.png" alt="Japan trip overview" loading="lazy"></div></div>
+        <div class="phone-cap"><b>Overview · in progress</b><br>Live trip with active state</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── 04 · SCREENS ─────────────────────────────────────────────────── -->
-<section class="section" id="screens" data-title="Screens">
+<!-- ─── PLANNING — Itinerary + AI Plan ───────────────────────────────── -->
+<section class="section" id="planning" data-title="Planning">
   <div class="section-inner">
-    <div class="chapter-mark">04 · Screens</div>
-    <h2 class="h1">The shape, in pixels.</h2>
-    <p class="lede">Highlights from across the app. The screens recreated here are faithful to what ships on <a href="https://paxawa.com" style="color: var(--indigo-500); border-bottom: 1px solid currentColor;">paxawa.com</a> today.</p>
-
-    <!-- Row 1 — Itinerary -->
-    <div class="screens-row">
-      <div class="screens-prose reveal">
-        <div class="label">Itinerary</div>
-        <h3 class="h2">A map-first plan, not another list.</h3>
+    <div class="two-col reveal">
+      <div class="label">04 · Planning</div>
+      <div>
+        <h2 class="h1">A map-first plan, not another list.</h2>
         <div class="body">
-          <p>The map is the surface. Mapbox basemap, English labels, places pinned per-day. Tap a day pill, and the rest dim. The bottom sheet is the day's items, draggable to expand.</p>
-          <p>Place search runs on <strong>Foursquare's POI database</strong>, with Mapbox as a fallback for free-form text. Search "Petronas Towers" on a KL trip and you get the actual landmark — not a same-named street six countries away.</p>
-        </div>
-      </div>
-      <div class="screens-art reveal" data-delay="1">
-        <div class="device phone">
-          <div class="phone-screen">
-            <div class="app-shell">
-              <div class="app-status"><span>9:41</span><span>● ●</span></div>
-              <div style="padding: 18px 16px 8px;">
-                <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
-              </div>
-              <div class="app-tab-row">
-                <div class="app-tab">Overview</div>
-                <div class="app-tab active">Itinerary</div>
-                <div class="app-tab">Votes</div>
-                <div class="app-tab">Expenses</div>
-                <div class="app-tab">Pack</div>
-              </div>
-              <div class="map-mock" style="height:62%;">
-                <div class="map-day-pills">
-                  <div class="map-pill">All</div>
-                  <div class="map-pill active">D1</div>
-                  <div class="map-pill">D2</div>
-                  <div class="map-pill">D3</div>
-                </div>
-                <div class="map-cta">+ Add place</div>
-              </div>
-              <div class="day-sheet" style="height:38%;">
-                <div class="day-sheet-head">
-                  <div>
-                    <div class="day-sheet-title">Day 1 · Fri, Jul 10</div>
-                    <div class="day-sheet-sub">3 items · 0 votes</div>
-                  </div>
-                </div>
-                <div class="day-row"><div class="day-pin"></div><div class="day-name">KLCC Twin Towers</div><div class="day-time">10:30</div></div>
-                <div class="day-row"><div class="day-pin" style="background:#a78bfa;"></div><div class="day-name">Jalan Alor street food</div><div class="day-time">19:00</div></div>
-                <div class="day-row"><div class="day-pin" style="background:#34d399;"></div><div class="day-name">Sky Bar</div><div class="day-time">22:00</div></div>
-              </div>
-            </div>
-          </div>
+          <p>The map is the surface. Mapbox basemap, English labels, places pinned per-day. <strong>The route lines connect the day's points</strong> in order, drawn from Mapbox Directions so they follow real roads — not as-the-crow-flies.</p>
+          <p>Tap a day pill (D1, D2, D3…) and the rest dim. The right rail shows the day's items in sequence. The Add place search hits the <em>Foursquare POI database</em> first — so "KLCC" returns the actual tower, not a same-named street six countries away.</p>
         </div>
       </div>
     </div>
 
-    <!-- Row 2 — Votes -->
-    <div class="screens-row flip">
-      <div class="screens-prose reveal">
-        <div class="label">Decide</div>
-        <h3 class="h2">A vote is a question with a deadline.</h3>
-        <div class="body">
-          <p>Open a vote, pick options, set a deadline. Anyone in the trip casts a tap. The winning option fills its bar gradually, so the result tells a story rather than barking a number.</p>
-          <p>When a vote closes, the winning option <strong>auto-adds to the itinerary</strong> on the relevant day. Decision and plan stay in lock-step — no copy-paste, no "I already added it" confusion.</p>
-        </div>
+    <div class="browser reveal" data-delay="1" style="max-width: 1100px; margin: 32px auto 0;">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <span class="browser-bar-url">paxawa.com / trips / malaysia-adventure / itinerary</span>
       </div>
-      <div class="screens-art reveal" data-delay="1">
-        <div class="device phone">
-          <div class="phone-screen">
-            <div class="app-shell">
-              <div class="app-status"><span>9:41</span><span>● ●</span></div>
-              <div style="padding: 18px 16px 8px;">
-                <div style="font-size:16px; font-weight:700;">Votes</div>
-                <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Make group decisions together</div>
-              </div>
-              <div class="vote-card">
-                <div class="vote-eyebrow">Open</div>
-                <div class="vote-title">Dinner spot tonight?</div>
-                <div class="vote-opt win">
-                  <div class="vote-opt-content">
-                    <div class="vote-opt-name">Jalan Alor street food <b>YOUR VOTE</b></div>
-                    <div class="vote-opt-pct">100%</div>
-                  </div>
-                </div>
-                <div class="vote-opt">
-                  <div class="vote-opt-content">
-                    <div class="vote-opt-name">Suria KLCC food court</div>
-                    <div class="vote-opt-pct">0%</div>
-                  </div>
-                </div>
-                <div class="vote-foot">Tap any option to change your vote</div>
-              </div>
-              <div class="vote-card" style="opacity:0.6;">
-                <div class="vote-eyebrow" style="color:#9ca3af;">● Closed · resolved</div>
-                <div class="vote-title">Where to stay?</div>
-                <div class="vote-opt win">
-                  <div class="vote-opt-content">
-                    <div class="vote-opt-name">Beachfront villa <b style="background:rgba(52,211,153,0.16); color:#047857;">WON</b></div>
-                    <div class="vote-opt-pct">75%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div class="browser-img"><img src="/case/img/itinerary-malaysia-desktop.png" alt="Itinerary with map, route line, day items" loading="lazy"></div>
+    </div>
+    <div class="screen-cap"><span class="num">4.1</span><span class="arrow">→</span><span>Itinerary · map + day rail · Day 1 of Malaysia trip</span></div>
+
+    <div class="row-prose-img" style="margin-top: 80px;">
+      <div class="row-prose reveal">
+        <div class="label">AI Trip Planner</div>
+        <h3>A side panel, not a takeover.</h3>
+        <p>The AI planner opens as a <em>right-edge sheet</em> over the map — never as a full-page wizard. Three steps: vibe, interests, pace. Each is one thumb-tap from the next.</p>
+        <p>The result is a draft itinerary the group can <strong>edit and re-vote on</strong>. The AI proposes; the crew disposes.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / itinerary · AI panel open</span>
           </div>
+          <div class="browser-img"><img src="/case/img/ai-plan-panel-desktop.png" alt="AI Trip Planner side panel — Step 1 of 3: Vibe" loading="lazy"></div>
         </div>
+        <div class="screen-cap"><span class="num">4.2</span><span class="arrow">→</span><span>AI Trip Planner · Step 1 of 3 · Vibe</span></div>
       </div>
     </div>
 
-    <!-- Row 3 — Pack + Notifications side-by-side -->
-    <h3 class="h2 reveal" style="margin-top: 80px; margin-bottom: 16px;">Smaller surfaces, same care.</h3>
-    <p class="lede reveal">Pack auto-seeds 20 essentials at trip creation — destination-aware (insect repellent + cooling towel ship with a Malaysia trip). The notification bell lives in the header of every trip and the dashboard, with optimistic mark-read on open.</p>
-
-    <div class="stack-2">
-      <div class="device phone reveal">
-        <div class="phone-screen">
-          <div class="app-shell">
-            <div class="app-status"><span>9:41</span><span>● ●</span></div>
-            <div style="padding: 18px 16px 8px;">
-              <div style="font-size:16px; font-weight:700;">Pack</div>
-              <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Trip docs and packing checklist</div>
-            </div>
-            <div class="pack-tabs">
-              <div class="pack-tab">Docs · 0</div>
-              <div class="pack-tab on">Packing · 8/20</div>
-            </div>
-            <div class="pack-progress">
-              <div class="pack-progress-row"><span>8 of 20 packed</span><b>40%</b></div>
-              <div class="pack-bar"><div class="pack-bar-fill" style="width:40%;"></div></div>
-            </div>
-            <div class="pack-section">
-              <div class="pack-section-label">📄 Documents · 3</div>
-              <div class="pack-item"><div class="pack-check on"></div><div class="pack-item-name done">Passport</div></div>
-              <div class="pack-item"><div class="pack-check on"></div><div class="pack-item-name done">Boarding passes</div></div>
-              <div class="pack-item"><div class="pack-check"></div><div class="pack-item-name">Travel insurance card</div></div>
-            </div>
-            <div class="pack-section">
-              <div class="pack-section-label">🧴 Toiletries · 5</div>
-              <div class="pack-item"><div class="pack-check on"></div><div class="pack-item-name done">Sunscreen</div></div>
-              <div class="pack-item"><div class="pack-check"></div><div class="pack-item-name">Insect repellent</div></div>
-              <div class="pack-item"><div class="pack-check"></div><div class="pack-item-name">Toothpaste</div></div>
-            </div>
-          </div>
-        </div>
+    <div class="phone-row" style="margin-top: 64px;">
+      <div>
+        <div class="phone"><div class="phone-img"><img src="/case/img/itinerary-malaysia-mobile.png" alt="Itinerary on mobile" loading="lazy"></div></div>
+        <div class="phone-cap"><b>Itinerary · mobile</b><br>Map + draggable day sheet</div>
       </div>
-
-      <div class="device reveal" data-delay="1" style="display:flex; flex-direction:column; gap:18px; justify-content:center;">
-        <div class="notif-shell">
-          <div class="notif-head">
-            <div class="notif-head-title">Notifications</div>
-            <div class="notif-head-last">Last 3</div>
-          </div>
-          <div class="notif-row">
-            <div class="notif-ico"><span style="color:#047857;">💵</span></div>
-            <div class="notif-main">
-              <div class="notif-title">Raheem paid for Bus tickets</div>
-              <div class="notif-sub">JPY 380 · Japan trip</div>
-              <div class="notif-time">less than a minute ago</div>
-            </div>
-            <div class="notif-dot"></div>
-          </div>
-          <div class="notif-row">
-            <div class="notif-ico vote"><span style="color:#7c3aed;">🗳</span></div>
-            <div class="notif-main">
-              <div class="notif-title">Raheem opened a vote</div>
-              <div class="notif-sub">Where should we eat tonight?</div>
-              <div class="notif-time">2 minutes ago</div>
-            </div>
-            <div class="notif-dot"></div>
-          </div>
-          <div class="notif-row">
-            <div class="notif-ico check"><span style="color:#047857;">✓</span></div>
-            <div class="notif-main">
-              <div class="notif-title">Raheem settled up</div>
-              <div class="notif-sub">JPY 50 for Bus tickets</div>
-              <div class="notif-time">3 minutes ago</div>
-            </div>
-            <div class="notif-dot"></div>
-          </div>
-        </div>
-
-        <div class="ai-panel">
-          <div class="ai-head">
-            <div class="ai-ico">✨</div>
-            <div>
-              <div class="ai-title">AI Trip Planner</div>
-              <div class="ai-sub">Smart itinerary for Kuala Lumpur</div>
-            </div>
-          </div>
-          <div class="ai-progress">
-            <div class="ai-progress-seg on"></div>
-            <div class="ai-progress-seg"></div>
-            <div class="ai-progress-seg"></div>
-          </div>
-          <div class="ai-step-label">Step 1 of 3 · Vibe</div>
-          <div class="ai-question">What's the vibe?</div>
-          <div class="ai-choices">
-            <div class="ai-choice">🏔 Adventure<span class="ai-choice-cap">Outdoors &amp; thrills</span></div>
-            <div class="ai-choice">🏝 Relaxed<span class="ai-choice-cap">Chill &amp; scenic</span></div>
-            <div class="ai-choice on">🏛 Cultural<span class="ai-choice-cap">History &amp; art</span></div>
-            <div class="ai-choice">🍜 Foodie<span class="ai-choice-cap">Eat everything</span></div>
-          </div>
-          <div class="ai-cta">Next →</div>
-        </div>
+      <div>
+        <div class="phone"><div class="phone-img"><img src="/case/img/discover-malaysia-desktop.png" alt="Discover screen" loading="lazy" style="object-fit: contain;"></div></div>
+        <div class="phone-cap"><b>Discover</b><br>Curated places for the destination</div>
+      </div>
+      <div>
+        <div class="phone"><div class="phone-img"><img src="/case/img/new-trip-desktop.png" alt="Create new trip form" loading="lazy" style="object-fit: contain;"></div></div>
+        <div class="phone-cap"><b>Create trip</b><br>Name · dates · currency · budget</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── 05 · MONEY DEEP DIVE ─────────────────────────────────────────── -->
+<!-- ─── DECIDE — Votes ───────────────────────────────────────────────── -->
+<section class="section" id="decide" data-title="Decide">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">05 · Decide</div>
+      <div>
+        <h2 class="h1">A vote is a question with a deadline.</h2>
+        <div class="body">
+          <p>Open a vote, pick options, set a deadline. Anyone in the trip casts a tap. The winning option <strong>fills its bar gradually</strong>, so the result tells a story rather than barking a number.</p>
+          <p>When a vote closes, the winning option <em>auto-adds to the itinerary</em> on the relevant day. Decision and plan stay in lock-step — no copy-paste, no "I already added it" confusion.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-prose-img" style="margin-top: 40px;">
+      <div class="row-art reveal">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">paxawa.com / trips / malaysia / votes</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/votes-malaysia-desktop.png" alt="Votes screen with active vote" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">5.1</span><span class="arrow">→</span><span>Votes · live result bars</span></div>
+      </div>
+      <div class="row-prose reveal" data-delay="1">
+        <div class="label">Live results</div>
+        <h3>The bar tells the story.</h3>
+        <p>Each option's progress bar fills proportional to votes received. <strong>"YOUR VOTE"</strong> tag sits inside the row you picked, so changing your mind is one tap, not a hidden setting.</p>
+        <p>"Tap any option to change your vote" sits below — the rules of the game, written down.</p>
+      </div>
+    </div>
+
+    <div class="row-prose-img flip" style="margin-top: 64px;">
+      <div class="row-prose reveal">
+        <div class="label">Creating a vote</div>
+        <h3>Question. Options. Optional deadline.</h3>
+        <p>The dialog accepts up to five options, each with an optional <em>Cost</em> column — so "Where to stay?" can carry budget context without a separate price discussion.</p>
+        <p>The cost is a hint, not a constraint. The group still decides.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / votes · new vote</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/create-vote-dialog-desktop.png" alt="Create a vote dialog" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">5.2</span><span class="arrow">→</span><span>Create vote · dialog with options + costs</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── MONEY — Expense system deep dive ─────────────────────────────── -->
 <section class="section" id="money" data-title="Money">
   <div class="section-inner">
     <div class="two-col reveal">
-      <div class="label">05 · Multi-currency money</div>
+      <div class="label">06 · Money</div>
       <div>
         <h2 class="h1">Eight currencies. One source of truth.</h2>
         <div class="body">
           <p>A trip can mix yen, ringgit, riyal, and dollars in a single afternoon. The naïve approach — sum the raw numbers — produces nonsense like <em>"USD 880"</em> on a trip that actually spent <em>USD 130</em>.</p>
           <p>Paxawa pulls live FX rates from <strong>open.er-api.com</strong> on a stale-while-revalidate cache, then converts every row into the trip's base currency before adding it up. Each row also keeps its original — so the activity feed shows <em>"JPY 380 ≈ USD 2.38"</em>, not a flattened number that loses context.</p>
-          <p>The expense dialog itself runs the same conversion live. Type 45 in MYR on a SAR-based trip, and the projection pill shows where the expense lands inside the personal budget <em>and</em> the trip budget — converted, never skipped.</p>
         </div>
       </div>
     </div>
 
-    <div class="stack-2 reveal" data-delay="1">
-      <div class="device" style="display:flex; justify-content: center;">
-        <div class="phone">
-          <div class="phone-screen">
-            <div class="app-shell">
-              <div class="app-status"><span>9:41</span><span>● ●</span></div>
-              <div style="padding: 18px 16px 8px;">
-                <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
-              </div>
-              <div class="app-tab-row">
-                <div class="app-tab">Overview</div>
-                <div class="app-tab">Itinerary</div>
-                <div class="app-tab">Votes</div>
-                <div class="app-tab active">Expenses</div>
-                <div class="app-tab">Pack</div>
-              </div>
-              <div class="money-hero">
-                <div class="money-hero-label">Trip total spent</div>
-                <div class="money-hero-amt">SAR 42.56</div>
-                <div class="money-hero-fx">⇄ Live FX applied across 1 currency</div>
-                <div class="money-row-2">
-                  <div class="money-pill"><div class="money-pill-lbl">You paid</div><div class="money-pill-val">SAR 42.56</div></div>
-                  <div class="money-pill"><div class="money-pill-lbl">You owe</div><div class="money-pill-val">SAR 0</div></div>
-                </div>
-              </div>
-              <div class="activity">
-                <div class="activity-head">Activity · 1</div>
-                <div class="activity-row">
-                  <div class="activity-ico" style="background:rgba(52,211,153,0.18);">🥘</div>
-                  <div class="activity-main">
-                    <div class="activity-title">Nasi lemak lunch</div>
-                    <div class="activity-sub">Jul 10 · You</div>
-                  </div>
-                  <div>
-                    <div class="activity-amt">MYR 45</div>
-                    <div class="activity-amt-sub">≈ SAR 42.56</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="browser reveal" data-delay="1" style="max-width: 1100px; margin: 32px auto 0;">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <span class="browser-bar-url">paxawa.com / trips / japan / expenses</span>
       </div>
+      <div class="browser-img"><img src="/case/img/expenses-japan-desktop.png" alt="Expenses page — Trip Total Spent, Activity feed, Spending breakdown, Balances" loading="lazy"></div>
+    </div>
+    <div class="screen-cap"><span class="num">6.1</span><span class="arrow">→</span><span>Expenses overview · Total spent · Activity · Breakdown · Balances</span></div>
 
-      <div style="display:flex; flex-direction:column; gap:24px; justify-content:center;">
-        <div class="expense-dialog">
-          <div class="ed-title">Log an expense</div>
-          <div class="ed-row1">
-            <div class="ed-row1-ico">🥘</div>
-            <div class="ed-row1-name">Nasi lemak lunch</div>
+    <!-- Daily expense tracker -->
+    <div class="row-prose-img" style="margin-top: 80px;">
+      <div class="row-prose reveal">
+        <div class="label">Daily expense tracker</div>
+        <h3>Spent today, planned tomorrow.</h3>
+        <p>The Activity sub-page lays the trip out <strong>day by day</strong>. Each day is a row with the total spent that day. Today gets a <em>LIVE</em> badge — a small thing that anchors the user in time across a long trip.</p>
+        <p>Empty days don't get hidden — they're shown as <em>upcoming</em>. The trip's shape is visible even before money is logged.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / expenses / transactions</span>
           </div>
-          <div class="ed-amount-box">
-            <div class="ed-amount-row">
-              <div class="ed-amount">45</div>
-              <div class="ed-currency">MYR ▾</div>
-            </div>
-            <div class="ed-fx-hint">≈ SAR 42.56 · live FX</div>
-          </div>
-          <div class="ed-projection">After your share · your budget · <b>1% of SAR 8,000</b></div>
-          <div class="ed-scope">
-            <div class="ed-scope-btn on">👥 Shared · split equally</div>
-            <div class="ed-scope-btn">👤 Personal · just you</div>
-          </div>
-          <div class="ed-foot">
-            <div class="ed-btn ed-btn-secondary">Cancel</div>
-            <div class="ed-btn ed-btn-primary">Log expense</div>
-          </div>
+          <div class="browser-img"><img src="/case/img/expenses-transactions-desktop.png" alt="Daily transactions — Day 1, Day 2, Today (live), Day 4…" loading="lazy"></div>
         </div>
+        <div class="screen-cap"><span class="num">6.2</span><span class="arrow">→</span><span>Transactions · day-by-day with LIVE marker</span></div>
       </div>
     </div>
 
-    <blockquote class="pull reveal" style="margin-top: 80px;">
+    <!-- Spending breakdown + balances -->
+    <div class="row-prose-img flip" style="margin-top: 64px;">
+      <div class="row-prose reveal">
+        <div class="label">Spending breakdown</div>
+        <h3>Where the money goes.</h3>
+        <p>Categories from the trip's actual spend. Each row has a proportional bar, a hex amount in the trip's base currency, and a percentage.</p>
+        <p><em>Food 98%, Transport 2%</em> — said quickly, said honestly. The categories aren't asked of the user; they're inferred from the expense title using a lightweight classifier.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / expenses / breakdown</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/expenses-breakdown-page-desktop.png" alt="Spending breakdown by category" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">6.3</span><span class="arrow">→</span><span>Breakdown · Food · Transport · Activities</span></div>
+      </div>
+    </div>
+
+    <div class="row-prose-img" style="margin-top: 64px;">
+      <div class="row-prose reveal">
+        <div class="label">Balances</div>
+        <h3>Who owes who. Settled in a tap.</h3>
+        <p>Each member sits as a row. Green <em>"+USD 128.55"</em> means the group owes you. Orange <em>"USD −47.64"</em> means you owe the group.</p>
+        <p>One tap on any debtor's row opens the settle-up dialog: amount pre-filled, currency pre-converted, "Mark paid" closes the loop.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / expenses / balances</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/expenses-balances-desktop.png" alt="Balances — who owes who" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">6.4</span><span class="arrow">→</span><span>Balances · settle-up surface</span></div>
+      </div>
+    </div>
+
+    <!-- Log expense dialog -->
+    <div class="row-prose-img flip" style="margin-top: 64px;">
+      <div class="row-prose reveal">
+        <div class="label">Logging an expense</div>
+        <h3>The hottest path, six taps long.</h3>
+        <p>Title. Amount. Currency dropdown (defaults to trip base, overridable per row). <em>Shared / Personal</em> toggle. Date. Optional notes. Optional receipt photo.</p>
+        <p>Live FX shows under the amount as you type: <strong>≈ SAR 42.56 · live FX</strong>. The projection pill below says what the expense will do to your personal budget the moment you save.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / expenses · Log expense</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/log-expense-dialog-desktop.png" alt="Log an expense dialog — title, amount + currency, shared/personal" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">6.5</span><span class="arrow">→</span><span>Log expense · receipt photo · shared/personal scope</span></div>
+      </div>
+    </div>
+
+    <blockquote class="pull reveal" style="margin-top: 64px;">
       "If the bell, the dashboard card, and the expenses page show <em>three different numbers</em> for the same trip — the user trusts none of them. Single source of truth has to mean it everywhere."
       <span class="pull-cite">B12-followup · session note</span>
     </blockquote>
   </div>
 </section>
 
-<!-- ─── 06 · PROCESS ─────────────────────────────────────────────────── -->
+<!-- ─── CHAT ─────────────────────────────────────────────────────────── -->
+<section class="section" id="chat" data-title="Chat">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">07 · Chat</div>
+      <div>
+        <h2 class="h1">The group chat that knows what the group is doing.</h2>
+        <div class="body">
+          <p>Most "trip chat" features are dead air with a different background. Paxawa's chat <strong>knows about the trip</strong> — it logs expenses as cards, posts vote results, and surfaces pre-trip nudges seven days out.</p>
+          <p>The composer has shortcuts: <em>Expense, Vote, More</em>. Type intent, skip nav.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="browser reveal" data-delay="1" style="max-width: 1100px; margin: 32px auto 0;">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <span class="browser-bar-url">paxawa.com / trips / japan / chat</span>
+      </div>
+      <div class="browser-img"><img src="/case/img/chat-japan-desktop.png" alt="Chat with AI nudge messages and date dividers" loading="lazy"></div>
+    </div>
+    <div class="screen-cap"><span class="num">7.1</span><span class="arrow">→</span><span>Chat · AI nudges · composer shortcuts</span></div>
+
+    <div class="chat-scenarios reveal" style="margin-top: 48px;">
+      <div class="chat-scenario">
+        <div class="chat-scenario-num">SCENARIO 01</div>
+        <div class="chat-scenario-title">Pre-trip nudges</div>
+        <div class="chat-scenario-body">A cron posts a milestone message 30 / 14 / 7 / 1 days out. The 7-day nudge says "confirm flights and book any activities you're planning. Make sure everyone has their passport and travel insurance sorted."</div>
+      </div>
+      <div class="chat-scenario">
+        <div class="chat-scenario-num">SCENARIO 02</div>
+        <div class="chat-scenario-title">Expense logged · auto-card</div>
+        <div class="chat-scenario-body">When anyone logs an expense, an inline card appears in chat: <em>"💸 Burger — JPY 800"</em>. Tap the card to open the expense detail sheet. The discussion happens around the card, not in a separate tab.</div>
+      </div>
+      <div class="chat-scenario">
+        <div class="chat-scenario-num">SCENARIO 03</div>
+        <div class="chat-scenario-title">Smart chip → vote</div>
+        <div class="chat-scenario-body">Type "let's vote where to eat tonight" and a "Vote?" smart chip appears above the composer. Tap it — the create-vote dialog opens with the question pre-filled from your sentence.</div>
+      </div>
+      <div class="chat-scenario">
+        <div class="chat-scenario-num">SCENARIO 04</div>
+        <div class="chat-scenario-title">Vote closed · result card</div>
+        <div class="chat-scenario-body">When a vote closes, the result posts to chat as a small card: <em>"Beachfront wins — added to Day 2."</em> No need to refresh the votes tab. Everyone sees it in the same scroll.</div>
+      </div>
+      <div class="chat-scenario">
+        <div class="chat-scenario-num">SCENARIO 05</div>
+        <div class="chat-scenario-title">Reactions on cards</div>
+        <div class="chat-scenario-body">Long-press any card (expense, vote, place) to drop a reaction. The reaction set is short: 👍 ❤️ 😂 ✈️ 🌶️. The fewer the choices, the less the deliberation.</div>
+      </div>
+      <div class="chat-scenario">
+        <div class="chat-scenario-num">SCENARIO 06</div>
+        <div class="chat-scenario-title">Day-zero check-in</div>
+        <div class="chat-scenario-body">The morning the trip starts, AI posts "Day 1 starts today. Here's where you're headed first: [first itinerary item]." It's a thread-opener, not a chore. The group takes it from there.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PACK ─────────────────────────────────────────────────────────── -->
+<section class="section" id="pack" data-title="Pack">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">08 · Pack</div>
+      <div>
+        <h2 class="h1">Defaults are design.</h2>
+        <div class="body">
+          <p>Every new trip starts with a <strong>20-item packing list seeded by the destination</strong>. Toiletries, documents, tech, medical, clothes. A Malaysia trip auto-includes <em>insect repellent</em> and a <em>cooling towel</em>. A ski trip would include thermal layers.</p>
+          <p>The activation gate flipped from <em>"I'll get to it"</em> to <em>"let me uncheck what I don't need."</em> Same item count, opposite emotional cost.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="browser reveal" data-delay="1" style="max-width: 1100px; margin: 32px auto 0;">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <span class="browser-bar-url">paxawa.com / trips / malaysia / pack</span>
+      </div>
+      <div class="browser-img"><img src="/case/img/pack-malaysia-desktop.png" alt="Pack screen — checklist with progress bar and categories" loading="lazy"></div>
+    </div>
+    <div class="screen-cap"><span class="num">8.1</span><span class="arrow">→</span><span>Pack · auto-seeded checklist + docs tab</span></div>
+  </div>
+</section>
+
+<!-- ─── NOTIFICATIONS ────────────────────────────────────────────────── -->
+<section class="section" id="notifications" data-title="Notifications">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">09 · Notifications</div>
+      <div>
+        <h2 class="h1">A bell that respects you.</h2>
+        <div class="body">
+          <p>Four channels: <em>in-app bell, transactional email, push, daily digest</em>. Each ships on, each is one toggle to mute. The settings page is the entire surface — no menu diving.</p>
+          <p>The bell itself sits in every trip header and on the dashboard. Opening it marks-all-read optimistically; the badge clears before the POST round-trip finishes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-prose-img" style="margin-top: 32px;">
+      <div class="row-art reveal">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / trip · bell open</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/notif-bell-open-desktop.png" alt="Bell dropdown showing recent notifications" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">9.1</span><span class="arrow">→</span><span>Bell · recent activity</span></div>
+      </div>
+      <div class="row-prose reveal" data-delay="1">
+        <div class="label">Preferences</div>
+        <h3>Four toggles. No menu diving.</h3>
+        <p>The notification settings page is intentionally one screen. Four rows, each one a toggle and a one-line explanation of what flipping it off actually means.</p>
+        <p>Daily digest is a quieter alternative to per-event email — one summary, once a day, only if you have unread events.</p>
+      </div>
+    </div>
+
+    <div class="browser reveal" style="max-width: 1100px; margin: 64px auto 0;">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <span class="browser-bar-url">paxawa.com / account / notifications</span>
+      </div>
+      <div class="browser-img"><img src="/case/img/notif-settings-desktop.png" alt="Notification settings — four channel toggles" loading="lazy"></div>
+    </div>
+    <div class="screen-cap"><span class="num">9.2</span><span class="arrow">→</span><span>Notification preferences · 4 channels</span></div>
+  </div>
+</section>
+
+<!-- ─── SUPPORTING SCREENS ───────────────────────────────────────────── -->
+<section class="section" id="supporting" data-title="More">
+  <div class="section-inner">
+    <div class="chapter-mark">10 · The rest of the system</div>
+    <h2 class="h1">Surfaces that earn their place.</h2>
+    <p class="lede">A trip is more than five tabs. The supporting screens — Crew, Settings, Discover, Create — each carry one job and stay out of the way the rest of the time.</p>
+
+    <div class="row-prose-img" style="margin-top: 56px;">
+      <div class="row-prose reveal">
+        <div class="label">Crew · members</div>
+        <h3>Who's coming. What they owe.</h3>
+        <p>The Crew page lists every member with their role, per-member personal budget, and their net balance in trip currency. The owner has one extra control: <em>change role / remove</em>.</p>
+        <p>Invite-link sits at the top — one tap to copy, one to share via system share sheet.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / members</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/members-malaysia-desktop.png" alt="Members / Crew page" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">10.1</span><span class="arrow">→</span><span>Crew · members + invite link</span></div>
+      </div>
+    </div>
+
+    <div class="row-prose-img flip" style="margin-top: 64px;">
+      <div class="row-prose reveal">
+        <div class="label">Trip settings</div>
+        <h3>Configuration without a maze.</h3>
+        <p>Name, dates, destination, base currency, total budget, share/visibility, and the destructive controls (archive, delete) live on a single scrollable page.</p>
+        <p>Owner-only, gated server-side. Members landing here are redirected back to the overview.</p>
+      </div>
+      <div class="row-art reveal" data-delay="1">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-bar-url">… / settings</span>
+          </div>
+          <div class="browser-img"><img src="/case/img/settings-malaysia-desktop.png" alt="Trip settings page" loading="lazy"></div>
+        </div>
+        <div class="screen-cap"><span class="num">10.2</span><span class="arrow">→</span><span>Trip settings · owner-only</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PROCESS ──────────────────────────────────────────────────────── -->
 <section class="section" id="process" data-title="Process">
   <div class="section-inner">
     <div class="two-col reveal">
-      <div class="label">06 · Process</div>
+      <div class="label">11 · Process</div>
       <div>
         <h2 class="h1">Ship, audit, repeat.</h2>
         <div class="body">
-          <p>Fourteen build iterations, each scoped to a clear theme. Every cycle ended with a tester walk-through that surfaced the next batch.</p>
+          <p>Fifteen build iterations, each scoped to a clear theme. Every cycle ended with a tester walk-through that surfaced the next batch.</p>
           <p>The biggest unlocks weren't features — they were the audits that caught the gaps between what shipped and what users actually trusted.</p>
         </div>
       </div>
@@ -1530,21 +1267,22 @@
 
     <div class="timeline">
       <div class="tl-row reveal"><div class="tl-tag">A1 – A4</div><div class="tl-content"><h3>Foundations &amp; landing</h3><p>Brand, landing page, legal, waitlist, in-app feedback widget. Got the shape of the product on paper before code.</p></div></div>
-      <div class="tl-row reveal" data-delay="1"><div class="tl-tag">B1 – B3</div><div class="tl-content"><h3>Core loops</h3><p>Performance triage, expense bug sweep, budget v2 with per-member caps, role system (owner/member), and the map-first itinerary view.</p></div></div>
-      <div class="tl-row reveal" data-delay="2"><div class="tl-tag">B4 – B7</div><div class="tl-content"><h3>UI rebalance</h3><p>Hero compaction, Money page rebuild around a single hero, Plan page rebuild on Mapbox + Foursquare, day polylines that follow real roads via Directions API.</p></div></div>
-      <div class="tl-row reveal" data-delay="3"><div class="tl-tag">B8 – B11</div><div class="tl-content"><h3>Audit cycles</h3><p>Full UX/UI audit. Dialog overflow → BottomSheet on mobile. FX provider swap when exchangerate.host died quietly. Dashboard metrics, button positions, drag-to-expand sheets.</p></div></div>
-      <div class="tl-row reveal" data-delay="4"><div class="tl-tag">B12</div><div class="tl-content"><h3>Tester-driven fixes</h3><p>Eight specific fixes from a real-trip walkthrough: Mapbox English labels, doc descriptions, receipt upload, FX projection, place-button placement, auto-seeded packing, Pack tab rename, full detective audit walk in MYR ↔ SAR.</p></div></div>
-      <div class="tl-row reveal" data-delay="4"><div class="tl-tag">B13</div><div class="tl-content"><h3>Notifications</h3><p>In-app bell + dropdown, per-channel preferences (in-app, email, push, digest), trip-shell + dashboard bells, daily digest cron.</p></div></div>
-      <div class="tl-row reveal" data-delay="4"><div class="tl-tag">B14</div><div class="tl-content"><h3>Launch hardening</h3><p>Timezone-safe calendar date parser, CRON_SECRET, smoke checks across votes / settle / AI plan / share. Ready for the test event.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B1 – B3</div><div class="tl-content"><h3>Core loops</h3><p>Performance triage, expense bug sweep, budget v2 with per-member caps, role system (owner/member), and the map-first itinerary view.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B4 – B7</div><div class="tl-content"><h3>UI rebalance</h3><p>Hero compaction, Money page rebuild around a single hero, Plan page rebuild on Mapbox + Foursquare, day polylines that follow real roads via Directions API.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B8 – B11</div><div class="tl-content"><h3>Audit cycles</h3><p>Full UX/UI audit. Dialog overflow → BottomSheet on mobile. FX provider swap when exchangerate.host died quietly. Dashboard metrics, button positions, drag-to-expand sheets.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B12</div><div class="tl-content"><h3>Tester-driven fixes</h3><p>Eight specific fixes from a real-trip walkthrough: Mapbox English labels, doc descriptions, receipt upload, FX projection, place-button placement, auto-seeded packing, Pack tab rename, full detective audit walk in MYR ↔ SAR.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B13</div><div class="tl-content"><h3>Notifications</h3><p>In-app bell + dropdown, per-channel preferences (in-app, email, push, digest), trip-shell + dashboard bells, daily digest cron.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B14</div><div class="tl-content"><h3>Launch hardening</h3><p>Timezone-safe calendar date parser, CRON_SECRET, smoke checks across votes / settle / AI plan / share. Ready for the test event.</p></div></div>
+      <div class="tl-row reveal"><div class="tl-tag">B15</div><div class="tl-content"><h3>Case study</h3><p>This document. Real screenshots captured via Puppeteer headless against the production app, embedded into an editorial long-form so the product can speak for itself.</p></div></div>
     </div>
   </div>
 </section>
 
-<!-- ─── 07 · OUTCOME ─────────────────────────────────────────────────── -->
+<!-- ─── OUTCOME ──────────────────────────────────────────────────────── -->
 <section class="section" id="outcome" data-title="Outcome">
   <div class="section-inner">
     <div class="two-col reveal">
-      <div class="label">07 · Outcome</div>
+      <div class="label">12 · Outcome</div>
       <div>
         <h2 class="h1">What I'd keep, what I'd watch.</h2>
         <div class="body">
@@ -1568,7 +1306,7 @@
       <div class="takeaway reveal" data-delay="2">
         <div class="takeaway-num">03</div>
         <div class="takeaway-title">Show the conversion</div>
-        <div class="takeaway-body">When money is in a foreign currency, never hide the FX math. Show both numbers, every time. The instant trust on a multi-currency trip is the difference between using the app and screenshotting it into Notes.</div>
+        <div class="takeaway-body">When money is in a foreign currency, never hide the FX math. Show both numbers, every time. Instant trust on a multi-currency trip is the difference between using the app and screenshotting it into Notes.</div>
       </div>
     </div>
   </div>
@@ -1583,10 +1321,10 @@
     <div class="foot-row">
       <div>
         <a class="foot-mail" href="mailto:hello@paxawa.com">hello@paxawa.com</a>
-        <div style="font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 14px; max-width: 360px;">Product, design questions, and partnership requests welcome. Bookmarks &amp; brand guidelines live at <span style="color: var(--indigo-300);">doc.paxawa.com</span>.</div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 14px; max-width: 360px;">Product, design questions, and partnership requests welcome. Brand guidelines live at <span style="color: var(--indigo-300);">doc.paxawa.com</span>.</div>
       </div>
       <div class="foot-meta">
-        <div>Case study · v1.0</div>
+        <div>Case study · v1.1</div>
         <div>June 2026</div>
         <div>© Paxawa</div>
         <div style="margin-top: 12px; color: rgba(255,255,255,0.6);">paxawa.com ↗</div>
@@ -1617,11 +1355,9 @@
     setTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   });
 
-  // Nav scrolled state
+  // Scrolled nav state
   const nav = document.getElementById('nav');
-  function onScroll() {
-    nav.classList.toggle('scrolled', window.scrollY > 24);
-  }
+  function onScroll() { nav.classList.toggle('scrolled', window.scrollY > 24); }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
@@ -1651,10 +1387,7 @@
   if (!reduce) {
     const ro = new IntersectionObserver(entries => {
       entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('in-view');
-          ro.unobserve(e.target);
-        }
+        if (e.isIntersecting) { e.target.classList.add('in-view'); ro.unobserve(e.target); }
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
     document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
