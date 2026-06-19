@@ -2,11 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
-  // ── Internal brand docs subdomain ─────────────────────────────────────
-  // doc.paxawa.com serves the standalone brand guidelines HTML from
-  // public/brand/index.html. No auth, no nav link from the main app —
+  // ── Subdomain rewrites ────────────────────────────────────────────────
+  // Two private subdomains, each pointing at a static HTML file shipped
+  // under /public/. Both are intentionally unlinked from the main app —
   // the URL is the access control. Handled before the Supabase auth
-  // dance below because the asset is static and doesn't need a session.
+  // dance below because the assets are static and don't need a session.
+  //
+  //   doc.paxawa.com  → /brand/index.html (internal brand guidelines)
+  //   case.paxawa.com → /case/index.html  (Paxawa case study, portfolio)
   const host = request.headers.get("host") ?? "";
   if (host.startsWith("doc.paxawa.com") || host === "doc.localhost:3000") {
     if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "") {
@@ -14,8 +17,14 @@ export async function proxy(request: NextRequest) {
       url.pathname = "/brand/index.html";
       return NextResponse.rewrite(url);
     }
-    // Any non-root request on the doc subdomain stays a 404 — we don't
-    // want to leak the main app surface through this host.
+    return NextResponse.next({ request });
+  }
+  if (host.startsWith("case.paxawa.com") || host === "case.localhost:3000") {
+    if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/case/index.html";
+      return NextResponse.rewrite(url);
+    }
     return NextResponse.next({ request });
   }
 

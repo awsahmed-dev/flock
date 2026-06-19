@@ -29,9 +29,15 @@ stay** (hardened to spec). The **test UI surface deviated from the design system
 The engine today is a **skeleton**; Phase 2 brings it to full build-spec Part A (complete event taxonomy,
 honest dwell, scalar axes, rendered/upcoming buffers + exploration, cold-start seed, measurement).
 
-**Discipline every sprint:** behind a feature flag · typecheck + lint + vitest green · desktop **and**
-mobile screenshot · RTL + i18n (no hardcoded strings) · attribution where Google data shows · additive
-to live testers (never regress the Plan page they use) · manual deploy (`npx vercel deploy --prod --yes`).
+**Discipline every sprint:** typecheck + lint + vitest green · desktop **and** mobile screenshot ·
+RTL + i18n (no hardcoded strings) · attribution where Google data shows · manual deploy
+(`npx vercel deploy --prod --yes`).
+
+**Build-directly (2026-06-19):** the user relaxed the tester-protection rule — *"build directly and no
+need to think about testers."* So we **integrate v2 straight into the real surfaces** (replace the Plan
+add-place / Votes / etc. in place per the docs); no URL-only staging, no flag purely to hide from
+testers. The `isDiscoveryEnabled` flag stays only as an optional rollout switch. Still don't break
+things carelessly — but "don't surprise testers" no longer gates the work.
 
 ---
 

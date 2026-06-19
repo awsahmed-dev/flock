@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paxawa — Case study</title>
+<meta name="description" content="A case study on Paxawa — designing a calm, group-aware travel planner. From the chaos of group chats to a single shared source of truth.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:  #eef2ff;
+    --indigo-100: #e0e7ff;
+    --indigo-200: #c7d2fe;
+    --indigo-300: #a5b4fc;
+    --indigo-400: #818cf8;
+    --indigo-500: #6366f1;
+    --indigo-600: #4f46e5;
+    --indigo-700: #4338ca;
+    --indigo-900: #312e81;
+    --violet-400: #a78bfa;
+    --violet-500: #8b5cf6;
+
+    --emerald: #34d399;
+    --amber:   #fbbf24;
+    --rose:    #f87171;
+    --sky:     #38bdf8;
+
+    --canvas:   #fbfaf7;
+    --surface:  #ffffff;
+    --raised:   #ffffff;
+    --ink:      #0a0a0f;
+    --ink-2:    #1e1e2e;
+    --muted:    #6b7280;
+    --muted-2:  #9ca3af;
+    --line:     #ececec;
+    --pale:     #f6f5f0;
+
+    --font-display: 'DM Serif Display', 'Times New Roman', serif;
+    --font-body:    'Sora', system-ui, sans-serif;
+    --font-mono:    'DM Mono', 'SF Mono', monospace;
+
+    --shadow:     0 14px 50px -10px rgba(15, 15, 25, 0.10), 0 4px 12px -2px rgba(15, 15, 25, 0.05);
+    --shadow-lg:  0 40px 100px -16px rgba(15, 15, 25, 0.18), 0 12px 30px -8px rgba(15, 15, 25, 0.08);
+
+    --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --content-max: 1180px;
+    --prose-max: 680px;
+  }
+  html[data-theme="dark"] {
+    --canvas:  #0a0a0f;
+    --surface: #13131a;
+    --raised:  #1a1a24;
+    --ink:     #f4f4f7;
+    --ink-2:   #d7d7df;
+    --muted:   #8b8b95;
+    --muted-2: #5d5d68;
+    --line:    #22222d;
+    --pale:    #16161e;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--canvas);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background-color .3s var(--ease-out), color .3s var(--ease-out);
+  }
+  ::selection { background: var(--indigo-200); color: var(--ink); }
+  html[data-theme="dark"] ::selection { background: var(--indigo-700); color: var(--ink); }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; border: 0; background: 0; color: inherit; cursor: pointer; }
+
+  /* ─── Sticky top nav ─────────────────────────────────────────────────── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 64px;
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    background: rgba(251, 250, 247, 0.78);
+    border-bottom: 1px solid transparent;
+    transition: all .3s var(--ease-out);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  html[data-theme="dark"] .nav { background: rgba(10, 10, 15, 0.72); }
+  .nav.scrolled { border-bottom-color: var(--line); }
+  .nav-mark {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .nav-mark svg { width: 26px; height: 22px; }
+  .nav-mark svg path { fill: var(--ink); }
+  .nav-mark-sub { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 1px; }
+  .nav-chapters {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px;
+  }
+  .nav-chap {
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: var(--muted);
+    font-weight: 500;
+    transition: all .15s var(--ease-out);
+    position: relative;
+  }
+  .nav-chap:hover { color: var(--ink); }
+  .nav-chap.active { color: var(--ink); background: var(--pale); }
+  .nav-actions { display: flex; align-items: center; gap: 8px; }
+  .nav-btn {
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    color: var(--muted);
+    transition: all .15s var(--ease-out);
+  }
+  .nav-btn:hover { background: var(--pale); color: var(--ink); }
+  .nav-btn svg { width: 16px; height: 16px; }
+
+  /* ─── Reveal ─────────────────────────────────────────────────────────── */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 1s var(--ease-out), transform 1s var(--ease-out); }
+  .reveal.in-view { opacity: 1; transform: none; }
+  .reveal[data-delay="1"] { transition-delay: .08s; }
+  .reveal[data-delay="2"] { transition-delay: .16s; }
+  .reveal[data-delay="3"] { transition-delay: .24s; }
+  .reveal[data-delay="4"] { transition-delay: .32s; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .reveal[data-delay] { transition: none; opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
+    .float, .orb, .marquee-track { animation: none !important; }
+  }
+
+  /* ─── Hero ───────────────────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    padding: 180px 32px 100px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 80% 10%, rgba(139, 92, 246, 0.10), transparent 70%),
+      radial-gradient(50% 40% at 12% 90%, rgba(99, 102, 241, 0.10), transparent 70%);
+  }
+  .hero-bg::after {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(circle at 60% 40%, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(circle at 60% 40%, black 0%, transparent 75%);
+  }
+  html[data-theme="dark"] .hero-bg {
+    background:
+      radial-gradient(60% 50% at 80% 10%, rgba(139, 92, 246, 0.20), transparent 70%),
+      radial-gradient(50% 40% at 12% 90%, rgba(99, 102, 241, 0.18), transparent 70%);
+  }
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); pointer-events: none;
+    will-change: transform;
+  }
+  .orb-1 { width: 360px; height: 360px; background: rgba(139,92,246,0.32); top: -100px; right: 8%; animation: drift 18s ease-in-out infinite; }
+  .orb-2 { width: 260px; height: 260px; background: rgba(99,102,241,0.32); bottom: -80px; left: 14%; animation: drift 22s ease-in-out infinite reverse; }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(50px, -40px) scale(1.1); }
+  }
+
+  .hero-inner {
+    position: relative;
+    max-width: var(--content-max); margin: 0 auto;
+  }
+  .hero-meta {
+    display: flex; gap: 28px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fadeUp .8s var(--ease-out) both;
+  }
+  .hero-meta span { display: flex; flex-direction: column; gap: 6px; }
+  .hero-meta b { color: var(--ink); font-weight: 600; font-size: 12px; letter-spacing: 0; text-transform: none; font-family: var(--font-body); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 8vw, 130px);
+    line-height: 0.94;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    font-weight: 400;
+    margin-bottom: 36px;
+    max-width: 1000px;
+    animation: fadeUp 1s var(--ease-out) .1s both;
+  }
+  .hero-title em {
+    color: var(--indigo-500);
+    font-style: italic;
+    position: relative;
+  }
+  .hero-title em::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 6%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--indigo-500), var(--violet-400));
+    transform-origin: left;
+    animation: drawLine 1.2s var(--ease-out) 1s both;
+  }
+  @keyframes drawLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .hero-lede {
+    font-size: clamp(18px, 2vw, 24px);
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.6;
+    margin-bottom: 64px;
+    animation: fadeUp 1s var(--ease-out) .2s both;
+  }
+  .hero-lede strong { color: var(--ink); font-weight: 500; }
+
+  .hero-marquee {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    animation: fadeUp 1s var(--ease-out) .3s both;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 16px;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    color: var(--ink-2);
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--indigo-500); }
+
+  /* ─── Hero showcase tile (floating screen) ───────────────────────────── */
+  .hero-showcase {
+    position: relative;
+    max-width: var(--content-max);
+    margin: 80px auto 0;
+    padding: 0 32px;
+  }
+  .float {
+    transform: translateY(40px);
+    opacity: 0;
+    animation: floatIn 1.4s var(--ease-out) .5s forwards;
+  }
+  @keyframes floatIn { to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── Section primitives ─────────────────────────────────────────────── */
+  .section {
+    padding: 120px 32px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .section:last-child { border-bottom: 0; }
+  .section-inner { max-width: var(--content-max); margin: 0 auto; }
+  .chapter-mark {
+    display: flex; align-items: center; gap: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--indigo-600);
+    margin-bottom: 24px;
+  }
+  html[data-theme="dark"] .chapter-mark { color: var(--indigo-300); }
+  .chapter-mark::before { content: ""; width: 32px; height: 1px; background: currentColor; }
+
+  .h1 {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    font-weight: 400;
+    margin-bottom: 28px;
+    max-width: 920px;
+  }
+  .h1 em { color: var(--indigo-500); font-style: italic; }
+  .h2 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-weight: 400;
+    margin-bottom: 20px;
+  }
+  .h3 {
+    font-family: var(--font-body);
+    font-size: 18px; font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    margin-bottom: 12px;
+  }
+  .lede {
+    font-size: clamp(18px, 1.6vw, 22px);
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: var(--prose-max);
+    margin-bottom: 32px;
+  }
+  .body {
+    font-size: 17px; line-height: 1.7;
+    color: var(--ink-2);
+    max-width: var(--prose-max);
+  }
+  .body p + p { margin-top: 18px; }
+  .body strong { color: var(--ink); font-weight: 600; }
+  .body em { color: var(--indigo-500); font-style: italic; font-weight: 500; }
+
+  /* ─── Stats strip ────────────────────────────────────────────────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-top: 48px;
+  }
+  .stat {
+    padding: 32px 28px;
+    border-right: 1px solid var(--line);
+  }
+  .stat:last-child { border-right: 0; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 48px;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .stat-num em { color: var(--indigo-500); font-style: italic; font-size: 0.6em; vertical-align: super; }
+  .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+  /* ─── Quote pull ─────────────────────────────────────────────────────── */
+  .pull {
+    border-left: 3px solid var(--indigo-500);
+    padding: 4px 0 4px 28px;
+    margin: 48px 0;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.4vw, 32px);
+    line-height: 1.35;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    max-width: 760px;
+  }
+  .pull em { color: var(--indigo-500); font-style: italic; }
+  .pull-cite { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-top: 16px; text-transform: uppercase; }
+
+  /* ─── Two-column ─────────────────────────────────────────────────────── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+  .two-col .label {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 8px;
+    border-top: 1px solid var(--ink);
+  }
+
+  /* ─── Problem callouts ────────────────────────────────────────────────── */
+  .problems {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+  }
+  .problem {
+    padding: 32px 28px;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    transition: all .25s var(--ease-out);
+  }
+  .problem:hover { transform: translateY(-2px); border-color: var(--indigo-200); box-shadow: var(--shadow); }
+  .problem-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--indigo-500), var(--violet-500));
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    color: white;
+  }
+  .problem-icon svg { width: 22px; height: 22px; }
+  .problem-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .problem-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ─── Screen mockups — device frames ─────────────────────────────────── */
+  .device {
+    position: relative;
+    transition: transform .35s var(--ease-out);
+  }
+  .device:hover { transform: translateY(-4px); }
+
+  .phone {
+    width: 320px;
+    background: #16161e;
+    border-radius: 36px;
+    padding: 10px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+  }
+  .phone::before {
+    content: ""; position: absolute; top: 18px; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 24px;
+    background: #0a0a0f;
+    border-radius: 0 0 12px 12px;
+    z-index: 2;
+  }
+  .phone-screen {
+    background: #fbfaf7;
+    border-radius: 28px;
+    overflow: hidden;
+    height: 640px;
+    position: relative;
+    color: #0a0a0f;
+    font-family: var(--font-body);
+    font-size: 13px;
+  }
+  html[data-theme="dark"] .phone-screen { background: #0a0a0f; color: #f4f4f7; }
+
+  .laptop {
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .laptop-screen {
+    background: #16161e;
+    border-radius: 14px 14px 0 0;
+    padding: 14px 12px 4px;
+    box-shadow: var(--shadow-lg);
+  }
+  .laptop-window {
+    background: #fbfaf7;
+    border-radius: 6px;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    color: #0a0a0f;
+    font-family: var(--font-body);
+    font-size: 12px;
+    position: relative;
+  }
+  html[data-theme="dark"] .laptop-window { background: #0a0a0f; color: #f4f4f7; }
+  .laptop-base {
+    height: 14px;
+    background: linear-gradient(180deg, #22222d 0%, #16161e 50%, #0a0a0f 100%);
+    border-radius: 0 0 18px 18px;
+    margin: 0 auto;
+    width: 102%;
+    position: relative;
+    transform: translateX(-1%);
+  }
+  .laptop-base::before {
+    content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 4px;
+    background: #0a0a0f;
+    border-radius: 0 0 4px 4px;
+  }
+
+  /* ─── Recreated app UI inside mockups (light theme only — locked) ──── */
+  .app-shell { height: 100%; display: flex; flex-direction: column; background: #fbfaf7; color: #0a0a0f; }
+  .app-shell.app-laptop { background: #ffffff; }
+  .app-status {
+    height: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    font-size: 10px; font-weight: 600;
+    color: #0a0a0f;
+    margin-top: 14px;
+  }
+  .app-tab-row {
+    display: flex; align-items: center; gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ececec;
+    overflow: hidden;
+  }
+  .app-tab {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 8px;
+    font-size: 10px; font-weight: 500;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+  .app-tab.active { color: #6366f1; font-weight: 600; border-bottom: 2px solid #6366f1; padding-bottom: 6px; margin-bottom: -2px; }
+
+  /* Hero card */
+  .trip-hero {
+    margin: 12px;
+    background: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
+    border-radius: 14px;
+    padding: 16px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .trip-hero.indigo { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+  .trip-hero-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .trip-hero-eyebrow::after { content: "● In 38 days"; opacity: 0.9; }
+  .trip-hero-title { font-family: var(--font-display); font-size: 22px; line-height: 1; margin-bottom: 12px; }
+  .trip-hero-meta { display: flex; gap: 12px; font-size: 9px; opacity: 0.85; }
+  .trip-hero-meta span { display: flex; align-items: center; gap: 4px; }
+  .trip-hero-avatar {
+    position: absolute; top: 14px; right: 14px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: white;
+  }
+
+  .up-next {
+    margin: 0 12px 12px;
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .up-next-ico {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(99,102,241,0.10);
+    display: flex; align-items: center; justify-content: center;
+    color: #6366f1;
+    font-size: 14px;
+  }
+  .up-next-title { font-size: 11px; font-weight: 700; }
+  .up-next-sub   { font-size: 9px; color: #6b7280; margin-top: 2px; }
+
+  .cards-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0 12px;
+  }
+  .qcard {
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    padding: 12px;
+    position: relative;
+  }
+  .qcard.active { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251,191,36,0.15); }
+  .qcard-eyebrow { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+  .qcard-eyebrow.plan::before    { content: "📅"; font-size: 11px; }
+  .qcard-eyebrow.decide::before  { content: "🗳"; font-size: 11px; }
+  .qcard-eyebrow.money::before   { content: "💳"; font-size: 11px; }
+  .qcard-eyebrow.pack::before    { content: "🎒"; font-size: 11px; }
+  .qcard-main { font-size: 14px; font-weight: 700; margin-top: 6px; line-height: 1.2; }
+  .qcard-sub  { font-size: 9px; color: #6b7280; margin-top: 2px; }
+  .qcard-bullet {
+    position: absolute; top: 12px; right: 12px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fbbf24;
+  }
+
+  /* Map screen */
+  .map-mock {
+    height: 60%;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(167,139,250,0.18) 0%, transparent 35%),
+      radial-gradient(circle at 70% 60%, rgba(99,102,241,0.12) 0%, transparent 35%),
+      linear-gradient(135deg, #e3e0d4 0%, #ede9dd 100%);
+    position: relative;
+    border-bottom: 1px solid #ececec;
+  }
+  .map-mock::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 28% 38%, #6366f1 0%, #6366f1 1.2%, transparent 1.4%),
+      radial-gradient(circle at 52% 30%, #6366f1 0%, #6366f1 1.0%, transparent 1.2%),
+      radial-gradient(circle at 68% 58%, #8b5cf6 0%, #8b5cf6 1.0%, transparent 1.2%);
+    background-size: 100% 100%;
+  }
+  .map-day-pills {
+    position: absolute; top: 12px; left: 12px;
+    display: flex; gap: 4px;
+    background: rgba(255,255,255,0.92);
+    padding: 4px;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(15,15,25,0.06);
+  }
+  .map-pill { font-size: 9px; font-weight: 600; color: #6b7280; padding: 4px 8px; border-radius: 999px; }
+  .map-pill.active { background: #0a0a0f; color: white; }
+  .map-cta {
+    position: absolute; top: 12px; right: 12px;
+    background: #6366f1;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    box-shadow: 0 6px 18px rgba(99,102,241,0.4);
+  }
+  .day-sheet {
+    height: 40%;
+    padding: 14px;
+    background: white;
+  }
+  .day-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .day-sheet-title { font-size: 13px; font-weight: 700; }
+  .day-sheet-sub   { font-size: 9px; color: #6b7280; }
+  .day-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f2f2f0; }
+  .day-row:last-child { border-bottom: 0; }
+  .day-pin { width: 8px; height: 8px; border-radius: 50%; background: #6366f1; }
+  .day-name { font-size: 11px; font-weight: 600; flex: 1; }
+  .day-time { font-size: 9px; color: #6b7280; }
+
+  /* Money screen */
+  .money-hero {
+    margin: 12px;
+    background: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
+    border-radius: 16px;
+    padding: 16px;
+    color: white;
+  }
+  .money-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; }
+  .money-hero-amt { font-family: var(--font-display); font-size: 32px; line-height: 1; margin-bottom: 6px; }
+  .money-hero-fx  { font-size: 9px; opacity: 0.85; display: flex; align-items: center; gap: 4px; }
+  .money-row-2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-top: 12px;
+  }
+  .money-pill { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 8px 10px; }
+  .money-pill-lbl { font-size: 8px; opacity: 0.8; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .money-pill-val { font-size: 14px; font-weight: 700; font-family: var(--font-mono); }
+
+  .activity {
+    padding: 0 12px;
+  }
+  .activity-head { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+  .activity-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f2f2f0;
+  }
+  .activity-row:last-child { border-bottom: 0; }
+  .activity-ico {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(99,102,241,0.10);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+  .activity-main { flex: 1; min-width: 0; }
+  .activity-title { font-size: 11px; font-weight: 600; }
+  .activity-sub   { font-size: 9px; color: #6b7280; }
+  .activity-amt   { font-size: 11px; font-weight: 700; font-family: var(--font-mono); text-align: right; }
+  .activity-amt-sub { font-size: 8px; color: #6b7280; }
+
+  /* Vote screen */
+  .vote-card { margin: 12px; background: white; border: 1px solid #ececec; border-radius: 14px; padding: 14px; }
+  .vote-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 700; color: #6366f1; }
+  .vote-eyebrow::before { content: "●"; }
+  .vote-title { font-size: 14px; font-weight: 700; margin: 6px 0 12px; }
+  .vote-opt {
+    margin-top: 8px;
+    position: relative;
+    background: #f6f5f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    overflow: hidden;
+  }
+  .vote-opt.win::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, rgba(99,102,241,0.18), rgba(99,102,241,0.10));
+    z-index: 0;
+  }
+  .vote-opt-content { position: relative; display: flex; justify-content: space-between; align-items: center; }
+  .vote-opt-name { font-size: 11px; font-weight: 600; }
+  .vote-opt-name b { display: inline-block; background: rgba(99,102,241,0.12); color: #6366f1; padding: 1px 6px; border-radius: 999px; font-size: 8px; font-weight: 700; margin-left: 6px; }
+  .vote-opt-pct { font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+  .vote-foot { margin-top: 12px; text-align: center; font-size: 9px; color: #6b7280; }
+
+  /* Pack screen */
+  .pack-tabs { display: flex; gap: 4px; padding: 12px; }
+  .pack-tab { padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; color: #6b7280; background: #f6f5f0; }
+  .pack-tab.on { background: #0a0a0f; color: white; }
+  .pack-progress { padding: 0 12px 8px; }
+  .pack-progress-row { display: flex; justify-content: space-between; font-size: 10px; }
+  .pack-progress-row b { font-weight: 700; }
+  .pack-bar { height: 4px; background: #ececec; border-radius: 2px; margin-top: 4px; overflow: hidden; }
+  .pack-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+  .pack-section { padding: 12px; }
+  .pack-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6b7280; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .pack-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+  .pack-check { width: 18px; height: 18px; border: 1.5px solid #d4d4d4; border-radius: 4px; flex-shrink: 0; }
+  .pack-check.on { background: #6366f1; border-color: #6366f1; position: relative; }
+  .pack-check.on::after { content: "✓"; position: absolute; inset: 0; color: white; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .pack-item-name { font-size: 11px; flex: 1; }
+  .pack-item-name.done { text-decoration: line-through; color: #9ca3af; }
+
+  /* Notif bell + dropdown */
+  .notif-shell { background: white; border-radius: 16px; box-shadow: var(--shadow); width: 320px; overflow: hidden; }
+  .notif-head { padding: 12px 16px; border-bottom: 1px solid #ececec; display: flex; justify-content: space-between; align-items: center; }
+  .notif-head-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; }
+  .notif-head-last { font-size: 10px; color: #9ca3af; }
+  .notif-row { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #f4f4f4; background: rgba(99,102,241,0.03); }
+  .notif-row:last-child { border-bottom: 0; }
+  .notif-ico { width: 28px; height: 28px; border-radius: 50%; background: rgba(52,211,153,0.14); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .notif-ico.vote { background: rgba(139,92,246,0.14); }
+  .notif-ico.check { background: rgba(52,211,153,0.14); }
+  .notif-main { flex: 1; min-width: 0; }
+  .notif-title { font-size: 12px; font-weight: 700; }
+  .notif-sub   { font-size: 10px; color: #6b7280; margin-top: 1px; }
+  .notif-time  { font-size: 9px; color: #9ca3af; margin-top: 3px; }
+  .notif-dot { width: 6px; height: 6px; border-radius: 50%; background: #6366f1; align-self: flex-start; margin-top: 6px; }
+
+  /* AI planner */
+  .ai-panel { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 18px; width: 320px; }
+  .ai-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .ai-ico { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+  .ai-title { font-size: 13px; font-weight: 700; }
+  .ai-sub   { font-size: 10px; color: #6b7280; }
+  .ai-progress { display: flex; gap: 6px; margin-bottom: 16px; }
+  .ai-progress-seg { flex: 1; height: 3px; background: #ececec; border-radius: 2px; }
+  .ai-progress-seg.on { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+  .ai-step-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin-bottom: 12px; }
+  .ai-question { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .ai-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+  .ai-choice { padding: 10px 12px; border: 1px solid #ececec; border-radius: 10px; font-size: 11px; font-weight: 600; display: flex; flex-direction: column; gap: 2px; }
+  .ai-choice.on { border-color: #6366f1; background: rgba(99,102,241,0.05); color: #6366f1; }
+  .ai-choice-cap { font-size: 9px; font-weight: 500; color: #6b7280; }
+  .ai-choice.on .ai-choice-cap { color: #6366f1; opacity: 0.8; }
+  .ai-cta { width: 100%; padding: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; }
+
+  /* Expense dialog */
+  .expense-dialog { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 20px; width: 320px; }
+  .ed-title { font-size: 13px; font-weight: 700; margin-bottom: 16px; }
+  .ed-row1 { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f6f5f0; border-radius: 10px; margin-bottom: 10px; }
+  .ed-row1-ico { width: 28px; height: 28px; border-radius: 8px; background: rgba(52,211,153,0.15); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .ed-row1-name { font-size: 12px; font-weight: 600; }
+  .ed-amount-box { padding: 12px 14px; background: #f6f5f0; border-radius: 10px; margin-bottom: 12px; }
+  .ed-amount-row { display: flex; align-items: baseline; justify-content: space-between; }
+  .ed-amount { font-family: var(--font-display); font-size: 28px; font-weight: 400; }
+  .ed-currency { font-size: 11px; font-weight: 700; padding: 4px 10px; background: white; border-radius: 999px; border: 1px solid #ececec; }
+  .ed-fx-hint { font-size: 10px; color: #6b7280; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .ed-projection { font-size: 10px; color: #6b7280; padding: 8px 12px; background: rgba(99,102,241,0.06); border-radius: 8px; margin-bottom: 12px; }
+  .ed-projection b { color: #6366f1; }
+  .ed-scope { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .ed-scope-btn { padding: 8px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: center; border: 1px solid #ececec; }
+  .ed-scope-btn.on { background: rgba(99,102,241,0.12); color: #6366f1; border-color: rgba(99,102,241,0.3); }
+  .ed-foot { display: flex; gap: 8px; margin-top: 8px; }
+  .ed-btn { flex: 1; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: center; }
+  .ed-btn-secondary { background: white; border: 1px solid #ececec; }
+  .ed-btn-primary   { background: #6366f1; color: white; }
+
+  /* ─── Screen gallery layouts ────────────────────────────────────────── */
+  .screens-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    margin: 80px 0;
+  }
+  .screens-row.flip { grid-template-columns: 1fr 1.1fr; }
+  .screens-row.flip .screens-prose { order: 2; }
+  .screens-row.flip .screens-art   { order: 1; }
+  .screens-prose .label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--indigo-600); margin-bottom: 16px;
+  }
+  html[data-theme="dark"] .screens-prose .label { color: var(--indigo-300); }
+  .screens-art {
+    display: flex; justify-content: center; align-items: center;
+    position: relative;
+  }
+  .stack-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 64px;
+  }
+  .stack-2 .device { display: flex; justify-content: center; }
+
+  /* ─── Cluster (3-device showcase) ────────────────────────────────────── */
+  .cluster {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin: 80px auto 0;
+  }
+  .cluster .device:nth-child(1) { transform: translateY(20px) rotate(-3deg); }
+  .cluster .device:nth-child(2) { z-index: 2; }
+  .cluster .device:nth-child(3) { transform: translateY(20px) rotate(3deg); }
+  .cluster .device { transition: transform .5s var(--ease-out); }
+  .cluster:hover .device:nth-child(1) { transform: translateY(0) rotate(0); }
+  .cluster:hover .device:nth-child(3) { transform: translateY(0) rotate(0); }
+
+  /* ─── Process timeline ──────────────────────────────────────────────── */
+  .timeline {
+    margin-top: 56px;
+    position: relative;
+  }
+  .timeline::before {
+    content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px;
+    width: 1px; background: var(--line);
+  }
+  .tl-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 28px;
+    padding: 20px 0 20px 40px;
+    position: relative;
+    border-bottom: 1px solid var(--line);
+  }
+  .tl-row:last-child { border-bottom: 0; }
+  .tl-row::before {
+    content: ""; position: absolute; left: 0; top: 28px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--canvas);
+    border: 2px solid var(--indigo-500);
+    z-index: 1;
+  }
+  .tl-tag {
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    color: var(--indigo-600);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  html[data-theme="dark"] .tl-tag { color: var(--indigo-300); }
+  .tl-content h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--ink); }
+  .tl-content p  { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* ─── Final / Reflection ────────────────────────────────────────────── */
+  .takeaways {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 56px;
+  }
+  .takeaway {
+    padding: 32px 28px;
+    background: linear-gradient(180deg, transparent 0%, rgba(99,102,241,0.04) 100%);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  .takeaway-num {
+    font-family: var(--font-display);
+    font-size: 56px;
+    line-height: 1;
+    color: var(--indigo-500);
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+  .takeaway-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .takeaway-body  { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+  /* ─── Footer / Next ─────────────────────────────────────────────────── */
+  .doc-foot {
+    background: var(--ink);
+    color: white;
+    padding: 120px 32px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .doc-foot::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(60% 50% at 80% 0%, rgba(139,92,246,0.20), transparent 70%);
+    pointer-events: none;
+  }
+  .doc-foot-inner { position: relative; max-width: var(--content-max); margin: 0 auto; }
+  .foot-eyebrow { font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 16px; }
+  .foot-h {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    margin-bottom: 40px;
+    max-width: 920px;
+  }
+  .foot-h em { color: var(--indigo-300); font-style: italic; }
+  .foot-row { display: flex; justify-content: space-between; align-items: end; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .foot-mail { font-size: 14px; color: rgba(255,255,255,0.85); display: inline-flex; align-items: center; gap: 10px; }
+  .foot-mail::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--indigo-300); }
+  .foot-meta { font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.3); line-height: 1.8; text-align: right; }
+
+  /* Logo footprint */
+  .foot-logo-rays {
+    position: absolute; right: -40px; bottom: -40px;
+    width: 400px; height: 400px;
+    opacity: 0.04;
+    color: white;
+    pointer-events: none;
+  }
+
+  /* ─── Mobile ────────────────────────────────────────────────────────── */
+  @media (max-width: 980px) {
+    .nav-chapters { display: none; }
+    .hero { padding: 140px 24px 80px; }
+    .section { padding: 80px 24px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stat:nth-child(2) { border-right: 0; }
+    .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--line); }
+    .two-col { grid-template-columns: 1fr; gap: 32px; }
+    .problems { grid-template-columns: 1fr; }
+    .screens-row, .screens-row.flip { grid-template-columns: 1fr; gap: 48px; margin: 56px 0; }
+    .screens-row.flip .screens-prose { order: 1; }
+    .screens-row.flip .screens-art   { order: 2; }
+    .stack-2 { grid-template-columns: 1fr; }
+    .takeaways { grid-template-columns: 1fr; }
+    .cluster .device { transform: none !important; }
+    .doc-foot { padding: 80px 24px 48px; }
+    .foot-row { flex-direction: column; gap: 32px; align-items: flex-start; }
+    .foot-meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Logo symbol -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="logo-mark" viewBox="0 0 253.12 204.85">
+      <path d="M191.66 8.82001C125.91 -20.81 0 21.66 0.16 175.31L0 203.01C0 203.43 0.33 203.77 0.75 203.77C0.75 203.77 59.94 205.34 79.65 204.69C95.73 204.16 143.79 199.68 143.79 199.68L143.75 199.66C143.75 199.66 139.12 157.9 138.01 150.63C137.93 150.11 137.36 149.83 136.9 150.09L94.16 173.5C93.94 173.62 93.67 173.62 93.45 173.5L60.71 156.48C60.17 156.2 60.17 155.42 60.71 155.14L132.34 117.26C132.62 117.11 132.78 116.81 132.74 116.5L123.02 38.3C122.95 37.7 123.57 37.26 124.11 37.53C130.35 40.65 157.96 55.98 161.4 57.89C161.62 58.01 161.76 58.24 161.78 58.49L165.24 102.3C165.28 102.85 165.89 103.17 166.37 102.9L204.7 80.96C204.92 80.83 205.19 80.83 205.41 80.94L239.66 97.96C240.22 98.24 240.22 99.03 239.67 99.31L171.88 134.3C171.6 134.45 171.44 134.75 171.48 135.07L178.69 190.58C178.75 191.03 179.18 191.32 179.62 191.22L182.92 190.44C182.92 190.44 182.96 190.43 182.98 190.42C255.28 173 292 54.03 191.7 8.82001H191.66Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ─── Top nav ──────────────────────────────────────────────────────── -->
+<nav class="nav" id="nav">
+  <a class="nav-mark" href="#top">
+    <svg viewBox="0 0 253.12 204.85" aria-hidden="true"><use href="#logo-mark"/></svg>
+    <div>
+      <div>Paxawa</div>
+      <div class="nav-mark-sub">Case study · 2026</div>
+    </div>
+  </a>
+  <div class="nav-chapters">
+    <a class="nav-chap" data-target="intro">Intro</a>
+    <a class="nav-chap" data-target="problem">Problem</a>
+    <a class="nav-chap" data-target="solution">Solution</a>
+    <a class="nav-chap" data-target="screens">Screens</a>
+    <a class="nav-chap" data-target="money">Money</a>
+    <a class="nav-chap" data-target="process">Process</a>
+    <a class="nav-chap" data-target="outcome">Outcome</a>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn" id="theme-toggle" title="Toggle theme">
+      <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+      </svg>
+    </button>
+    <a class="nav-btn" href="https://paxawa.com" target="_blank" rel="noopener" title="Open Paxawa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 3h6v6"></path><path d="M10 14L21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+      </svg>
+    </a>
+  </div>
+</nav>
+
+<!-- ─── HERO ─────────────────────────────────────────────────────────── -->
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-inner">
+    <div class="hero-meta">
+      <span><b>Role</b>Designer · Engineer</span>
+      <span><b>Year</b>2026</span>
+      <span><b>Scope</b>Web · PWA · iOS shell</span>
+      <span><b>Status</b>Beta</span>
+    </div>
+    <h1 class="hero-title">Plan the trip.<br>Not the <em>group chat</em>.</h1>
+    <p class="hero-lede">A case study on <strong>Paxawa</strong> — the calm, group-aware travel planner. From the noise of WhatsApp threads and spreadsheets, to a single shared source of truth for itineraries, decisions, and money.</p>
+    <div class="hero-marquee">
+      <span class="chip">Group travel</span>
+      <span class="chip">Multi-currency money</span>
+      <span class="chip">AI-assisted planning</span>
+      <span class="chip">Live voting</span>
+      <span class="chip">Smart packing</span>
+      <span class="chip">Real-time notifications</span>
+    </div>
+  </div>
+</section>
+
+<!-- Hero showcase — laptop + phone cluster -->
+<section class="hero-showcase float">
+  <div class="cluster">
+    <!-- Left phone — Trip overview -->
+    <div class="device phone">
+      <div class="phone-screen">
+        <div class="app-shell">
+          <div class="app-status"><span>9:41</span><span>● ●</span></div>
+          <div style="padding: 18px 16px 8px;">
+            <div style="display:flex; align-items:center; gap:8px; font-size:10px; color:#6b7280; margin-bottom: 4px;">
+              <span>←</span>
+              <span>Trip</span>
+            </div>
+            <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
+            <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Kuala Lumpur · Jul 10 – Jul 17</div>
+          </div>
+          <div class="app-tab-row">
+            <div class="app-tab active">Overview</div>
+            <div class="app-tab">Itinerary</div>
+            <div class="app-tab">Votes</div>
+            <div class="app-tab">Expenses</div>
+            <div class="app-tab">Pack</div>
+          </div>
+          <div class="trip-hero">
+            <div class="trip-hero-eyebrow">Kuala Lumpur, Malaysia</div>
+            <div class="trip-hero-title">Malaysia<br>adventure</div>
+            <div class="trip-hero-meta">
+              <span>📅 Jul 10 – Jul 17</span>
+              <span>🕒 7n</span>
+            </div>
+            <div class="trip-hero-avatar">AW</div>
+          </div>
+          <div class="up-next">
+            <div class="up-next-ico">✨</div>
+            <div>
+              <div class="up-next-title">1 vote needs your input</div>
+              <div class="up-next-sub">Cast your vote so the group can move on.</div>
+            </div>
+          </div>
+          <div class="cards-2x2">
+            <div class="qcard"><div class="qcard-eyebrow plan">Plan</div><div class="qcard-main">3 items</div><div class="qcard-sub">6 days empty</div></div>
+            <div class="qcard active"><div class="qcard-bullet"></div><div class="qcard-eyebrow decide">Decide</div><div class="qcard-main">1 open</div><div class="qcard-sub">Needs your vote</div></div>
+            <div class="qcard"><div class="qcard-eyebrow money">Money</div><div class="qcard-main">SAR 42</div><div class="qcard-sub">You're settled</div></div>
+            <div class="qcard"><div class="qcard-eyebrow pack">Pack</div><div class="qcard-main">0/20</div><div class="qcard-sub">0% packed</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center phone — Itinerary map -->
+    <div class="device phone">
+      <div class="phone-screen">
+        <div class="app-shell">
+          <div class="app-status"><span>9:41</span><span>● ●</span></div>
+          <div style="padding: 18px 16px 8px;">
+            <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
+            <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Kuala Lumpur · Jul 10 – Jul 17</div>
+          </div>
+          <div class="app-tab-row">
+            <div class="app-tab">Overview</div>
+            <div class="app-tab active">Itinerary</div>
+            <div class="app-tab">Votes</div>
+            <div class="app-tab">Expenses</div>
+            <div class="app-tab">Pack</div>
+          </div>
+          <div class="map-mock">
+            <div class="map-day-pills">
+              <div class="map-pill">All</div>
+              <div class="map-pill active">D1</div>
+              <div class="map-pill">D2</div>
+              <div class="map-pill">D3</div>
+              <div class="map-pill">D4</div>
+            </div>
+            <div class="map-cta">+ Add place</div>
+          </div>
+          <div class="day-sheet">
+            <div class="day-sheet-head">
+              <div>
+                <div class="day-sheet-title">Day 1 · Fri, Jul 10</div>
+                <div class="day-sheet-sub">3 items</div>
+              </div>
+              <div style="font-size:14px; color:#9ca3af;">⌃</div>
+            </div>
+            <div class="day-row"><div class="day-pin"></div><div class="day-name">KLCC Twin Towers</div><div class="day-time">10:30</div></div>
+            <div class="day-row"><div class="day-pin" style="background:#a78bfa;"></div><div class="day-name">Jalan Alor street food</div><div class="day-time">19:00</div></div>
+            <div class="day-row"><div class="day-pin" style="background:#34d399;"></div><div class="day-name">Sky Bar</div><div class="day-time">22:00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right phone — Expenses -->
+    <div class="device phone">
+      <div class="phone-screen">
+        <div class="app-shell">
+          <div class="app-status"><span>9:41</span><span>● ●</span></div>
+          <div style="padding: 18px 16px 8px;">
+            <div style="font-size:16px; font-weight:700;">Japan trip</div>
+            <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Japan · Jun 18 – Jul 2</div>
+          </div>
+          <div class="app-tab-row">
+            <div class="app-tab">Overview</div>
+            <div class="app-tab">Itinerary</div>
+            <div class="app-tab">Votes</div>
+            <div class="app-tab active">Expenses</div>
+            <div class="app-tab">Pack</div>
+          </div>
+          <div class="money-hero">
+            <div class="money-hero-label">Trip total spent</div>
+            <div class="money-hero-amt">USD 130.93</div>
+            <div class="money-hero-fx">⇄ Live FX applied across 3 currencies</div>
+            <div class="money-row-2">
+              <div class="money-pill"><div class="money-pill-lbl">You paid</div><div class="money-pill-val">USD 128.55</div></div>
+              <div class="money-pill"><div class="money-pill-lbl">You owe</div><div class="money-pill-val">USD 0</div></div>
+            </div>
+          </div>
+          <div class="activity">
+            <div class="activity-head">Activity · 6</div>
+            <div class="activity-row"><div class="activity-ico" style="background:rgba(56,189,248,0.16);">✈️</div><div class="activity-main"><div class="activity-title">Bus tickets</div><div class="activity-sub">Jun 25 · Raheem</div></div><div><div class="activity-amt">JPY 380</div><div class="activity-amt-sub">≈ USD 2.38</div></div></div>
+            <div class="activity-row"><div class="activity-ico" style="background:rgba(52,211,153,0.16);">🍱</div><div class="activity-main"><div class="activity-title">Burger</div><div class="activity-sub">Jun 25 · You</div></div><div><div class="activity-amt">JPY 800</div><div class="activity-amt-sub">≈ USD 5.02</div></div></div>
+            <div class="activity-row"><div class="activity-ico" style="background:rgba(52,211,153,0.16);">🥖</div><div class="activity-main"><div class="activity-title">Bread</div><div class="activity-sub">May 28 · You</div></div><div><div class="activity-amt">SAR 100</div><div class="activity-amt-sub">≈ USD 26.67</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 01 · INTRO ───────────────────────────────────────────────────── -->
+<section class="section" id="intro" data-title="Intro">
+  <div class="section-inner">
+    <div class="chapter-mark">01 · Overview</div>
+    <h2 class="h1">A travel planner that <em>celebrates the group</em>, not just the individual.</h2>
+    <p class="lede">Most travel apps are designed for a solo planner who relays decisions to everyone else. Paxawa starts from a different premise — <strong>the group is the user</strong>. Every screen accepts that planning is a collective act, and shapes itself around that.</p>
+
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-num">5</div>
+        <div class="stat-label">Surfaces</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">160<em>+</em></div>
+        <div class="stat-label">Live FX currencies</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Motion presets</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">14</div>
+        <div class="stat-label">Build iterations</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 02 · PROBLEM ─────────────────────────────────────────────────── -->
+<section class="section" id="problem" data-title="Problem">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">02 · The problem</div>
+      <div>
+        <h2 class="h1">Group travel breaks down where the tools end.</h2>
+        <div class="body">
+          <p>Talk to anyone who has organised a trip for four or more people and they'll describe the same arc: <strong>excitement → spreadsheet → group chat → silence → resentment</strong>. The Discord-of-friends becomes a search engine for "who said yes to the hotel?" by week two.</p>
+          <p>The product wasn't missing. It was scattered across <em>WhatsApp, Google Sheets, Splitwise, Notion, and someone's Notes app</em>. Each one solved a sliver. None of them spoke to the rest.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="problems">
+      <div class="problem reveal" data-delay="1">
+        <div class="problem-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="problem-title">Decisions get lost in chat</div>
+        <div class="problem-desc">The vote on which Airbnb to book sits at message #847 in a thread of 3,200. Nobody can find it. The host re-books and someone gets the wrong dates.</div>
+      </div>
+      <div class="problem reveal" data-delay="2">
+        <div class="problem-icon" style="background:linear-gradient(135deg,#34d399,#10b981);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="problem-title">Money math doesn't match memory</div>
+        <div class="problem-desc">Three currencies, four payers, partial settles. The spreadsheet is right. The vibe says someone is owed more. The post-trip "Venmo me ¥3,200" message tanks the friendship.</div>
+      </div>
+      <div class="problem reveal" data-delay="3">
+        <div class="problem-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="problem-title">No one owns the plan</div>
+        <div class="problem-desc">The one friend with a spreadsheet becomes the on-call coordinator. By day three of the trip they're exhausted, mildly resentful, and the group is asking them what's next.</div>
+      </div>
+    </div>
+
+    <blockquote class="pull reveal">
+      "The fix wasn't a better spreadsheet. It was <em>making the spreadsheet disappear</em> — so the question 'who decided what?' has the same answer for everyone in the trip."
+      <span class="pull-cite">Design premise · early note</span>
+    </blockquote>
+  </div>
+</section>
+
+<!-- ─── 03 · SOLUTION ────────────────────────────────────────────────── -->
+<section class="section" id="solution" data-title="Solution">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">03 · The shape of the answer</div>
+      <div>
+        <h2 class="h1">Five surfaces. One source of truth.</h2>
+        <div class="body">
+          <p>The information architecture earns its weight. Each tab maps to a question a traveller actually asks during a trip — and refuses to leak into another tab's job.</p>
+          <p><strong>Overview</strong> answers <em>"what's the state of this trip?"</em> &nbsp;·&nbsp; <strong>Itinerary</strong> answers <em>"where are we and when?"</em> &nbsp;·&nbsp; <strong>Votes</strong> answers <em>"what hasn't the group decided?"</em> &nbsp;·&nbsp; <strong>Expenses</strong> answers <em>"who paid what, who owes whom?"</em> &nbsp;·&nbsp; <strong>Pack</strong> answers <em>"what do I still need to bring, and which docs do I need?"</em></p>
+          <p>A bell icon in the header (and the dashboard) collects everything you've missed across trips. A side panel hosts the AI planner without taking over the page.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 04 · SCREENS ─────────────────────────────────────────────────── -->
+<section class="section" id="screens" data-title="Screens">
+  <div class="section-inner">
+    <div class="chapter-mark">04 · Screens</div>
+    <h2 class="h1">The shape, in pixels.</h2>
+    <p class="lede">Highlights from across the app. The screens recreated here are faithful to what ships on <a href="https://paxawa.com" style="color: var(--indigo-500); border-bottom: 1px solid currentColor;">paxawa.com</a> today.</p>
+
+    <!-- Row 1 — Itinerary -->
+    <div class="screens-row">
+      <div class="screens-prose reveal">
+        <div class="label">Itinerary</div>
+        <h3 class="h2">A map-first plan, not another list.</h3>
+        <div class="body">
+          <p>The map is the surface. Mapbox basemap, English labels, places pinned per-day. Tap a day pill, and the rest dim. The bottom sheet is the day's items, draggable to expand.</p>
+          <p>Place search runs on <strong>Foursquare's POI database</strong>, with Mapbox as a fallback for free-form text. Search "Petronas Towers" on a KL trip and you get the actual landmark — not a same-named street six countries away.</p>
+        </div>
+      </div>
+      <div class="screens-art reveal" data-delay="1">
+        <div class="device phone">
+          <div class="phone-screen">
+            <div class="app-shell">
+              <div class="app-status"><span>9:41</span><span>● ●</span></div>
+              <div style="padding: 18px 16px 8px;">
+                <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
+              </div>
+              <div class="app-tab-row">
+                <div class="app-tab">Overview</div>
+                <div class="app-tab active">Itinerary</div>
+                <div class="app-tab">Votes</div>
+                <div class="app-tab">Expenses</div>
+                <div class="app-tab">Pack</div>
+              </div>
+              <div class="map-mock" style="height:62%;">
+                <div class="map-day-pills">
+                  <div class="map-pill">All</div>
+                  <div class="map-pill active">D1</div>
+                  <div class="map-pill">D2</div>
+                  <div class="map-pill">D3</div>
+                </div>
+                <div class="map-cta">+ Add place</div>
+              </div>
+              <div class="day-sheet" style="height:38%;">
+                <div class="day-sheet-head">
+                  <div>
+                    <div class="day-sheet-title">Day 1 · Fri, Jul 10</div>
+                    <div class="day-sheet-sub">3 items · 0 votes</div>
+                  </div>
+                </div>
+                <div class="day-row"><div class="day-pin"></div><div class="day-name">KLCC Twin Towers</div><div class="day-time">10:30</div></div>
+                <div class="day-row"><div class="day-pin" style="background:#a78bfa;"></div><div class="day-name">Jalan Alor street food</div><div class="day-time">19:00</div></div>
+                <div class="day-row"><div class="day-pin" style="background:#34d399;"></div><div class="day-name">Sky Bar</div><div class="day-time">22:00</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2 — Votes -->
+    <div class="screens-row flip">
+      <div class="screens-prose reveal">
+        <div class="label">Decide</div>
+        <h3 class="h2">A vote is a question with a deadline.</h3>
+        <div class="body">
+          <p>Open a vote, pick options, set a deadline. Anyone in the trip casts a tap. The winning option fills its bar gradually, so the result tells a story rather than barking a number.</p>
+          <p>When a vote closes, the winning option <strong>auto-adds to the itinerary</strong> on the relevant day. Decision and plan stay in lock-step — no copy-paste, no "I already added it" confusion.</p>
+        </div>
+      </div>
+      <div class="screens-art reveal" data-delay="1">
+        <div class="device phone">
+          <div class="phone-screen">
+            <div class="app-shell">
+              <div class="app-status"><span>9:41</span><span>● ●</span></div>
+              <div style="padding: 18px 16px 8px;">
+                <div style="font-size:16px; font-weight:700;">Votes</div>
+                <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Make group decisions together</div>
+              </div>
+              <div class="vote-card">
+                <div class="vote-eyebrow">Open</div>
+                <div class="vote-title">Dinner spot tonight?</div>
+                <div class="vote-opt win">
+                  <div class="vote-opt-content">
+                    <div class="vote-opt-name">Jalan Alor street food <b>YOUR VOTE</b></div>
+                    <div class="vote-opt-pct">100%</div>
+                  </div>
+                </div>
+                <div class="vote-opt">
+                  <div class="vote-opt-content">
+                    <div class="vote-opt-name">Suria KLCC food court</div>
+                    <div class="vote-opt-pct">0%</div>
+                  </div>
+                </div>
+                <div class="vote-foot">Tap any option to change your vote</div>
+              </div>
+              <div class="vote-card" style="opacity:0.6;">
+                <div class="vote-eyebrow" style="color:#9ca3af;">● Closed · resolved</div>
+                <div class="vote-title">Where to stay?</div>
+                <div class="vote-opt win">
+                  <div class="vote-opt-content">
+                    <div class="vote-opt-name">Beachfront villa <b style="background:rgba(52,211,153,0.16); color:#047857;">WON</b></div>
+                    <div class="vote-opt-pct">75%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3 — Pack + Notifications side-by-side -->
+    <h3 class="h2 reveal" style="margin-top: 80px; margin-bottom: 16px;">Smaller surfaces, same care.</h3>
+    <p class="lede reveal">Pack auto-seeds 20 essentials at trip creation — destination-aware (insect repellent + cooling towel ship with a Malaysia trip). The notification bell lives in the header of every trip and the dashboard, with optimistic mark-read on open.</p>
+
+    <div class="stack-2">
+      <div class="device phone reveal">
+        <div class="phone-screen">
+          <div class="app-shell">
+            <div class="app-status"><span>9:41</span><span>● ●</span></div>
+            <div style="padding: 18px 16px 8px;">
+              <div style="font-size:16px; font-weight:700;">Pack</div>
+              <div style="font-size:10px; color:#6b7280; margin-top: 2px;">Trip docs and packing checklist</div>
+            </div>
+            <div class="pack-tabs">
+              <div class="pack-tab">Docs · 0</div>
+              <div class="pack-tab on">Packing · 8/20</div>
+            </div>
+            <div class="pack-progress">
+              <div class="pack-progress-row"><span>8 of 20 packed</span><b>40%</b></div>
+              <div class="pack-bar"><div class="pack-bar-fill" style="width:40%;"></div></div>
+            </div>
+            <div class="pack-section">
+              <div class="pack-section-label">📄 Documents · 3</div>
+              <div class="pack-item"><div class="pack-check on"></div><div class="pack-item-name done">Passport</div></div>
+              <div class="pack-item"><div class="pack-check on"></div><div class="pack-item-name done">Boarding passes</div></div>
+              <div class="pack-item"><div class="pack-check"></div><div class="pack-item-name">Travel insurance card</div></div>
+            </div>
+            <div class="pack-section">
+              <div class="pack-section-label">🧴 Toiletries · 5</div>
+              <div class="pack-item"><div class="pack-check on"></div><div class="pack-item-name done">Sunscreen</div></div>
+              <div class="pack-item"><div class="pack-check"></div><div class="pack-item-name">Insect repellent</div></div>
+              <div class="pack-item"><div class="pack-check"></div><div class="pack-item-name">Toothpaste</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="device reveal" data-delay="1" style="display:flex; flex-direction:column; gap:18px; justify-content:center;">
+        <div class="notif-shell">
+          <div class="notif-head">
+            <div class="notif-head-title">Notifications</div>
+            <div class="notif-head-last">Last 3</div>
+          </div>
+          <div class="notif-row">
+            <div class="notif-ico"><span style="color:#047857;">💵</span></div>
+            <div class="notif-main">
+              <div class="notif-title">Raheem paid for Bus tickets</div>
+              <div class="notif-sub">JPY 380 · Japan trip</div>
+              <div class="notif-time">less than a minute ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+          <div class="notif-row">
+            <div class="notif-ico vote"><span style="color:#7c3aed;">🗳</span></div>
+            <div class="notif-main">
+              <div class="notif-title">Raheem opened a vote</div>
+              <div class="notif-sub">Where should we eat tonight?</div>
+              <div class="notif-time">2 minutes ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+          <div class="notif-row">
+            <div class="notif-ico check"><span style="color:#047857;">✓</span></div>
+            <div class="notif-main">
+              <div class="notif-title">Raheem settled up</div>
+              <div class="notif-sub">JPY 50 for Bus tickets</div>
+              <div class="notif-time">3 minutes ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+        </div>
+
+        <div class="ai-panel">
+          <div class="ai-head">
+            <div class="ai-ico">✨</div>
+            <div>
+              <div class="ai-title">AI Trip Planner</div>
+              <div class="ai-sub">Smart itinerary for Kuala Lumpur</div>
+            </div>
+          </div>
+          <div class="ai-progress">
+            <div class="ai-progress-seg on"></div>
+            <div class="ai-progress-seg"></div>
+            <div class="ai-progress-seg"></div>
+          </div>
+          <div class="ai-step-label">Step 1 of 3 · Vibe</div>
+          <div class="ai-question">What's the vibe?</div>
+          <div class="ai-choices">
+            <div class="ai-choice">🏔 Adventure<span class="ai-choice-cap">Outdoors &amp; thrills</span></div>
+            <div class="ai-choice">🏝 Relaxed<span class="ai-choice-cap">Chill &amp; scenic</span></div>
+            <div class="ai-choice on">🏛 Cultural<span class="ai-choice-cap">History &amp; art</span></div>
+            <div class="ai-choice">🍜 Foodie<span class="ai-choice-cap">Eat everything</span></div>
+          </div>
+          <div class="ai-cta">Next →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 05 · MONEY DEEP DIVE ─────────────────────────────────────────── -->
+<section class="section" id="money" data-title="Money">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">05 · Multi-currency money</div>
+      <div>
+        <h2 class="h1">Eight currencies. One source of truth.</h2>
+        <div class="body">
+          <p>A trip can mix yen, ringgit, riyal, and dollars in a single afternoon. The naïve approach — sum the raw numbers — produces nonsense like <em>"USD 880"</em> on a trip that actually spent <em>USD 130</em>.</p>
+          <p>Paxawa pulls live FX rates from <strong>open.er-api.com</strong> on a stale-while-revalidate cache, then converts every row into the trip's base currency before adding it up. Each row also keeps its original — so the activity feed shows <em>"JPY 380 ≈ USD 2.38"</em>, not a flattened number that loses context.</p>
+          <p>The expense dialog itself runs the same conversion live. Type 45 in MYR on a SAR-based trip, and the projection pill shows where the expense lands inside the personal budget <em>and</em> the trip budget — converted, never skipped.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-2 reveal" data-delay="1">
+      <div class="device" style="display:flex; justify-content: center;">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="app-shell">
+              <div class="app-status"><span>9:41</span><span>● ●</span></div>
+              <div style="padding: 18px 16px 8px;">
+                <div style="font-size:16px; font-weight:700;">Malaysia adventure</div>
+              </div>
+              <div class="app-tab-row">
+                <div class="app-tab">Overview</div>
+                <div class="app-tab">Itinerary</div>
+                <div class="app-tab">Votes</div>
+                <div class="app-tab active">Expenses</div>
+                <div class="app-tab">Pack</div>
+              </div>
+              <div class="money-hero">
+                <div class="money-hero-label">Trip total spent</div>
+                <div class="money-hero-amt">SAR 42.56</div>
+                <div class="money-hero-fx">⇄ Live FX applied across 1 currency</div>
+                <div class="money-row-2">
+                  <div class="money-pill"><div class="money-pill-lbl">You paid</div><div class="money-pill-val">SAR 42.56</div></div>
+                  <div class="money-pill"><div class="money-pill-lbl">You owe</div><div class="money-pill-val">SAR 0</div></div>
+                </div>
+              </div>
+              <div class="activity">
+                <div class="activity-head">Activity · 1</div>
+                <div class="activity-row">
+                  <div class="activity-ico" style="background:rgba(52,211,153,0.18);">🥘</div>
+                  <div class="activity-main">
+                    <div class="activity-title">Nasi lemak lunch</div>
+                    <div class="activity-sub">Jul 10 · You</div>
+                  </div>
+                  <div>
+                    <div class="activity-amt">MYR 45</div>
+                    <div class="activity-amt-sub">≈ SAR 42.56</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:24px; justify-content:center;">
+        <div class="expense-dialog">
+          <div class="ed-title">Log an expense</div>
+          <div class="ed-row1">
+            <div class="ed-row1-ico">🥘</div>
+            <div class="ed-row1-name">Nasi lemak lunch</div>
+          </div>
+          <div class="ed-amount-box">
+            <div class="ed-amount-row">
+              <div class="ed-amount">45</div>
+              <div class="ed-currency">MYR ▾</div>
+            </div>
+            <div class="ed-fx-hint">≈ SAR 42.56 · live FX</div>
+          </div>
+          <div class="ed-projection">After your share · your budget · <b>1% of SAR 8,000</b></div>
+          <div class="ed-scope">
+            <div class="ed-scope-btn on">👥 Shared · split equally</div>
+            <div class="ed-scope-btn">👤 Personal · just you</div>
+          </div>
+          <div class="ed-foot">
+            <div class="ed-btn ed-btn-secondary">Cancel</div>
+            <div class="ed-btn ed-btn-primary">Log expense</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <blockquote class="pull reveal" style="margin-top: 80px;">
+      "If the bell, the dashboard card, and the expenses page show <em>three different numbers</em> for the same trip — the user trusts none of them. Single source of truth has to mean it everywhere."
+      <span class="pull-cite">B12-followup · session note</span>
+    </blockquote>
+  </div>
+</section>
+
+<!-- ─── 06 · PROCESS ─────────────────────────────────────────────────── -->
+<section class="section" id="process" data-title="Process">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">06 · Process</div>
+      <div>
+        <h2 class="h1">Ship, audit, repeat.</h2>
+        <div class="body">
+          <p>Fourteen build iterations, each scoped to a clear theme. Every cycle ended with a tester walk-through that surfaced the next batch.</p>
+          <p>The biggest unlocks weren't features — they were the audits that caught the gaps between what shipped and what users actually trusted.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-row reveal"><div class="tl-tag">A1 – A4</div><div class="tl-content"><h3>Foundations &amp; landing</h3><p>Brand, landing page, legal, waitlist, in-app feedback widget. Got the shape of the product on paper before code.</p></div></div>
+      <div class="tl-row reveal" data-delay="1"><div class="tl-tag">B1 – B3</div><div class="tl-content"><h3>Core loops</h3><p>Performance triage, expense bug sweep, budget v2 with per-member caps, role system (owner/member), and the map-first itinerary view.</p></div></div>
+      <div class="tl-row reveal" data-delay="2"><div class="tl-tag">B4 – B7</div><div class="tl-content"><h3>UI rebalance</h3><p>Hero compaction, Money page rebuild around a single hero, Plan page rebuild on Mapbox + Foursquare, day polylines that follow real roads via Directions API.</p></div></div>
+      <div class="tl-row reveal" data-delay="3"><div class="tl-tag">B8 – B11</div><div class="tl-content"><h3>Audit cycles</h3><p>Full UX/UI audit. Dialog overflow → BottomSheet on mobile. FX provider swap when exchangerate.host died quietly. Dashboard metrics, button positions, drag-to-expand sheets.</p></div></div>
+      <div class="tl-row reveal" data-delay="4"><div class="tl-tag">B12</div><div class="tl-content"><h3>Tester-driven fixes</h3><p>Eight specific fixes from a real-trip walkthrough: Mapbox English labels, doc descriptions, receipt upload, FX projection, place-button placement, auto-seeded packing, Pack tab rename, full detective audit walk in MYR ↔ SAR.</p></div></div>
+      <div class="tl-row reveal" data-delay="4"><div class="tl-tag">B13</div><div class="tl-content"><h3>Notifications</h3><p>In-app bell + dropdown, per-channel preferences (in-app, email, push, digest), trip-shell + dashboard bells, daily digest cron.</p></div></div>
+      <div class="tl-row reveal" data-delay="4"><div class="tl-tag">B14</div><div class="tl-content"><h3>Launch hardening</h3><p>Timezone-safe calendar date parser, CRON_SECRET, smoke checks across votes / settle / AI plan / share. Ready for the test event.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 07 · OUTCOME ─────────────────────────────────────────────────── -->
+<section class="section" id="outcome" data-title="Outcome">
+  <div class="section-inner">
+    <div class="two-col reveal">
+      <div class="label">07 · Outcome</div>
+      <div>
+        <h2 class="h1">What I'd keep, what I'd watch.</h2>
+        <div class="body">
+          <p>The product holds together as a single thing. A trip isn't five apps stapled to a logo — it's one calm shape with five entry points.</p>
+          <p>The audits did more for trust than any one feature. Every time the team did a real walkthrough in a non-base currency, we caught something the unit tests couldn't.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="takeaways">
+      <div class="takeaway reveal">
+        <div class="takeaway-num">01</div>
+        <div class="takeaway-title">Audits beat unit tests</div>
+        <div class="takeaway-body">The Money card on the dashboard summed raw numbers without converting — invisible to unit tests, instantly broken to a tester who spent in three currencies.</div>
+      </div>
+      <div class="takeaway reveal" data-delay="1">
+        <div class="takeaway-num">02</div>
+        <div class="takeaway-title">Defaults are design</div>
+        <div class="takeaway-body">Auto-seeding 20 packing items at trip creation moved the activation gate from "I'll get to it" to "let me uncheck what I don't need." Same item count, opposite emotional cost.</div>
+      </div>
+      <div class="takeaway reveal" data-delay="2">
+        <div class="takeaway-num">03</div>
+        <div class="takeaway-title">Show the conversion</div>
+        <div class="takeaway-body">When money is in a foreign currency, never hide the FX math. Show both numbers, every time. The instant trust on a multi-currency trip is the difference between using the app and screenshotting it into Notes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ───────────────────────────────────────────────────────── -->
+<footer class="doc-foot">
+  <svg class="foot-logo-rays" viewBox="0 0 253.12 204.85" aria-hidden="true"><use href="#logo-mark" style="fill:currentColor;"/></svg>
+  <div class="doc-foot-inner">
+    <div class="foot-eyebrow">↗ Next steps</div>
+    <h2 class="foot-h">Want to <em>plan together</em>?</h2>
+    <div class="foot-row">
+      <div>
+        <a class="foot-mail" href="mailto:hello@paxawa.com">hello@paxawa.com</a>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 14px; max-width: 360px;">Product, design questions, and partnership requests welcome. Bookmarks &amp; brand guidelines live at <span style="color: var(--indigo-300);">doc.paxawa.com</span>.</div>
+      </div>
+      <div class="foot-meta">
+        <div>Case study · v1.0</div>
+        <div>June 2026</div>
+        <div>© Paxawa</div>
+        <div style="margin-top: 12px; color: rgba(255,255,255,0.6);">paxawa.com ↗</div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Theme toggle
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const sun  = '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>';
+  const moon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+  function setTheme(t) {
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem('paxawa-case-theme', t); } catch {}
+    themeIcon.innerHTML = t === 'dark' ? moon : sun;
+  }
+  try {
+    const saved = localStorage.getItem('paxawa-case-theme');
+    if (saved) setTheme(saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+    else setTheme('light');
+  } catch { setTheme('light'); }
+  themeBtn.addEventListener('click', () => {
+    setTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // Nav scrolled state
+  const nav = document.getElementById('nav');
+  function onScroll() {
+    nav.classList.toggle('scrolled', window.scrollY > 24);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Chapter active state
+  const chapterLinks = document.querySelectorAll('.nav-chap');
+  const chapterSections = document.querySelectorAll('.section[data-title]');
+  const chapObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        chapterLinks.forEach(l => l.classList.toggle('active', l.getAttribute('data-target') === id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -55% 0px' });
+  chapterSections.forEach(s => chapObserver.observe(s));
+
+  chapterLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.getElementById(link.getAttribute('data-target'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Reveal-on-scroll
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) {
+    const ro = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in-view');
+          ro.unobserve(e.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in-view'));
+  }
+
+  // Subtle parallax on hero orbs
+  if (!reduce) {
+    const orb1 = document.querySelector('.orb-1');
+    const orb2 = document.querySelector('.orb-2');
+    let raf = null;
+    document.addEventListener('mousemove', e => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        const x = (e.clientX / window.innerWidth) - 0.5;
+        const y = (e.clientY / window.innerHeight) - 0.5;
+        if (orb1) orb1.style.transform = `translate(${x * 28}px, ${y * 28}px)`;
+        if (orb2) orb2.style.transform = `translate(${x * -22}px, ${y * -22}px)`;
+        raf = null;
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
