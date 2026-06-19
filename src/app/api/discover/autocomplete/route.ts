@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   if (input.length < 2) return NextResponse.json({ predictions: [] });
 
   // Autocomplete is the cheapest SKU but still counts toward the daily cap.
-  if (isOverCap()) return NextResponse.json({ predictions: [], capped: true });
+  if (await isOverCap()) return NextResponse.json({ predictions: [], capped: true });
 
   try {
     const locale = await getLocale();

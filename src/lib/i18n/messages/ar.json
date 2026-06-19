@@ -412,7 +412,8 @@
     "addedToast": "تمت إضافة {name} إلى {day}",
     "addedToDay": "أُضيف إلى {day}",
     "addError": "تعذّرت إضافة المكان — أعد المحاولة.",
-    "addedBadge": "مُضاف"
+    "addedBadge": "مُضاف",
+    "poweredBy": "مدعوم من"
   },
   "pack": {
     "title": "أمتعة",

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   if (lat == null || lng == null) {
     return NextResponse.json({ error: "lat and lng are required" }, { status: 400 });
   }
-  if (isOverCap()) return NextResponse.json({ places: [], capped: true });
+  if (await isOverCap()) return NextResponse.json({ places: [], capped: true });
 
   const category = searchParams.get("category") ?? "eat";
   try {

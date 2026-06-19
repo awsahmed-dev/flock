@@ -87,6 +87,21 @@ export async function getCachedPlace(
   return refresh(placeId, opts);
 }
 
+/** Cache-only lookup — LRU → DB, never Google. Returns null on a cold miss.
+ *  Used by the over-cap path so a detail open still works for already-cached
+ *  places without spending, and degrades gracefully when it's never been seen. */
+export async function getCachedPlaceOnly(placeId: string): Promise<Place | null> {
+  const hot = lruGet(placeId);
+  if (hot) return hot.place; // serve even if stale; better than nothing when capped
+  const row = await db.query.cachedPlaces.findFirst({
+    where: eq(cachedPlaces.placeId, placeId),
+  });
+  if (!row) return null;
+  const place = row.snapshot as Place;
+  lruSet(placeId, { place, fetchedAt: row.fetchedAt?.getTime?.() ?? 0 });
+  return place;
+}
+
 /** Fetch fresh from Google, write through both cache layers, return it. */
 async function refresh(
   placeId: string,

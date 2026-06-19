@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { photoMediaUrl } from "@/lib/places/google";
+import { isOverCap, trackCall } from "@/lib/places/meter";
 import { requireUser, placesError } from "../_helpers";
 
 /**
@@ -17,11 +18,18 @@ export async function GET(request: Request) {
   if (!ref) return NextResponse.json({ error: "Missing ref" }, { status: 400 });
   const w = Math.min(Number(searchParams.get("w") ?? 800) || 800, 1600);
 
+  // Photos are a billable SKU. Over cap → skip the fetch (the card falls back to
+  // its letter tile); the browser just gets a 503 for that <img>.
+  if (await isOverCap()) {
+    return NextResponse.json({ error: "Photo capped" }, { status: 503 });
+  }
+
   try {
     const upstream = await fetch(photoMediaUrl(ref, w), { cache: "no-store" });
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json({ error: "Photo unavailable" }, { status: 502 });
     }
+    trackCall("photo"); // meter only real (uncached-at-edge) Google photo hits
     return new NextResponse(upstream.body, {
       status: 200,
       headers: {

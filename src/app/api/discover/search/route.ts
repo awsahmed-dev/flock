@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.trim() ?? "";
   if (query.length < 2) return NextResponse.json({ places: [] });
-  if (isOverCap()) return NextResponse.json({ places: [], capped: true });
+  if (await isOverCap()) return NextResponse.json({ places: [], capped: true });
 
   try {
     const locale = await getLocale();

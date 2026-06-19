@@ -412,7 +412,8 @@
     "addedToast": "Added {name} to {day}",
     "addedToDay": "Added to {day}",
     "addError": "Couldn't add that place — try again.",
-    "addedBadge": "Added"
+    "addedBadge": "Added",
+    "poweredBy": "Powered by"
   },
   "pack": {
     "title": "Pack",

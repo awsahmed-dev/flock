@@ -527,6 +527,21 @@ export const cachedPlaces = pgTable("cached_places", {
 });
 
 /**
+ * Global Google Places spend ledger — the kill-switch's source of truth.
+ * One row per (UTC day, SKU); `id` = "YYYY-MM-DD:sku" so an atomic upsert can
+ * increment it. The in-memory meter is a per-instance fast floor; this table
+ * makes the daily cap aggregate across all serverless instances (the hardening
+ * named in docs/v2-discovery-planning.md §5.4 and the meter's own TODO).
+ */
+export const placesSpend = pgTable("places_spend", {
+  id: text("id").primaryKey(), // `${day}:${sku}`
+  day: text("day").notNull(), // UTC YYYY-MM-DD
+  sku: text("sku").notNull(),
+  count: integer("count").default(0).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/**
  * The in-session signal log — the raw events that feed the taste engine
  * (build-spec Part A). One row per micro-interaction (dwell, open, add, vote,
  * expense…). `features` denormalizes the place's feature vector at event time
