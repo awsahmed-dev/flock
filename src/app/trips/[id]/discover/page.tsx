@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import { eachDayOfInterval, format } from "date-fns";
+import { parseDateOnly } from "@/lib/date-only";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { geocode } from "@/lib/geocode";
@@ -28,6 +30,11 @@ export default async function DiscoverPage({ params }: Props) {
   const geo = await geocode(trip.destination).catch(() => null);
   const center: [number, number] | null = geo ? [geo.lng, geo.lat] : null;
 
+  const days = eachDayOfInterval({
+    start: parseDateOnly(trip.startDate),
+    end: parseDateOnly(trip.endDate),
+  }).map((d) => format(d, "yyyy-MM-dd"));
+
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const t = (k: string, p?: Record<string, string | number>) => tFromDict(dict, k, p, locale);
@@ -44,7 +51,7 @@ export default async function DiscoverPage({ params }: Props) {
         <p className="text-sm text-muted-foreground mt-1">{t("discover.subtitle")}</p>
       </div>
 
-      <DiscoverFeed tripId={trip.id} destination={trip.destination} center={center} />
+      <DiscoverFeed tripId={trip.id} destination={trip.destination} center={center} days={days} />
     </div>
   );
 }

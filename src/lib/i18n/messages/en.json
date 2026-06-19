@@ -405,7 +405,14 @@
     "emptySub": "Try a search or a different category.",
     "unconfigured": "Place search isn't switched on yet. Enable \"Places API (New)\" on the Google project to go live.",
     "error": "Couldn't load places — try again in a moment.",
-    "capped": "Showing cached results for now (daily search limit reached)."
+    "capped": "Showing cached results for now (daily search limit reached).",
+    "reviewsCount": "{count} reviews",
+    "openMaps": "Open in Google Maps",
+    "addTo": "Add to {day}",
+    "addedToast": "Added {name} to {day}",
+    "addedToDay": "Added to {day}",
+    "addError": "Couldn't add that place — try again.",
+    "addedBadge": "Added"
   },
   "pack": {
     "title": "Pack",
@@ -579,20 +586,6 @@
     "airaloSubGeneric": "Skip roaming charges · eSIM from $9",
     "disclosure": "ad",
     "dismiss": "Dismiss"
-  },
-  "bookings": {
-    "section": "Bookings",
-    "totalLine": "{count} confirmations · {currency} {amount}",
-    "viewAll": "View all",
-    "typeHotel": "Stay",
-    "typeFlight": "Flight",
-    "typeEsim": "eSIM",
-    "typeActivity": "Tour",
-    "confirmed": "Confirmed",
-    "autoAdded": "Auto-added from your inbox",
-    "forwardTitle": "Forward booking emails here",
-    "forwardSub": "Send any confirmation to trip-abc@paxawa.com — we'll add it",
-    "copyAddress": "Copy address"
   },
   "bookings": {
     "totalLabel": "Total trip spend",

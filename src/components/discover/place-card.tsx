@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Heart, Sparkles, MapPin } from "lucide-react";
+import { Star, Heart, Sparkles, MapPin, Check } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -27,12 +27,14 @@ export function PlaceCard({
   scored,
   center,
   saved,
+  added = false,
   onOpen,
   onSave,
 }: {
   scored: ScoredPlace;
   center: [number, number] | null;
   saved: boolean;
+  added?: boolean;
   onOpen: (s: ScoredPlace) => void;
   onSave: (s: ScoredPlace) => void;
 }) {
@@ -68,6 +70,12 @@ export function PlaceCard({
 
         {/* Tags (top-start) */}
         <div className="absolute top-2.5 start-2.5 flex flex-col items-start gap-1">
+          {added && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-bold shadow">
+              <Check className="w-3 h-3" />
+              {t("discover.addedBadge")}
+            </span>
+          )}
           {scored.tags.includes("ai_pick") && (
             <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white px-2 py-0.5 text-[10px] font-bold shadow">
               <Sparkles className="w-3 h-3" />

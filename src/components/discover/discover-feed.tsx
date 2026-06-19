@@ -9,6 +9,7 @@ import { useTasteSession } from "@/lib/discovery/client/use-taste-session";
 import { useDwellTracker } from "@/lib/discovery/client/use-dwell-tracker";
 import { useT } from "@/components/i18n/locale-provider";
 import { PlaceCard } from "./place-card";
+import { PlaceDetailPanel } from "./place-detail-panel";
 
 /**
  * Paxawa v2 — the Discover feed. Search + category browse over real Google
@@ -30,10 +31,12 @@ export function DiscoverFeed({
   tripId,
   destination,
   center,
+  days,
 }: {
   tripId: string;
   destination: string;
   center: [number, number] | null;
+  days: string[];
 }) {
   const t = useT();
   const { vector, emit } = useTasteSession(tripId);
@@ -43,6 +46,8 @@ export function DiscoverFeed({
   const [candidates, setCandidates] = useState<Place[]>([]);
   const [state, setState] = useState<FetchState>("idle");
   const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
 
   // Debounce the vector that drives ranking so rapid dwells coalesce into one
   // smooth re-rank (~every 600ms) instead of churning on every signal.
@@ -152,7 +157,16 @@ export function DiscoverFeed({
   const onOpen = useCallback(
     (s: ScoredPlace) => {
       emit("card_open", { placeId: s.place.placeId, features: s.features });
-      // PhB-4: open the detail panel. For now the open signal still teaches.
+      setOpenPlace(s);
+    },
+    [emit],
+  );
+  // Strongest positive signal: the place actually made it onto a day.
+  const onAdded = useCallback(
+    (placeId: string) => {
+      setAdded((prev) => new Set(prev).add(placeId));
+      const f = featuresRef.current.get(placeId);
+      if (f) emit("place_add", { placeId, features: f });
     },
     [emit],
   );
@@ -246,6 +260,7 @@ export function DiscoverFeed({
               scored={s}
               center={center}
               saved={saved.has(s.place.placeId)}
+              added={added.has(s.place.placeId)}
               onOpen={onOpen}
               onSave={onSave}
             />
@@ -257,6 +272,18 @@ export function DiscoverFeed({
           )}
         </div>
       )}
+
+      <PlaceDetailPanel
+        scored={openPlace}
+        open={openPlace !== null}
+        tripId={tripId}
+        days={days}
+        center={center}
+        saved={openPlace ? saved.has(openPlace.place.placeId) : false}
+        onClose={() => setOpenPlace(null)}
+        onSave={() => openPlace && onSave(openPlace)}
+        onAdded={onAdded}
+      />
     </div>
   );
 }

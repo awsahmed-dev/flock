@@ -405,7 +405,14 @@
     "emptySub": "جرّب بحثًا أو فئة أخرى.",
     "unconfigured": "بحث الأماكن غير مُفعّل بعد. فعّل \"Places API (New)\" في مشروع Google للانطلاق.",
     "error": "تعذّر تحميل الأماكن — أعد المحاولة بعد لحظة.",
-    "capped": "نعرض نتائج مخزّنة مؤقتًا (تم بلوغ حد البحث اليومي)."
+    "capped": "نعرض نتائج مخزّنة مؤقتًا (تم بلوغ حد البحث اليومي).",
+    "reviewsCount": "{count} تقييم",
+    "openMaps": "افتح في خرائط Google",
+    "addTo": "أضِف إلى {day}",
+    "addedToast": "تمت إضافة {name} إلى {day}",
+    "addedToDay": "أُضيف إلى {day}",
+    "addError": "تعذّرت إضافة المكان — أعد المحاولة.",
+    "addedBadge": "مُضاف"
   },
   "pack": {
     "title": "أمتعة",
@@ -579,20 +586,6 @@
     "airaloSubGeneric": "تجنّب رسوم التجوال · eSIM من $9",
     "disclosure": "إعلان",
     "dismiss": "إخفاء"
-  },
-  "bookings": {
-    "section": "الحجوزات",
-    "totalLine": "{count} حجوزات · {currency} {amount}",
-    "viewAll": "عرض الكل",
-    "typeHotel": "إقامة",
-    "typeFlight": "طيران",
-    "typeEsim": "شريحة",
-    "typeActivity": "جولة",
-    "confirmed": "مؤكَّد",
-    "autoAdded": "أُضيف تلقائيًا من بريدك",
-    "forwardTitle": "أرسل تأكيدات الحجز هنا",
-    "forwardSub": "حوِّل أي تأكيد إلى trip-abc@paxawa.com وسنضيفه",
-    "copyAddress": "انسخ العنوان"
   },
   "bookings": {
     "totalLabel": "إجمالي مصاريف الرحلة",

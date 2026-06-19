@@ -182,6 +182,120 @@ function inferTypeFromCategory(category: string | null | undefined): "activity" 
   return "activity";
 }
 
+/** v2 Discover category bucket → our itinerary type enum. */
+function googleCategoryToType(
+  category: string | null | undefined,
+): "activity" | "accommodation" | "transport" | "meal" | "other" {
+  switch (category) {
+    case "eat":
+    case "coffee":
+      return "meal";
+    case "stay":
+      return "accommodation";
+    default:
+      return "activity";
+  }
+}
+
+/**
+ * PhB-4 — Add a discovered Google place straight onto a day.
+ *
+ * The detail panel hands us the already-normalized v2 Place (no extra Google
+ * call), and we write it with provider="google" so the item carries its durable
+ * place_id + rich metadata and lands on the map with full proof. The photo is
+ * stored as our same-origin proxy URL so itinerary cards/popups render it
+ * without ever exposing the Google key.
+ *
+ * status="confirmed": an owner adding directly is a decision, not a proposal.
+ * (Member "suggest → crew vote" arrives with the chat-decisions phase.)
+ */
+export async function createItineraryItemFromGooglePlace(input: {
+  tripId: string;
+  dayDate: string;
+  place: {
+    placeId: string;
+    name: string;
+    category: string;
+    placeTypes: string[];
+    rating: number | null;
+    userRatingsTotal: number | null;
+    priceLevel: number | null;
+    coords: [number, number]; // [lng, lat]
+    address: string | null;
+    photoRef: string | null;
+    hoursSummary: string | null;
+    topTip: string | null;
+  };
+}) {
+  const user = await getAuthenticatedUser();
+  const trip = await getTripWithMembership(input.tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
+
+  await db.insert(profiles).values({
+    id: user.id,
+    displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "Traveler",
+    email: user.email,
+  }).onConflictDoNothing();
+
+  // Drop at the end of that day's stack.
+  const existingForDay = await db.query.itineraryItems.findMany({
+    where: and(
+      eq(itineraryItems.tripId, input.tripId),
+      eq(itineraryItems.dayDate, input.dayDate),
+    ),
+    columns: { sortOrder: true },
+  });
+  const sortOrder = existingForDay.length;
+
+  const p = input.place;
+  const photoUrl = p.photoRef
+    ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=800`
+    : null;
+  const type = googleCategoryToType(p.category);
+
+  const [newItem] = await db.insert(itineraryItems).values({
+    tripId: input.tripId,
+    dayDate: input.dayDate,
+    title: p.name,
+    type,
+    locationName: p.name,
+    locationLat: p.coords[1],
+    locationLng: p.coords[0],
+    status: "confirmed",
+    sortOrder,
+    createdBy: user.id,
+    provider: "google",
+    googlePlaceId: p.placeId,
+    placeTypes: p.placeTypes,
+    address: p.address,
+    userRatingsTotal: p.userRatingsTotal,
+    photoUrl,
+    rating: p.rating,
+    priceLevel: p.priceLevel,
+    hoursSummary: p.hoursSummary,
+    topTip: p.topTip,
+  }).returning();
+
+  await db.insert(chatMessages).values({
+    tripId: input.tripId,
+    userId: user.id,
+    body: `${TYPE_EMOJI[type] ?? "📍"} New plan: ${p.name}`,
+    type: "itinerary_card",
+    metadata: {
+      itineraryItemId: newItem.id,
+      title: p.name,
+      type,
+      dayDate: input.dayDate,
+      locationName: p.name,
+      photoUrl,
+    },
+  }).catch(() => {});
+
+  revalidatePath(`/trips/${input.tripId}/itinerary`);
+  revalidatePath(`/trips/${input.tripId}`);
+  return { id: newItem.id, dayDate: input.dayDate };
+}
+
 export async function updateItineraryItem(formData: FormData) {
   const user = await getAuthenticatedUser();
   const itemId = formData.get("itemId") as string;
