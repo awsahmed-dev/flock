@@ -427,7 +427,12 @@
     "viewList": "List",
     "viewMap": "Map",
     "details": "Details",
-    "curating": "Curating your feed…"
+    "curating": "Curating your feed…",
+    "about": "About",
+    "hours": "Hours",
+    "goodToKnow": "Good to know",
+    "location": "Location",
+    "addToPlan": "Add to plan"
   },
   "pack": {
     "title": "Pack",

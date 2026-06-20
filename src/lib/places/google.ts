@@ -151,6 +151,7 @@ function normalize(g: GPlace): Place {
       : [0, 0],
     address: g.formattedAddress ?? null,
     photoRef: g.photos?.[0]?.name ?? null,
+    photoRefs: (g.photos ?? []).map((p) => p.name).filter(Boolean).slice(0, 10),
     hoursSummary: g.regularOpeningHours?.openNow != null
       ? g.regularOpeningHours.openNow
         ? "Open now"

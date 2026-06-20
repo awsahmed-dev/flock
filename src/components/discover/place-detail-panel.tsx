@@ -2,49 +2,34 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
-  X, Star, MapPin, Clock, Quote, Plus, Check, ExternalLink, Loader2, Sparkles, Heart,
+  X, Star, MapPin, Clock, Plus, Check, ChevronLeft, ChevronRight, ExternalLink,
+  Loader2, Heart, Sparkles, Tag,
 } from "lucide-react";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { toast } from "sonner";
 import type { Place } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
-import { distanceKm } from "@/lib/discovery/score";
 import { createItineraryItemFromGooglePlace } from "@/lib/actions/itinerary";
 import { useT } from "@/components/i18n/locale-provider";
+import { PoweredByGoogle } from "./primitives";
 
 /**
- * Paxawa v2 — the place detail panel (PhB-4).
+ * Paxawa v2 — the place detail, Airbnb-style.
  *
- * Tapping a Discover card opens this: a richer view (hero photo, rating,
- * reviews, hours, a real review snippet, address) plus the decisive action —
- * pick a day and drop the place straight onto the map. Bottom sheet on mobile,
- * right slide-over on desktop, matching the rest of the app's panels.
- *
- * It opens instantly with the data we already have, then enriches in place when
- * the cached /details call returns (hours + top tip + full address).
+ * A swipeable photo gallery up top, then clean sectioned content with real
+ * breathing room (about · hours · location). The action bar replaces the old
+ * radio-button day grid with a single elegant day strip + one "Add to plan"
+ * button. Full-screen sheet on mobile, right slide-over on desktop.
  */
 const CAT_KEY: Record<string, string> = {
-  eat: "discover.catEat",
-  coffee: "discover.catCoffee",
-  sight: "discover.catSight",
-  nightlife: "discover.catNightlife",
-  shopping: "discover.catShopping",
-  activity: "discover.catActivity",
-  stay: "discover.catStay",
-  other: "discover.catOther",
+  eat: "discover.catEat", coffee: "discover.catCoffee", sight: "discover.catSight",
+  nightlife: "discover.catNightlife", shopping: "discover.catShopping",
+  activity: "discover.catActivity", stay: "discover.catStay", other: "discover.catOther",
 };
 
 export function PlaceDetailPanel({
-  scored,
-  open,
-  tripId,
-  days,
-  center,
-  saved,
-  onClose,
-  onSave,
-  onAdded,
+  scored, open, tripId, days, center, saved, onClose, onSave, onAdded,
 }: {
   scored: ScoredPlace | null;
   open: boolean;
@@ -58,23 +43,21 @@ export function PlaceDetailPanel({
 }) {
   const t = useT();
   const base = scored?.place ?? null;
-  // Enrichment (hours, top tip, full address) fetched lazily; merged over the
-  // base only while it belongs to the place currently open.
   const [enriched, setEnriched] = useState<Place | null>(null);
   const [selectedDay, setSelectedDay] = useState<string>(days[0] ?? "");
-  // Which place+day we just added, so the action bar can flip to "Added". Keyed
-  // by placeId so opening a different card clears it without a sync effect.
   const [addedInfo, setAddedInfo] = useState<{ placeId: string; day: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [photoIdx, setPhotoIdx] = useState(0);
   const fetchedFor = useRef<string | null>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Enrich from the cache-backed details endpoint. Setting state from an async
-  // callback (not synchronously during the effect) is the intended pattern.
+  // Enrich (full photos + hours + about) from the cache-backed detail endpoint.
   useEffect(() => {
     if (!open || !base) return;
     const id = base.placeId;
     if (fetchedFor.current === id) return;
     fetchedFor.current = id;
+    setPhotoIdx(0);
     let alive = true;
     (async () => {
       try {
@@ -83,19 +66,14 @@ export function PlaceDetailPanel({
         const data = await res.json().catch(() => null);
         if (alive && data?.place) setEnriched({ ...base, ...data.place });
       } catch {
-        /* keep the list-mask data we already have */
+        /* keep what we have */
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [open, base]);
 
-  // Escape + body scroll lock while open.
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
     if (open) {
       document.addEventListener("keydown", onKey);
       document.body.style.overflow = "hidden";
@@ -108,50 +86,51 @@ export function PlaceDetailPanel({
 
   if ((!scored || !base) && !open) return null;
 
-  // Merge enrichment only when it belongs to the place currently open.
   const p: Place | null = base
-    ? enriched && enriched.placeId === base.placeId
-      ? enriched
-      : base
+    ? enriched && enriched.placeId === base.placeId ? enriched : base
     : null;
-  const photo = p?.photoRef
-    ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=900`
-    : null;
-  const dist = p && center ? distanceKm(p.coords, center) : null;
-  const price = p?.priceLevel != null && p.priceLevel > 0 ? "$".repeat(p.priceLevel) : null;
+
+  const photos = p
+    ? p.photoRefs && p.photoRefs.length > 0
+      ? p.photoRefs
+      : p.photoRef ? [p.photoRef] : []
+    : [];
   const effectiveDay = days.includes(selectedDay) ? selectedDay : days[0] ?? "";
-  const dayIndex = days.indexOf(effectiveDay);
-  const dayLabel = dayIndex >= 0 ? t("itinerary.dayN", { n: dayIndex + 1 }) : "";
   const addedDay = addedInfo && p && addedInfo.placeId === p.placeId ? addedInfo.day : null;
+  const price = p?.priceLevel != null && p.priceLevel > 0 ? "$".repeat(p.priceLevel) : null;
   const mapsUrl = p
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.placeId}`
     : "#";
+
+  function scrollGallery(dir: number) {
+    const el = galleryRef.current;
+    if (!el) return;
+    const next = Math.min(Math.max(photoIdx + dir, 0), photos.length - 1);
+    (el.children[next] as HTMLElement | undefined)?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    setPhotoIdx(next);
+  }
+  function onGalleryScroll() {
+    const el = galleryRef.current;
+    if (!el || el.clientWidth === 0) return;
+    setPhotoIdx(Math.round(Math.abs(el.scrollLeft) / el.clientWidth));
+  }
 
   function handleAdd() {
     if (!p || !effectiveDay) return;
     startTransition(async () => {
       try {
         await createItineraryItemFromGooglePlace({
-          tripId,
-          dayDate: effectiveDay,
+          tripId, dayDate: effectiveDay,
           place: {
-            placeId: p.placeId,
-            name: p.name,
-            category: p.category,
-            placeTypes: p.placeTypes,
-            rating: p.rating,
-            userRatingsTotal: p.userRatingsTotal,
-            priceLevel: p.priceLevel,
-            coords: p.coords,
-            address: p.address,
-            photoRef: p.photoRef,
-            hoursSummary: p.hoursSummary,
-            topTip: p.topTip,
+            placeId: p.placeId, name: p.name, category: p.category, placeTypes: p.placeTypes,
+            rating: p.rating, userRatingsTotal: p.userRatingsTotal, priceLevel: p.priceLevel,
+            coords: p.coords, address: p.address, photoRef: p.photoRef,
+            hoursSummary: p.hoursSummary, topTip: p.topTip,
           },
         });
         setAddedInfo({ placeId: p.placeId, day: effectiveDay });
         onAdded(p.placeId);
-        toast.success(t("discover.addedToast", { name: p.name, day: dayLabel }));
+        toast.success(t("discover.addedToast", { name: p.name, day: t("itinerary.dayN", { n: days.indexOf(effectiveDay) + 1 }) }));
       } catch {
         toast.error(t("discover.addError"));
       }
@@ -160,203 +139,211 @@ export function PlaceDetailPanel({
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${
-          open ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={onClose}
       />
-
-      {/* Panel — bottom sheet on mobile, end slide-over on desktop */}
       <aside
         className={`fixed z-50 bg-background flex flex-col shadow-2xl transition-transform duration-300 ease-out
-          inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl
-          sm:inset-y-0 sm:end-0 sm:inset-x-auto sm:w-[440px] sm:max-h-none sm:rounded-none sm:border-s
-          ${
-            open
-              ? "translate-y-0 sm:translate-x-0"
-              : "translate-y-full sm:translate-y-0 sm:translate-x-full sm:rtl:-translate-x-full"
-          }`}
+          inset-x-0 bottom-0 top-10 rounded-t-3xl
+          sm:inset-y-0 sm:end-0 sm:top-0 sm:inset-x-auto sm:w-[480px] sm:rounded-none sm:border-s
+          ${open ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-y-0 sm:translate-x-full sm:rtl:-translate-x-full"}`}
       >
-        {/* Mobile grab handle */}
-        <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0">
-          <div className="h-1 w-10 rounded-full bg-border" />
-        </div>
-
-        {/* Scroll body */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
-          {/* Hero */}
-          <div className="relative aspect-[16/10] bg-muted">
-            {photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photo} alt={p?.name ?? ""} className="absolute inset-0 w-full h-full object-cover" />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center text-5xl font-bold text-primary/40">
-                {p?.name.charAt(0)}
-              </div>
-            )}
-            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent pointer-events-none" />
-
-            {/* Tags */}
-            <div className="absolute top-3 start-3 flex flex-wrap gap-1.5">
-              {scored?.tags.includes("ai_pick") && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white px-2.5 py-1 text-[11px] font-bold shadow">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  {t("discover.tagAiPick")}
-                </span>
-              )}
-              {scored?.tags.includes("hidden_gem") && (
-                <span className="rounded-full bg-amber-500/90 backdrop-blur text-white px-2.5 py-1 text-[11px] font-bold">
-                  {t("discover.tagHiddenGem")}
-                </span>
-              )}
-              {scored?.tags.includes("crew_favorite") && (
-                <span className="rounded-full bg-cyan-500/90 backdrop-blur text-white px-2.5 py-1 text-[11px] font-bold">
-                  {t("discover.tagCrewFav")}
-                </span>
+          {/* Gallery */}
+          <div className="relative">
+            <div
+              ref={galleryRef}
+              onScroll={onGalleryScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none aspect-[4/3] bg-muted"
+            >
+              {photos.length > 0 ? (
+                photos.map((ref, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={ref}
+                    src={`/api/discover/photo?ref=${encodeURIComponent(ref)}&w=900`}
+                    alt={`${p?.name ?? ""} ${i + 1}`}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    className="w-full h-full shrink-0 snap-center object-cover"
+                  />
+                ))
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-violet-500/20 text-5xl font-bold text-primary/40">
+                  {p?.name.charAt(0)}
+                </div>
               )}
             </div>
 
-            {/* Save + Close */}
-            <div className="absolute top-3 end-3 flex items-center gap-2">
+            {/* Top controls over the gallery */}
+            <div className="absolute top-3 inset-x-3 flex items-center justify-between">
               <button
-                type="button"
-                onClick={onSave}
-                aria-label={t("discover.save")}
-                className="w-9 h-9 rounded-full bg-black/35 backdrop-blur flex items-center justify-center text-white hover:bg-black/55 transition-colors"
-              >
-                <Heart className={`w-4.5 h-4.5 ${saved ? "fill-rose-500 text-rose-500" : ""}`} />
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label={t("common.close")}
-                className="w-9 h-9 rounded-full bg-black/35 backdrop-blur flex items-center justify-center text-white hover:bg-black/55 transition-colors"
+                type="button" onClick={onClose} aria-label={t("common.close")}
+                className="w-9 h-9 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur flex items-center justify-center text-foreground shadow-sm hover:scale-105 transition-transform"
               >
                 <X className="w-4.5 h-4.5" />
               </button>
+              <button
+                type="button" onClick={onSave} aria-label={t("discover.save")}
+                className="w-9 h-9 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur flex items-center justify-center text-foreground shadow-sm hover:scale-105 transition-transform"
+              >
+                <Heart className={`w-4.5 h-4.5 ${saved ? "fill-rose-500 text-rose-500" : ""}`} />
+              </button>
             </div>
+
+            {/* Counter + arrows */}
+            {photos.length > 1 && (
+              <>
+                <div className="absolute bottom-3 end-3 rounded-full bg-black/55 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 tabular-nums">
+                  {photoIdx + 1} / {photos.length}
+                </div>
+                <div className="absolute bottom-3 start-3 hidden sm:flex items-center gap-1.5">
+                  <GalleryArrow disabled={photoIdx === 0} onClick={() => scrollGallery(-1)}><ChevronLeft className="w-4 h-4" /></GalleryArrow>
+                  <GalleryArrow disabled={photoIdx >= photos.length - 1} onClick={() => scrollGallery(1)}><ChevronRight className="w-4 h-4" /></GalleryArrow>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Info */}
-          <div className="p-4 space-y-4">
+          {/* Content sections */}
+          <div className="p-5 space-y-5">
+            {/* Title */}
             <div>
-              <h2 className="text-lg font-extrabold leading-tight">{p?.name}</h2>
-              <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mt-1.5 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {scored?.tags.includes("ai_pick") && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[11px] font-bold">
+                    <Sparkles className="w-3.5 h-3.5" />{t("discover.tagAiPick")}
+                  </span>
+                )}
+                {scored?.tags.includes("hidden_gem") && (
+                  <span className="rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2.5 py-1 text-[11px] font-bold">{t("discover.tagHiddenGem")}</span>
+                )}
+              </div>
+              <h2 className="text-2xl font-extrabold tracking-[-0.01em] leading-tight">{p?.name}</h2>
+              <div className="mt-2 flex items-center gap-x-2.5 gap-y-1 flex-wrap text-sm text-muted-foreground">
                 {p?.rating != null && (
                   <span className="inline-flex items-center gap-1 font-bold text-foreground">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    {p.rating.toFixed(1)}
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />{p.rating.toFixed(1)}
                   </span>
                 )}
-                {p?.userRatingsTotal != null && (
-                  <span className="tabular-nums">{t("discover.reviewsCount", { count: compact(p.userRatingsTotal) })}</span>
-                )}
-                <span className="font-medium">· {t(CAT_KEY[p?.category ?? "other"] ?? CAT_KEY.other)}</span>
-                {price && (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">· {price}</span>
-                )}
-                {dist != null && (
-                  <span className="inline-flex items-center gap-0.5 tabular-nums">
-                    · <MapPin className="w-3 h-3" />
-                    {dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}
-                  </span>
-                )}
+                {p?.userRatingsTotal != null && <span>{t("discover.reviewsCount", { count: compact(p.userRatingsTotal) })}</span>}
+                <span>· {t(CAT_KEY[p?.category ?? "other"] ?? CAT_KEY.other)}</span>
+                {price && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">· {price}</span>}
               </div>
             </div>
 
-            {p?.address && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{p.address}</span>
-              </div>
-            )}
-
-            {p?.hoursSummary && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{p.hoursSummary}</span>
-              </div>
-            )}
-
+            {/* About */}
             {p?.topTip && (
-              <div className="rounded-xl bg-muted/50 p-3 flex items-start gap-2">
-                <Quote className="w-4 h-4 shrink-0 mt-0.5 text-primary/60" />
-                <p className="text-sm leading-relaxed text-foreground/80 italic">{p.topTip}</p>
-              </div>
+              <Section title={t("discover.about")}>
+                <p className="text-[15px] leading-relaxed text-foreground/80">{p.topTip}</p>
+              </Section>
             )}
 
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              {t("discover.openMaps")}
-            </a>
+            {/* Hours */}
+            {p?.hoursSummary && (
+              <Section title={t("discover.hours")}>
+                <div className="flex items-center gap-2.5 text-[15px] text-foreground/80">
+                  <Clock className="w-4.5 h-4.5 text-muted-foreground shrink-0" />
+                  <span>{p.hoursSummary}</span>
+                </div>
+              </Section>
+            )}
 
-            {/* Day picker */}
-            <div className="pt-1">
-              <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
-                {t("itinerary.addToDay")}
-              </label>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
-                {days.map((d, idx) => {
-                  const active = d === effectiveDay;
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setSelectedDay(d)}
-                      className={`rounded-xl border px-2 py-2 text-center transition-all ${
-                        active
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-card hover:border-foreground/20"
-                      }`}
-                    >
-                      <p className="text-[9px] font-bold tracking-widest uppercase">{t("itinerary.dayN", { n: idx + 1 })}</p>
-                      <p className="text-xs font-bold mt-0.5">{format(parseISO(d), "MMM d")}</p>
-                    </button>
-                  );
-                })}
+            {/* Good to know */}
+            <Section title={t("discover.goodToKnow")}>
+              <div className="space-y-2.5 text-[15px] text-foreground/80">
+                <Row icon={Tag} label={t(CAT_KEY[p?.category ?? "other"] ?? CAT_KEY.other)} value={price ?? ""} />
+                {p?.address && <Row icon={MapPin} label={p.address} />}
               </div>
-            </div>
+            </Section>
+
+            {/* Location */}
+            <Section title={t("discover.location")}>
+              <a
+                href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              >
+                <ExternalLink className="w-4 h-4" />{t("discover.openMaps")}
+              </a>
+            </Section>
+
+            <PoweredByGoogle className="pt-1" />
           </div>
         </div>
 
-        {/* Sticky action bar */}
-        <div className="shrink-0 border-t bg-background/95 backdrop-blur p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3">
+        {/* Action bar — day strip + one button (no radio grid) */}
+        <div className="shrink-0 border-t bg-background/95 backdrop-blur px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3 space-y-3">
           {addedDay ? (
             <button
-              type="button"
-              onClick={onClose}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold py-3 text-sm"
+              type="button" onClick={onClose}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold py-3.5 text-sm"
             >
-              <Check className="w-4.5 h-4.5" />
-              {t("discover.addedToDay", {
-                day: days.indexOf(addedDay) >= 0 ? t("itinerary.dayN", { n: days.indexOf(addedDay) + 1 }) : "",
-              })}
+              <Check className="w-5 h-5" />
+              {t("discover.addedToDay", { day: t("itinerary.dayN", { n: days.indexOf(addedDay) + 1 }) })}
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={isPending || !effectiveDay}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white font-bold py-3 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
-            >
-              {isPending ? (
-                <Loader2 className="w-4.5 h-4.5 animate-spin" />
-              ) : (
-                <Plus className="w-4.5 h-4.5" />
-              )}
-              {t("discover.addTo", { day: dayLabel })}
-            </button>
+            <>
+              <div>
+                <p className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5">{t("itinerary.addToDay")}</p>
+                <div className="-mx-1 px-1 overflow-x-auto scrollbar-none">
+                  <div className="inline-flex items-center gap-1.5">
+                    {days.map((d, idx) => {
+                      const active = d === effectiveDay;
+                      return (
+                        <button
+                          key={d} type="button" onClick={() => setSelectedDay(d)}
+                          className={`shrink-0 rounded-2xl px-3.5 py-2 text-center transition-all ${active ? "bg-primary text-primary-foreground" : "bg-muted/60 text-foreground hover:bg-muted"}`}
+                        >
+                          <p className="text-[9px] font-bold tracking-widest uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
+                          <p className="text-[13px] font-bold mt-0.5 whitespace-nowrap">{format(parseISO(d), "MMM d")}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button" onClick={handleAdd} disabled={isPending || !effectiveDay}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-bold py-3.5 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
+              >
+                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                {t("discover.addToPlan")}
+              </button>
+            </>
           )}
         </div>
       </aside>
     </>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border-t border-border/60 pt-5 first:border-t-0 first:pt-0">
+      <h3 className="text-base font-bold mb-2.5">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function Row({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: string }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="w-4.5 h-4.5 text-muted-foreground shrink-0 mt-0.5" />
+      <span className="flex-1">{label}</span>
+      {value && <span className="font-semibold text-emerald-600 dark:text-emerald-400">{value}</span>}
+    </div>
+  );
+}
+
+function GalleryArrow({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      type="button" onClick={onClick} disabled={disabled}
+      className="w-8 h-8 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur flex items-center justify-center text-foreground shadow-sm disabled:opacity-40 hover:scale-105 transition-transform"
+    >
+      {children}
+    </button>
   );
 }
 

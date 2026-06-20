@@ -427,7 +427,12 @@
     "viewList": "قائمة",
     "viewMap": "خريطة",
     "details": "تفاصيل",
-    "curating": "نُجهّز لك القائمة…"
+    "curating": "نُجهّز لك القائمة…",
+    "about": "نبذة",
+    "hours": "ساعات العمل",
+    "goodToKnow": "معلومات مفيدة",
+    "location": "الموقع",
+    "addToPlan": "أضِف إلى الخطة"
   },
   "pack": {
     "title": "أمتعة",

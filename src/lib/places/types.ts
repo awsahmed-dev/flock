@@ -49,6 +49,9 @@ export interface Place {
   /** Google photo resource name (not a URL). Resolved lazily via the photo
    *  proxy so we never store/serve Google bytes directly. */
   photoRef: string | null;
+  /** Up to ~10 photo resource names for the detail carousel. Optional so older
+   *  cached snapshots (pre-carousel) still satisfy the type. */
+  photoRefs?: string[];
   /** Opening-hours one-liner for the card ("Open · closes 22:00"). */
   hoursSummary: string | null;
   /** Editorial/first review snippet for the card, when present. */
