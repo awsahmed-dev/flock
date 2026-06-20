@@ -98,8 +98,9 @@ export function TripGrid({ trips }: Props) {
 
   return (
     <>
-      {/* Mobile: slim row list, identical to before */}
-      <div className="lg:hidden rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60">
+      {/* Mobile: premium image cards (single column), matching the cinematic
+          v2 language — photo-led with the status pill + name over a scrim. */}
+      <div className="lg:hidden space-y-3">
         {trips.map((trip) => {
           const status = getTripStatus(trip);
           const gradient = getGradient(trip.id);
@@ -108,65 +109,53 @@ export function TripGrid({ trips }: Props) {
 
           return (
             <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
-              <div className="group flex items-center gap-3 ps-0 pe-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <div className={`w-1 self-stretch rounded-full bg-gradient-to-b ${gradient}`} />
-                  {trip.heroImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={trip.heroImageUrl}
-                      alt={trip.destination}
-                      className="w-10 h-10 rounded-xl object-cover shrink-0"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center text-lg shrink-0">
-                      {emoji}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-sm truncate">{trip.name}</p>
-                    <span className={`text-[10px] font-bold tracking-widest uppercase border rounded-full px-2 py-0.5 ${status.color}`}>
-                      {status.label}
-                    </span>
+              <article className="group relative rounded-3xl overflow-hidden ring-1 ring-border/50 shadow-sm active:scale-[0.99] transition-transform cursor-pointer aspect-[16/10] bg-muted">
+                {trip.heroImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={trip.heroImageUrl}
+                    alt={trip.destination}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-6xl opacity-90`}>
+                    {emoji}
                   </div>
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/20 pointer-events-none" />
+                <span className={`absolute top-3 start-3 text-[10px] font-bold tracking-widest uppercase border rounded-full px-2.5 py-1 backdrop-blur-md ${status.color}`}>
+                  {status.label}
+                </span>
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <h3 className="font-extrabold text-xl text-white tracking-[-0.01em] leading-tight drop-shadow line-clamp-1">{trip.name}</h3>
+                  <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[13px]">
                     <span className="inline-flex items-center gap-1">
-                      <Calendar className="w-2.5 h-2.5" />
-                      {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
+                      <Calendar className="w-3.5 h-3.5" />
+                      {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d")}
                     </span>
-                    <span className="mx-1.5">·</span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      {nights}n
-                    </span>
-                    <span className="mx-1.5">·</span>
+                    <span className="opacity-60">·</span>
+                    <span className="inline-flex items-center gap-1 tabular-nums">{nights}n</span>
+                    <span className="opacity-60">·</span>
                     <span className="truncate">{trip.destination}</span>
-                  </p>
+                  </div>
                 </div>
-
-                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
-              </div>
+              </article>
             </Link>
           );
         })}
 
         <Link href="/trips/new" prefetch>
-          <div className="group flex items-center gap-3 ps-3 pe-3 py-2.5 hover:bg-accent/40 transition-colors cursor-pointer">
-            <div className="w-9 h-9 rounded-xl border-2 border-dashed border-border group-hover:border-primary/40 flex items-center justify-center shrink-0 transition-colors">
-              <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          <article className="group flex items-center gap-3 rounded-3xl border-2 border-dashed border-border bg-card px-4 py-4 active:scale-[0.99] transition-transform cursor-pointer">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/15 to-violet-500/15 flex items-center justify-center shrink-0">
+              <Plus className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-bold text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                New trip
-              </p>
-              <p className="text-[11px] text-muted-foreground/70">Invite your crew, start planning</p>
+              <p className="font-bold text-[15px]">{"New trip"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Invite your crew, start planning</p>
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
-          </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
+          </article>
         </Link>
       </div>
 
@@ -185,7 +174,7 @@ export function TripGrid({ trips }: Props) {
 
           return (
             <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
-              <article className="group rounded-2xl border border-border/60 bg-card overflow-hidden hover:border-foreground/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer h-full">
+              <article className="group rounded-3xl ring-1 ring-border/50 bg-card overflow-hidden shadow-sm hover:ring-border hover:-translate-y-1 hover:shadow-xl hover:shadow-black/[0.06] transition-all cursor-pointer h-full">
                 <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                   {trip.heroImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
