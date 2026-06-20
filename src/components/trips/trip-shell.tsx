@@ -18,6 +18,7 @@ import {
   LogOut,
   LayoutDashboard,
   MapPin,
+  Compass,
   Vote,
   Wallet,
   FileText,
@@ -101,6 +102,7 @@ interface Props {
 const NAV_TABS = [
   { key: "nav.overview", href: "", icon: LayoutDashboard },
   { key: "nav.itinerary", href: "/itinerary", icon: MapPin },
+  { key: "nav.discover", href: "/discover", icon: Compass },
   { key: "nav.votes", href: "/votes", icon: Vote },
   { key: "nav.expenses", href: "/expenses", icon: Wallet },
   // B6: Documents + Packing merged into Pack with segmented control inside.

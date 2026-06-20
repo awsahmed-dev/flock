@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   LayoutDashboard,
   MapPin,
+  Compass,
   Vote,
   Wallet,
   Backpack,
@@ -79,6 +80,7 @@ interface Props {
 const NAV_TABS = [
   { key: "nav.overview", href: "", icon: LayoutDashboard, badgeKey: null as null },
   { key: "nav.itinerary", href: "/itinerary", icon: MapPin, badgeKey: "itinerary" as const },
+  { key: "nav.discover", href: "/discover", icon: Compass, badgeKey: null as null },
   { key: "nav.expenses", href: "/expenses", icon: Wallet, badgeKey: "expenses" as const },
   { key: "nav.wallet", href: "/wallet", icon: CreditCard, badgeKey: null as null },
   { key: "nav.pack", href: "/pack", icon: Backpack, badgeKey: null as null },

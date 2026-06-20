@@ -160,7 +160,8 @@
     "darkMode": "Dark mode",
     "matchSystem": "Match system",
     "keyboardShortcuts": "Keyboard shortcuts",
-    "blogLink": "Blog & guides"
+    "blogLink": "Blog & guides",
+    "discover": "Discover"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",
@@ -795,7 +796,8 @@
     "clearWarning": "This can't be undone — all items removed",
     "clearingPlan": "Clearing…",
     "planCleared": "Itinerary cleared",
-    "clearFailed": "Couldn't clear — try again"
+    "clearFailed": "Couldn't clear — try again",
+    "bookings": "Bookings"
   },
   "balances": {
     "markPaid": "Mark as paid",

@@ -3,6 +3,7 @@
 import {
   X,
   MessageSquare,
+  CreditCard,
   Vote,
   Users,
   Share2,
@@ -176,6 +177,12 @@ export function TripMoreSheet({
             meta={t("more.chatMeta")}
             badge={badges.chat}
             onClick={openChat}
+          />
+          <Row
+            icon={CreditCard}
+            label={t("more.bookings")}
+            href={`/trips/${tripId}/wallet`}
+            onClick={onClose}
           />
           <Row
             icon={Vote}

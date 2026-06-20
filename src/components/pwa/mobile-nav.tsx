@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Sparkles, Calendar, Wallet, MessageSquare, CreditCard, Backpack } from "lucide-react";
+import { Sparkles, Calendar, Wallet, MessageSquare, Compass, Backpack } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/locale-provider";
 
@@ -50,7 +50,7 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
     { id: "home" as const,      label: t("nav.overview"),  href: `/trips/${tripId}`,           icon: Sparkles,   exact: true },
     { id: "itinerary" as const, label: t("cards.plan"),    href: `/trips/${tripId}/itinerary`, icon: Calendar,   exact: false },
     { id: "expenses" as const,  label: t("cards.money"),   href: `/trips/${tripId}/expenses`,  icon: Wallet,     exact: false },
-    { id: "wallet" as const,    label: t("nav.wallet"),    href: `/trips/${tripId}/wallet`,    icon: CreditCard, exact: false },
+    { id: "discover" as const,  label: t("nav.discover"),  href: `/trips/${tripId}/discover`,  icon: Compass,    exact: false },
     { id: "documents" as const, label: t("nav.pack"),      href: `/trips/${tripId}/pack`,      icon: Backpack,   exact: false },
   ];
 
@@ -61,7 +61,7 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
           const isActive = tab.exact
             ? pathname === tab.href
             : pathname.startsWith(tab.href);
-          const badge = badges[tab.id] ?? 0;
+          const badge = (badges as Record<string, number | undefined>)[tab.id] ?? 0;
           return (
             <Link
               key={tab.id}

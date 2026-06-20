@@ -160,7 +160,8 @@
     "darkMode": "الوضع الداكن",
     "matchSystem": "حسب النظام",
     "keyboardShortcuts": "اختصارات لوحة المفاتيح",
-    "blogLink": "المدوّنة والأدلّة"
+    "blogLink": "المدوّنة والأدلّة",
+    "discover": "اكتشف"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",
@@ -795,7 +796,8 @@
     "clearWarning": "لا يمكن التراجع — ستُحذف جميع العناصر",
     "clearingPlan": "جارٍ الحذف…",
     "planCleared": "تم مسح الخطة",
-    "clearFailed": "تعذّر الحذف — حاول مرة أخرى"
+    "clearFailed": "تعذّر الحذف — حاول مرة أخرى",
+    "bookings": "الحجوزات"
   },
   "balances": {
     "markPaid": "تم الدفع",
