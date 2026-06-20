@@ -261,21 +261,21 @@ export function DiscoverFeed({
 
       {/* Map view */}
       {view === "map" ? (
-        <div className="h-[82vh]">
+        <div className="h-[72svh]">
           <MapboxPlanMap
             items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
             highlightedItemId={highlightedId} onItemClick={onPinClick} days={[DISCOVER_DAY]} showRoutes={false}
           />
         </div>
       ) : state === "loading" && candidates.length === 0 ? (
-        <div className="h-[82vh] flex items-center justify-center">
+        <div className="h-[72svh] flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-white/70">
             <Sparkles className="w-7 h-7 animate-pulse" />
             <p className="text-sm">{t("discover.curating")}</p>
           </div>
         </div>
       ) : ranked.length === 0 && state === "idle" ? (
-        <div className="h-[82vh] flex items-center justify-center">
+        <div className="h-[72svh] flex items-center justify-center">
           <div className="flex flex-col items-center gap-2 text-white/70 text-center px-8">
             <Compass className="w-8 h-8" />
             <p className="font-semibold">{t("discover.emptyTitle")}</p>
@@ -286,7 +286,7 @@ export function DiscoverFeed({
         /* Immersive stream */
         <div
           ref={containerRef}
-          className="h-[82vh] overflow-y-auto snap-y snap-mandatory scrollbar-none px-3 pt-16 pb-6 space-y-3 flex flex-col items-center"
+          className="h-[72svh] overflow-y-auto snap-y snap-mandatory scrollbar-none px-3 pt-16 pb-6 space-y-3 flex flex-col items-center"
         >
           {ranked.map((s) => (
             <div key={s.place.placeId} className="w-full">
