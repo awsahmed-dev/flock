@@ -423,7 +423,9 @@
     "addedBadge": "مُضاف",
     "poweredBy": "مدعوم من",
     "catAll": "الكل",
-    "priceLevelAria": "مستوى السعر {n} من {max}"
+    "priceLevelAria": "مستوى السعر {n} من {max}",
+    "viewList": "قائمة",
+    "viewMap": "خريطة"
   },
   "pack": {
     "title": "أمتعة",

@@ -51,6 +51,10 @@ interface Props {
   onItemClick?: (itemId: string) => void;
   /** Ordered list of dayDates so colour assignment is stable across renders. */
   days: string[];
+  /** Draw road-following route polylines between a day's pins (default true).
+   *  Discover sets this false — its pins are unconnected places, not a route,
+   *  so we skip both the lines and the Directions API calls. */
+  showRoutes?: boolean;
 }
 
 // Roamy uses ROY G BIV-ish palette per day. We replicate with 8 hues so
@@ -78,6 +82,7 @@ export function MapboxPlanMap({
   highlightedItemId,
   onItemClick,
   days,
+  showRoutes = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -233,7 +238,7 @@ export function MapboxPlanMap({
   // Up to 25 coords per request; we trim if a day somehow exceeds that.
   useEffect(() => {
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    if (!token) return;
+    if (!token || !showRoutes) return; // Discover: no routes → no Directions calls
 
     const byDay = new Map<string, PlanMapItem[]>();
     for (const it of items) {
@@ -304,7 +309,8 @@ export function MapboxPlanMap({
 
     // ── Polylines: one feature per day, using road-following route
     //    from Directions when available, else straight line as fallback.
-    const features = [...byDay.entries()]
+    //    Discover (showRoutes=false) draws none — its pins aren't a route.
+    const features = (showRoutes ? [...byDay.entries()] : [])
       .filter(([, dayItems]) => dayItems.length >= 2)
       .map(([day, dayItems]) => {
         const cached = routeCacheRef.current.get(routeKey(day, dayItems));

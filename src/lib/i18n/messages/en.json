@@ -423,7 +423,9 @@
     "addedBadge": "Added",
     "poweredBy": "Powered by",
     "catAll": "All",
-    "priceLevelAria": "Price level {n} of {max}"
+    "priceLevelAria": "Price level {n} of {max}",
+    "viewList": "List",
+    "viewMap": "Map"
   },
   "pack": {
     "title": "Pack",
