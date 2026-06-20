@@ -100,6 +100,16 @@ export function ItineraryBoard({
   const t = useT();
   const { locale } = useLocale();
   const [items, setItems] = useState(initialItems);
+  // Keep local state in sync with server revalidations: adding a place (or AI
+  // Plan) calls a server action that revalidates this route, re-rendering us
+  // with fresh initialItems. Without this the new item wouldn't show until a
+  // full reload. React's "adjust state when a prop changes" pattern — runs in
+  // render (a new server payload = a new array reference), no effect needed.
+  const [syncedItems, setSyncedItems] = useState(initialItems);
+  if (initialItems !== syncedItems) {
+    setSyncedItems(initialItems);
+    setItems(initialItems);
+  }
   // B24: planMode removed — Book mode merged into the Bookings tab.
   const [addPickerOpen, setAddPickerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

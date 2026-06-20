@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Search, MapPin, Loader2, X, Calendar, Sparkles, ChevronDown, Clock, Tag, PencilLine } from "lucide-react";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -47,6 +48,7 @@ export function AddPlaceSearch({
   defaultDay,
 }: Props) {
   const t = useT();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [searching, setSearching] = useState(false);
@@ -196,6 +198,7 @@ export function AddPlaceSearch({
           });
           toast.success(t("itinerary.addedToDayN", { name: title, n: days.indexOf(dayDate) + 1 }));
         }
+        router.refresh(); // re-fetch the route so the new item shows without a reload
         onClose();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : t("itinerary.failedToAdd"));
