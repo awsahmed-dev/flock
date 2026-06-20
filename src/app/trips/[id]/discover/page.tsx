@@ -40,15 +40,15 @@ export default async function DiscoverPage({ params }: Props) {
   const t = (k: string, p?: Record<string, string | number>) => tFromDict(dict, k, p, locale);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 lg:space-y-7">
-      <div className="max-w-2xl">
+    <div className="max-w-[680px] mx-auto space-y-5">
+      <div>
         <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-primary mb-2">
           {t("discover.eyebrow")}
         </p>
-        <h1 className="text-3xl sm:text-[2.6rem] font-extrabold tracking-[-0.02em] leading-[1.05]">
+        <h1 className="text-3xl sm:text-[2.4rem] font-extrabold tracking-[-0.02em] leading-[1.05]">
           {t("discover.title", { destination: trip.destination })}
         </h1>
-        <p className="text-[15px] text-muted-foreground mt-2.5 leading-relaxed">{t("discover.subtitle")}</p>
+        <p className="text-[15px] text-muted-foreground mt-2 leading-relaxed">{t("discover.subtitle")}</p>
       </div>
 
       <DiscoverFeed tripId={trip.id} destination={trip.destination} center={center} days={days} />

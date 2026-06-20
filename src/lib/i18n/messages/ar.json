@@ -425,7 +425,9 @@
     "catAll": "الكل",
     "priceLevelAria": "مستوى السعر {n} من {max}",
     "viewList": "قائمة",
-    "viewMap": "خريطة"
+    "viewMap": "خريطة",
+    "details": "تفاصيل",
+    "curating": "نُجهّز لك القائمة…"
   },
   "pack": {
     "title": "أمتعة",

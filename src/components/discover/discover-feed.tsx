@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles } from "lucide-react";
 import type { Place, PlaceFeatures } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -12,32 +12,32 @@ import { useDwellTracker } from "@/lib/discovery/client/use-dwell-tracker";
 import { useT } from "@/components/i18n/locale-provider";
 import { PlaceCard } from "./place-card";
 import { PlaceDetailPanel } from "./place-detail-panel";
-import { CategoryChips, SkeletonGrid, EmptyState, PoweredByGoogle, type PlaceCategoryKey } from "./primitives";
+import { PLACE_CATEGORIES, type PlaceCategoryKey } from "./primitives";
 
 /**
- * Paxawa v2 — Discover, feed-first (planning §3, design §4.1/§4.4).
+ * Paxawa v2 — Discover, cinematic/immersive (TikTok-Reels language).
  *
- * Opens FULL on the cold-start seed (never a blank search box): a diverse,
- * high-quality set for the destination. Category chips are *filters* over that
- * live feed — never a precondition. Search is a secondary, explicit-intent
- * override. The feed sits beside a live Mapbox map; hovering a card pulses its
- * pin, tapping a pin opens the card. Editorial-airy: big imagery, calm type,
- * soft elevation — a different language from V1.
+ * A dark cinematic stage. Opens FULL on the cold-start seed (never a blank
+ * search box). Full-bleed photo cards in a vertical stream — one place fills the
+ * view, the next peeks. Glass category-filter chips + a Map toggle float on top;
+ * search is a secondary affordance. The feed learns live as you dwell. A bold
+ * departure from V1 — the photo is the experience.
  */
 const MapboxPlanMap = dynamic(
   () => import("@/components/map/mapbox-plan-map").then((m) => m.MapboxPlanMap),
-  { ssr: false, loading: () => <MapSkeleton /> },
+  { ssr: false, loading: () => <div className="w-full h-full bg-neutral-800 animate-pulse" /> },
 );
 
-const DISCOVER_DAY = "discover"; // single synthetic "day" so all pins share one hue
+const DISCOVER_DAY = "discover";
+const CAT_KEY: Record<string, string> = {
+  eat: "discover.catEat", coffee: "discover.catCoffee", sight: "discover.catSight",
+  nightlife: "discover.catNightlife", shopping: "discover.catShopping", activity: "discover.catActivity",
+};
 
 type FetchState = "idle" | "loading" | "error" | "capped" | "unconfigured";
 
 export function DiscoverFeed({
-  tripId,
-  destination,
-  center,
-  days,
+  tripId, destination, center, days,
 }: {
   tripId: string;
   destination: string;
@@ -47,7 +47,7 @@ export function DiscoverFeed({
   const t = useT();
   const { vector, emit } = useTasteSession(tripId);
 
-  const [category, setCategory] = useState<PlaceCategoryKey | null>(null); // null = All
+  const [category, setCategory] = useState<PlaceCategoryKey | null>(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [candidates, setCandidates] = useState<Place[]>([]);
@@ -56,18 +56,16 @@ export function DiscoverFeed({
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<"list" | "map">("list");
+  const [view, setView] = useState<"stream" | "map">("stream");
 
   const searching = query.trim().length >= 2;
 
-  // Debounce the ranking vector so rapid dwells coalesce into one smooth re-rank.
   const [rankVector, setRankVector] = useState(vector);
   useEffect(() => {
     const id = setTimeout(() => setRankVector(vector), 600);
     return () => clearTimeout(id);
   }, [vector]);
 
-  // Seen cards freeze; only the unseen tail re-ranks.
   const seenRef = useRef<Set<string>>(new Set());
   const lastOrderRef = useRef<string[]>([]);
 
@@ -110,32 +108,20 @@ export function DiscoverFeed({
         let url: string;
         if (q.trim().length >= 2) {
           const p = new URLSearchParams({ q });
-          if (center) {
-            p.set("lng", String(center[0]));
-            p.set("lat", String(center[1]));
-          }
+          if (center) { p.set("lng", String(center[0])); p.set("lat", String(center[1])); }
           url = `/api/discover/search?${p}`;
         } else {
-          // Feed-first: the cold-start seed for the destination (+ category filter).
           const p = new URLSearchParams({ destination });
           if (cat) p.set("category", cat);
-          if (center) {
-            p.set("lng", String(center[0]));
-            p.set("lat", String(center[1]));
-          }
+          if (center) { p.set("lng", String(center[0])); p.set("lat", String(center[1])); }
           url = `/api/discover/feed?${p}`;
         }
         const res = await fetch(url);
         const data = await res.json().catch(() => ({}));
         if (res.status === 503 && data?.code === "places_not_configured") {
-          setState("unconfigured");
-          setCandidates([]);
-          return;
+          setState("unconfigured"); setCandidates([]); return;
         }
-        if (!res.ok) {
-          setState("error");
-          return;
-        }
+        if (!res.ok) { setState("error"); return; }
         setCandidates(data.places ?? []);
         setState(data.capped ? "capped" : "idle");
       } catch {
@@ -145,17 +131,15 @@ export function DiscoverFeed({
     [center, destination],
   );
 
-  // Cold-start load + reload on category change (when not searching).
   useEffect(() => {
     if (searching) return;
     void fetchFeed("", category);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
-  // Debounced search override.
   useEffect(() => {
     if (!searching) {
-      if (query.trim().length === 0) void fetchFeed("", category); // cleared → back to seed
+      if (query.trim().length === 0) void fetchFeed("", category);
       return;
     }
     const id = setTimeout(() => void fetchFeed(query, category), 350);
@@ -165,10 +149,7 @@ export function DiscoverFeed({
 
   // ── Signals ────────────────────────────────────────────────────────────────
   const onOpen = useCallback(
-    (s: ScoredPlace) => {
-      emit("card_open", { placeId: s.place.placeId, features: s.features });
-      setOpenPlace(s);
-    },
+    (s: ScoredPlace) => { emit("card_open", { placeId: s.place.placeId, features: s.features }); setOpenPlace(s); },
     [emit],
   );
   const onAdded = useCallback(
@@ -184,15 +165,14 @@ export function DiscoverFeed({
       setSaved((prev) => {
         const next = new Set(prev);
         if (next.has(s.place.placeId)) next.delete(s.place.placeId);
-        else {
-          next.add(s.place.placeId);
-          emit("place_save", { placeId: s.place.placeId, features: s.features });
-        }
+        else { next.add(s.place.placeId); emit("place_save", { placeId: s.place.placeId, features: s.features }); }
         return next;
       });
     },
     [emit],
   );
+  // Quick-add from the card rail: lands on day 1 (the detail panel lets you pick).
+  const onQuickAdd = useCallback((s: ScoredPlace) => onOpen(s), [onOpen]);
 
   // ── Map adapter ──────────────────────────────────────────────────────────
   const mapItems = useMemo<PlanMapItem[]>(
@@ -200,189 +180,176 @@ export function DiscoverFeed({
       ranked
         .filter((s) => Number.isFinite(s.place.coords[1]) && Number.isFinite(s.place.coords[0]))
         .map((s) => ({
-          id: s.place.placeId,
-          title: s.place.name,
-          type: s.place.category,
+          id: s.place.placeId, title: s.place.name, type: s.place.category,
           status: added.has(s.place.placeId) ? "confirmed" : "proposed",
-          dayDate: DISCOVER_DAY,
-          startTime: null,
-          costEstimate: null,
-          bookingUrl: null,
-          locationName: s.place.address,
-          lat: s.place.coords[1],
-          lng: s.place.coords[0],
-          photoUrl: s.place.photoRef
-            ? `/api/discover/photo?ref=${encodeURIComponent(s.place.photoRef)}&w=400`
-            : null,
-          rating: s.place.rating,
-          fsqCategory: s.place.category,
+          dayDate: DISCOVER_DAY, startTime: null, costEstimate: null, bookingUrl: null,
+          locationName: s.place.address, lat: s.place.coords[1], lng: s.place.coords[0],
+          photoUrl: s.place.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(s.place.photoRef)}&w=400` : null,
+          rating: s.place.rating, fsqCategory: s.place.category,
         })),
     [ranked, added],
   );
-
   const onPinClick = useCallback(
-    (placeId: string) => {
-      const s = ranked.find((r) => r.place.placeId === placeId);
-      if (s) onOpen(s);
-    },
+    (placeId: string) => { const s = ranked.find((r) => r.place.placeId === placeId); if (s) onOpen(s); },
     [ranked, onOpen],
   );
 
-  return (
-    <div className="space-y-5">
-      {/* Controls — chips are the hero; search is a secondary override */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 min-w-0">
-          <CategoryChips value={category} onChange={(c) => { setQuery(""); setCategory(c); }} />
-        </div>
-        {searchOpen || searching ? (
-          <div className="relative shrink-0 w-44 sm:w-60">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onBlur={() => !query && setSearchOpen(false)}
-              placeholder={t("discover.searchPlaceholder")}
-              className="w-full rounded-full border border-border bg-card ps-9 pe-8 py-2 text-sm outline-none focus:border-primary/40 transition-colors"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => { setQuery(""); setSearchOpen(false); }}
-                className="absolute end-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={t("common.clear")}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-label={t("discover.searchPlaceholder")}
-            className="shrink-0 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
-          >
-            <Search className="w-4.5 h-4.5" />
-          </button>
-        )}
-      </div>
+  const chips: (PlaceCategoryKey | null)[] = [null, ...PLACE_CATEGORIES];
 
-      {/* Mobile list/map toggle */}
-      <div className="lg:hidden inline-flex rounded-full bg-muted/60 p-1">
-        <Toggle active={mobileView === "list"} onClick={() => setMobileView("list")} icon={LayoutGrid} label={t("discover.viewList")} />
-        <Toggle active={mobileView === "map"} onClick={() => setMobileView("map")} icon={MapIcon} label={t("discover.viewMap")} />
+  return (
+    <div className="relative rounded-[2rem] bg-neutral-950 ring-1 ring-white/10 overflow-hidden">
+      {/* Floating controls */}
+      <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0 -mx-1 px-1 overflow-x-auto scrollbar-none">
+            <div className="inline-flex items-center gap-1.5">
+              {chips.map((c) => {
+                const active = category === c && !searching;
+                return (
+                  <button
+                    key={c ?? "all"}
+                    type="button"
+                    onClick={() => { setQuery(""); setSearchOpen(false); setCategory(c); }}
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ring-1 ${
+                      active
+                        ? "bg-white text-neutral-900 ring-white"
+                        : "bg-white/10 text-white/90 ring-white/15 backdrop-blur-md hover:bg-white/20"
+                    }`}
+                  >
+                    {c === null ? t("discover.catAll") : t(CAT_KEY[c])}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {searchOpen || searching ? (
+            <div className="relative shrink-0 w-40 sm:w-56">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onBlur={() => !query && setSearchOpen(false)}
+                placeholder={t("discover.searchPlaceholder")}
+                className="w-full rounded-full bg-white/10 backdrop-blur-md ring-1 ring-white/15 text-white placeholder:text-white/50 ps-9 pe-8 py-2 text-sm outline-none focus:ring-white/40"
+              />
+              {query && (
+                <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }}
+                  className="absolute end-2.5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white" aria-label={t("common.clear")}>
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <GlassBtn onClick={() => setSearchOpen(true)} label={t("discover.searchPlaceholder")}>
+              <Search className="w-4.5 h-4.5" />
+            </GlassBtn>
+          )}
+          <GlassBtn onClick={() => setView((v) => (v === "stream" ? "map" : "stream"))} label={t(view === "stream" ? "discover.viewMap" : "discover.viewList")} active={view === "map"}>
+            <MapIcon className="w-4.5 h-4.5" />
+          </GlassBtn>
+        </div>
       </div>
 
       {/* Notices */}
-      {state === "unconfigured" && <Notice tone="amber" text={t("discover.unconfigured")} />}
-      {state === "error" && <Notice tone="red" text={t("discover.error")} />}
-      {state === "capped" && <Notice tone="amber" text={t("discover.capped")} />}
+      {state !== "idle" && state !== "loading" && (
+        <div className="absolute inset-x-0 top-16 z-20 px-4">
+          <Notice text={t(state === "unconfigured" ? "discover.unconfigured" : state === "capped" ? "discover.capped" : "discover.error")} />
+        </div>
+      )}
 
-      {/* Split: feed + map */}
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,40%)] gap-5">
-        {/* Feed column */}
-        <div className={mobileView === "map" ? "hidden lg:block" : ""}>
-          {state === "loading" && candidates.length === 0 ? (
-            <SkeletonGrid count={6} />
-          ) : ranked.length === 0 && state === "idle" ? (
-            <EmptyState icon={Compass} title={t("discover.emptyTitle")} description={t("discover.emptySub")} />
-          ) : (
-            <div ref={containerRef} className="grid grid-cols-2 gap-4">
-              {ranked.map((s) => (
-                <PlaceCard
-                  key={s.place.placeId}
-                  scored={s}
-                  center={center}
-                  saved={saved.has(s.place.placeId)}
-                  added={added.has(s.place.placeId)}
-                  onOpen={onOpen}
-                  onSave={onSave}
-                  onHover={setHighlightedId}
-                />
-              ))}
-              {state === "loading" && (
-                <div className="col-span-full flex justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              )}
+      {/* Map view */}
+      {view === "map" ? (
+        <div className="h-[82vh]">
+          <MapboxPlanMap
+            items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
+            highlightedItemId={highlightedId} onItemClick={onPinClick} days={[DISCOVER_DAY]} showRoutes={false}
+          />
+        </div>
+      ) : state === "loading" && candidates.length === 0 ? (
+        <div className="h-[82vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-white/70">
+            <Sparkles className="w-7 h-7 animate-pulse" />
+            <p className="text-sm">{t("discover.curating")}</p>
+          </div>
+        </div>
+      ) : ranked.length === 0 && state === "idle" ? (
+        <div className="h-[82vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 text-white/70 text-center px-8">
+            <Compass className="w-8 h-8" />
+            <p className="font-semibold">{t("discover.emptyTitle")}</p>
+            <p className="text-sm text-white/50">{t("discover.emptySub")}</p>
+          </div>
+        </div>
+      ) : (
+        /* Immersive stream */
+        <div
+          ref={containerRef}
+          className="h-[82vh] overflow-y-auto snap-y snap-mandatory scrollbar-none px-3 pt-16 pb-6 space-y-3 flex flex-col items-center"
+        >
+          {ranked.map((s) => (
+            <div key={s.place.placeId} className="w-full">
+              <PlaceCard
+                scored={s} center={center}
+                saved={saved.has(s.place.placeId)} added={added.has(s.place.placeId)}
+                onOpen={onOpen} onSave={onSave} onAdd={onQuickAdd} onHover={setHighlightedId}
+              />
+            </div>
+          ))}
+          {state === "loading" && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-white/60" />
             </div>
           )}
-          <div className="mt-4 flex justify-end">
-            <PoweredByGoogle />
-          </div>
         </div>
+      )}
 
-        {/* Map column — sticky on desktop, full-height on mobile when toggled */}
-        <div className={`${mobileView === "list" ? "hidden lg:block" : ""}`}>
-          <div className="lg:sticky lg:top-4 rounded-3xl overflow-hidden ring-1 ring-border/50 shadow-sm h-[60vh] lg:h-[calc(100vh-7rem)]">
-            <MapboxPlanMap
-              items={mapItems}
-              destinationCenter={center}
-              focusedDay={DISCOVER_DAY}
-              highlightedItemId={highlightedId}
-              onItemClick={onPinClick}
-              days={[DISCOVER_DAY]}
-              showRoutes={false}
-            />
-          </div>
+      {/* Required attribution (dark) */}
+      {view === "stream" && (
+        <div className="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none z-10">
+          <span className="text-[10px] text-white/40">
+            {t("discover.poweredBy")} <span className="font-semibold">Google</span>
+          </span>
         </div>
-      </div>
+      )}
 
       <PlaceDetailPanel
-        scored={openPlace}
-        open={openPlace !== null}
-        tripId={tripId}
-        days={days}
-        center={center}
+        scored={openPlace} open={openPlace !== null} tripId={tripId} days={days} center={center}
         saved={openPlace ? saved.has(openPlace.place.placeId) : false}
-        onClose={() => setOpenPlace(null)}
-        onSave={() => openPlace && onSave(openPlace)}
-        onAdded={onAdded}
+        onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
       />
     </div>
   );
 }
 
-function Toggle({
-  active,
-  onClick,
-  icon: Icon,
-  label,
+function GlassBtn({
+  children, onClick, label, active = false,
 }: {
-  active: boolean;
+  children: React.ReactNode;
   onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>;
   label: string;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-        active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+      aria-label={label}
+      className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ring-1 backdrop-blur-md transition-all hover:scale-105 ${
+        active ? "bg-white text-neutral-900 ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"
       }`}
     >
-      <Icon className="w-4 h-4" />
-      {label}
+      {children}
     </button>
   );
 }
 
-function Notice({ tone, text }: { tone: "amber" | "red"; text: string }) {
-  const cls =
-    tone === "amber"
-      ? "border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-300"
-      : "border-red-500/30 bg-red-500/8 text-red-700 dark:text-red-300";
+function Notice({ text }: { text: string }) {
   return (
-    <div className={`flex items-start gap-2 rounded-2xl border p-3 text-xs ${cls}`}>
+    <div className="flex items-start gap-2 rounded-2xl bg-amber-500/20 backdrop-blur-md ring-1 ring-amber-400/30 text-amber-100 p-3 text-xs">
       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
       <span>{text}</span>
     </div>
   );
-}
-
-function MapSkeleton() {
-  return <div className="w-full h-full bg-muted animate-pulse" />;
 }

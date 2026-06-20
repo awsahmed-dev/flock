@@ -1,18 +1,17 @@
 "use client";
 
-import { Heart, Check, MapPin, Plus } from "lucide-react";
+import { Heart, Plus, Check, Star, MapPin, Sparkles, Info } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
-import { RatingPill, PriceLevel, TagChips } from "./primitives";
 
 /**
- * Paxawa v2 — the canonical place card (design §4.1), editorial-airy language.
+ * Paxawa v2 — the immersive place card (cinematic / TikTok-Reels language).
  *
- * Image-forward and confident: a large rounded photo hero with floating glass
- * controls, then a calm text block — name, rating, price, category, distance.
- * Soft elevation that lifts on hover (not V1's flat border). `data-place-id` is
- * read by the dwell tracker; hovering pulses the matching map pin.
+ * The photo IS the card: full-bleed, with a bottom scrim carrying a big bold
+ * name and glass meta pills, a TikTok-style right action rail (save / add), and
+ * floating tags. Built to fill the viewport in a vertical snap-scroll stream
+ * (the next card peeks below). `data-place-id` is read by the dwell tracker.
  */
 const CAT_KEY: Record<string, string> = {
   eat: "discover.catEat",
@@ -47,9 +46,10 @@ export function PlaceCard({
   const t = useT();
   const p = scored.place;
   const photo = p.photoRef
-    ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=800`
+    ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=1000`
     : null;
   const dist = center ? distanceKm(p.coords, center) : null;
+  const price = p.priceLevel != null && p.priceLevel > 0 ? "$".repeat(p.priceLevel) : null;
 
   return (
     <article
@@ -57,103 +57,140 @@ export function PlaceCard({
       onClick={() => onOpen(scored)}
       onMouseEnter={() => onHover?.(p.placeId)}
       onMouseLeave={() => onHover?.(null)}
-      className="group cursor-pointer rounded-3xl bg-card ring-1 ring-border/50 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/[0.06] hover:-translate-y-1 hover:ring-border transition-all duration-300"
+      className="group relative snap-start snap-always shrink-0 w-full h-[78vh] sm:h-[80vh] rounded-[1.75rem] overflow-hidden cursor-pointer ring-1 ring-white/10 bg-neutral-900 select-none"
     >
-      <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-        {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photo}
-            alt={p.name}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-[600ms] ease-out"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-violet-500/15 flex items-center justify-center text-4xl font-bold text-primary/30">
-            {p.name.charAt(0)}
-          </div>
-        )}
-
-        {/* Tags (top-start) */}
-        <TagChips tags={scored.tags} className="absolute top-3 start-3" />
-
-        {/* Glass controls (top-end) */}
-        <div className="absolute top-3 end-3 flex items-center gap-1.5">
-          {added ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white ps-2 pe-2.5 py-1 text-[11px] font-bold shadow-sm">
-              <Check className="w-3.5 h-3.5" />
-              {t("discover.addedBadge")}
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSave(scored);
-              }}
-              aria-label={t("discover.save")}
-              className="w-9 h-9 rounded-full bg-white/85 dark:bg-black/55 backdrop-blur-md flex items-center justify-center text-foreground/80 shadow-sm hover:bg-white dark:hover:bg-black/70 hover:scale-105 transition-all"
-            >
-              <Heart className={`w-[18px] h-[18px] ${saved ? "fill-rose-500 text-rose-500" : ""}`} />
-            </button>
-          )}
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo}
+          alt={p.name}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-violet-700/40 flex items-center justify-center text-7xl font-bold text-white/30">
+          {p.name.charAt(0)}
         </div>
+      )}
+
+      {/* Cinematic scrim — strong at bottom, faint at top for tag legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/35 pointer-events-none" />
+
+      {/* Tags (top-start) */}
+      <div className="absolute top-4 start-4 flex flex-wrap gap-1.5">
+        {scored.tags.includes("ai_pick") && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-md text-white px-3 py-1.5 text-xs font-bold ring-1 ring-white/20">
+            <Sparkles className="w-3.5 h-3.5" />
+            {t("discover.tagAiPick")}
+          </span>
+        )}
+        {scored.tags.includes("hidden_gem") && (
+          <span className="rounded-full bg-amber-400/90 backdrop-blur-md text-amber-950 px-3 py-1.5 text-xs font-bold">
+            {t("discover.tagHiddenGem")}
+          </span>
+        )}
+        {scored.tags.includes("crew_favorite") && (
+          <span className="rounded-full bg-cyan-400/90 backdrop-blur-md text-cyan-950 px-3 py-1.5 text-xs font-bold">
+            {t("discover.tagCrewFav")}
+          </span>
+        )}
       </div>
 
-      {/* Calm text block */}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-[15px] leading-snug line-clamp-2 flex-1 tracking-[-0.01em]">
-            {p.name}
-          </h3>
-          <RatingPill rating={p.rating} showReviews={false} className="shrink-0 mt-0.5" />
-        </div>
-
-        <div className="mt-2 flex items-center gap-x-2 gap-y-1 flex-wrap text-[12.5px] text-muted-foreground">
-          <span className="font-medium text-foreground/70">{t(CAT_KEY[p.category] ?? CAT_KEY.other)}</span>
-          {p.priceLevel != null && p.priceLevel > 0 && (
-            <>
-              <Dot />
-              <PriceLevel level={p.priceLevel} className="text-[12.5px]" />
-            </>
-          )}
-          {p.userRatingsTotal != null && (
-            <>
-              <Dot />
-              <span className="tabular-nums">{compact(p.userRatingsTotal)}</span>
-            </>
-          )}
-          {dist != null && (
-            <>
-              <Dot />
-              <span className="inline-flex items-center gap-0.5 tabular-nums">
-                <MapPin className="w-3.5 h-3.5" />
-                {dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}
-              </span>
-            </>
-          )}
-        </div>
-
-        {onAdd && !added && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAdd(scored);
-            }}
-            className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-foreground/[0.04] hover:bg-primary/10 hover:text-primary text-foreground/80 font-semibold text-[13px] py-2 transition-colors"
+      {/* Right action rail (TikTok-style) */}
+      <div className="absolute end-3.5 bottom-32 sm:bottom-28 flex flex-col items-center gap-3.5">
+        <RailButton
+          onClick={(e) => { e.stopPropagation(); onSave(scored); }}
+          label={t("discover.save")}
+          active={saved}
+        >
+          <Heart className={`w-6 h-6 ${saved ? "fill-rose-500 text-rose-500" : "text-white"}`} />
+        </RailButton>
+        {onAdd && (
+          <RailButton
+            onClick={(e) => { e.stopPropagation(); if (!added) onAdd(scored); }}
+            label={added ? t("discover.addedBadge") : t("itinerary.addToDay")}
+            active={added}
+            accent={!added}
           >
-            <Plus className="w-4 h-4" />
-            {t("itinerary.addToDay")}
-          </button>
+            {added ? <Check className="w-6 h-6 text-white" /> : <Plus className="w-6 h-6 text-white" />}
+          </RailButton>
+        )}
+        <RailButton onClick={(e) => { e.stopPropagation(); onOpen(scored); }} label={t("discover.details")}>
+          <Info className="w-6 h-6 text-white" />
+        </RailButton>
+      </div>
+
+      {/* Bottom content */}
+      <div className="absolute inset-x-0 bottom-0 p-5 pe-20">
+        <h3 className="text-white font-bold text-2xl sm:text-[1.7rem] leading-[1.1] tracking-[-0.02em] drop-shadow-sm line-clamp-2">
+          {p.name}
+        </h3>
+        <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+          {p.rating != null && (
+            <Pill>
+              <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+              <span className="font-bold tabular-nums">{p.rating.toFixed(1)}</span>
+              {p.userRatingsTotal != null && (
+                <span className="text-white/60">· {compact(p.userRatingsTotal)}</span>
+              )}
+            </Pill>
+          )}
+          <Pill>{t(CAT_KEY[p.category] ?? CAT_KEY.other)}</Pill>
+          {price && <Pill><span className="text-emerald-300 font-bold">{price}</span></Pill>}
+          {dist != null && dist < 60 && (
+            <Pill>
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="tabular-nums">{dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}</span>
+            </Pill>
+          )}
+        </div>
+        {p.topTip && (
+          <p className="mt-2.5 text-[13px] text-white/80 leading-snug line-clamp-2 max-w-md italic">
+            “{p.topTip}”
+          </p>
         )}
       </div>
     </article>
   );
 }
 
-function Dot() {
-  return <span className="text-border" aria-hidden>·</span>;
+function RailButton({
+  children,
+  onClick,
+  label,
+  active = false,
+  accent = false,
+}: {
+  children: React.ReactNode;
+  onClick: (e: React.MouseEvent) => void;
+  label: string;
+  active?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center shadow-lg ring-1 transition-all hover:scale-110 active:scale-95 ${
+        accent
+          ? "bg-gradient-to-br from-primary to-violet-600 ring-white/20"
+          : active
+            ? "bg-white/25 ring-white/30"
+            : "bg-black/35 ring-white/15 hover:bg-black/50"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Pill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-md text-white px-2.5 py-1 text-[12.5px] ring-1 ring-white/15">
+      {children}
+    </span>
+  );
 }
 
 function compact(n: number): string {

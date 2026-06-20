@@ -425,7 +425,9 @@
     "catAll": "All",
     "priceLevelAria": "Price level {n} of {max}",
     "viewList": "List",
-    "viewMap": "Map"
+    "viewMap": "Map",
+    "details": "Details",
+    "curating": "Curating your feed…"
   },
   "pack": {
     "title": "Pack",
