@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles } from "lucide-react";
+import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin } from "lucide-react";
 import type { Place, PlaceFeatures } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -189,10 +189,34 @@ export function DiscoverFeed({
         })),
     [ranked, added],
   );
-  const onPinClick = useCallback(
-    (placeId: string) => { const s = ranked.find((r) => r.place.placeId === placeId); if (s) onOpen(s); },
-    [ranked, onOpen],
+  // Map carousel: a card strip floats over the map, synced to the pins. Tapping
+  // a pin focuses its card; swiping the strip highlights the matching pin.
+  const mapCarouselRef = useRef<HTMLDivElement>(null);
+  const focusCarousel = useCallback(
+    (placeId: string) => {
+      const idx = ranked.findIndex((r) => r.place.placeId === placeId);
+      if (idx < 0) return;
+      setHighlightedId(placeId);
+      (mapCarouselRef.current?.children[idx] as HTMLElement | undefined)?.scrollIntoView({
+        behavior: "smooth", inline: "center", block: "nearest",
+      });
+    },
+    [ranked],
   );
+  const onCarouselScroll = useCallback(() => {
+    const el = mapCarouselRef.current;
+    if (!el) return;
+    const center = el.scrollLeft + el.clientWidth / 2;
+    let best = 0;
+    let bestDist = Infinity;
+    Array.from(el.children).forEach((child, i) => {
+      const c = (child as HTMLElement).offsetLeft + (child as HTMLElement).clientWidth / 2;
+      const d = Math.abs(c - center);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    const id = ranked[best]?.place.placeId;
+    if (id) setHighlightedId(id);
+  }, [ranked]);
 
   const chips: (PlaceCategoryKey | null)[] = [null, ...PLACE_CATEGORIES];
 
@@ -259,13 +283,63 @@ export function DiscoverFeed({
         </div>
       )}
 
-      {/* Map view */}
+      {/* Map view — pins + a floating card carousel synced to them */}
       {view === "map" ? (
-        <div className="h-[72svh]">
+        <div className="relative h-[72svh]">
           <MapboxPlanMap
             items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
-            highlightedItemId={highlightedId} onItemClick={onPinClick} days={[DISCOVER_DAY]} showRoutes={false}
+            highlightedItemId={highlightedId} onItemClick={focusCarousel} days={[DISCOVER_DAY]} showRoutes={false}
           />
+          {ranked.length > 0 && (
+            <div
+              ref={mapCarouselRef}
+              onScroll={onCarouselScroll}
+              className="absolute inset-x-0 bottom-4 z-10 flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none px-[11%]"
+            >
+              {ranked.map((s) => {
+                const photo = s.place.photoRef
+                  ? `/api/discover/photo?ref=${encodeURIComponent(s.place.photoRef)}&w=500`
+                  : null;
+                const isSaved = saved.has(s.place.placeId);
+                const focused = highlightedId === s.place.placeId;
+                return (
+                  <button
+                    key={s.place.placeId}
+                    type="button"
+                    onClick={() => onOpen(s)}
+                    className={`snap-center shrink-0 w-[78%] sm:w-[300px] rounded-2xl bg-neutral-900/85 backdrop-blur-md overflow-hidden text-start shadow-xl ring-1 transition-all ${focused ? "ring-white/50" : "ring-white/10"}`}
+                  >
+                    <div className="relative aspect-[16/9] bg-neutral-800">
+                      {photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={photo} alt={s.place.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onSave(s); }}
+                        aria-label={t("discover.save")}
+                        className="absolute top-2 end-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white"
+                      >
+                        <Heart className={`w-4 h-4 ${isSaved ? "fill-rose-500 text-rose-500" : ""}`} />
+                      </button>
+                      {s.place.rating != null && (
+                        <span className="absolute bottom-2 start-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur px-2 py-0.5 text-white text-xs font-bold">
+                          <Star className="w-3 h-3 fill-amber-300 text-amber-300" />{s.place.rating.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="font-bold text-white text-[15px] line-clamp-1">{s.place.name}</p>
+                      <p className="text-white/60 text-xs mt-1 inline-flex items-center gap-1 max-w-full">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="line-clamp-1">{s.place.address ?? t(CAT_KEY[s.place.category] ?? CAT_KEY.eat)}</span>
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       ) : state === "loading" && candidates.length === 0 ? (
         <div className="h-[72svh] flex items-center justify-center">

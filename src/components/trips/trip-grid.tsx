@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, ArrowRight, Calendar, Clock, Users } from "lucide-react";
-import { parseISO, isPast, differenceInDays } from "date-fns";
+import { Plus, ArrowRight, Calendar } from "lucide-react";
+import { isPast, differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { trips } from "@/lib/db/schema";
@@ -16,16 +16,11 @@ interface Props {
 }
 
 /**
- * B4: dashboard trip list redesigned from a 3-col card grid to a tight
- * vertical row list. The old 176px gradient-hero cards meant a user
- * with 6+ trips had to scroll a screen-and-a-half just to find a name;
- * each new row is ~64px now, so 10 trips fit in one viewport.
- *
- * We trade the painterly destination art for a small gradient color
- * stripe on the left (gives each trip a colour identity without taking
- * vertical space). Hovering reveals a trailing arrow.
+ * v2 dashboard trips — premium, spacious cards (Airbnb/Linear language): a clean
+ * image on top, then a padded white content block with the name, a calm meta
+ * line, and a small status pill. Generous gaps, soft elevation, room to breathe
+ * — not loud full-bleed photos. Same card mobile (1-col) and desktop (2–3 col).
  */
-
 const CARD_GRADIENTS = [
   "from-blue-500 to-indigo-600",
   "from-violet-500 to-purple-600",
@@ -65,30 +60,87 @@ function getTripStatus(trip: Trip) {
   const now = new Date();
   const start = parseDateOnly(trip.startDate);
   const end = parseDateOnly(trip.endDate);
-  // B23: vocabulary unified with trip-overview's status labels. Was a
-  // mix of "Ongoing / Today / In 7d / 29 days / Upcoming / Past" which
-  // didn't match the inside-trip "Happening now / Starts in N days /
-  // Just ended / Past" the user sees once they tap in.
   if (now >= start && now <= end) {
-    return { label: "Happening now", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
+    return { label: "Happening now", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" };
   }
   if (isPast(end)) {
     const daysSinceEnd = differenceInDays(now, end);
     if (daysSinceEnd <= 14) {
-      return { label: "Just ended", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" };
+      return { label: "Just ended", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400" };
     }
-    return { label: "Past", color: "bg-muted text-muted-foreground border-border" };
+    return { label: "Past", color: "bg-muted text-muted-foreground" };
   }
   const daysAway = differenceInDays(start, now);
   return {
-    label:
-      daysAway <= 1
-        ? "Tomorrow"
-        : daysAway <= 30
-          ? `In ${daysAway} days`
-          : "Upcoming",
-    color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30",
+    label: daysAway <= 1 ? "Tomorrow" : daysAway <= 30 ? `In ${daysAway} days` : "Upcoming",
+    color: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
   };
+}
+
+function TripCard({ trip }: { trip: Trip }) {
+  const status = getTripStatus(trip);
+  const gradient = getGradient(trip.id);
+  const emoji = getTripEmoji(trip.destination);
+  const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
+
+  return (
+    <Link href={`/trips/${trip.id}`} prefetch>
+      <article className="group h-full rounded-3xl bg-card ring-1 ring-border/50 shadow-sm overflow-hidden hover:shadow-lg hover:shadow-black/[0.05] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
+        <div className="relative aspect-[16/9] bg-muted overflow-hidden">
+          {trip.heroImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={trip.heroImageUrl}
+              alt={trip.destination}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-[600ms] ease-out"
+            />
+          ) : (
+            <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-5xl opacity-90`}>
+              {emoji}
+            </div>
+          )}
+        </div>
+        <div className="p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-semibold text-[17px] tracking-[-0.01em] leading-snug line-clamp-1 flex-1">
+              {trip.name}
+            </h3>
+            <span className={`shrink-0 text-[10px] font-bold tracking-wider uppercase rounded-full px-2.5 py-1 ${status.color}`}>
+              {status.label}
+            </span>
+          </div>
+          <p className="mt-2 text-[13px] text-muted-foreground flex items-center gap-x-2 gap-y-0.5 flex-wrap">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
+            </span>
+            <span className="text-border">·</span>
+            <span className="tabular-nums">{nights}n</span>
+            <span className="text-border">·</span>
+            <span className="truncate">{trip.destination}</span>
+          </p>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function NewTripTile() {
+  return (
+    <Link href="/trips/new" prefetch>
+      <article className="group h-full min-h-[120px] lg:min-h-full rounded-3xl border-2 border-dashed border-border bg-card/40 flex items-center lg:flex-col lg:justify-center gap-3.5 p-5 lg:p-8 text-start lg:text-center hover:border-primary/40 hover:bg-card transition-colors cursor-pointer">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/15 to-violet-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+          <Plus className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1 lg:flex-none">
+          <p className="font-semibold text-[15px] group-hover:text-primary transition-colors">New trip</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5 lg:max-w-[200px]">Invite your crew, start planning</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:translate-x-0.5 transition-transform shrink-0 lg:hidden rtl:rotate-180" />
+      </article>
+    </Link>
+  );
 }
 
 export function TripGrid({ trips }: Props) {
@@ -97,150 +149,18 @@ export function TripGrid({ trips }: Props) {
   }
 
   return (
-    <>
-      {/* Mobile: premium image cards (single column), matching the cinematic
-          v2 language — photo-led with the status pill + name over a scrim. */}
-      <div className="lg:hidden space-y-3">
-        {trips.map((trip) => {
-          const status = getTripStatus(trip);
-          const gradient = getGradient(trip.id);
-          const emoji = getTripEmoji(trip.destination);
-          const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
-
-          return (
-            <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
-              <article className="group relative rounded-3xl overflow-hidden ring-1 ring-border/50 shadow-sm active:scale-[0.99] transition-transform cursor-pointer aspect-[16/10] bg-muted">
-                {trip.heroImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={trip.heroImageUrl}
-                    alt={trip.destination}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-6xl opacity-90`}>
-                    {emoji}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/20 pointer-events-none" />
-                <span className={`absolute top-3 start-3 text-[10px] font-bold tracking-widest uppercase border rounded-full px-2.5 py-1 backdrop-blur-md ${status.color}`}>
-                  {status.label}
-                </span>
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <h3 className="font-extrabold text-xl text-white tracking-[-0.01em] leading-tight drop-shadow line-clamp-1">{trip.name}</h3>
-                  <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[13px]">
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d")}
-                    </span>
-                    <span className="opacity-60">·</span>
-                    <span className="inline-flex items-center gap-1 tabular-nums">{nights}n</span>
-                    <span className="opacity-60">·</span>
-                    <span className="truncate">{trip.destination}</span>
-                  </div>
-                </div>
-              </article>
-            </Link>
-          );
-        })}
-
-        <Link href="/trips/new" prefetch>
-          <article className="group flex items-center gap-3 rounded-3xl border-2 border-dashed border-border bg-card px-4 py-4 active:scale-[0.99] transition-transform cursor-pointer">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/15 to-violet-500/15 flex items-center justify-center shrink-0">
-              <Plus className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold text-[15px]">{"New trip"}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Invite your crew, start planning</p>
-            </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
-          </article>
-        </Link>
-      </div>
-
-      {/* B27: desktop grid — 2 cols on lg, 3 on xl. Each trip becomes a
-          richer photo-led card with the hero image filling the top half,
-          status pill floating on the image, meta row below. Hover lifts
-          + tints the card border + scales the photo subtly — small
-          interactions that compound into the "this is a real desktop
-          app" feel. */}
-      <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 gap-4">
-        {trips.map((trip) => {
-          const status = getTripStatus(trip);
-          const gradient = getGradient(trip.id);
-          const emoji = getTripEmoji(trip.destination);
-          const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
-
-          return (
-            <Link key={trip.id} href={`/trips/${trip.id}`} prefetch>
-              <article className="group rounded-3xl ring-1 ring-border/50 bg-card overflow-hidden shadow-sm hover:ring-border hover:-translate-y-1 hover:shadow-xl hover:shadow-black/[0.06] transition-all cursor-pointer h-full">
-                <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                  {trip.heroImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={trip.heroImageUrl}
-                      alt={trip.destination}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-6xl opacity-90`}>
-                      {emoji}
-                    </div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
-                  <span className={`absolute top-3 start-3 text-[10px] font-bold tracking-widest uppercase border rounded-full px-2.5 py-0.5 backdrop-blur ${status.color}`}>
-                    {status.label}
-                  </span>
-                  <div className="absolute bottom-3 start-3 end-3">
-                    <p className="font-extrabold text-base text-white truncate drop-shadow">
-                      {trip.name}
-                    </p>
-                    <p className="text-xs text-white/85 truncate">
-                      {trip.destination}
-                    </p>
-                  </div>
-                </div>
-                <div className="px-4 py-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {format(parseDateOnly(trip.startDate), "MMM d")} – {format(parseDateOnly(trip.endDate), "MMM d")}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 tabular-nums">
-                    <Clock className="w-3.5 h-3.5" />
-                    {nights}n
-                  </span>
-                </div>
-              </article>
-            </Link>
-          );
-        })}
-
-        {/* New trip tile — same card footprint, dashed accent */}
-        <Link href="/trips/new" prefetch>
-          <article className="group rounded-2xl border-2 border-dashed border-border bg-card overflow-hidden hover:border-primary/40 hover:-translate-y-0.5 transition-all cursor-pointer h-full flex flex-col items-center justify-center min-h-[260px] py-8 px-4 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/15 to-violet-500/15 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Plus className="w-6 h-6 text-primary" />
-            </div>
-            <p className="font-bold text-base group-hover:text-primary transition-colors">
-              New trip
-            </p>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
-              Invite your crew, start planning together
-            </p>
-          </article>
-        </Link>
-      </div>
-    </>
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+      {trips.map((trip) => (
+        <TripCard key={trip.id} trip={trip} />
+      ))}
+      <NewTripTile />
+    </div>
   );
 }
 
 /**
- * B4: placeholder for the "suggested trips" horizontal carousel. Renders
- * an inert teaser strip until we wire the Paxawa-curated plans backend.
- * Lives in this file so dashboard/page.tsx can render <SuggestedTrips />
- * without touching new imports.
+ * Inert "inspiration" teaser strip until the taste-driven destination engine
+ * (logic §13.2) is wired. Premium gradient cards with breathing room.
  */
 export function SuggestedTrips() {
   const samples = [
@@ -252,25 +172,25 @@ export function SuggestedTrips() {
 
   return (
     <div className="mt-6">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3.5">
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
           Inspiration from Paxawa
         </h2>
         <span className="text-[10px] font-medium text-muted-foreground/70">Coming soon</span>
       </div>
-      <div className="flex items-stretch gap-3 overflow-x-auto -mx-1 px-1 pb-2 scrollbar-none">
+      <div className="flex items-stretch gap-3.5 overflow-x-auto -mx-1 px-1 pb-2 scrollbar-none">
         {samples.map((s) => (
           <div
             key={s.title}
-            className={`shrink-0 w-56 rounded-2xl bg-gradient-to-br ${s.gradient} p-3 text-white relative overflow-hidden cursor-not-allowed opacity-80`}
+            className={`shrink-0 w-60 rounded-3xl bg-gradient-to-br ${s.gradient} p-4 text-white relative overflow-hidden cursor-not-allowed opacity-90`}
             title="Coming soon"
           >
             <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/15" />
-            <div className="relative z-10 flex flex-col h-full justify-between min-h-[88px]">
+            <div className="relative z-10 flex flex-col h-full justify-between min-h-[96px]">
               <span className="text-2xl">{s.emoji}</span>
               <div>
                 <p className="font-bold text-sm leading-tight">{s.title}</p>
-                <p className="text-[11px] opacity-80 mt-0.5">{s.subtitle}</p>
+                <p className="text-[11px] opacity-85 mt-0.5">{s.subtitle}</p>
               </div>
             </div>
           </div>
