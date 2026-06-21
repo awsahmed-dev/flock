@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SmartActionChips } from "./smart-action-chips";
+import { DecisionCardMessage, type DecisionCardMeta } from "./decision-card-message";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "🙌", "✈️"];
 
@@ -653,6 +654,13 @@ export function MessageBubble({
             meta={message.metadata as VoteCardMeta}
             messageId={message.id}
             tripId={message.tripId}
+            onActionDone={onActionDone}
+          />
+        )}
+
+        {message.type === "decision_card" && message.metadata && (
+          <DecisionCardMessage
+            meta={message.metadata as DecisionCardMeta}
             onActionDone={onActionDone}
           />
         )}

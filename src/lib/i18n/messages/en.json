@@ -807,5 +807,23 @@
     "settledCount": "Settled {count} splits",
     "nothingToSettle": "Nothing was owed",
     "settleFailed": "Couldn't settle — try again"
+  },
+  "decisions": {
+    "label": "Decide",
+    "yes": "Yes",
+    "no": "No",
+    "votedOf": "{voted} of {total} voted",
+    "closesIn": "closes in {time}",
+    "closed": "closing",
+    "added": "Added to your plan",
+    "skipped": "Skipped — {no} of {total} said no",
+    "withdrawn": "Withdrawn",
+    "addNow": "Add it",
+    "skip": "Skip",
+    "addedToast": "It's in — added to the plan",
+    "voteError": "Couldn't register that — try again",
+    "askCrew": "Ask the crew",
+    "suggest": "Suggest to crew",
+    "suggestedToast": "Sent to the crew to vote"
   }
 }

@@ -37,12 +37,14 @@ const CAT_KEY: Record<string, string> = {
 type FetchState = "idle" | "loading" | "error" | "capped" | "unconfigured";
 
 export function DiscoverFeed({
-  tripId, destination, center, days,
+  tripId, destination, center, days, crewSize = 1, isOwner = false,
 }: {
   tripId: string;
   destination: string;
   center: [number, number] | null;
   days: string[];
+  crewSize?: number;
+  isOwner?: boolean;
 }) {
   const t = useT();
   const { vector, emit } = useTasteSession(tripId);
@@ -392,6 +394,7 @@ export function DiscoverFeed({
       <PlaceDetailPanel
         scored={openPlace} open={openPlace !== null} tripId={tripId} days={days} center={center}
         saved={openPlace ? saved.has(openPlace.place.placeId) : false}
+        crewSize={crewSize} isOwner={isOwner}
         onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
       />
     </div>

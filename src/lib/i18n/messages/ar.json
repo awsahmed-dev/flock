@@ -807,5 +807,23 @@
     "settledCount": "سُوّيت {count} مصاريف",
     "nothingToSettle": "لا شيء مستحق",
     "settleFailed": "تعذّرت التسوية — حاول مرة أخرى"
+  },
+  "decisions": {
+    "label": "قرار",
+    "yes": "نعم",
+    "no": "لا",
+    "votedOf": "صوّت {voted} من {total}",
+    "closesIn": "يُغلق خلال {time}",
+    "closed": "يُغلق",
+    "added": "أُضيف إلى خطتك",
+    "skipped": "تم التخطّي — قال {no} من {total} لا",
+    "withdrawn": "مسحوب",
+    "addNow": "أضِفه",
+    "skip": "تخطَّ",
+    "addedToast": "تم — أُضيف إلى الخطة",
+    "voteError": "تعذّر التسجيل — أعد المحاولة",
+    "askCrew": "اسأل الفريق",
+    "suggest": "اقترح على الفريق",
+    "suggestedToast": "أُرسل إلى الفريق للتصويت"
   }
 }

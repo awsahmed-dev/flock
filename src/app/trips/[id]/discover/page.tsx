@@ -5,6 +5,7 @@ import { eachDayOfInterval, format } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
+import { isOwner } from "@/lib/permissions";
 import { geocode } from "@/lib/geocode";
 import { DiscoverFeed } from "@/components/discover/discover-feed";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
@@ -49,7 +50,14 @@ export default async function DiscoverPage({ params }: Props) {
         <p className="text-[13px] text-muted-foreground shrink-0">{t("discover.subtitle")}</p>
       </div>
 
-      <DiscoverFeed tripId={trip.id} destination={trip.destination} center={center} days={days} />
+      <DiscoverFeed
+        tripId={trip.id}
+        destination={trip.destination}
+        center={center}
+        days={days}
+        crewSize={trip.members.length}
+        isOwner={isOwner(trip, user.id)}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   X, Star, MapPin, Clock, Plus, Check, ChevronLeft, ChevronRight, ExternalLink,
-  Loader2, Heart, Sparkles, Tag,
+  Loader2, Heart, Sparkles, Tag, Users,
 } from "lucide-react";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import type { Place } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { createItineraryItemFromGooglePlace } from "@/lib/actions/itinerary";
+import { createDecision } from "@/lib/actions/decisions";
 import { useT } from "@/components/i18n/locale-provider";
 import { PoweredByGoogle } from "./primitives";
 
@@ -29,7 +30,7 @@ const CAT_KEY: Record<string, string> = {
 };
 
 export function PlaceDetailPanel({
-  scored, open, tripId, days, center, saved, onClose, onSave, onAdded,
+  scored, open, tripId, days, center, saved, crewSize = 1, isOwner = false, onClose, onSave, onAdded,
 }: {
   scored: ScoredPlace | null;
   open: boolean;
@@ -37,6 +38,8 @@ export function PlaceDetailPanel({
   days: string[];
   center: [number, number] | null;
   saved: boolean;
+  crewSize?: number;
+  isOwner?: boolean;
   onClose: () => void;
   onSave: () => void;
   onAdded: (placeId: string) => void;
@@ -131,6 +134,30 @@ export function PlaceDetailPanel({
         setAddedInfo({ placeId: p.placeId, day: effectiveDay });
         onAdded(p.placeId);
         toast.success(t("discover.addedToast", { name: p.name, day: t("itinerary.dayN", { n: days.indexOf(effectiveDay) + 1 }) }));
+      } catch {
+        toast.error(t("discover.addError"));
+      }
+    });
+  }
+
+  /** Owner "Ask the crew" / member "Suggest" — posts a decision card to chat. */
+  function handleSuggest() {
+    if (!p) return;
+    startTransition(async () => {
+      try {
+        await createDecision({
+          tripId,
+          proposedDay: effectiveDay || null,
+          mode: isOwner ? "ask" : "suggest",
+          place: {
+            placeId: p.placeId, name: p.name, category: p.category, placeTypes: p.placeTypes,
+            rating: p.rating, userRatingsTotal: p.userRatingsTotal, priceLevel: p.priceLevel,
+            coords: p.coords, address: p.address, photoRef: p.photoRef,
+            hoursSummary: p.hoursSummary, topTip: p.topTip,
+          },
+        });
+        toast.success(t("decisions.suggestedToast"));
+        onClose();
       } catch {
         toast.error(t("discover.addError"));
       }
@@ -302,13 +329,24 @@ export function PlaceDetailPanel({
                   </div>
                 </div>
               </div>
-              <button
-                type="button" onClick={handleAdd} disabled={isPending || !effectiveDay}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-bold py-3.5 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
-              >
-                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                {t("discover.addToPlan")}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button" onClick={handleAdd} disabled={isPending || !effectiveDay}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-bold py-3.5 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
+                >
+                  {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                  {t("discover.addToPlan")}
+                </button>
+                {crewSize >= 2 && (
+                  <button
+                    type="button" onClick={handleSuggest} disabled={isPending}
+                    className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-2xl ring-1 ring-border bg-card text-foreground font-bold px-4 py-3.5 text-sm hover:bg-muted/60 disabled:opacity-60 transition-colors"
+                  >
+                    <Users className="w-4.5 h-4.5" />
+                    {isOwner ? t("decisions.askCrew") : t("decisions.suggest")}
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
