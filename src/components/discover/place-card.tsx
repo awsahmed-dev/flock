@@ -57,7 +57,7 @@ export function PlaceCard({
       onClick={() => onOpen(scored)}
       onMouseEnter={() => onHover?.(p.placeId)}
       onMouseLeave={() => onHover?.(null)}
-      className="group relative snap-start snap-always shrink-0 w-full h-[68svh] sm:h-[74vh] rounded-[1.75rem] overflow-hidden cursor-pointer ring-1 ring-white/10 bg-neutral-900 select-none"
+      className="group relative snap-start snap-always shrink-0 w-full h-[72svh] sm:h-[74vh] rounded-2xl sm:rounded-[1.75rem] overflow-hidden cursor-pointer ring-1 ring-white/10 bg-neutral-900 select-none"
     >
       {photo ? (
         // eslint-disable-next-line @next/next/no-img-element

@@ -55,6 +55,12 @@ interface Props {
    *  Discover sets this false — its pins are unconnected places, not a route,
    *  so we skip both the lines and the Directions API calls. */
   showRoutes?: boolean;
+  /** Override pin color (e.g. Discover uses one accent for all). Default = the
+   *  per-day palette. */
+  pinColor?: string;
+  /** Show the sequence number inside each pin (default true). Discover sets
+   *  false → plain place pins, not numbered itinerary stops. */
+  numbered?: boolean;
 }
 
 // Roamy uses ROY G BIV-ish palette per day. We replicate with 8 hues so
@@ -83,6 +89,8 @@ export function MapboxPlanMap({
   onItemClick,
   days,
   showRoutes = true,
+  pinColor,
+  numbered = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -343,7 +351,7 @@ export function MapboxPlanMap({
 
     // ── Markers ───────────────────────────────────────────────────
     for (const [day, dayItems] of byDay) {
-      const color = colorForDay(day, dayIndex);
+      const color = pinColor ?? colorForDay(day, dayIndex);
       dayItems.forEach((item, idx) => {
         const el = document.createElement("button");
         el.type = "button";
@@ -366,7 +374,7 @@ export function MapboxPlanMap({
         el.style.transition = "all .15s";
         el.style.opacity = "1";
         el.style.padding = "0";
-        el.textContent = String(idx + 1);
+        el.textContent = numbered ? String(idx + 1) : "";
 
         el.addEventListener("click", (e) => {
           e.stopPropagation();

@@ -221,7 +221,7 @@ export function DiscoverFeed({
   const chips: (PlaceCategoryKey | null)[] = [null, ...PLACE_CATEGORIES];
 
   return (
-    <div className="relative rounded-[2rem] bg-neutral-950 ring-1 ring-white/10 overflow-hidden">
+    <div className="relative rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
       {/* Floating controls */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex items-center gap-2">
@@ -285,10 +285,11 @@ export function DiscoverFeed({
 
       {/* Map view — pins + a floating card carousel synced to them */}
       {view === "map" ? (
-        <div className="relative h-[72svh]">
+        <div className="relative h-[80svh] sm:h-[72svh]">
           <MapboxPlanMap
             items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
-            highlightedItemId={highlightedId} onItemClick={focusCarousel} days={[DISCOVER_DAY]} showRoutes={false}
+            highlightedItemId={highlightedId} onItemClick={focusCarousel} days={[DISCOVER_DAY]}
+            showRoutes={false} pinColor="#f97316" numbered={false}
           />
           {ranked.length > 0 && (
             <div
@@ -342,14 +343,14 @@ export function DiscoverFeed({
           )}
         </div>
       ) : state === "loading" && candidates.length === 0 ? (
-        <div className="h-[72svh] flex items-center justify-center">
+        <div className="h-[80svh] sm:h-[72svh] flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-white/70">
             <Sparkles className="w-7 h-7 animate-pulse" />
             <p className="text-sm">{t("discover.curating")}</p>
           </div>
         </div>
       ) : ranked.length === 0 && state === "idle" ? (
-        <div className="h-[72svh] flex items-center justify-center">
+        <div className="h-[80svh] sm:h-[72svh] flex items-center justify-center">
           <div className="flex flex-col items-center gap-2 text-white/70 text-center px-8">
             <Compass className="w-8 h-8" />
             <p className="font-semibold">{t("discover.emptyTitle")}</p>
@@ -360,7 +361,7 @@ export function DiscoverFeed({
         /* Immersive stream */
         <div
           ref={containerRef}
-          className="h-[72svh] overflow-y-auto snap-y snap-mandatory scrollbar-none px-3 pt-16 pb-6 space-y-3 flex flex-col items-center"
+          className="h-[80svh] sm:h-[72svh] overflow-y-auto snap-y snap-mandatory scrollbar-none px-3 pt-16 pb-6 space-y-3 flex flex-col items-center"
         >
           {ranked.map((s) => (
             <div key={s.place.placeId} className="w-full">
