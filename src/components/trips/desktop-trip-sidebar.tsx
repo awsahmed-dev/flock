@@ -8,7 +8,7 @@ import {
   LayoutDashboard,
   MapPin,
   Compass,
-  Vote,
+  Gavel,
   Wallet,
   Backpack,
   CreditCard,
@@ -72,7 +72,7 @@ interface Props {
     shareToken?: string | null;
   };
   isOwner: boolean;
-  badges: { chat: number; itinerary: number; expenses: number };
+  badges: { chat: number; itinerary: number; expenses: number; decisions: number };
   onChatOpen: () => void;
   onMoreOpen: () => void;
 }
@@ -81,10 +81,10 @@ const NAV_TABS = [
   { key: "nav.overview", href: "", icon: LayoutDashboard, badgeKey: null as null },
   { key: "nav.itinerary", href: "/itinerary", icon: MapPin, badgeKey: "itinerary" as const },
   { key: "nav.discover", href: "/discover", icon: Compass, badgeKey: null as null },
+  { key: "nav.decisions", href: "/decisions", icon: Gavel, badgeKey: "decisions" as const },
   { key: "nav.expenses", href: "/expenses", icon: Wallet, badgeKey: "expenses" as const },
   { key: "nav.wallet", href: "/wallet", icon: CreditCard, badgeKey: null as null },
   { key: "nav.pack", href: "/pack", icon: Backpack, badgeKey: null as null },
-  { key: "nav.votes", href: "/votes", icon: Vote, badgeKey: null as null },
 ];
 
 export function DesktopTripSidebar({

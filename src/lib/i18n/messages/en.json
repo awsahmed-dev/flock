@@ -144,6 +144,7 @@
     "overview": "Overview",
     "itinerary": "Itinerary",
     "votes": "Votes",
+    "decisions": "Decisions",
     "expenses": "Expenses",
     "pack": "Pack",
     "wallet": "Bookings",
@@ -776,6 +777,8 @@
     "chatMeta": "Talk with your crew",
     "votes": "Votes",
     "votesMeta": "Decide together",
+    "decisions": "Decisions",
+    "decisionsMeta": "Vote on places together",
     "crew": "Crew",
     "crewMeta": "Everyone on this trip",
     "share": "Share invite link",
@@ -824,6 +827,16 @@
     "voteError": "Couldn't register that — try again",
     "askCrew": "Ask the crew",
     "suggest": "Suggest to crew",
-    "suggestedToast": "Sent to the crew to vote"
+    "suggestedToast": "Sent to the crew to vote",
+    "alreadyOpen": "That place is already up for a vote",
+    "lensTitle": "Decisions",
+    "lensSubtitle": "Vote on the places your crew is weighing — newest first.",
+    "tabNeedsYou": "Needs you",
+    "tabOpen": "Open",
+    "tabDecided": "Decided",
+    "lensEmptyTitle": "No decisions yet",
+    "lensEmptyBody": "Suggest a place from Discover and your crew can vote on it right here.",
+    "lensEmptyCta": "Open Discover",
+    "filterEmpty": "Nothing here right now."
   }
 }

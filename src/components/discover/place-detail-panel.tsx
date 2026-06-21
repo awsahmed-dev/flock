@@ -145,7 +145,7 @@ export function PlaceDetailPanel({
     if (!p) return;
     startTransition(async () => {
       try {
-        await createDecision({
+        const res = await createDecision({
           tripId,
           proposedDay: effectiveDay || null,
           mode: isOwner ? "ask" : "suggest",
@@ -156,7 +156,11 @@ export function PlaceDetailPanel({
             hoursSummary: p.hoursSummary, topTip: p.topTip,
           },
         });
-        toast.success(t("decisions.suggestedToast"));
+        if (!res.ok) {
+          toast(t("decisions.alreadyOpen"));
+        } else {
+          toast.success(t("decisions.suggestedToast"));
+        }
         onClose();
       } catch {
         toast.error(t("discover.addError"));

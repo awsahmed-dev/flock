@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Bell, Receipt, Vote, Check, Users as UsersIcon } from "lucide-react";
+import { Bell, Receipt, Vote, Gavel, Check, Users as UsersIcon } from "lucide-react";
 import { formatDistanceToNow } from "@/lib/i18n/date-fns";
 import {
   DropdownMenu,
@@ -36,7 +36,11 @@ function metaFor(kind: string, tripId: string) {
       return { icon: Check, href: `/trips/${tripId}/expenses`, tint: "text-emerald-500" };
     case "vote_opened":
     case "vote_closed":
-      return { icon: Vote, href: `/trips/${tripId}/votes`, tint: "text-violet-500" };
+      return { icon: Vote, href: `/trips/${tripId}/decisions`, tint: "text-violet-500" };
+    case "decision_opened":
+      return { icon: Gavel, href: `/trips/${tripId}/decisions`, tint: "text-violet-500" };
+    case "decision_resolved":
+      return { icon: Gavel, href: `/trips/${tripId}/itinerary`, tint: "text-emerald-500" };
     case "member_joined":
       return { icon: UsersIcon, href: `/trips/${tripId}`, tint: "text-blue-500" };
     default:

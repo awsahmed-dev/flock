@@ -19,7 +19,7 @@ import {
   LayoutDashboard,
   MapPin,
   Compass,
-  Vote,
+  Gavel,
   Wallet,
   FileText,
   Backpack,
@@ -103,7 +103,7 @@ const NAV_TABS = [
   { key: "nav.overview", href: "", icon: LayoutDashboard },
   { key: "nav.itinerary", href: "/itinerary", icon: MapPin },
   { key: "nav.discover", href: "/discover", icon: Compass },
-  { key: "nav.votes", href: "/votes", icon: Vote },
+  { key: "nav.decisions", href: "/decisions", icon: Gavel },
   { key: "nav.expenses", href: "/expenses", icon: Wallet },
   // B6: Documents + Packing merged into Pack with segmented control inside.
   { key: "nav.pack", href: "/pack", icon: Backpack },
@@ -178,8 +178,8 @@ export function TripShell({ trip, isOwner, children }: Props) {
   // Mirrors the mobile app: small red pill on each tab in the floating nav
   // showing unread / pending / unsettled counts.
   const [badges, setBadges] = useState<{
-    chat: number; itinerary: number; expenses: number;
-  }>({ chat: 0, itinerary: 0, expenses: 0 });
+    chat: number; itinerary: number; expenses: number; decisions: number;
+  }>({ chat: 0, itinerary: 0, expenses: 0, decisions: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -192,7 +192,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
         const lastReadKey = `chat-last-read:${userId}:${trip.id}`;
         const lastRead = parseInt(localStorage.getItem(lastReadKey) ?? "0", 10);
 
-        const [chatRes, itinRes, splitsRes] = await Promise.all([
+        const [chatRes, itinRes, splitsRes, decisionsRes] = await Promise.all([
           supabase
             .from("chat_messages")
             .select("id", { count: "exact", head: true })
@@ -211,10 +211,24 @@ export function TripShell({ trip, isOwner, children }: Props) {
             .eq("settled", false)
             .filter("expense.trip_id", "eq", trip.id)
             .neq("expense.paid_by", userId),
+          // v2 decisions: open cards this user hasn't voted on yet. Small set
+          // (RLS-gated to trip members), so we pull the votes maps and count
+          // client-side rather than reach for a jsonb-key filter.
+          supabase
+            .from("decisions")
+            .select("votes")
+            .eq("trip_id", trip.id)
+            .eq("status", "open"),
         ]);
 
         if (cancelled) return;
+        const needsVote =
+          (decisionsRes.data ?? []).filter((d) => {
+            const v = (d.votes ?? {}) as Record<string, unknown>;
+            return !v[userId];
+          }).length;
         setBadges({
+          decisions: needsVote,
           chat:      chatRes.count ?? 0,
           itinerary: itinRes.count ?? 0,
           expenses:  splitsRes.data?.length ?? 0,
@@ -618,7 +632,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
         shareToken={trip.shareToken ?? null}
         onCrewOpen={() => setCrewOpen(true)}
         onChatOpen={() => setChatOpen(true)}
-        badges={{ chat: badges.chat, votes: 0 }}
+        badges={{ chat: badges.chat, decisions: badges.decisions }}
       />
 
       {/* PWA install prompt */}

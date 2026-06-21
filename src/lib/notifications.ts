@@ -68,6 +68,44 @@ export async function notifyNewVote(
   });
 }
 
+// ─── v2: chat decisions ───────────────────────────────────────────────────────
+// Decisions replace the old Votes page — a place proposed in chat that the crew
+// votes 👍/👎 on. Deep-links land on the Decisions lens where the same card is
+// votable inline.
+
+export async function notifyDecisionOpened(
+  memberIds: string[],
+  excludeUserId: string,
+  proposerName: string,
+  placeName: string,
+  mode: "ask" | "suggest",
+  tripId: string,
+  tripName: string
+) {
+  await sendPushNotification({
+    userIds: memberIds.filter((id) => id !== excludeUserId),
+    title: `🗳️ ${proposerName} ${mode === "ask" ? "started a vote" : "suggested a place"} in ${tripName}`,
+    body: `${placeName} — tap to vote`,
+    url: `${getBaseUrl()}/trips/${tripId}/decisions`,
+  });
+}
+
+export async function notifyDecisionResolved(
+  memberIds: string[],
+  excludeUserId: string,
+  placeName: string,
+  outcome: "added" | "skipped",
+  tripId: string,
+  tripName: string
+) {
+  await sendPushNotification({
+    userIds: memberIds.filter((id) => id !== excludeUserId),
+    title: outcome === "added" ? `✅ Added to ${tripName}` : `🙅 Crew passed in ${tripName}`,
+    body: outcome === "added" ? `${placeName} is now on the plan` : `${placeName} didn't make the cut`,
+    url: `${getBaseUrl()}/trips/${tripId}/${outcome === "added" ? "itinerary" : "decisions"}`,
+  });
+}
+
 export async function notifyNewExpense(
   memberIds: string[],
   excludeUserId: string,

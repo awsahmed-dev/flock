@@ -133,7 +133,7 @@ export function TripActionHub({ tripId, stats }: Props) {
           subline=""
         />
         <ActionCard
-          href={`/trips/${tripId}/votes`}
+          href={`/trips/${tripId}/decisions`}
           icon={Vote}
           color="violet"
           label={t("cards.decide")}
@@ -386,7 +386,7 @@ function pickSuggestion(
     return {
       title: t("actionHub.sgVotesOpenTitle", { count: s.votesOpen }),
       body: t("actionHub.sgVotesOpenBody"),
-      href: `/trips/${tripId}/votes`,
+      href: `/trips/${tripId}/decisions`,
       icon: Vote,
       urgent: true,
     };

@@ -18,6 +18,8 @@ export type NotifKind =
   | "expense_logged"
   | "vote_opened"
   | "vote_closed"
+  | "decision_opened"
+  | "decision_resolved"
   | "split_settled"
   | "member_joined"
   | "trip_starting_soon";

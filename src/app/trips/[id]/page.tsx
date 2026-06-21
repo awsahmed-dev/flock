@@ -9,7 +9,7 @@ import { getBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import {
   itineraryItems,
-  votes,
+  decisions,
   expenses,
   expenseSplits,
   packingItems,
@@ -50,14 +50,16 @@ export default async function TripPage({ params }: Props) {
   // ── Action-hub stats: run in parallel so the dashboard composes from a
   // single fast batch. None of these are heavy — all single-table scans on
   // an indexed trip_id.
-  const [itineraryRows, voteRows, expenseRows, splitRows, packingRows, docRows] =
+  const [itineraryRows, decisionRows, expenseRows, splitRows, packingRows, docRows] =
     await Promise.all([
       db.query.itineraryItems.findMany({
         where: eq(itineraryItems.tripId, id),
         columns: { dayDate: true },
       }),
-      db.query.votes.findMany({
-        where: eq(votes.tripId, id),
+      // v2: the Overview "Decide" card reflects chat decisions now, not the
+      // retired Votes feature.
+      db.query.decisions.findMany({
+        where: eq(decisions.tripId, id),
         columns: { status: true },
       }),
       db.query.expenses.findMany({
@@ -127,8 +129,8 @@ export default async function TripPage({ params }: Props) {
     itineraryCount: itineraryRows.length,
     daysWithItems,
     totalDays: Math.max(1, totalDays),
-    votesOpen: voteRows.filter((v) => v.status === "open").length,
-    votesResolved: voteRows.filter((v) => v.status === "closed").length,
+    votesOpen: decisionRows.filter((v) => v.status === "open").length,
+    votesResolved: decisionRows.filter((v) => v.status !== "open").length,
     expensesCount: expenseRows.length,
     currency: trip.currency,
     totalSpent,

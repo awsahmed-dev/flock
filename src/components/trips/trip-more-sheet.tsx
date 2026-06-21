@@ -4,7 +4,7 @@ import {
   X,
   MessageSquare,
   CreditCard,
-  Vote,
+  Gavel,
   Users,
   Share2,
   Settings,
@@ -46,7 +46,7 @@ interface Props {
   onChatOpen: () => void;
   badges?: {
     chat?: number;
-    votes?: number;
+    decisions?: number;
   };
 }
 
@@ -185,11 +185,11 @@ export function TripMoreSheet({
             onClick={onClose}
           />
           <Row
-            icon={Vote}
-            label={t("more.votes")}
-            meta={t("more.votesMeta")}
-            badge={badges.votes}
-            href={`/trips/${tripId}/votes`}
+            icon={Gavel}
+            label={t("more.decisions")}
+            meta={t("more.decisionsMeta")}
+            badge={badges.decisions}
+            href={`/trips/${tripId}/decisions`}
             onClick={onClose}
           />
           <Row

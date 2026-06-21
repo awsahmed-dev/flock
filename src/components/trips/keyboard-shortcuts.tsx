@@ -33,7 +33,7 @@ interface Props {
 const NAV_TARGETS: Record<string, string> = {
   h: "",
   i: "/itinerary",
-  v: "/votes",
+  v: "/decisions",
   e: "/expenses",
   // B6: Docs + Packing merged into /pack with a segmented control inside.
   // `d` jumps to the Docs view, `p` jumps to the Packing view.
@@ -48,7 +48,7 @@ const SHORTCUTS: Array<{ keys: string; label: string }> = [
   { keys: "/", label: "Focus chat input" },
   { keys: "g h", label: "Go to overview" },
   { keys: "g i", label: "Go to itinerary" },
-  { keys: "g v", label: "Go to votes" },
+  { keys: "g v", label: "Go to decisions" },
   { keys: "g e", label: "Go to expenses" },
   { keys: "g d", label: "Go to documents" },
   { keys: "g p", label: "Go to packing" },
