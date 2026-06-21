@@ -280,7 +280,9 @@
     "packCount": "{packed}/{total}",
     "wallet": "Bookings",
     "walletEmpty": "Tickets",
-    "walletSubline": "Book + manage all tickets"
+    "walletSubline": "Book + manage all tickets",
+    "discover": "Discover",
+    "discoverHeadline": "Find places to add"
   },
   "votes": {
     "title": "Votes",

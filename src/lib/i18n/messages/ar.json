@@ -280,7 +280,9 @@
     "packCount": "{packed}/{total}",
     "wallet": "الحجوزات",
     "walletEmpty": "تذاكر",
-    "walletSubline": "احجز وتابع تذاكرك"
+    "walletSubline": "احجز وتابع تذاكرك",
+    "discover": "اكتشف",
+    "discoverHeadline": "اعثر على أماكن لإضافتها"
   },
   "votes": {
     "title": "التصويتات",

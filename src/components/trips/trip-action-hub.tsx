@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   Calendar,
+  Compass,
   Vote,
   Wallet,
   Backpack,
@@ -124,6 +125,14 @@ export function TripActionHub({ tripId, stats }: Props) {
           }
         />
         <ActionCard
+          href={`/trips/${tripId}/discover`}
+          icon={Compass}
+          color="cyan"
+          label={t("cards.discover")}
+          headline={t("cards.discoverHeadline")}
+          subline=""
+        />
+        <ActionCard
           href={`/trips/${tripId}/votes`}
           icon={Vote}
           color="violet"
@@ -237,7 +246,7 @@ function ActionCard({
 }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: "blue" | "violet" | "emerald" | "amber" | "fuchsia" | "slate";
+  color: "blue" | "violet" | "emerald" | "amber" | "fuchsia" | "slate" | "cyan";
   label: string;
   headline: string;
   subline: string;
@@ -253,11 +262,11 @@ function ActionCard({
   return (
     <Link
       href={href}
-      className={`group block rounded-2xl border ${
+      className={`group block rounded-2xl ring-1 shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
         urgent
-          ? "border-amber-500/40 bg-amber-500/[0.04]"
-          : "border-border bg-card hover:border-foreground/15"
-      } ${compact ? "p-2.5" : "p-3"} transition-colors`}
+          ? "ring-amber-500/40 bg-amber-500/[0.04]"
+          : "ring-border/60 bg-card hover:ring-border"
+      } ${compact ? "p-3" : "p-3.5"} transition-all duration-200`}
     >
       <div className="flex items-center gap-2 mb-1">
         <div
@@ -314,6 +323,7 @@ function moneyProgress(stats: ActionHubStats): number | undefined {
 
 const TRACKER_BAR: Record<string, string> = {
   blue: "from-blue-400 to-indigo-500",
+  cyan: "from-cyan-400 to-blue-500",
   violet: "from-violet-400 to-purple-500",
   emerald: "from-emerald-400 to-teal-500",
   amber: "from-amber-400 to-orange-500",
@@ -326,6 +336,7 @@ const ACTION_COLORS: Record<
   { bg: string; icon: string }
 > = {
   blue: { bg: "bg-blue-500/15", icon: "text-blue-600 dark:text-blue-400" },
+  cyan: { bg: "bg-cyan-500/15", icon: "text-cyan-600 dark:text-cyan-400" },
   violet: {
     bg: "bg-violet-500/15",
     icon: "text-violet-600 dark:text-violet-400",
