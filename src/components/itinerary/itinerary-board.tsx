@@ -4,8 +4,9 @@ import { useMemo, useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
+import Link from "next/link";
 import {
-  Plus, Sparkles, ChevronUp, ChevronDown, ExternalLink, Search,
+  Plus, Sparkles, ChevronUp, ChevronDown, ExternalLink, Search, Compass,
   Bed, Plane, Car, Utensils, Ticket, HelpCircle, Trash2, Pencil, GripVertical, MapPin, Clock,
 } from "lucide-react";
 import dynamicImport from "next/dynamic";
@@ -301,6 +302,13 @@ export function ItineraryBoard({
               <Plus className="w-4 h-4" />
               {t("itinerary.addPlace")}
             </button>
+            <Link
+              href={`/trips/${tripId}/discover`}
+              aria-label={t("cards.discover")}
+              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ring-1 ring-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/15 transition-colors"
+            >
+              <Compass className="w-4 h-4" />
+            </Link>
           </div>
 
           {/* Day chips — horizontal scroll if many days */}
@@ -890,9 +898,9 @@ function SortableItemRow({
       id={`item-${item.id}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`group relative flex items-stretch rounded-xl border bg-card overflow-hidden transition-all ${
+      className={`group relative flex items-stretch rounded-2xl ring-1 bg-card overflow-hidden shadow-sm hover:shadow-md transition-all ${
         isDragging ? "opacity-40" : ""
-      } ${highlighted ? "border-primary/60 shadow-md shadow-primary/20" : "border-border hover:border-foreground/20"}`}
+      } ${highlighted ? "ring-primary/60 shadow-md shadow-primary/20" : "ring-border/60 hover:ring-border"}`}
     >
       <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-3 border-e border-border/40 shrink-0">
         <div
