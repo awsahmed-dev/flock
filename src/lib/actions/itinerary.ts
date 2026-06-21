@@ -303,6 +303,92 @@ export async function createItineraryItemFromGooglePlace(input: {
   return { id: newItem.id, dayDate: input.dayDate };
 }
 
+/**
+ * P5 — batch-add a whole AI-planned day in one shot. Same write as the single
+ * add but inserts the sequence in one transaction and posts ONE summary chat
+ * card instead of N "New plan" cards (5 cards per day would spam the feed).
+ */
+export async function createItineraryItemsFromGooglePlaces(input: {
+  tripId: string;
+  dayDate: string;
+  places: Array<{
+    placeId: string;
+    name: string;
+    category: string;
+    placeTypes: string[];
+    rating: number | null;
+    userRatingsTotal: number | null;
+    priceLevel: number | null;
+    coords: [number, number]; // [lng, lat]
+    address: string | null;
+    photoRef: string | null;
+    hoursSummary: string | null;
+    topTip: string | null;
+    startTime?: string | null;
+  }>;
+}) {
+  const user = await getAuthenticatedUser();
+  const trip = await getTripWithMembership(input.tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
+  if (input.places.length === 0) return { count: 0 };
+
+  await db.insert(profiles).values({
+    id: user.id,
+    displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "Traveler",
+    email: user.email,
+  }).onConflictDoNothing();
+
+  const existingForDay = await db.query.itineraryItems.findMany({
+    where: and(
+      eq(itineraryItems.tripId, input.tripId),
+      eq(itineraryItems.dayDate, input.dayDate),
+    ),
+    columns: { sortOrder: true },
+  });
+  let sortOrder = existingForDay.length;
+
+  const rows = input.places.map((p) => {
+    const photoUrl = p.photoRef
+      ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=800`
+      : null;
+    return {
+      tripId: input.tripId,
+      dayDate: input.dayDate,
+      title: p.name,
+      type: googleCategoryToType(p.category),
+      locationName: p.name,
+      locationLat: p.coords[1],
+      locationLng: p.coords[0],
+      startTime: p.startTime || null,
+      status: "confirmed" as const,
+      sortOrder: sortOrder++,
+      createdBy: user.id,
+      provider: "google" as const,
+      googlePlaceId: p.placeId,
+      placeTypes: p.placeTypes,
+      address: p.address,
+      userRatingsTotal: p.userRatingsTotal,
+      photoUrl,
+      rating: p.rating,
+      priceLevel: p.priceLevel,
+      hoursSummary: p.hoursSummary,
+      topTip: p.topTip,
+    };
+  });
+  await db.insert(itineraryItems).values(rows);
+
+  await db.insert(chatMessages).values({
+    tripId: input.tripId,
+    userId: user.id,
+    body: `✨ Planned ${input.places.length} ${input.places.length === 1 ? "place" : "places"} for the day`,
+    type: "text",
+  }).catch(() => {});
+
+  revalidatePath(`/trips/${input.tripId}/itinerary`);
+  revalidatePath(`/trips/${input.tripId}`);
+  return { count: input.places.length };
+}
+
 export async function updateItineraryItem(formData: FormData) {
   const user = await getAuthenticatedUser();
   const itemId = formData.get("itemId") as string;

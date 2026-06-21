@@ -811,6 +811,30 @@
     "nothingToSettle": "لا شيء مستحق",
     "settleFailed": "تعذّرت التسوية — حاول مرة أخرى"
   },
+  "overview": {
+    "daysPlanned": "أيام مُخطّطة",
+    "places": "الأماكن",
+    "spent": "المصروف",
+    "packed": "مُجهّز"
+  },
+  "planDay": {
+    "cta": "خطّط هذا اليوم",
+    "title": "خطّط هذا اليوم",
+    "subtitle": "يوم جاهز من أماكن حقيقية، مُرتّبة حسب رحلتك.",
+    "building": "نُجهّز يومك…",
+    "empty": "تعذّر تجهيز اليوم بعد",
+    "emptyCta": "تصفّح في اكتشف",
+    "add": "أضِف {count, plural, =0 {إلى اليوم} one {مكانًا} two {مكانين} few {# أماكن} other {# مكانًا}}",
+    "added": "أُضيف {count, plural, one {مكان} two {مكانان} few {# أماكن} other {# مكانًا}} إلى {day}",
+    "addError": "تعذّر تخطيط اليوم — أعد المحاولة",
+    "drop": "إزالة",
+    "restore": "إضافة من جديد",
+    "slotBreakfast": "الفطور",
+    "slotMorning": "صباحًا",
+    "slotLunch": "الغداء",
+    "slotAfternoon": "بعد الظهر",
+    "slotDinner": "العشاء"
+  },
   "decisions": {
     "label": "قرار",
     "yes": "نعم",

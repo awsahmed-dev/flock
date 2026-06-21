@@ -811,6 +811,30 @@
     "nothingToSettle": "Nothing was owed",
     "settleFailed": "Couldn't settle — try again"
   },
+  "overview": {
+    "daysPlanned": "Days planned",
+    "places": "Places",
+    "spent": "Spent",
+    "packed": "Packed"
+  },
+  "planDay": {
+    "cta": "Plan this day",
+    "title": "Plan this day",
+    "subtitle": "A ready-made day of real places, ranked for your trip.",
+    "building": "Building your day…",
+    "empty": "Couldn't assemble a day yet",
+    "emptyCta": "Browse in Discover",
+    "add": "Add {count, plural, =0 {to the day} one {# place} other {# places}}",
+    "added": "Added {count, plural, one {# place} other {# places}} to {day}",
+    "addError": "Couldn't plan that day — try again",
+    "drop": "Remove",
+    "restore": "Add back",
+    "slotBreakfast": "Breakfast",
+    "slotMorning": "Morning",
+    "slotLunch": "Lunch",
+    "slotAfternoon": "Afternoon",
+    "slotDinner": "Dinner"
+  },
   "decisions": {
     "label": "Decide",
     "yes": "Yes",

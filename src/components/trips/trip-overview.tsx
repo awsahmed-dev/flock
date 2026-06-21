@@ -1,40 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import {
-  Copy,
-  Check,
-  Users,
-  Calendar,
-  Wallet,
-  ArrowRight,
-  Clock,
-  Link2,
-  Sparkles,
+  Copy, Check, Users, Calendar, Wallet, ArrowRight, Clock, Link2, Sparkles,
+  MapPin, Backpack, Compass, Map as MapIcon, CreditCard as CardIcon,
+  Wallet as WalletIcon, X as XIcon, AlertCircle,
 } from "lucide-react";
-import { parseISO, differenceInDays, isPast, isFuture, differenceInCalendarDays } from "date-fns";
+import {
+  parseISO, differenceInDays, isPast, differenceInCalendarDays, eachDayOfInterval,
+  format as dfFormat,
+} from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import Link from "next/link";
 import { toast } from "sonner";
-import { AiPlannerPanel } from "./ai-planner-panel";
-import { TripActionHub, type ActionHubStats } from "./trip-action-hub";
-import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Map as MapIcon, CreditCard as CardIcon, Wallet as WalletIcon, X as XIcon } from "lucide-react";
+import { AiPlannerPanel } from "./ai-planner-panel";
+import { PlanDaySheet } from "@/components/itinerary/plan-day-sheet";
+import { pickSuggestion, type ActionHubStats } from "./trip-action-hub";
+import { fmtAmount } from "@/lib/numerals";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { MemberStatsSheet } from "@/components/trips/member-stats-sheet";
 
 interface Member {
   id: string;
-  // B22: trip_members row carries user_id directly (besides the join).
-  // Needed by MemberStatsSheet for the per-user roll-up query.
   userId?: string;
   displayName: string;
   role: "owner" | "member";
-  // B19: avatar from the joined profiles row (when the join is included).
   user?: { avatarUrl?: string | null; id?: string } | null;
 }
 
@@ -54,19 +47,8 @@ interface Props {
   inviteUrl: string | null;
   userId: string;
   stats: ActionHubStats;
-  /** B19: Unsplash hero photo for the trip's destination. When present
-   *  it replaces the gradient placeholder behind the hero card. */
   hero?: { url: string; creditName: string; creditLink: string } | null;
 }
-
-const AVATAR_COLORS = [
-  { bg: "bg-blue-500", text: "text-white" },
-  { bg: "bg-violet-500", text: "text-white" },
-  { bg: "bg-emerald-500", text: "text-white" },
-  { bg: "bg-amber-500", text: "text-white" },
-  { bg: "bg-rose-500", text: "text-white" },
-  { bg: "bg-cyan-500", text: "text-white" },
-];
 
 const CARD_GRADIENTS = [
   "from-blue-500 to-indigo-600",
@@ -84,13 +66,7 @@ function getGradient(id: string) {
   return CARD_GRADIENTS[hash % CARD_GRADIENTS.length];
 }
 
-function getMemberColor(id: string) {
-  const hash = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-
-// B15-e: status label now takes a translator so the hero pill follows
-// the active locale ("In 38 days" / "بعد 38 يوم").
+// Hero status pill — drives the countdown copy + tone.
 function getTripStatus(
   startDate: string,
   endDate: string,
@@ -99,38 +75,43 @@ function getTripStatus(
   const now = new Date();
   const start = parseISO(startDate);
   const end = parseISO(endDate);
-  if (now >= start && now <= end) return { label: t("trip.happeningNow"), color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" };
+  if (now >= start && now <= end)
+    return { label: t("trip.happeningNow"), color: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30" };
   if (isPast(end)) {
-    // B22: trips that ended within the last 14 days get a warmer
-    // "Just ended" label — they're still fresh in users' minds and the
-    // dead-grey "Past" felt cold for a trip that wrapped a week ago.
     const daysSinceEnd = differenceInCalendarDays(now, end);
-    if (daysSinceEnd <= 14) {
-      return { label: t("trip.justEnded"), color: "bg-amber-500/20 text-amber-300 border-amber-500/30" };
-    }
-    return { label: t("trip.past"), color: "bg-slate-500/20 text-slate-300 border-slate-500/30" };
+    if (daysSinceEnd <= 14)
+      return { label: t("trip.justEnded"), color: "bg-amber-500/20 text-amber-200 border-amber-400/30" };
+    return { label: t("trip.past"), color: "bg-slate-500/20 text-slate-200 border-slate-400/30" };
   }
   const days = differenceInCalendarDays(start, now);
-  return {
-    label: t("trip.startsIn", { days }),
-    color: "bg-blue-500/20 text-blue-200 border-blue-500/30",
-  };
+  return { label: t("trip.startsIn", { days }), color: "bg-blue-500/20 text-blue-100 border-blue-400/30" };
 }
 
+/**
+ * Paxawa v2 — Trip Overview, redesigned. The old overview stacked a hero, an
+ * onboarding strip, a loud 6-card colored action grid, two compact cards and a
+ * separate AI button — it read as crowded. v2 calms it to a clear hierarchy:
+ * a refined hero, the plan-first primary actions, ONE "up next" router, a quiet
+ * snapshot strip, and crew — leaning on the sidebar/bottom-nav for navigation
+ * rather than duplicating every tab as a tile.
+ */
 export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
   const t = useT();
-  // locale kept for future affiliate prefill; no longer needed on this
-  // screen now that affiliate strips moved into Plan/Book mode.
   useLocale();
   const [copied, setCopied] = useState(false);
-  // B22: tap a crew chip → opens MemberStatsSheet with that member's
-  // roll-up of items / expenses / packing / balance.
   const [statsMember, setStatsMember] = useState<Member | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [planDayOpen, setPlanDayOpen] = useState(false);
 
   const nights = differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate));
   const gradient = getGradient(trip.id);
   const tripStatus = getTripStatus(trip.startDate, trip.endDate, t);
+  const suggestion = pickSuggestion(trip.id, stats, t);
+
+  const days = eachDayOfInterval({
+    start: parseDateOnly(trip.startDate),
+    end: parseDateOnly(trip.endDate),
+  }).map((d) => dfFormat(d, "yyyy-MM-dd"));
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -140,253 +121,243 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  // navLinks removed — the previous 4-tile grid duplicated the bottom-nav
-  // tabs. High-frequency tabs live in the bottom nav; less-frequent views
-  // (Crew / Docs / Map / Photos) are reachable via the pill row under
-  // the hero card.
-
   return (
-    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
-      {/* Left column on lg+: hero + onboarding + action hub + AI plan */}
+    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_340px] lg:gap-7 lg:items-start">
+      {/* ── Left column — hero + plan actions + up-next + snapshot ─────── */}
       <div className="space-y-6 min-w-0">
-      {/* ── Hero card ──────────────────────────────────────────────────
-          B4: trimmed ~30% in height. Padding tightened, status pip lives
-          inline with destination, meta row collapses to 2 lines on
-          narrow screens with smaller text. The orbs are smaller and
-          fewer so the card reads as a header strip rather than a poster. */}
-      <div className={`relative rounded-2xl ${hero ? "" : `bg-gradient-to-br ${gradient}`} overflow-hidden min-h-[180px]`}>
-        {/* B19: real destination photo behind the hero. The dark overlay
-            keeps text legible regardless of what Unsplash returned, and
-            the gradient placeholder still shows while the image lazy-
-            loads or when Unsplash isn't configured. */}
-        {hero && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={hero.url}
-              alt={trip.destination}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-black/65 via-black/45 to-black/65" />
-            {/* Photographer attribution — required by Unsplash ToS. */}
-            <a
-              href={hero.creditLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-1.5 end-2 text-[9px] text-white/60 hover:text-white/90 z-20"
-            >
-              📸 {hero.creditName}
-            </a>
-          </>
-        )}
-        {/* Decorative orbs — kept on top of the image for the signature
-            paxawa shape language; toned down a bit when we have a photo. */}
-        <div className={`absolute -right-8 -top-8 w-36 h-36 rounded-full ${hero ? "bg-white/8" : "bg-white/10"} pointer-events-none`} />
-        <div className={`absolute -left-4 bottom-0 w-20 h-20 rounded-full ${hero ? "bg-black/15" : "bg-black/8"} pointer-events-none`} />
+        <FirstRunOnboarding tripId={trip.id} />
 
-        <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-5">
-          <div className="flex items-start justify-between gap-3 min-w-0">
-            <div className="min-w-0 flex-1">
-              {/* Destination + status on one line */}
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <p className="text-white/60 text-[10px] font-bold tracking-widest uppercase">
-                  {trip.destination}
-                </p>
-                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${tripStatus.color}`}>
-                  <span className="w-1 h-1 rounded-full bg-current" />
-                  {tripStatus.label}
-                </span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight break-words">
-                {trip.name}
-              </h1>
-              {/* Meta row — single horizontal-scroll line on mobile */}
-              <div className="flex items-center gap-3 mt-2 text-[11px] text-white/80 flex-wrap">
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {/* B15-f: date-fns ar locale resolves month names to
-                      Arabic via the active-locale module state set by
-                      the root layout / locale provider. Pattern stays
-                      "d MMM" so the order reads naturally in both
-                      languages (day, then month). */}
-                  {format(parseDateOnly(trip.startDate), "d MMM")} – {format(parseDateOnly(trip.endDate), "d MMM")}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {t("trip.nightsCount", { nights })}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {trip.members.length}
-                </span>
-                {trip.budgetTotal && (
-                  <span className="inline-flex items-center gap-1">
-                    <Wallet className="w-3 h-3" />
-                    {trip.currency} {trip.budgetTotal.toLocaleString()}
-                  </span>
+        {/* Hero — refined, more breathing room, a single clear status pill. */}
+        <div className={`relative rounded-3xl ${hero ? "" : `bg-gradient-to-br ${gradient}`} overflow-hidden`}>
+          {hero && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={hero.url} alt={trip.destination} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/30" />
+              <a
+                href={hero.creditLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-1.5 end-2.5 text-[9px] text-white/55 hover:text-white/90 z-20"
+              >
+                📸 {hero.creditName}
+              </a>
+            </>
+          )}
+          <div className="relative z-10 px-6 py-7 sm:px-8 sm:py-9 flex flex-col min-h-[210px] sm:min-h-[230px]">
+            <div className="flex items-start justify-between gap-3">
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm ${tripStatus.color}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                {tripStatus.label}
+              </span>
+              <div className="flex items-center -space-x-1.5 shrink-0">
+                {trip.members.slice(0, 4).map((m) => (
+                  <UserAvatar key={m.id} name={m.displayName} avatarUrl={m.user?.avatarUrl} seed={m.id} size="md" className="border-2 border-white/40" />
+                ))}
+                {trip.members.length > 4 && (
+                  <div className="w-7 h-7 rounded-full bg-black/30 text-white border-2 border-white/40 flex items-center justify-center text-[10px] font-bold shrink-0">
+                    +{trip.members.length - 4}
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Member stack — uses UserAvatar so uploaded photos surface
-                automatically alongside initials fallbacks. */}
-            <div className="flex items-center -space-x-1.5 shrink-0">
-              {trip.members.slice(0, 4).map((m) => (
-                <UserAvatar
-                  key={m.id}
-                  name={m.displayName}
-                  avatarUrl={m.user?.avatarUrl}
-                  seed={m.id}
-                  size="md"
-                  className="border-2 border-white/30"
-                />
-              ))}
-              {trip.members.length > 4 && (
-                <div className="w-7 h-7 rounded-full bg-black/25 text-white border-2 border-white/30 flex items-center justify-center text-[10px] font-bold shrink-0">
-                  +{trip.members.length - 4}
-                </div>
-              )}
+            <div className="mt-auto pt-6">
+              <p className="text-white/65 text-[11px] font-bold tracking-widest uppercase mb-1">
+                {trip.destination}
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-[1.1] break-words">
+                {trip.name}
+              </h1>
+              <div className="flex items-center gap-x-4 gap-y-1 mt-3 text-[12px] text-white/85 flex-wrap font-medium">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {format(parseDateOnly(trip.startDate), "d MMM")} – {format(parseDateOnly(trip.endDate), "d MMM")}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  {t("trip.nightsCount", { nights })}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  {t("trip.crewCount", { count: trip.members.length })}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Action Hub — the "what can I do here?" surface (B2-2). Replaces
-          the old icon-only pill row that hid feature discoverability
-          (Tester 2: "I didn't know there was a vote feature"). Each card
-          now surfaces live state — counts, what's pending, what's
-          missing — and the Up-next card directs to the highest-leverage
-          action right now. */}
-      {/* B17 (audit fix): Overview now hosts ONLY the calm modules — hero,
-          Up Next, action grid, recent activity, crew. The affiliate
-          strips + Bookings rail that previously lived here were moved
-          into Plan/Book mode (the single source of truth for "things to
-          book") and the Wallet tab (the single source of truth for
-          "things already booked"). This collapses the 4-entry-point
-          confusion into a clean Plan → Book → Wallet loop. */}
-
-      <FirstRunOnboarding tripId={trip.id} />
-
-      <TripActionHub tripId={trip.id} stats={stats} />
-
-      {/* B21: Find-a-Stay smart-tool card removed — fully redundant with
-          Plan/Book mode now. AI Plan card kept as the one-tap entry to
-          the wizard for users who want a fresh itinerary without going
-          through Plan tab. Sits below the action grid as a single full-
-          width prompt rather than a 2-up tile pair. */}
-      <button
-        type="button"
-        onClick={() => setAiOpen(true)}
-        className="w-full group text-left rounded-2xl border border-primary/20 hover:border-primary/40 bg-gradient-to-br from-primary/5 to-violet-500/5 hover:shadow-md hover:shadow-primary/10 transition-all p-3 flex items-center gap-3"
-      >
-        <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-          <Sparkles className="w-4 h-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm">{t("itinerary.aiPlan")}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {trip.destination}
-          </p>
-        </div>
-        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
-      </button>
-
-      </div>
-      {/* Right rail on lg+: crew + invite + helpful trip metrics. On mobile
-          this still renders below the action hub thanks to the grid
-          collapsing to a single column under lg. */}
-      <div className="space-y-6 lg:sticky lg:top-6">
-      {/* ── Crew + invite ───────────────────────────────────────────
-          B4: merged into one card. Two side-by-side cards (one for
-          listing, one for inviting) was the redundancy testers
-          flagged. Now: roster on top, invite link as a compact action
-          row below — one card, one mental model. */}
-      <div className="rounded-2xl border border-border/60 bg-card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
-              <Users className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-            </div>
-            <h3 className="font-bold text-sm">{t("trip.crewCount", { count: trip.members.length })}</h3>
-          </div>
-          <Link
-            href={`/trips/${trip.id}/members`}
-            className="text-[11px] font-bold tracking-wider uppercase text-primary hover:text-primary/80"
+        {/* Plan-first primary actions. P5 "Plan this day" leads; the multi-day
+            wizard sits beside it as a calmer secondary. */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setPlanDayOpen(true)}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3.5 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
           >
-            {t("trip.manage")}
-          </Link>
+            <Sparkles className="w-4 h-4" />
+            {t("planDay.cta")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAiOpen(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl ring-1 ring-border/70 bg-card hover:bg-muted/50 px-4 py-3.5 text-sm font-bold transition-colors"
+          >
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="hidden sm:inline">{t("itinerary.aiPlan")}</span>
+          </button>
         </div>
 
-        {/* Roster — horizontal-scroll chips so the card doesn't grow
-            unbounded with big groups. */}
-        <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none mb-3">
-          {trip.members.map((member) => (
-            <button
-              type="button"
-              key={member.id}
-              onClick={() => setStatsMember(member)}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background hover:border-primary/40 hover:bg-primary/5 ps-1 pe-2.5 py-1 transition-colors"
-              title={member.displayName}
-            >
-              <UserAvatar
-                name={member.displayName}
-                avatarUrl={member.user?.avatarUrl}
-                seed={member.id}
-                size="xs"
-              />
-              <span className="text-[11px] font-medium truncate max-w-[110px]">
-                {member.displayName}
+        {/* Up next — the single smart router (calm, one accent). */}
+        <Link
+          href={suggestion.href}
+          className="group flex items-center gap-3.5 rounded-2xl ring-1 ring-border/60 bg-card p-4 hover:ring-border hover:shadow-md transition-all"
+        >
+          <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <suggestion.icon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                {t("common.upNext")}
               </span>
-              {member.role === "owner" && (
-                <span className="text-[9px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400">
-                  {t("trip.owner")}
+              {suggestion.urgent && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="w-2.5 h-2.5" />
+                  {t("common.needsYou")}
                 </span>
               )}
-            </button>
-          ))}
+            </div>
+            <p className="font-bold text-sm leading-snug truncate">{suggestion.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{suggestion.body}</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
+        </Link>
+
+        {/* Snapshot — quiet, scannable trip metrics; each links to its page.
+            Replaces the loud 6-card grid that made the overview feel busy. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <StatTile
+            href={`/trips/${trip.id}/itinerary`}
+            icon={Calendar}
+            accent="text-blue-600 dark:text-blue-400 bg-blue-500/10"
+            value={`${stats.daysWithItems}/${stats.totalDays}`}
+            label={t("overview.daysPlanned")}
+          />
+          <StatTile
+            href={`/trips/${trip.id}/itinerary`}
+            icon={MapPin}
+            accent="text-cyan-600 dark:text-cyan-400 bg-cyan-500/10"
+            value={String(stats.itineraryCount)}
+            label={t("overview.places")}
+          />
+          <StatTile
+            href={`/trips/${trip.id}/expenses`}
+            icon={Wallet}
+            accent="text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+            value={`${stats.currency} ${fmtAmount(stats.totalSpent)}`}
+            label={t("overview.spent")}
+          />
+          <StatTile
+            href={`/trips/${trip.id}/pack?view=packing`}
+            icon={Backpack}
+            accent="text-amber-600 dark:text-amber-400 bg-amber-500/10"
+            value={stats.packingTotal > 0 ? `${stats.packingPacked}/${stats.packingTotal}` : "—"}
+            label={t("overview.packed")}
+          />
         </div>
 
-        {/* Invite row */}
-        {inviteUrl ? (
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 ps-3 pe-1 py-1">
-            <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="text-[11px] text-muted-foreground truncate font-mono flex-1">
-              {inviteUrl.replace(/^https?:\/\//, "")}
-            </span>
-            <button
-              type="button"
-              onClick={copyInviteLink}
-              className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                copied
-                  ? "bg-emerald-600 text-white"
-                  : "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90"
-              }`}
-            >
-              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              {copied ? t("common.copied") : t("trip.copyInvite")}
-            </button>
+        {/* Discover nudge — quiet, single line. */}
+        <Link
+          href={`/trips/${trip.id}/discover`}
+          className="group flex items-center gap-3 rounded-2xl ring-1 ring-cyan-500/20 bg-gradient-to-r from-cyan-500/[0.06] to-transparent p-3.5 hover:ring-cyan-500/40 transition-all"
+        >
+          <div className="w-9 h-9 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+            <Compass className="w-4 h-4" />
           </div>
-        ) : (
-          <p className="text-[11px] text-muted-foreground italic">{t("trip.noInviteToken")}</p>
-        )}
-      </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">{t("cards.discover")}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{t("cards.discoverHeadline")}</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
+        </Link>
       </div>
 
-      {/* Lazy-mount the AI planner — its mount cost includes the
-          questionnaire state + Anthropic client init, so we only pay
-          it once the user opens the panel. */}
+      {/* ── Right rail — crew + invite ─────────────────────────────────── */}
+      <div className="space-y-6 lg:sticky lg:top-6">
+        <div className="rounded-2xl ring-1 ring-border/60 bg-card p-5">
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
+                <Users className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              </div>
+              <h3 className="font-bold text-sm">{t("trip.crewCount", { count: trip.members.length })}</h3>
+            </div>
+            <Link
+              href={`/trips/${trip.id}/members`}
+              className="text-[11px] font-bold tracking-wider uppercase text-primary hover:text-primary/80"
+            >
+              {t("trip.manage")}
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none mb-4">
+            {trip.members.map((member) => (
+              <button
+                type="button"
+                key={member.id}
+                onClick={() => setStatsMember(member)}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full ring-1 ring-border/70 bg-background hover:ring-primary/40 hover:bg-primary/5 ps-1 pe-2.5 py-1 transition-colors"
+                title={member.displayName}
+              >
+                <UserAvatar name={member.displayName} avatarUrl={member.user?.avatarUrl} seed={member.id} size="xs" />
+                <span className="text-[11px] font-medium truncate max-w-[110px]">{member.displayName}</span>
+                {member.role === "owner" && (
+                  <span className="text-[9px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400">
+                    {t("trip.owner")}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {inviteUrl ? (
+            <div className="flex items-center gap-2 rounded-xl ring-1 ring-border/70 bg-muted/30 ps-3 pe-1 py-1">
+              <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-[11px] text-muted-foreground truncate font-mono flex-1">
+                {inviteUrl.replace(/^https?:\/\//, "")}
+              </span>
+              <button
+                type="button"
+                onClick={copyInviteLink}
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                  copied ? "bg-emerald-600 text-white" : "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90"
+                }`}
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? t("common.copied") : t("trip.copyInvite")}
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic">{t("trip.noInviteToken")}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Lazy-mounted panels */}
       {aiOpen && (
-        <AiPlannerPanel
-          open={aiOpen}
-          onClose={() => setAiOpen(false)}
+        <AiPlannerPanel open={aiOpen} onClose={() => setAiOpen(false)} tripId={trip.id} destination={trip.destination} />
+      )}
+      {planDayOpen && (
+        <PlanDaySheet
+          open={planDayOpen}
+          onClose={() => setPlanDayOpen(false)}
           tripId={trip.id}
-          destination={trip.destination}
+          days={days}
+          initialDay={days[0] ?? null}
         />
       )}
 
-      {/* B22: crew member roll-up sheet — tap any crew chip in the
-          Crew section above to see that member's contribution stats. */}
       <MemberStatsSheet
         open={statsMember !== null}
         onClose={() => setStatsMember(null)}
@@ -408,19 +379,36 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
 
 /* ──────────────────────────────────────────────────────────────────────── */
 
+function StatTile({
+  href, icon: Icon, accent, value, label,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+  value: string;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-2xl ring-1 ring-border/60 bg-card p-3.5 sm:p-4 hover:ring-border hover:shadow-md hover:-translate-y-0.5 transition-all"
+    >
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2.5 ${accent}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <p className="text-lg sm:text-xl font-extrabold tabular-nums tracking-tight truncate">{value}</p>
+      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{label}</p>
+    </Link>
+  );
+}
+
 /**
- * B17 (audit fix #6): one-time onboarding strip that explains the
- * Plan → Book → Wallet loop so first-time users understand the mental
- * model without us writing docs. Three lines, dismissible. Persists
- * the dismissal per-user in localStorage so it never reappears.
- *
- * Currently preview-gated behind ?previewAffiliate=1 — flips on for
- * everyone once we sign the affiliate programs.
+ * One-time onboarding strip explaining the Plan → Book → Wallet loop.
+ * Dismissible, persisted per-user in localStorage.
  */
 function FirstRunOnboarding({ tripId }: { tripId: string }) {
   const t = useT();
   const searchParams = useSearchParams();
-  // B18: onboarding strip ships to everyone now.
   const showPreview = true;
   void searchParams;
   const [dismissed, setDismissed] = useState(true);
@@ -439,7 +427,7 @@ function FirstRunOnboarding({ tripId }: { tripId: string }) {
   if (!showPreview || dismissed) return null;
 
   return (
-    <div className="relative rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-violet-500/5 to-fuchsia-500/5 p-4 overflow-hidden">
+    <div className="relative rounded-2xl ring-1 ring-primary/25 bg-gradient-to-br from-primary/5 via-violet-500/5 to-fuchsia-500/5 p-4 overflow-hidden">
       <button
         type="button"
         onClick={dismiss}
@@ -458,9 +446,7 @@ function FirstRunOnboarding({ tripId }: { tripId: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm">{t("onboarding.step1Title")}</p>
-            <p className="text-[11px] text-muted-foreground">
-              {t("onboarding.step1Body")}
-            </p>
+            <p className="text-[11px] text-muted-foreground">{t("onboarding.step1Body")}</p>
           </div>
         </li>
         <li className="flex items-start gap-3">
@@ -469,9 +455,7 @@ function FirstRunOnboarding({ tripId }: { tripId: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm">{t("onboarding.step2Title")}</p>
-            <p className="text-[11px] text-muted-foreground">
-              {t("onboarding.step2Body")}
-            </p>
+            <p className="text-[11px] text-muted-foreground">{t("onboarding.step2Body")}</p>
           </div>
         </li>
         <li className="flex items-start gap-3">
@@ -480,16 +464,11 @@ function FirstRunOnboarding({ tripId }: { tripId: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm">
-              <Link
-                href={`/trips/${tripId}/wallet`}
-                className="hover:underline"
-              >
+              <Link href={`/trips/${tripId}/wallet`} className="hover:underline">
                 {t("onboarding.step3Title")}
               </Link>
             </p>
-            <p className="text-[11px] text-muted-foreground">
-              {t("onboarding.step3Body")}
-            </p>
+            <p className="text-[11px] text-muted-foreground">{t("onboarding.step3Body")}</p>
           </div>
         </li>
       </ol>

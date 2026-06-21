@@ -358,7 +358,7 @@ const ACTION_COLORS: Record<
 
 /* ─── Smart suggestion picker ─────────────────────────────────────────── */
 
-interface Suggestion {
+export interface Suggestion {
   title: string;
   body: string;
   href: string;
@@ -368,8 +368,9 @@ interface Suggestion {
 
 // B15-i: pickSuggestion accepts the translator so the smart-suggestion
 // title + body follow the active locale. The function isn't a React
-// component so it can't call useT() itself.
-function pickSuggestion(
+// component so it can't call useT() itself. Exported (P5/overview-v2) so the
+// redesigned Overview can reuse the same priority logic without the loud grid.
+export function pickSuggestion(
   tripId: string,
   s: ActionHubStats,
   t: (k: string, p?: Record<string, string | number>) => string,

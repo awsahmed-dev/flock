@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { AddPlaceSearch } from "./add-place-search";
 import { EditItemDialog } from "./edit-item-dialog";
+import { PlanDaySheet } from "./plan-day-sheet";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { fmtAmount } from "@/lib/numerals";
@@ -116,6 +117,7 @@ export function ItineraryBoard({
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [planDayOpen, setPlanDayOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [focusedDay, setFocusedDay] = useState<string | null>(days[0] ?? null);
@@ -283,15 +285,24 @@ export function ItineraryBoard({
             </div>
           </div>
 
-          {/* Inline action buttons — AI Plan + Add place. No FAB needed on
-              desktop; the controls live where the eye is. */}
-          <div className="flex items-center gap-2">
+          {/* Inline action buttons. P5: "Plan this day" is the headline AI
+              affordance (gradient, full-width); the multi-day wizard + manual
+              Add sit below it as secondary outline buttons. */}
+          <button
+            type="button"
+            onClick={() => setPlanDayOpen(true)}
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 text-white px-3 py-2.5 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+          >
+            <Sparkles className="w-4 h-4" />
+            {t("planDay.cta")}
+          </button>
+          <div className="mt-2 flex items-center gap-2">
             <button
               type="button"
               onClick={() => setAiOpen(true)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 text-white px-3 py-2 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-primary/5 text-foreground px-3 py-2 text-xs font-bold transition-colors"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-primary" />
               {t("itinerary.aiPlan")}
             </button>
             <button
@@ -499,6 +510,17 @@ export function ItineraryBoard({
       <div className="absolute z-40 end-4 sm:end-6 bottom-[80px] flex flex-col items-end gap-2 pointer-events-none lg:hidden">
         {addPickerOpen && (
           <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAddPickerOpen(false);
+                setPlanDayOpen(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white shadow-lg px-4 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {t("planDay.cta")}
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -822,6 +844,17 @@ export function ItineraryBoard({
           onClose={() => setAiOpen(false)}
           tripId={tripId}
           destination={destination}
+        />
+      )}
+
+      {/* P5: "Plan this day" — assemble a real-place day from the engine. */}
+      {planDayOpen && (
+        <PlanDaySheet
+          open={planDayOpen}
+          onClose={() => setPlanDayOpen(false)}
+          tripId={tripId}
+          days={days}
+          initialDay={focusedDay}
         />
       )}
     </div>
