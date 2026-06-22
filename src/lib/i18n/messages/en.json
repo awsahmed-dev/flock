@@ -817,6 +817,13 @@
     "nothingToSettle": "Nothing was owed",
     "settleFailed": "Couldn't settle — try again"
   },
+  "offline": {
+    "title": "You're offline",
+    "body": "No connection right now. Trips you've already opened are saved and still work — head back to one of them.",
+    "retry": "Try again",
+    "backToTrips": "Back to my trips",
+    "banner": "You're offline — showing your saved data"
+  },
   "overview": {
     "daysPlanned": "Days planned",
     "places": "Places",

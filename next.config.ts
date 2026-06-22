@@ -62,7 +62,51 @@ async function buildConfig() {
       cacheOnFrontEndNav: true,
       aggressiveFrontEndNavCaching: true,
       reloadOnOnline: true,
-      workboxOptions: { disableDevLogs: true },
+      // P6 offline: serve a branded fallback when navigating to an uncached
+      // route while offline. Pages already opened (trips, dashboard) are cached
+      // by the SW and render from cache.
+      fallbacks: { document: "/~offline" },
+      // Keep next-pwa's solid defaults (static assets, fonts, RSC, same-origin
+      // images) AND add the cross-origin sources an added itinerary needs to
+      // render offline: Mapbox tiles/styles + the Google place-photo proxy.
+      extendDefaultRuntimeCaching: true,
+      workboxOptions: {
+        disableDevLogs: true,
+        runtimeCaching: [
+          {
+            // Mapbox styles, fonts, sprites + vector/raster tiles.
+            urlPattern: /^https:\/\/(?:api|[a-d]\.tiles)\.mapbox\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "mapbox",
+              expiration: { maxEntries: 800, maxAgeSeconds: 7 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Our same-origin Google place-photo proxy — immutable per ref, so
+            // CacheFirst both makes itinerary photos work offline AND avoids
+            // re-billing the Google photo call on repeat views.
+            urlPattern: /\/api\/discover\/photo/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "place-photos",
+              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Unsplash destination/hero imagery.
+            urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "unsplash",
+              expiration: { maxEntries: 120, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
     });
     cfg = withPWA(nextConfig) as NextConfig;
   }
