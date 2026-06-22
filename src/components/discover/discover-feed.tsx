@@ -236,7 +236,7 @@ export function DiscoverFeed({
                     key={c ?? "all"}
                     type="button"
                     onClick={() => { setQuery(""); setSearchOpen(false); setCategory(c); }}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ring-1 ${
+                    className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-bold transition-all ring-1 ${
                       active
                         ? "bg-white text-neutral-900 ring-white"
                         : "bg-white/10 text-white/90 ring-white/15 backdrop-blur-md hover:bg-white/20"

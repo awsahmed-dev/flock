@@ -73,14 +73,14 @@ export function DecisionsBoard({ tripId, rows }: { tripId: string; rows: LensRow
       <Header t={t} />
 
       {/* Segmented filter — the lens. */}
-      <div className="mt-5 inline-flex items-center gap-1 rounded-full bg-muted/60 p-1">
+      <div className="mt-5 inline-flex items-center gap-1 rounded-2xl bg-muted/60 p-1.5">
         {tabs.map((tb) => (
           <button
             key={tb.id}
             type="button"
             onClick={() => setTab(tb.id)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-bold transition-colors",
+              "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold transition-colors",
               tab === tb.id
                 ? "bg-card text-foreground shadow-sm ring-1 ring-border/60"
                 : "text-muted-foreground hover:text-foreground",
@@ -90,7 +90,7 @@ export function DecisionsBoard({ tripId, rows }: { tripId: string; rows: LensRow
             {tb.count > 0 && (
               <span
                 className={cn(
-                  "min-w-[18px] rounded-full px-1 text-[11px] tabular-nums",
+                  "min-w-[20px] rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums",
                   tab === tb.id ? "bg-primary/10 text-primary" : "bg-foreground/10 text-muted-foreground",
                 )}
               >

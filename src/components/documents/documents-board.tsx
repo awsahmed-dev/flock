@@ -264,7 +264,7 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embed
       )}
 
       {/* View tabs */}
-      <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-muted/60 w-fit">
         {tabs.map((t) => {
           const Icon = t.icon;
           const active = view === t.id;
@@ -273,16 +273,16 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embed
               key={t.id}
               type="button"
               onClick={() => setView(t.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                 active
-                  ? "bg-card text-foreground shadow-sm"
+                  ? "bg-card text-foreground shadow-sm ring-1 ring-border/60"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               {t.label}
               <span
-                className={`text-[10px] tabular-nums px-1.5 rounded-full ${
+                className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
                   active ? "bg-primary/15 text-primary" : "bg-muted-foreground/15"
                 }`}
               >

@@ -148,7 +148,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
                   type="button"
                   onClick={() => setDay(d)}
                   className={cn(
-                    "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all",
+                    "shrink-0 rounded-xl px-3.5 py-2 text-xs font-bold transition-all",
                     d === day
                       ? "bg-foreground text-background"
                       : "bg-muted/50 text-muted-foreground hover:text-foreground",

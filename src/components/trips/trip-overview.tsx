@@ -146,7 +146,7 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
               </a>
             </>
           )}
-          <div className="relative z-10 px-6 py-7 sm:px-8 sm:py-9 flex flex-col min-h-[210px] sm:min-h-[230px]">
+          <div className="relative z-10 px-6 py-6 sm:px-8 sm:py-7 flex flex-col min-h-[180px] sm:min-h-[200px]">
             <div className="flex items-start justify-between gap-3">
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm ${tripStatus.color}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -190,12 +190,13 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
         </div>
 
         {/* Plan-first primary actions. P5 "Plan this day" leads; the multi-day
-            wizard sits beside it as a calmer secondary. */}
-        <div className="flex items-center gap-2.5">
+            wizard sits beside it as a calmer secondary (balanced 2:1, not a
+            giant bar next to a tiny chip). */}
+        <div className="flex items-stretch gap-2.5">
           <button
             type="button"
             onClick={() => setPlanDayOpen(true)}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3.5 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+            className="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
           >
             <Sparkles className="w-4 h-4" />
             {t("planDay.cta")}
@@ -203,10 +204,10 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
           <button
             type="button"
             onClick={() => setAiOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl ring-1 ring-border/70 bg-card hover:bg-muted/50 px-4 py-3.5 text-sm font-bold transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl ring-1 ring-border/70 bg-card hover:bg-muted/50 px-4 py-3 text-sm font-bold transition-colors"
           >
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="hidden sm:inline">{t("itinerary.aiPlan")}</span>
+            {t("itinerary.aiPlan")}
           </button>
         </div>
 
