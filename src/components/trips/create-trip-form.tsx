@@ -11,7 +11,7 @@ import { useT } from "@/components/i18n/locale-provider";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "JPY", "AUD", "CAD"];
 
-export function CreateTripForm() {
+export function CreateTripForm({ defaultDestination }: { defaultDestination?: string } = {}) {
   const t = useT();
   const [isPending, startTransition] = useTransition();
   const [currency, setCurrency] = useState("USD");
@@ -49,6 +49,7 @@ export function CreateTripForm() {
           id="destination"
           name="destination"
           placeholder={t("trip.destinationPlaceholder")}
+          defaultValue={defaultDestination}
           required
         />
         <p className="text-[11px] text-muted-foreground">

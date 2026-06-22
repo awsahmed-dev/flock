@@ -172,6 +172,8 @@
     "tripsSummaryEmpty": "No upcoming trips"
   },
   "dashboard": {
+    "whereToNext": "Where to next",
+    "planTrip": "Plan a trip",
     "totalTrips": "total trips",
     "upcomingCount": "upcoming",
     "daysPlanned": "days planned",

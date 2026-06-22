@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Plus, ArrowRight, Calendar } from "lucide-react";
 import { isPast, differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -8,6 +9,9 @@ import { parseDateOnly } from "@/lib/date-only";
 import type { trips } from "@/lib/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { OnboardingCard } from "@/components/dashboard/onboarding-card";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { pickSuggestedDestinations } from "@/lib/discovery/destinations";
+import { getDestinationImages } from "@/lib/actions/destination-images";
 
 type Trip = InferSelectModel<typeof trips>;
 
@@ -162,39 +166,70 @@ export function TripGrid({ trips }: Props) {
  * Inert "inspiration" teaser strip until the taste-driven destination engine
  * (logic §13.2) is wired. Premium gradient cards with breathing room.
  */
+/**
+ * P6 "Where to next" — real, clickable destination inspiration (replaces the
+ * old "Coming soon" placeholder). Cards render instantly with a gradient; real
+ * photos swap in progressively (lazy server fetch, cached) so the dashboard
+ * never blocks. Tapping a card opens the create-trip flow prefilled with that
+ * destination. Curated Gulf-relevant + marquee set, rotates daily.
+ */
 export function SuggestedTrips() {
-  const samples = [
-    { title: "Weekend in Lisbon", subtitle: "2 nights · Foodie + Cultural", emoji: "🇵🇹", gradient: "from-amber-500 to-orange-500" },
-    { title: "Kyoto in autumn", subtitle: "5 nights · Cultural + Chill", emoji: "🍁", gradient: "from-rose-500 to-pink-600" },
-    { title: "Iceland road loop", subtitle: "7 nights · Adventure", emoji: "🏔️", gradient: "from-cyan-500 to-blue-500" },
-    { title: "Bali surf + chill", subtitle: "10 nights · Relaxed", emoji: "🌴", gradient: "from-emerald-500 to-teal-600" },
-  ];
+  const t = useT();
+  const { locale } = useLocale();
+  const [picks] = useState(() => pickSuggestedDestinations(4));
+  const [images, setImages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let alive = true;
+    getDestinationImages(picks.map((p) => p.name))
+      .then((map) => alive && setImages(map))
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [picks]);
 
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-3.5">
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-          Inspiration from Paxawa
+          {t("dashboard.whereToNext")}
         </h2>
-        <span className="text-[10px] font-medium text-muted-foreground/70">Coming soon</span>
       </div>
       <div className="flex items-stretch gap-3.5 overflow-x-auto -mx-1 px-1 pb-2 scrollbar-none">
-        {samples.map((s) => (
-          <div
-            key={s.title}
-            className={`shrink-0 w-60 rounded-3xl bg-gradient-to-br ${s.gradient} p-4 text-white relative overflow-hidden cursor-not-allowed opacity-90`}
-            title="Coming soon"
-          >
-            <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/15" />
-            <div className="relative z-10 flex flex-col h-full justify-between min-h-[96px]">
-              <span className="text-2xl">{s.emoji}</span>
-              <div>
-                <p className="font-bold text-sm leading-tight">{s.title}</p>
-                <p className="text-[11px] opacity-85 mt-0.5">{s.subtitle}</p>
+        {picks.map((s) => {
+          const region = locale === "ar" ? s.region.ar : s.region.en;
+          const hook = locale === "ar" ? s.hook.ar : s.hook.en;
+          const image = images[s.name];
+          return (
+            <Link
+              key={s.name}
+              href={`/trips/new?destination=${encodeURIComponent(s.name)}`}
+              prefetch={false}
+              className="group shrink-0 w-60 rounded-3xl overflow-hidden relative ring-1 ring-border/40 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              <div className={`relative h-44 ${image ? "" : `bg-gradient-to-br ${s.gradient}`}`}>
+                {image && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={image} alt={s.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  </>
+                )}
+                {!image && <div className="absolute -end-4 -top-4 w-20 h-20 rounded-full bg-white/15" />}
+                <div className="absolute inset-0 p-4 flex flex-col justify-between text-white">
+                  <span className="text-2xl drop-shadow-sm">{s.emoji}</span>
+                  <div>
+                    <p className="font-bold text-base leading-tight drop-shadow-sm">{s.name}</p>
+                    <p className="text-[11px] font-medium opacity-90 drop-shadow-sm">{region}</p>
+                    <p className="text-[11px] opacity-85 mt-1 line-clamp-1 drop-shadow-sm">{hook}</p>
+                  </div>
+                </div>
+                <span className="absolute top-3 end-3 inline-flex items-center gap-1 rounded-full bg-white/95 text-neutral-900 px-2.5 py-1 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                  {t("dashboard.planTrip")} <ArrowRight className="w-3 h-3 rtl:rotate-180" />
+                </span>
               </div>
-            </div>
-          </div>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

@@ -172,6 +172,8 @@
     "tripsSummaryEmpty": "لا توجد رحلات قادمة"
   },
   "dashboard": {
+    "whereToNext": "إلى أين بعد؟",
+    "planTrip": "خطّط رحلة",
     "totalTrips": "إجمالي الرحلات",
     "upcomingCount": "قادمة",
     "daysPlanned": "يوم مُخطَّط",

@@ -8,11 +8,16 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { CreateTripForm } from "@/components/trips/create-trip-form";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 
-export default async function NewTripPage() {
+export default async function NewTripPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ destination?: string }>;
+}) {
   const user = await getCurrentUser();
 
   if (!user) redirect("/auth/login");
 
+  const { destination } = await searchParams;
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const t = (k: string) => tFromDict(dict, k, undefined, locale);
@@ -36,7 +41,7 @@ export default async function NewTripPage() {
             {t("trip.setupBasics")}
           </p>
         </div>
-        <CreateTripForm />
+        <CreateTripForm defaultDestination={destination} />
       </div>
     </DashboardShell>
   );
