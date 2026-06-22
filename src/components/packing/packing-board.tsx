@@ -241,7 +241,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
 
       {/* Add-item row */}
       {tab !== "crew" && (
-        <div className="flex flex-col sm:flex-row gap-2 rounded-xl border border-border bg-card p-3">
+        <div className="flex flex-col sm:flex-row gap-2 rounded-xl border border-border bg-card p-2.5">
           <input
             type="text"
             value={newLabel}
@@ -251,31 +251,33 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
                 ? t("pack.whatDoesGroupNeed")
                 : t("pack.whatYouNeed")
             }
-            className="flex-1 min-w-0 bg-transparent text-sm px-2 py-1.5 outline-none placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 bg-transparent text-sm px-2 h-10 outline-none placeholder:text-muted-foreground"
             onKeyDown={(e) => {
               if (e.key === "Enter") add(tab === "shared" ? "shared" : "mine");
             }}
           />
-          <select
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            className="bg-muted/40 text-xs font-semibold rounded-lg px-2 py-1.5 outline-none border border-border"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {t(`pack.categories.${CATEGORY_META[c]?.i18nKey ?? "other"}`)}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => add(tab === "shared" ? "shared" : "mine")}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-violet-600 text-white text-xs font-bold px-3 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t("pack.add")}
-          </button>
+          <div className="flex items-stretch gap-2">
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="flex-1 sm:flex-none bg-muted/40 text-xs font-semibold rounded-lg px-2.5 h-10 outline-none border border-border"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {t(`pack.categories.${CATEGORY_META[c]?.i18nKey ?? "other"}`)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => add(tab === "shared" ? "shared" : "mine")}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-violet-600 text-white text-sm font-bold px-4 h-10 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Plus className="w-4 h-4" />
+              {t("pack.add")}
+            </button>
+          </div>
         </div>
       )}
 
@@ -453,17 +455,23 @@ function PackingRow({
         item.packed ? "border-emerald-500/30 bg-emerald-500/5" : "border-border"
       }`}
     >
+      {/* Checkbox: the visible tick stays 24px but the tap area is padded
+          out to a full 40px target (-m-2 keeps the row layout tight). */}
       <button
         type="button"
         onClick={onToggle}
-        className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors shrink-0 ${
-          item.packed
-            ? "bg-emerald-500 text-white"
-            : "border-2 border-muted-foreground/40 hover:border-primary"
-        }`}
+        className="-m-2 p-2 shrink-0"
         aria-label={item.packed ? t("pack.markNotPacked") : t("pack.markPacked")}
       >
-        {item.packed && <Check className="w-3.5 h-3.5" />}
+        <span
+          className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+            item.packed
+              ? "bg-emerald-500 text-white"
+              : "border-2 border-muted-foreground/40 hover:border-primary"
+          }`}
+        >
+          {item.packed && <Check className="w-3.5 h-3.5" />}
+        </span>
       </button>
       <div className="flex-1 min-w-0">
         <p
@@ -478,13 +486,17 @@ function PackingRow({
         )}
       </div>
       {canDelete && (
+        /* Delete was opacity-0 + group-hover only — invisible and
+           unreachable on touch (no hover). Always shown on mobile;
+           hover-reveal kept on desktop where the row is denser. The hit
+           area is a full 40px square. */
         <button
           type="button"
           onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive transition-all"
+          className="shrink-0 w-10 h-10 -me-1.5 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive lg:opacity-0 lg:group-hover:opacity-100 transition-all"
           aria-label={t("pack.deleteItem")}
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-4 h-4" />
         </button>
       )}
     </div>

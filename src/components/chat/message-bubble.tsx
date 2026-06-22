@@ -674,21 +674,27 @@ export function MessageBubble({
         />
       </div>
 
-      {/* Actions (hover) */}
-      <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mt-2 ${isMine ? "flex-row-reverse" : ""}`}>
+      {/* Actions. Was opacity-0 + group-hover only → Reply / Pin / Delete
+          were unreachable on touch (no hover). Always shown on mobile;
+          hover-reveal kept on desktop. Hit areas bumped to ~36px. */}
+      <div className={`flex items-center gap-0.5 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity mt-1 ${isMine ? "flex-row-reverse" : ""}`}>
         <button
           onClick={handleReply}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           title="Reply"
+          aria-label="Reply"
         >
-          <Reply className="w-3.5 h-3.5" />
+          <Reply className="w-4 h-4" />
         </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <MoreHorizontal className="w-3.5 h-3.5" />
+              <button
+                aria-label="Message actions"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <MoreHorizontal className="w-4 h-4" />
               </button>
             }
           />

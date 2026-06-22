@@ -106,7 +106,13 @@
     "failedToSend": "Failed to send message",
     "failedToPostExpense": "Failed to post expense",
     "failedToPostVote": "Failed to post vote",
-    "failedToPost": "Failed to post"
+    "failedToPost": "Failed to post",
+    "expenseAction": "Expense",
+    "voteAction": "Vote",
+    "moreAction": "More",
+    "suggestActivityAction": "Suggest activity",
+    "enterToSend": "Enter to send",
+    "addOption": "Add option"
   },
   "states": {
     "nothingYet": "Nothing yet",
@@ -364,7 +370,9 @@
     "avgPerExpense": "Avg {currency} {amount} per expense",
     "everyoneSettled": "Everyone's settled",
     "noBalancesYet": "Nothing to balance yet",
-    "noBalancesSub": "Log shared expenses to see who owes who."
+    "noBalancesSub": "Log shared expenses to see who owes who.",
+    "netPerPerson": "Net per person",
+    "settleUp": "Settle up"
   },
   "itinerary": {
     "add": "Add",

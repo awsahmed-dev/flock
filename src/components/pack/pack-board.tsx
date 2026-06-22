@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Backpack } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DocumentsBoard } from "@/components/documents/documents-board";
 import { PackingBoard } from "@/components/packing/packing-board";
 import { useT } from "@/components/i18n/locale-provider";
@@ -94,40 +95,25 @@ export function PackBoard({
       />
 
       {/* Mobile only: segmented control between Docs and Packing.
-          On lg+ both render side by side so the toggle is unnecessary. */}
-      <div className="lg:hidden inline-flex items-center rounded-full border border-border p-0.5 bg-muted/40">
-        <button
-          type="button"
-          onClick={() => switchTo("docs")}
-          aria-pressed={view === "docs"}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
-            view === "docs"
-              ? "bg-background shadow-sm text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <FileText className="w-3 h-3" />
-          {t("pack.docs")}
-          <span className={`tabular-nums ${view === "docs" ? "opacity-80" : "opacity-60"}`}>
-            · {docsCount}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => switchTo("packing")}
-          aria-pressed={view === "packing"}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
-            view === "packing"
-              ? "bg-background shadow-sm text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Backpack className="w-3 h-3" />
-          {t("pack.packing")}
-          <span className={`tabular-nums ${view === "packing" ? "opacity-80" : "opacity-60"}`}>
-            · {totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}
-          </span>
-        </button>
+          On lg+ both render side by side so the toggle is unnecessary.
+          Uses the canonical full-width SegmentedControl so the tap
+          targets clear 40px (the old hand-rolled p-0.5 toggle was ~26px
+          tall with 12px icons). The Docs/Packing counts are appended to
+          the label so the single badge slot stays free for the ratio. */}
+      <div className="lg:hidden">
+        <SegmentedControl<View>
+          aria-label={t("pack.title")}
+          value={view}
+          onChange={switchTo}
+          options={[
+            { value: "docs", label: `${t("pack.docs")} · ${docsCount}`, icon: FileText },
+            {
+              value: "packing",
+              label: `${t("pack.packing")} · ${totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}`,
+              icon: Backpack,
+            },
+          ]}
+        />
       </div>
 
       {/* On lg+ render both panels side by side with a small section

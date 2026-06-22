@@ -106,7 +106,13 @@
     "failedToSend": "تعذّر إرسال الرسالة",
     "failedToPostExpense": "تعذّر نشر المصروف",
     "failedToPostVote": "تعذّر نشر التصويت",
-    "failedToPost": "تعذّر النشر"
+    "failedToPost": "تعذّر النشر",
+    "expenseAction": "مصروف",
+    "voteAction": "تصويت",
+    "moreAction": "المزيد",
+    "suggestActivityAction": "اقترح نشاطًا",
+    "enterToSend": "Enter للإرسال",
+    "addOption": "إضافة خيار"
   },
   "states": {
     "nothingYet": "لا شيء حتى الآن",
@@ -364,7 +370,9 @@
     "avgPerExpense": "بمتوسط {currency} {amount} لكل مصروف",
     "everyoneSettled": "الجميع متعادل",
     "noBalancesYet": "لا أرصدة بعد",
-    "noBalancesSub": "سجّل المصروفات المشتركة لرؤية من يدين لمن."
+    "noBalancesSub": "سجّل المصروفات المشتركة لرؤية من يدين لمن.",
+    "netPerPerson": "صافي كل شخص",
+    "settleUp": "سدّدوا الحسابات"
   },
   "itinerary": {
     "add": "إضافة",

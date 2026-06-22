@@ -254,7 +254,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
                       }
                       aria-label={isDropped ? t("planDay.restore") : t("planDay.drop")}
                       className={cn(
-                        "shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                        "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
                         isDropped
                           ? "bg-primary/10 text-primary hover:bg-primary/15"
                           : "text-muted-foreground/60 hover:text-foreground hover:bg-muted",

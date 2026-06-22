@@ -6,6 +6,7 @@ import { convert, type RateBundle } from "@/lib/fx";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { settleAllBetween } from "@/lib/actions/expenses";
 import { useT } from "@/components/i18n/locale-provider";
@@ -147,28 +148,19 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
         subtitle={data.nets.length <= 1 ? "Solo trip — no balances to settle" : "Who owes who · settle up"}
       />
 
-      {/* View switch — hidden when nothing to settle (solo trip) */}
+      {/* View switch — hidden when nothing to settle (solo trip). Canonical
+          SegmentedControl so the tap targets clear 40px (was a p-0.5 /
+          py-1 toggle ~24px tall) and the labels are localized. */}
       {members.length > 1 && (
-      <div className="inline-flex items-center rounded-full border border-border p-0.5 bg-muted/40">
-        <button
-          type="button"
-          onClick={() => setView("net")}
-          className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
-            view === "net" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Net per person
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("settle")}
-          className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
-            view === "settle" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Settle up
-        </button>
-      </div>
+        <SegmentedControl<"net" | "settle">
+          aria-label={t("expenses.balances")}
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "net", label: t("expenses.netPerPerson") },
+            { value: "settle", label: t("expenses.settleUp") },
+          ]}
+        />
       )}
 
       {/* B8: solo-trip case — the net/settle views show nonsense when there's

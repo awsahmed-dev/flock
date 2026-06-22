@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, Compass } from "lucide-react";
 import { DecisionCardMessage, type DecisionCardMeta } from "@/components/chat/decision-card-message";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useT } from "@/components/i18n/locale-provider";
-import { cn } from "@/lib/utils";
 
 interface LensRow {
   meta: DecisionCardMeta;
@@ -72,33 +72,18 @@ export function DecisionsBoard({ tripId, rows }: { tripId: string; rows: LensRow
     <div className="mx-auto max-w-[980px]">
       <Header t={t} />
 
-      {/* Segmented filter — the lens. */}
-      <div className="mt-5 inline-flex items-center gap-1 rounded-2xl bg-muted/60 p-1.5">
-        {tabs.map((tb) => (
-          <button
-            key={tb.id}
-            type="button"
-            onClick={() => setTab(tb.id)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold transition-colors",
-              tab === tb.id
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border/60"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {tb.label}
-            {tb.count > 0 && (
-              <span
-                className={cn(
-                  "min-w-[20px] rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums",
-                  tab === tb.id ? "bg-primary/10 text-primary" : "bg-foreground/10 text-muted-foreground",
-                )}
-              >
-                {tb.count}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Segmented filter — the lens. Full-width on mobile (3 tabs share
+          the row evenly so it never overflows 390px); content-hugging on
+          sm+ where there's room. Canonical SegmentedControl. */}
+      <div className="mt-5">
+        <SegmentedControl<Tab>
+          aria-label={t("decisions.lensTitle")}
+          value={tab}
+          onChange={setTab}
+          layout="fill"
+          className="sm:inline-flex sm:w-auto"
+          options={tabs.map((tb) => ({ value: tb.id, label: tb.label, count: tb.count }))}
+        />
       </div>
 
       {shown.length === 0 ? (

@@ -406,48 +406,50 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
             if (e.target.value) handleTypingBroadcast();
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Message…"
+          placeholder={t("chat.typeMessage")}
           rows={1}
-          className="flex-1 resize-none rounded-xl border bg-muted/40 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
+          className="flex-1 resize-none rounded-xl border bg-muted/40 px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
           disabled={isPending}
         />
         <Button
           type="submit"
           size="icon"
+          aria-label={t("chat.send")}
           disabled={!body.trim() || isPending}
-          className="rounded-xl h-9 w-9 shrink-0 bg-gradient-to-br from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/25 disabled:opacity-40 disabled:shadow-none"
+          className="rounded-xl h-10 w-10 shrink-0 bg-gradient-to-br from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/25 disabled:opacity-40 disabled:shadow-none"
         >
-          <Send className="w-3.5 h-3.5" />
+          <Send className="w-4 h-4" />
         </Button>
       </form>
 
-      {/* Action buttons row */}
+      {/* Action buttons row — bumped from ~24px chips to a 36px+ pill so
+          they clear a comfortable thumb target; icons up to 16px. */}
       <div className="flex items-center gap-1.5">
         {/* Always-visible primary actions */}
         <button
           type="button"
           onClick={() => setActiveAction(activeAction === "expense" ? null : "expense")}
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
             activeAction === "expense"
               ? "bg-orange-100 border-orange-300 text-orange-700 shadow-sm dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300"
               : "bg-muted/40 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 text-muted-foreground border-border/60"
           }`}
         >
-          <ReceiptText className="w-3 h-3" />
-          Expense
+          <ReceiptText className="w-4 h-4" />
+          {t("chat.expenseAction")}
         </button>
 
         <button
           type="button"
           onClick={() => setActiveAction(activeAction === "vote" ? null : "vote")}
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
             activeAction === "vote"
               ? "bg-violet-100 border-violet-300 text-violet-700 shadow-sm dark:bg-violet-950/40 dark:border-violet-700 dark:text-violet-300"
               : "bg-muted/40 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 text-muted-foreground border-border/60"
           }`}
         >
-          <Vote className="w-3 h-3" />
-          Vote
+          <Vote className="w-4 h-4" />
+          {t("chat.voteAction")}
         </button>
 
         {/* More actions in dropdown */}
@@ -456,10 +458,10 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
             render={
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-full border bg-muted/40 hover:bg-muted px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1 rounded-full border bg-muted/40 hover:bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Plus className="w-3 h-3" />
-                More
+                <Plus className="w-4 h-4" />
+                {t("chat.moreAction")}
               </button>
             }
           />
@@ -469,13 +471,13 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
               onClick={() => setActiveAction("itinerary")}
             >
               <MapPin className="w-3.5 h-3.5 me-2 text-blue-500" />
-              Suggest activity
+              {t("chat.suggestActivityAction")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <span className="ms-auto text-[10px] text-muted-foreground hidden sm:block">
-          Enter to send
+          {t("chat.enterToSend")}
         </span>
       </div>
     </div>

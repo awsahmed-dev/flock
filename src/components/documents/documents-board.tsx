@@ -99,24 +99,26 @@ function DocumentCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-0.5 shrink-0 -me-1.5">
         <a
           href={doc.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           title="Open link"
+          aria-label="Open link"
         >
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink className="w-4 h-4" />
         </a>
         {canDelete && (
           <button
             onClick={handleDelete}
             disabled={isPending}
-            className="rounded-md p-1.5 text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
             title="Remove"
+            aria-label="Remove"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         )}
       </div>

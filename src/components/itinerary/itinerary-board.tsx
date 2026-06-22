@@ -604,13 +604,15 @@ export function ItineraryBoard({
               and already-booked tickets. Cleaner mental model: Plan =
               what you're doing, Bookings = what you're spending on. */}
 
-          {/* Day chips — own row, horizontal scroll, full width */}
+          {/* Day chips — own row, horizontal scroll, full width. Bumped to
+              px-3.5/py-2 + text-xs so each chip clears a comfortable ~36px
+              thumb target (was px-3/py-1.5 text-[11px] ≈ 28px). */}
           <div className="px-3 pb-2 overflow-x-auto scrollbar-none">
             <div className="inline-flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setFocusedDay(null)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                   focusedDay === null
                     ? "bg-foreground text-background"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
@@ -627,7 +629,7 @@ export function ItineraryBoard({
                     key={day}
                     type="button"
                     onClick={() => setFocusedDay(day)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                       active
                         ? "bg-foreground text-background"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"

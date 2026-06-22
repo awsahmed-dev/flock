@@ -131,6 +131,9 @@ export function ItineraryCard({
             <div className="flex-1 min-w-0">
               {/* Title + status dot */}
               <div className="flex items-center gap-2">
+                {/* Tap-to-cycle status. Visible dot stays 10px but the
+                    tap area is padded out (-m-2 p-2) to a 40px target so
+                    it's thumb-friendly. */}
                 <button
                   onClick={() => {
                     const next = item.status === "proposed" ? "confirmed"
@@ -138,11 +141,16 @@ export function ItineraryCard({
                     handleStatusChange(next);
                   }}
                   title={`${statusCfg.label} — click to cycle`}
-                  className={cn(
-                    "w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-offset-1 transition-all focus:outline-none mt-px",
-                    statusCfg.dot, statusCfg.ring
-                  )}
-                />
+                  aria-label={`${statusCfg.label} — tap to cycle status`}
+                  className="-m-2 p-2 shrink-0 focus:outline-none"
+                >
+                  <span
+                    className={cn(
+                      "block w-2.5 h-2.5 rounded-full ring-2 ring-offset-1 transition-all",
+                      statusCfg.dot, statusCfg.ring
+                    )}
+                  />
+                </button>
                 <span className={cn(
                   "font-medium text-sm leading-tight",
                   item.status === "rejected" && "line-through text-muted-foreground"
@@ -190,12 +198,18 @@ export function ItineraryCard({
               )}
             </div>
 
-            {/* Actions menu */}
+            {/* Actions menu. Was opacity-0 + group-hover only → invisible
+                and unreachable on touch, so Edit/Delete couldn't be opened
+                on mobile. Always shown on mobile; hover-reveal kept on
+                desktop where rows are denser. Hit area padded to ~36px. */}
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-muted shrink-0 -mt-0.5 -me-0.5">
-                    <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                  <button
+                    aria-label="Item actions"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted shrink-0 -mt-1 -me-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                  >
+                    <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                   </button>
                 }
               />
