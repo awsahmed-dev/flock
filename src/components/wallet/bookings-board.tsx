@@ -17,6 +17,7 @@ import { useT } from "@/components/i18n/locale-provider";
 import { BookMode } from "@/components/itinerary/book-mode";
 import { WalletBoard } from "@/components/wallet/wallet-board";
 import { MOCK_BOOKINGS } from "@/components/wallet/mock-bookings";
+import { StaysRail } from "@/components/wallet/stays-rail";
 
 interface Props {
   tripId: string;
@@ -145,7 +146,11 @@ export function BookingsBoard(props: Props) {
         </div>
       </div>
 
-      <div className="inline-flex w-full items-center gap-1 rounded-full bg-muted/60 p-1">
+      {/* P6: real Stays discovery — the taste/discovery brain on the booking
+          surface. Lazy-loaded; renders nothing if no hotels are found. */}
+      <StaysRail tripId={props.tripId} destination={props.destination} />
+
+      <div className="inline-flex w-full items-center gap-1 rounded-2xl bg-muted/60 p-1.5">
         <SegmentButton
           active={tab === "booked"}
           onClick={() => setTab("booked")}
@@ -234,15 +239,15 @@ function SegmentButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2 text-xs font-bold transition-all ${
+      className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all ${
         active
-          ? "bg-card shadow-sm text-foreground"
+          ? "bg-card shadow-sm text-foreground ring-1 ring-border/60"
           : "text-muted-foreground hover:text-foreground"
       }`}
       aria-pressed={active}
     >
       <span>{label}</span>
-      <span className={`tabular-nums text-[10px] px-1.5 py-0.5 rounded-full ${
+      <span className={`tabular-nums text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
         active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
       }`}>{count}</span>
     </button>

@@ -32,6 +32,8 @@ const CATEGORY_PROMPT: Record<string, string> = {
   nightlife: "best bars and nightlife",
   shopping: "best shopping",
   activity: "best things to do",
+  // P6: stays discovery on the Bookings page reuses the cached seed pipeline.
+  stay: "best hotels and places to stay",
 };
 
 /** The diverse Eat/See/Do mix for the "All" seed, capped per category so

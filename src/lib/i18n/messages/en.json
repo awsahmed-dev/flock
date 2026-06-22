@@ -612,6 +612,10 @@
     "dismiss": "Dismiss"
   },
   "bookings": {
+    "staysTitle": "Stays you'd love",
+    "staysSubtitle": "Top-rated places to stay in {destination}",
+    "staysLoading": "Finding great stays…",
+    "staysView": "View",
     "totalLabel": "Total trip spend",
     "totalSubline": "{count, plural, =0 {No bookings yet} one {1 booking confirmed} other {# bookings confirmed}}",
     "todoTitle": "Still to book",

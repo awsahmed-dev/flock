@@ -612,6 +612,10 @@
     "dismiss": "إخفاء"
   },
   "bookings": {
+    "staysTitle": "إقامات ستحبّها",
+    "staysSubtitle": "أعلى أماكن الإقامة تقييمًا في {destination}",
+    "staysLoading": "نبحث عن إقامات رائعة…",
+    "staysView": "عرض",
     "totalLabel": "إجمالي مصاريف الرحلة",
     "totalSubline": "{count, plural, =0 {لا حجوزات بعد} one {حجز واحد مؤكَّد} two {حجزان مؤكَّدان} few {{count} حجوزات مؤكَّدة} many {{count} حجزًا مؤكَّدًا} other {{count} حجز مؤكَّد}}",
     "todoTitle": "ما زال يحتاج حجز",
