@@ -10,6 +10,9 @@ import { geocode } from "@/lib/geocode";
 import { buildSeedFeed } from "@/lib/discovery/seed";
 import { quality } from "@/lib/discovery/score";
 import { getLocale } from "@/lib/i18n";
+import { createDecision } from "./decisions";
+import { recordEvent } from "@/lib/inbox";
+import { notifyDecisionOpened } from "@/lib/notifications";
 import type { Place } from "@/lib/places/types";
 
 /**
@@ -132,4 +135,64 @@ export async function planDay(input: {
   }
 
   return { slots };
+}
+
+/**
+ * P5 — send a planned day to the crew as decision cards (the "Plan this day →
+ * decision cards" path). Each place becomes a votable card in chat, all
+ * proposed for the chosen day, reusing the P4 decisions engine. Per-card
+ * notifications are suppressed; one summary lands in the crew's inbox/push so a
+ * 5-place day doesn't fire five separate alerts.
+ */
+export async function sendPlannedDayToCrew(input: {
+  tripId: string;
+  dayDate: string;
+  places: PlannedSlotPlace[];
+  mode: "ask" | "suggest";
+}): Promise<{ created: number; skipped: number }> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/auth/login");
+  const trip = await getTripWithMembership(input.tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
+  if (trip.members.length < 2) throw new Error("Decisions need a crew");
+
+  let created = 0;
+  let skipped = 0;
+  for (const place of input.places) {
+    const res = await createDecision({
+      tripId: input.tripId,
+      place, // PlannedSlotPlace matches DecisionPlace
+      proposedDay: input.dayDate,
+      mode: input.mode,
+      closesInHours: 24,
+      notify: false, // one summary below instead of N
+    });
+    if (res.ok) created++;
+    else skipped++;
+  }
+
+  if (created > 0) {
+    const proposerName =
+      user.user_metadata?.display_name || user.email?.split("@")[0] || "Traveler";
+    await recordEvent({
+      tripId: input.tripId,
+      kind: "decision_opened",
+      actorUserId: user.id,
+      recipients: null,
+      title: `${proposerName} planned a day`,
+      body: `${created} ${created === 1 ? "place" : "places"} to vote on`,
+      payload: { count: created, dayDate: input.dayDate },
+    }).catch(() => {});
+    notifyDecisionOpened(
+      trip.members.map((m) => m.userId),
+      user.id,
+      proposerName,
+      `${created} ${created === 1 ? "place" : "places"}`,
+      input.mode,
+      input.tripId,
+      trip.name,
+    ).catch(() => {});
+  }
+
+  return { created, skipped };
 }

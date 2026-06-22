@@ -99,6 +99,7 @@ export default async function ItineraryPage({ params }: Props) {
       fxRates={fxRates}
       userId={user.id}
       isOwner={checkOwner(trip, user.id)}
+      crewSize={trip.members.length}
     />
   );
 }

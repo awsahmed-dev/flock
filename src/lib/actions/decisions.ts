@@ -84,6 +84,9 @@ export async function createDecision(input: {
   note?: string | null;
   closesInHours?: number | null; // default 24h; null = no deadline
   mode: "ask" | "suggest";
+  /** P5 batch ("Plan this day → crew"): suppress the per-card open notification
+   *  so a 5-place day sends ONE summary instead of five. Defaults to notifying. */
+  notify?: boolean;
 }) {
   const user = await authUser();
   const trip = await getTripWithMembership(input.tripId, user.id);
@@ -154,20 +157,23 @@ export async function createDecision(input: {
   await db.update(decisions).set({ chatMessageId: msg.id }).where(eq(decisions.id, decision.id));
 
   // Tell the crew there's something to vote on — in-app inbox + push. Both
-  // best-effort: a notification failure must never sink the decision.
-  const memberIds = trip.members.map((m) => m.userId);
-  await recordEvent({
-    tripId: input.tripId,
-    kind: "decision_opened",
-    actorUserId: user.id,
-    recipients: null, // fan out to the whole crew
-    title: `${proposerName} ${input.mode === "ask" ? "started a vote" : "suggested a place"}`,
-    body: input.place.name,
-    payload: { decisionId: decision.id, placeName: input.place.name },
-  }).catch(() => {});
-  notifyDecisionOpened(
-    memberIds, user.id, proposerName, input.place.name, input.mode, input.tripId, trip.name,
-  ).catch(() => {});
+  // best-effort: a notification failure must never sink the decision. Batch
+  // callers (Plan-this-day → crew) pass notify:false and send one summary.
+  if (input.notify !== false) {
+    const memberIds = trip.members.map((m) => m.userId);
+    await recordEvent({
+      tripId: input.tripId,
+      kind: "decision_opened",
+      actorUserId: user.id,
+      recipients: null, // fan out to the whole crew
+      title: `${proposerName} ${input.mode === "ask" ? "started a vote" : "suggested a place"}`,
+      body: input.place.name,
+      payload: { decisionId: decision.id, placeName: input.place.name },
+    }).catch(() => {});
+    notifyDecisionOpened(
+      memberIds, user.id, proposerName, input.place.name, input.mode, input.tripId, trip.name,
+    ).catch(() => {});
+  }
 
   revalidatePath(`/trips/${input.tripId}/chat`);
   revalidatePath(`/trips/${input.tripId}/decisions`);

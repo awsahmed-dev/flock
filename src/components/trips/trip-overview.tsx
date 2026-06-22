@@ -95,9 +95,11 @@ function getTripStatus(
  * snapshot strip, and crew — leaning on the sidebar/bottom-nav for navigation
  * rather than duplicating every tab as a tile.
  */
-export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
+export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
   const t = useT();
   useLocale();
+  const isOwner =
+    trip.members.find((m) => (m.userId ?? m.user?.id ?? m.id) === userId)?.role === "owner";
   const [copied, setCopied] = useState(false);
   const [statsMember, setStatsMember] = useState<Member | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -355,6 +357,8 @@ export function TripOverview({ trip, inviteUrl, stats, hero }: Props) {
           tripId={trip.id}
           days={days}
           initialDay={days[0] ?? null}
+          crewSize={trip.members.length}
+          isOwner={isOwner}
         />
       )}
 

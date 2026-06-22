@@ -6,12 +6,12 @@ import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import {
   Sparkles, Coffee, Landmark, Utensils, Ticket, UtensilsCrossed,
-  Loader2, X, Star, Plus, Compass,
+  Loader2, X, Star, Plus, Compass, Users,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SidePanel } from "@/components/ui/side-panel";
-import { planDay, type PlannedSlot, type DaySlot } from "@/lib/actions/plan-day";
+import { planDay, sendPlannedDayToCrew, type PlannedSlot, type DaySlot } from "@/lib/actions/plan-day";
 import { createItineraryItemsFromGooglePlaces } from "@/lib/actions/itinerary";
 import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,9 @@ interface Props {
   tripId: string;
   days: string[];
   initialDay: string | null;
+  /** Crew size + role drive the "Send to crew → decision cards" path. */
+  crewSize?: number;
+  isOwner?: boolean;
 }
 
 /**
@@ -38,7 +41,7 @@ interface Props {
  * you don't want, then add the whole day in one tap. Every card is a real place
  * with its pin/photo/rating — AI curates, never invents.
  */
-export function PlanDaySheet({ open, onClose, tripId, days, initialDay }: Props) {
+export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize = 1, isOwner = false }: Props) {
   const t = useT();
   const router = useRouter();
   const [day, setDay] = useState<string>(initialDay ?? days[0] ?? "");
@@ -46,6 +49,8 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay }: Props)
   const [dropped, setDropped] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [isAdding, startAdd] = useTransition();
+  const [isSending, startSend] = useTransition();
+  const hasCrew = crewSize >= 2;
 
   const build = useCallback(
     async (forDay: string) => {
@@ -93,6 +98,29 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay }: Props)
         toast.success(t("planDay.added", { count: kept.length, day: t("itinerary.dayN", { n }) }));
         router.refresh();
         onClose();
+      } catch {
+        toast.error(t("planDay.addError"));
+      }
+    });
+  }
+
+  function handleSendCrew() {
+    if (kept.length === 0) return;
+    startSend(async () => {
+      try {
+        const res = await sendPlannedDayToCrew({
+          tripId,
+          dayDate: day,
+          places: kept.map((s) => s.place),
+          mode: isOwner ? "ask" : "suggest",
+        });
+        if (res.created > 0) {
+          toast.success(t("planDay.sentToCrew", { count: res.created }));
+          router.refresh();
+          onClose();
+        } else {
+          toast(t("planDay.allAlreadyOpen"));
+        }
       } catch {
         toast.error(t("planDay.addError"));
       }
@@ -241,17 +269,30 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay }: Props)
           </ol>
         )}
 
-        {/* Add action */}
+        {/* Actions — add directly, or (with a crew) send as decision cards. */}
         {!loading && slots && slots.length > 0 && (
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={kept.length === 0 || isAdding}
-            className="sticky bottom-0 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            {t("planDay.add", { count: kept.length })}
-          </button>
+          <div className="sticky bottom-0 flex flex-col gap-2 pt-1 pb-1 bg-gradient-to-t from-background via-background to-transparent">
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={kept.length === 0 || isAdding || isSending}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {t("planDay.add", { count: kept.length })}
+            </button>
+            {hasCrew && (
+              <button
+                type="button"
+                onClick={handleSendCrew}
+                disabled={kept.length === 0 || isAdding || isSending}
+                className="inline-flex items-center justify-center gap-2 rounded-xl ring-1 ring-border/70 bg-card hover:bg-muted/60 px-4 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
+              >
+                {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4 text-primary" />}
+                {t("planDay.sendToCrew")}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </SidePanel>

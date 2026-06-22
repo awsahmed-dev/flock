@@ -49,6 +49,7 @@ interface Props {
   fxRates: RateBundle | null;
   userId: string;
   isOwner: boolean;
+  crewSize?: number;
 }
 
 const DAY_PALETTE = [
@@ -98,6 +99,7 @@ export function ItineraryBoard({
   fxRates,
   userId,
   isOwner,
+  crewSize = 1,
 }: Props) {
   const t = useT();
   const { locale } = useLocale();
@@ -855,6 +857,8 @@ export function ItineraryBoard({
           tripId={tripId}
           days={days}
           initialDay={focusedDay}
+          crewSize={crewSize}
+          isOwner={isOwner}
         />
       )}
     </div>
