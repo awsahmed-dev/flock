@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { RegisterSW } from "@/components/pwa/register-sw";
 import { getLocale, getDictionary, isRtl } from "@/lib/i18n";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { setActiveLocale } from "@/lib/i18n/date-fns";
@@ -164,6 +165,7 @@ export default async function RootLayout({
             {children}
             <PushNotificationInit />
             <OfflineBanner />
+            <RegisterSW />
           </Providers>
           <Toaster richColors position="top-right" />
         </LocaleProvider>

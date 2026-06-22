@@ -55,61 +55,12 @@ const nextConfig: NextConfig = {
 async function buildConfig() {
   let cfg: NextConfig = nextConfig;
 
-  if (process.env.NODE_ENV === "production") {
-    const withPWAInit = (await import("@ducanh2912/next-pwa")).default;
-    const withPWA = withPWAInit({
-      dest: "public",
-      cacheOnFrontEndNav: true,
-      aggressiveFrontEndNavCaching: true,
-      reloadOnOnline: true,
-      // P6 offline: serve a branded fallback when navigating to an uncached
-      // route while offline. Pages already opened (trips, dashboard) are cached
-      // by the SW and render from cache.
-      fallbacks: { document: "/~offline" },
-      // Keep next-pwa's solid defaults (static assets, fonts, RSC, same-origin
-      // images) AND add the cross-origin sources an added itinerary needs to
-      // render offline: Mapbox tiles/styles + the Google place-photo proxy.
-      extendDefaultRuntimeCaching: true,
-      workboxOptions: {
-        disableDevLogs: true,
-        runtimeCaching: [
-          {
-            // Mapbox styles, fonts, sprites + vector/raster tiles.
-            urlPattern: /^https:\/\/(?:api|[a-d]\.tiles)\.mapbox\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "mapbox",
-              expiration: { maxEntries: 800, maxAgeSeconds: 7 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            // Our same-origin Google place-photo proxy — immutable per ref, so
-            // CacheFirst both makes itinerary photos work offline AND avoids
-            // re-billing the Google photo call on repeat views.
-            urlPattern: /\/api\/discover\/photo/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "place-photos",
-              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            // Unsplash destination/hero imagery.
-            urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "unsplash",
-              expiration: { maxEntries: 120, maxAgeSeconds: 30 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
-      },
-    });
-    cfg = withPWA(nextConfig) as NextConfig;
-  }
+  // NOTE: `@ducanh2912/next-pwa` is a webpack plugin and generates nothing under
+  // Next 16's Turbopack build (verified: /sw.js was 404, zero SWs registered).
+  // Offline is delivered instead by a hand-rolled static worker at
+  // `public/sw.js`, registered by <RegisterSW/> — Turbopack-proof and fully
+  // under our control (runtime caching for Mapbox tiles + the place-photo proxy
+  // + Unsplash, network-first pages, /~offline fallback).
 
   // Sentry source-map upload at build time so production stack traces are
   // readable. Skipped automatically when SENTRY_AUTH_TOKEN is unset (local
