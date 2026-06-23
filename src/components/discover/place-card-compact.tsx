@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Heart, Star, MapPin, Sparkles, Check } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -28,6 +29,7 @@ export function PlaceCardCompact({
   onHover: (id: string | null) => void;
 }) {
   const t = useT();
+  const [imgLoaded, setImgLoaded] = useState(false);
   const p = scored.place;
   const photo = p.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=500` : null;
   const price = p.priceLevel != null && p.priceLevel > 0 ? "$".repeat(p.priceLevel) : null;
@@ -43,8 +45,24 @@ export function PlaceCardCompact({
     >
       <div className="relative aspect-[16/10] bg-muted overflow-hidden">
         {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt={p.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <>
+            {/* Branded shimmer skeleton until the photo decodes — never a flat
+                gray box (brief §4.5). The image fades in over it on load. */}
+            {!imgLoaded && (
+              <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-muted via-muted/60 to-muted" />
+            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo}
+              alt={p.name}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105",
+                imgLoaded ? "opacity-100" : "opacity-0",
+              )}
+            />
+          </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/15 to-violet-500/15 text-3xl font-bold text-primary/40">
             {p.name.charAt(0)}

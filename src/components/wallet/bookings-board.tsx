@@ -65,7 +65,11 @@ export function BookingsBoard(props: Props) {
   const t = useT();
   const [hideAmount, setHideAmount] = useState(false);
 
-  const bookingCurrency = props.currency;
+  // Booked value is reported in the bookings' OWN currency (the passes below are
+  // all priced in it) — not the trip's base currency, which would label e.g.
+  // SAR amounts as "USD" and contradict the cards. Falls back to trip currency
+  // only if there are no bookings.
+  const bookingCurrency = MOCK_BOOKINGS[0]?.currency ?? props.currency;
   const totalSpend = MOCK_BOOKINGS.reduce((s, b) => s + b.price, 0);
   const bookedCount = MOCK_BOOKINGS.length;
 
