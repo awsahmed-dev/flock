@@ -11,8 +11,23 @@ import { useTasteSession } from "@/lib/discovery/client/use-taste-session";
 import { useDwellTracker } from "@/lib/discovery/client/use-dwell-tracker";
 import { useT } from "@/components/i18n/locale-provider";
 import { PlaceCard } from "./place-card";
+import { PlaceCardCompact } from "./place-card-compact";
 import { PlaceDetailPanel } from "./place-detail-panel";
 import { PLACE_CATEGORIES, type PlaceCategoryKey } from "./primitives";
+
+/** lg+ desktop detection (SSR-safe: mobile until mounted). Drives the two
+ *  native Discover layouts — immersive stream on mobile, grid+map on desktop. */
+function useIsDesktop(): boolean {
+  const [isLg, setIsLg] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsLg(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isLg;
+}
 
 /**
  * Paxawa v2 — Discover, cinematic/immersive (TikTok-Reels language).
@@ -59,6 +74,7 @@ export function DiscoverFeed({
   const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [view, setView] = useState<"stream" | "map">("stream");
+  const isDesktop = useIsDesktop();
 
   const searching = query.trim().length >= 2;
 
@@ -221,6 +237,129 @@ export function DiscoverFeed({
   }, [ranked]);
 
   const chips: (PlaceCategoryKey | null)[] = [null, ...PLACE_CATEGORIES];
+
+  // ── Desktop (lg+): card grid beside a persistent map (design §4.1/§5). The
+  // immersive stream below is the mobile design; only one mounts at a time so
+  // there's a single Mapbox instance and no doubled DOM.
+  if (isDesktop) {
+    return (
+      <>
+        <div className="grid grid-cols-[1fr_minmax(0,480px)] xl:grid-cols-[1fr_minmax(0,540px)] gap-5 items-start">
+          {/* Left — filter chips + search + card grid */}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 min-w-0 -mx-1 px-1 overflow-x-auto scrollbar-none">
+                <div className="inline-flex items-center gap-1.5">
+                  {chips.map((c) => {
+                    const active = category === c && !searching;
+                    return (
+                      <button
+                        key={c ?? "all"}
+                        type="button"
+                        onClick={() => { setQuery(""); setCategory(c); }}
+                        className={`shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all ${
+                          active ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {c === null ? t("discover.catAll") : t(CAT_KEY[c])}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="relative shrink-0 w-56">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("discover.searchPlaceholder")}
+                  className="w-full rounded-full bg-muted/50 ring-1 ring-border/60 ps-9 pe-8 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    aria-label={t("common.clear")}
+                    className="absolute end-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {state !== "idle" && state !== "loading" && (
+              <div className="mb-4 flex items-start gap-2 rounded-2xl bg-amber-500/10 ring-1 ring-amber-500/30 text-amber-700 dark:text-amber-300 p-3 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{t(state === "unconfigured" ? "discover.unconfigured" : state === "capped" ? "discover.capped" : "discover.error")}</span>
+              </div>
+            )}
+
+            {state === "loading" && candidates.length === 0 ? (
+              <div className="h-[55vh] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                  <Sparkles className="w-7 h-7 animate-pulse text-primary" />
+                  <p className="text-sm">{t("discover.curating")}</p>
+                </div>
+              </div>
+            ) : ranked.length === 0 && state === "idle" ? (
+              <div className="h-[45vh] flex flex-col items-center justify-center gap-2 text-center px-8">
+                <Compass className="w-8 h-8 text-muted-foreground" />
+                <p className="font-semibold">{t("discover.emptyTitle")}</p>
+                <p className="text-sm text-muted-foreground">{t("discover.emptySub")}</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 2xl:grid-cols-3 gap-4">
+                  {ranked.map((s) => (
+                    <PlaceCardCompact
+                      key={s.place.placeId}
+                      scored={s}
+                      saved={saved.has(s.place.placeId)}
+                      added={added.has(s.place.placeId)}
+                      onOpen={onOpen}
+                      onSave={onSave}
+                      onHover={setHighlightedId}
+                    />
+                  ))}
+                </div>
+                {state === "loading" && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                <p className="mt-5 text-center text-[11px] text-muted-foreground">
+                  {t("discover.poweredBy")} <span className="font-semibold">Google</span>
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Right — persistent live map, sticky as the grid scrolls */}
+          <div className="sticky top-4 h-[calc(100dvh-8.5rem)] rounded-3xl overflow-hidden ring-1 ring-border/60 shadow-sm bg-muted">
+            <MapboxPlanMap
+              items={mapItems}
+              destinationCenter={center}
+              focusedDay={DISCOVER_DAY}
+              highlightedItemId={highlightedId}
+              onItemClick={(id) => { const s = ranked.find((r) => r.place.placeId === id); if (s) onOpen(s); }}
+              days={[DISCOVER_DAY]}
+              showRoutes={false}
+              pinColor="#f97316"
+              numbered={false}
+            />
+          </div>
+        </div>
+
+        <PlaceDetailPanel
+          scored={openPlace} open={openPlace !== null} tripId={tripId} days={days} center={center}
+          saved={openPlace ? saved.has(openPlace.place.placeId) : false}
+          crewSize={crewSize} isOwner={isOwner}
+          onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="relative rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
