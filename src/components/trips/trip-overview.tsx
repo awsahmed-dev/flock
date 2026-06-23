@@ -189,44 +189,50 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
           </div>
         </div>
 
-        {/* P0-3 / P1-3: exactly ONE plan CTA on the Overview. It opens the
-            single AI planner, where "one day" vs "whole trip" is a choice
-            inside the panel — no second AI button competing beside it, and
-            no duplication of the Plan page's controls. */}
+        {/* B4: the Overview is a BRIEFING, not a directory. The single
+            personalized "next move" is the ONE focal element — promoted to a
+            hero-adjacent block (large, one accent, the eye lands here first).
+            It answers "what should I do next?" in one glance; everything below
+            is secondary. The generic AI-plan CTA is demoted to a quiet inline
+            link inside it (it merely opens the planner the Plan tab also owns,
+            so it must not compete as a second focal point). */}
+        <Link
+          href={suggestion.href}
+          className="group block rounded-3xl ring-1 ring-primary/25 bg-gradient-to-br from-primary/8 via-violet-500/5 to-transparent p-5 sm:p-6 hover:ring-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-widest uppercase text-primary">
+              {t("common.upNext")}
+            </span>
+            {suggestion.urgent && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-2.5 h-2.5" />
+                {t("common.needsYou")}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <suggestion.icon className="w-6 h-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-lg sm:text-xl leading-tight tracking-tight">{suggestion.title}</p>
+              <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{suggestion.body}</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-0.5 transition-transform shrink-0 rtl:rotate-180" />
+          </div>
+        </Link>
+
+        {/* Demoted secondary action — quiet inline AI-plan entry, no longer a
+            loud gradient button competing with the briefing above. */}
         <button
           type="button"
           onClick={() => setPlanDayOpen(true)}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl ring-1 ring-border/60 bg-card text-foreground px-4 py-2.5 text-sm font-bold hover:ring-primary/40 hover:bg-primary/5 transition-all"
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-4 h-4 text-primary" />
           {t("itinerary.aiEntry")}
         </button>
-
-        {/* Up next — the single smart router (calm, one accent). */}
-        <Link
-          href={suggestion.href}
-          className="group flex items-center gap-3.5 rounded-2xl ring-1 ring-border/60 bg-card p-4 hover:ring-border hover:shadow-md transition-all"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <suggestion.icon className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-                {t("common.upNext")}
-              </span>
-              {suggestion.urgent && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                  <AlertCircle className="w-2.5 h-2.5" />
-                  {t("common.needsYou")}
-                </span>
-              )}
-            </div>
-            <p className="font-bold text-sm leading-snug truncate">{suggestion.title}</p>
-            <p className="text-xs text-muted-foreground truncate">{suggestion.body}</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
-        </Link>
 
         {/* P1-4: one compact snapshot strip. Was four tall 3-line tiles
             (icon block + big number + label) burning the most-expensive

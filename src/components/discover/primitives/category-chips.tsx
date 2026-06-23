@@ -17,6 +17,11 @@ export const PLACE_CATEGORIES = [
   "nightlife",
   "shopping",
   "activity",
+  // §A1: hotel discovery is EVICTED from Bookings and lives here as a Discover
+  // category, ranked by the same taste brain (server prompt "best hotels and
+  // places to stay" already exists in discovery/seed.ts). Tucked in the Filters
+  // disclosure, not the inline strip.
+  "stay",
 ] as const;
 
 export type PlaceCategoryKey = (typeof PLACE_CATEGORIES)[number];
@@ -28,6 +33,7 @@ const CAT_LABEL: Record<PlaceCategoryKey, string> = {
   nightlife: "discover.catNightlife",
   shopping: "discover.catShopping",
   activity: "discover.catActivity",
+  stay: "discover.catStay",
 };
 
 /** `null` value = "All". */

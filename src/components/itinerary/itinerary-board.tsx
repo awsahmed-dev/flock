@@ -521,15 +521,19 @@ export function ItineraryBoard({
               <Sparkles className="w-3.5 h-3.5" />
               {t("itinerary.aiEntry")}
             </button>
+            {/* B3 / Paxawa Control Language: this Add affordance floats over
+                the Plan map, so it joins the glass control layer (glass-on-dark
+                with the reduced-transparency fallback) — Plan and Discover now
+                share one material on their floating controls. */}
             <button
               type="button"
               onClick={() => {
                 setAddPickerOpen(false);
                 openAddFor(focusedDay);
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-card border border-border shadow-lg px-4 py-2 text-xs font-bold hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              className="glass-dark inline-flex items-center gap-2 rounded-full text-white shadow-lg px-4 py-2 text-xs font-bold transition-all hover:scale-[1.03]"
             >
-              <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <MapPin className="w-3.5 h-3.5" />
               {t("itinerary.addPlace")}
             </button>
           </div>

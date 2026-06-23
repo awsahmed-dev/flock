@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin } from "lucide-react";
+import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check } from "lucide-react";
 import type { Place, PlaceFeatures } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -10,6 +10,8 @@ import { rankFeed } from "@/lib/discovery/client/rank-feed";
 import { useTasteSession } from "@/lib/discovery/client/use-taste-session";
 import { useDwellTracker } from "@/lib/discovery/client/use-dwell-tracker";
 import { useT } from "@/components/i18n/locale-provider";
+import { GlassButton } from "@/components/ui/glass";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { PlaceCard } from "./place-card";
 import { PlaceCardCompact } from "./place-card-compact";
 import { PlaceDetailPanel } from "./place-detail-panel";
@@ -47,12 +49,24 @@ const DISCOVER_DAY = "discover";
 const CAT_KEY: Record<string, string> = {
   eat: "discover.catEat", coffee: "discover.catCoffee", sight: "discover.catSight",
   nightlife: "discover.catNightlife", shopping: "discover.catShopping", activity: "discover.catActivity",
+  stay: "discover.catStay",
 };
+
+/**
+ * A2 / Hick's-Law progressive disclosure: surface the highest-intent
+ * categories inline, tuck the rest behind ONE "Filters" affordance. "Eat" and
+ * "Sights" are the safe travel default; everything else (incl. the evicted
+ * "Stay" hotel-discovery category, per §A1) lives in the Filters sheet so the
+ * inline strip never overflows off a hidden swipe. The disclosure also keeps
+ * room for future refinements (price, open-now, rating) without growing the
+ * rail to a dozen chips.
+ */
+const INLINE_CATEGORIES: PlaceCategoryKey[] = ["eat", "sight"];
 
 type FetchState = "idle" | "loading" | "error" | "capped" | "unconfigured";
 
 export function DiscoverFeed({
-  tripId, destination, center, days, crewSize = 1, isOwner = false,
+  tripId, destination, center, days, crewSize = 1, isOwner = false, initialCategory = null,
 }: {
   tripId: string;
   destination: string;
@@ -60,11 +74,14 @@ export function DiscoverFeed({
   days: string[];
   crewSize?: number;
   isOwner?: boolean;
+  /** §A1: deep-link entry point (e.g. Bookings' "Find on Discover →" for a
+   *  hotel gap lands on the Stay category). */
+  initialCategory?: PlaceCategoryKey | null;
 }) {
   const t = useT();
   const { vector, emit } = useTasteSession(tripId);
 
-  const [category, setCategory] = useState<PlaceCategoryKey | null>(null);
+  const [category, setCategory] = useState<PlaceCategoryKey | null>(initialCategory);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [candidates, setCandidates] = useState<Place[]>([]);
@@ -74,9 +91,22 @@ export function DiscoverFeed({
   const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [view, setView] = useState<"stream" | "map">("stream");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const isDesktop = useIsDesktop();
 
   const searching = query.trim().length >= 2;
+
+  // A2: a non-"All" category counts as one active filter, so the Filters pill
+  // can carry a visible active-count badge (Visibility of System Status). When
+  // the active category is one of the inline chips it's already visible, so it
+  // doesn't count toward the badge — the badge only flags filters hidden in the
+  // disclosure.
+  const activeFilterCount = category && !INLINE_CATEGORIES.includes(category) ? 1 : 0;
+  const selectCategory = useCallback((c: PlaceCategoryKey | null) => {
+    setQuery("");
+    setSearchOpen(false);
+    setCategory(c);
+  }, []);
 
   const [rankVector, setRankVector] = useState(vector);
   useEffect(() => {
@@ -236,8 +266,6 @@ export function DiscoverFeed({
     if (id) setHighlightedId(id);
   }, [ranked]);
 
-  const chips: (PlaceCategoryKey | null)[] = [null, ...PLACE_CATEGORIES];
-
   // ── Desktop (lg+): card grid beside a persistent map (design §4.1/§5). The
   // immersive stream below is the mobile design; only one mounts at a time so
   // there's a single Mapbox instance and no doubled DOM.
@@ -248,25 +276,20 @@ export function DiscoverFeed({
           {/* Left — filter chips + search + card grid */}
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1 min-w-0 -mx-1 px-1 overflow-x-auto scrollbar-none">
-                <div className="inline-flex items-center gap-1.5">
-                  {chips.map((c) => {
-                    const active = category === c && !searching;
-                    return (
-                      <button
-                        key={c ?? "all"}
-                        type="button"
-                        onClick={() => { setQuery(""); setCategory(c); }}
-                        className={`shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all ${
-                          active ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {c === null ? t("discover.catAll") : t(CAT_KEY[c])}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* A2: progressive disclosure — inline top categories + one
+                  Filters affordance (with active-count badge) for the rest.
+                  No more horizontal rail you must scroll to discover hidden
+                  filters. Solid tone here (desktop is a light content surface,
+                  not a photo backdrop). */}
+              <CategoryStrip
+                tone="glassLight"
+                category={category}
+                searching={searching}
+                activeFilterCount={activeFilterCount}
+                onSelect={selectCategory}
+                onOpenFilters={() => setFiltersOpen(true)}
+                className="flex-1 min-w-0"
+              />
               <div className="relative shrink-0 w-56">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
@@ -310,7 +333,12 @@ export function DiscoverFeed({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 2xl:grid-cols-3 gap-4">
+                {/* B2: photo-first feed, not a dense matte grid. One soul on
+                    both breakpoints — the cinematic photo IS the experience on
+                    desktop too. A roomy 1-up (→2-up only on very wide screens)
+                    keeps each card's hero photo large and dominant beside the
+                    persistent map. */}
+                <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
                   {ranked.map((s) => (
                     <PlaceCardCompact
                       key={s.place.placeId}
@@ -351,6 +379,14 @@ export function DiscoverFeed({
           </div>
         </div>
 
+        <FiltersSheet
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          category={category}
+          searching={searching}
+          onSelect={selectCategory}
+        />
+
         <PlaceDetailPanel
           scored={openPlace} open={openPlace !== null} tripId={tripId} days={days} center={center}
           saved={openPlace ? saved.has(openPlace.place.placeId) : false}
@@ -363,33 +399,24 @@ export function DiscoverFeed({
 
   return (
     <div className="relative rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
-      {/* Floating controls */}
+      {/* Floating controls — the glass control layer (Paxawa Control Language,
+          §4). Glass-on-dark chips + buttons float over the cinematic photo. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex items-center gap-2">
-          <div className="flex-1 min-w-0 -mx-1 px-1 overflow-x-auto scrollbar-none">
-            <div className="inline-flex items-center gap-1.5">
-              {chips.map((c) => {
-                const active = category === c && !searching;
-                return (
-                  <button
-                    key={c ?? "all"}
-                    type="button"
-                    onClick={() => { setQuery(""); setSearchOpen(false); setCategory(c); }}
-                    className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-bold transition-all ring-1 ${
-                      active
-                        ? "bg-white text-neutral-900 ring-white"
-                        : "bg-white/10 text-white/90 ring-white/15 backdrop-blur-md hover:bg-white/20"
-                    }`}
-                  >
-                    {c === null ? t("discover.catAll") : t(CAT_KEY[c])}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* A2: top categories inline + one glass Filters pill (badge when
+              active) — every category reachable without a hidden swipe. */}
+          <CategoryStrip
+            tone="glass"
+            category={category}
+            searching={searching}
+            activeFilterCount={activeFilterCount}
+            onSelect={selectCategory}
+            onOpenFilters={() => setFiltersOpen(true)}
+            className="flex-1 min-w-0"
+          />
 
           {searchOpen || searching ? (
-            <div className="relative shrink-0 w-40 sm:w-56">
+            <div className="relative shrink-0 w-32 sm:w-56">
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
               <input
                 autoFocus
@@ -397,7 +424,7 @@ export function DiscoverFeed({
                 onChange={(e) => setQuery(e.target.value)}
                 onBlur={() => !query && setSearchOpen(false)}
                 placeholder={t("discover.searchPlaceholder")}
-                className="w-full rounded-full bg-white/10 backdrop-blur-md ring-1 ring-white/15 text-white placeholder:text-white/50 ps-9 pe-8 py-2 text-sm outline-none focus:ring-white/40"
+                className="w-full rounded-full glass-dark text-white placeholder:text-white/50 ps-9 pe-8 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               />
               {query && (
                 <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }}
@@ -407,13 +434,13 @@ export function DiscoverFeed({
               )}
             </div>
           ) : (
-            <GlassBtn onClick={() => setSearchOpen(true)} label={t("discover.searchPlaceholder")}>
-              <Search className="w-4.5 h-4.5" />
-            </GlassBtn>
+            <GlassButton iconOnly onClick={() => setSearchOpen(true)} aria-label={t("discover.searchPlaceholder")}>
+              <Search className="w-[18px] h-[18px]" />
+            </GlassButton>
           )}
-          <GlassBtn onClick={() => setView((v) => (v === "stream" ? "map" : "stream"))} label={t(view === "stream" ? "discover.viewMap" : "discover.viewList")} active={view === "map"}>
-            <MapIcon className="w-4.5 h-4.5" />
-          </GlassBtn>
+          <GlassButton iconOnly active={view === "map"} onClick={() => setView((v) => (v === "stream" ? "map" : "stream"))} aria-label={t(view === "stream" ? "discover.viewMap" : "discover.viewList")}>
+            <MapIcon className="w-[18px] h-[18px]" />
+          </GlassButton>
         </div>
       </div>
 
@@ -530,6 +557,14 @@ export function DiscoverFeed({
         </div>
       )}
 
+      <FiltersSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        category={category}
+        searching={searching}
+        onSelect={selectCategory}
+      />
+
       <PlaceDetailPanel
         scored={openPlace} open={openPlace !== null} tripId={tripId} days={days} center={center}
         saved={openPlace ? saved.has(openPlace.place.placeId) : false}
@@ -540,25 +575,129 @@ export function DiscoverFeed({
   );
 }
 
-function GlassBtn({
-  children, onClick, label, active = false,
+/**
+ * A2 — the progressive-disclosure category strip. Renders the inline top
+ * categories (`All · Eat · Sights`) + ONE Filters pill that opens the sheet
+ * holding the rest. The Filters pill carries an active-count badge so a hidden
+ * filter is always visible (Visibility of System Status). Two tones:
+ *   - "glass" — over the mobile photo stream (Paxawa Control Language).
+ *   - "solid" — over the desktop light content surface.
+ */
+function CategoryStrip({
+  tone,
+  category,
+  searching,
+  activeFilterCount,
+  onSelect,
+  onOpenFilters,
+  className,
 }: {
-  children: React.ReactNode;
-  onClick: () => void;
-  label: string;
-  active?: boolean;
+  /** "glass" = glass-on-dark (mobile, over the photo stream); "glassLight" =
+   *  glass-on-light (desktop, over the light page); both share the material +
+   *  reduced-transparency fallback. */
+  tone: "glass" | "glassLight";
+  category: PlaceCategoryKey | null;
+  searching: boolean;
+  activeFilterCount: number;
+  onSelect: (c: PlaceCategoryKey | null) => void;
+  onOpenFilters: () => void;
+  className?: string;
 }) {
+  const t = useT();
+  const inline: (PlaceCategoryKey | null)[] = [null, ...INLINE_CATEGORIES];
+  const isGlass = tone === "glass";
+
+  const baseChip = "shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
+  const activeChip = isGlass ? "bg-white text-neutral-900" : "bg-foreground text-background";
+  const restChip = isGlass
+    ? "glass-dark text-white/90"
+    : "glass-light text-muted-foreground hover:text-foreground";
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ring-1 backdrop-blur-md transition-all hover:scale-105 ${
-        active ? "bg-white text-neutral-900 ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"
-      }`}
-    >
-      {children}
-    </button>
+    <div className={`flex items-center gap-1.5 ${className ?? ""}`}>
+      {inline.map((c) => {
+        const active = category === c && !searching;
+        return (
+          <button
+            key={c ?? "all"}
+            type="button"
+            onClick={() => onSelect(c)}
+            aria-pressed={active}
+            className={`${baseChip} ${active ? activeChip : restChip}`}
+          >
+            {c === null ? t("discover.catAll") : t(CAT_KEY[c])}
+          </button>
+        );
+      })}
+      {/* The ONE disclosure affordance — opens the rest of the categories. */}
+      <button
+        type="button"
+        onClick={onOpenFilters}
+        aria-haspopup="dialog"
+        aria-label={activeFilterCount > 0 ? t("discover.filtersWithCount", { count: activeFilterCount }) : t("discover.filters")}
+        className={`${baseChip} inline-flex items-center gap-1.5 ${
+          activeFilterCount > 0 ? activeChip : restChip
+        }`}
+      >
+        <SlidersHorizontal className="w-3.5 h-3.5" />
+        <span>{t("discover.filters")}</span>
+        {activeFilterCount > 0 && (
+          <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-black leading-none ${
+            isGlass ? "bg-neutral-900 text-white" : "bg-background text-foreground"
+          }`}>
+            {activeFilterCount}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * A2 — the Filters disclosure. A compact sheet (mobile) / centered popover
+ * (desktop, via BottomSheet's ≥sm behavior) holding the full category set plus
+ * room for future refinements. Picking a category applies it and closes; it
+ * never navigates away or fully covers the feed on desktop.
+ */
+function FiltersSheet({
+  open,
+  onClose,
+  category,
+  searching,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  category: PlaceCategoryKey | null;
+  searching: boolean;
+  onSelect: (c: PlaceCategoryKey | null) => void;
+}) {
+  const t = useT();
+  const all: (PlaceCategoryKey | null)[] = [null, ...PLACE_CATEGORIES];
+  return (
+    <BottomSheet open={open} onClose={onClose} title={t("discover.filtersTitle")} subtitle={t("discover.filtersSubtitle")} size="sm">
+      <div className="grid grid-cols-2 gap-2 pb-1">
+        {all.map((c) => {
+          const active = category === c && !searching;
+          return (
+            <button
+              key={c ?? "all"}
+              type="button"
+              onClick={() => { onSelect(c); onClose(); }}
+              aria-pressed={active}
+              className={`flex items-center justify-between gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${
+                active
+                  ? "bg-foreground text-background"
+                  : "bg-muted/50 text-foreground hover:bg-muted"
+              }`}
+            >
+              <span>{c === null ? t("discover.catAll") : t(CAT_KEY[c])}</span>
+              {active && <Check className="w-4 h-4 shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+    </BottomSheet>
   );
 }
 

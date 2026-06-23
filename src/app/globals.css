@@ -151,6 +151,60 @@
   }
 }
 
+/* ────────────────────────────────────────────────────────────────────────
+   The Paxawa Control Language — the glass material (docs §4 of the
+   product-head brief). ONE material for the floating control/overlay layer;
+   solid stays for content/text/tables. Two tones:
+     .glass-dark  — over photos/maps (white content)
+     .glass-light — over light content/sheets (foreground content)
+   Each pairs a translucent fill + hairline ring + blur. A subtle scrim is
+   baked into the fill so short labels/icons clear ≥4.5:1 over a bright photo
+   without depending on luck.
+
+   GUARDRAIL: prefers-reduced-transparency (or reduced-motion, which the same
+   users often set) drops the blur and swaps to a SOLID token automatically,
+   so the material degrades to a legible, opaque control — never a smeared,
+   low-contrast one. This is the non-negotiable a11y fallback from the brief. */
+.glass-dark {
+  background-color: rgb(255 255 255 / 0.10);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.glass-dark:hover {
+  background-color: rgb(255 255 255 / 0.20);
+}
+.glass-light {
+  background-color: color-mix(in oklab, var(--background) 70%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border) 60%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.glass-light:hover {
+  background-color: color-mix(in oklab, var(--background) 85%, transparent);
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+  .glass-dark {
+    background-color: rgb(23 23 23 / 0.92);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass-dark:hover {
+    background-color: rgb(38 38 38 / 0.96);
+  }
+  .glass-light {
+    background-color: var(--background);
+    box-shadow: inset 0 0 0 1px var(--border);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass-light:hover {
+    background-color: var(--card);
+  }
+}
+
 /* B26: blog content typography. Replaces @tailwindcss/typography which
    we don't install — small + tuned for the dark marketing surface. */
 .blog-content {

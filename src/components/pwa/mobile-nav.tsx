@@ -61,7 +61,10 @@ export function MobileNav({ tripId, onChatToggle, chatOpen, badges = {} }: Props
 
   return (
     <div className="lg:hidden fixed left-0 right-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 pointer-events-none">
-      <nav className="pointer-events-auto mx-auto max-w-[460px] h-16 flex items-stretch px-1 rounded-full bg-card border border-border shadow-2xl shadow-black/40 backdrop-blur-md">
+      {/* Paxawa Control Language (§4): the floating bottom nav is part of the
+          glass control layer — glass-on-light, with the reduced-transparency
+          fallback to a solid bar baked into `.glass-light`. */}
+      <nav className="glass-light pointer-events-auto mx-auto max-w-[460px] h-16 flex items-stretch px-1 rounded-full shadow-2xl shadow-black/40">
         {tabs.map((tab) => {
           const isActive = tab.exact
             ? pathname === tab.href

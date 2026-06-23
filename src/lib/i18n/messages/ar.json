@@ -447,7 +447,14 @@
     "hours": "ساعات العمل",
     "goodToKnow": "معلومات مفيدة",
     "location": "الموقع",
-    "addToPlan": "أضِف إلى الخطة"
+    "addToPlan": "أضِف إلى الخطة",
+    "filters": "تصفية",
+    "filtersWithCount": "تصفية · {count}",
+    "filtersTitle": "تصفية الأماكن",
+    "filtersSubtitle": "اختر فئة لتحسين قائمتك.",
+    "filtersClear": "مسح",
+    "filtersApply": "اعرض الأماكن",
+    "moreCategories": "فئات أخرى"
   },
   "pack": {
     "title": "أمتعة",
@@ -643,7 +650,24 @@
     "tabBooked": "محجوز",
     "tabTodo": "للحجز",
     "pageTitle": "الحجوزات",
-    "jobLine": "التذاكر والتأكيدات التي يحملها فريقك."
+    "jobLine": "التذاكر والتأكيدات التي يحملها فريقك.",
+    "statusLine": "{booked} محجوز · {value} · {todo} متبقٍّ",
+    "passesTitle": "تذاكرك",
+    "passesSub": "{count, plural, =0 {لا تذاكر بعد} one {تذكرة واحدة في محفظتك} two {تذكرتان في محفظتك} few {{count} تذاكر في محفظتك} many {{count} تذكرة في محفظتك} other {{count} تذكرة في محفظتك}}",
+    "checklistTitle": "ما زال يحتاج ترتيبًا",
+    "checklistSub": "الفجوة بين ما تحتاجه رحلتك وما تم حجزه.",
+    "checklistAllDone": "كل شيء محجوز. أنت جاهز.",
+    "findOnDiscover": "ابحث في اكتشف",
+    "markBooked": "وضع كمحجوز",
+    "checklistHotel": "إقامة في {city}",
+    "checklistHotelSub": "لا فندق محجوز لهذه المحطة بعد",
+    "checklistFlight": "رحلة ذهاب وعودة",
+    "checklistFlightSub": "أوصل الفريق إلى {destination} وعُد",
+    "checklistEsim": "شريحة eSIM محلية",
+    "checklistEsimSub": "ابقَ متصلًا في {destination}",
+    "checklistActivity": "احجز {title}",
+    "checklistActivitySub": "احجز مكانك قبل أن يمتلئ",
+    "markedBooked": "تم وضعه كمحجوز"
   },
   "wallet": {
     "section": "المحفظة",

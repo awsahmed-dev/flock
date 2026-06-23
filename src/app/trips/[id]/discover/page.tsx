@@ -8,11 +8,20 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { isOwner } from "@/lib/permissions";
 import { geocode } from "@/lib/geocode";
 import { DiscoverFeed } from "@/components/discover/discover-feed";
+import type { PlaceCategoryKey } from "@/components/discover/primitives";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ category?: string }>;
 }
+
+/** Server-safe validation list — kept local so this server page never pulls a
+ *  runtime value out of the "use client" primitives barrel (that import throws
+ *  on the server). Must stay in sync with PLACE_CATEGORIES in primitives. */
+const VALID_CATEGORIES = [
+  "eat", "coffee", "sight", "nightlife", "shopping", "activity", "stay",
+] as const;
 
 /**
  * v2 Discover — standalone preview surface. Real Google places, ranked + tagged
@@ -20,10 +29,18 @@ interface Props {
  * route) so the existing Plan page testers use stays untouched until Discover
  * is proven and wired into the Plan IA.
  */
-export default async function DiscoverPage({ params }: Props) {
+export default async function DiscoverPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { category } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
+
+  // §A1: Bookings' "to book" checklist deep-links here with ?category=stay so a
+  // hotel gap lands straight on the Stay category — discovery has one home.
+  const initialCategory: PlaceCategoryKey | null =
+    category && (VALID_CATEGORIES as readonly string[]).includes(category)
+      ? (category as PlaceCategoryKey)
+      : null;
 
   const trip = await getTripWithMembership(id, user.id);
   if (!trip) redirect("/dashboard");
@@ -57,6 +74,7 @@ export default async function DiscoverPage({ params }: Props) {
         days={days}
         crewSize={trip.members.length}
         isOwner={isOwner(trip, user.id)}
+        initialCategory={initialCategory}
       />
     </div>
   );

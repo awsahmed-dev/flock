@@ -447,7 +447,14 @@
     "hours": "Hours",
     "goodToKnow": "Good to know",
     "location": "Location",
-    "addToPlan": "Add to plan"
+    "addToPlan": "Add to plan",
+    "filters": "Filters",
+    "filtersWithCount": "Filters · {count}",
+    "filtersTitle": "Filter places",
+    "filtersSubtitle": "Pick a category to refine your feed.",
+    "filtersClear": "Clear",
+    "filtersApply": "Show places",
+    "moreCategories": "More categories"
   },
   "pack": {
     "title": "Pack",
@@ -643,7 +650,24 @@
     "tabBooked": "Booked",
     "tabTodo": "To book",
     "pageTitle": "Bookings",
-    "jobLine": "The tickets and confirmations your crew carries."
+    "jobLine": "The tickets and confirmations your crew carries.",
+    "statusLine": "{booked} booked · {value} · {todo} to go",
+    "passesTitle": "Your passes",
+    "passesSub": "{count, plural, =0 {No tickets yet} one {1 ticket in your wallet} other {# tickets in your wallet}}",
+    "checklistTitle": "Still to sort",
+    "checklistSub": "The gap between what your trip needs and what's booked.",
+    "checklistAllDone": "Everything's booked. You're all set.",
+    "findOnDiscover": "Find on Discover",
+    "markBooked": "Mark booked",
+    "checklistHotel": "Stay in {city}",
+    "checklistHotelSub": "No hotel booked for this stop yet",
+    "checklistFlight": "Round-trip flight",
+    "checklistFlightSub": "Get the crew to {destination} and back",
+    "checklistEsim": "Local eSIM",
+    "checklistEsimSub": "Stay connected in {destination}",
+    "checklistActivity": "Book {title}",
+    "checklistActivitySub": "Secure your spot before it fills up",
+    "markedBooked": "Marked as booked"
   },
   "wallet": {
     "section": "Wallet",
