@@ -96,36 +96,110 @@ function lookup(dict: unknown, key: string): string | null {
  * rendered the raw ICU template on screen. Spotted on the Plan day
  * sheet where `itinerary.items` was showing as
  * `{count, plural, =0 {No items} ...}` to the user. */
-const PLURAL_RE =
-  /\{(\w+),\s*plural,\s*((?:=?\w+\s*\{[^}]*\}\s*)+)\}/g;
+// Brace-aware ICU plural handling — mirrors the server `interpolate` in
+// lib/i18n. The old `\{[^}]*\}` body match couldn't hold a nested {placeholder},
+// so Arabic two/few/many branches (which embed {count}/{currency}) leaked the
+// raw ICU skeleton on screen (e.g. the money-page subtitle). Kept inline so this
+// client file has no server-only deps.
+const PLURAL_OPEN_RE = /^\{\s*(\w+)\s*,\s*plural\s*,/;
 
 function interpolate(
   template: string,
   params: Record<string, string | number>,
   locale: Locale,
 ): string {
-  const afterPlurals = template.replace(
-    PLURAL_RE,
-    (_m, name: string, cases: string) => {
-      const value = Number(params[name]);
-      const category = new Intl.PluralRules(locale).select(value);
-      const branches: Record<string, string> = {};
-      const branchRe = /(=?\w+)\s*\{([^}]*)\}/g;
-      let m: RegExpExecArray | null;
-      while ((m = branchRe.exec(cases)) !== null) {
-        branches[m[1]] = m[2];
-      }
-      const chosen =
-        branches[`=${value}`] ??
-        branches[category] ??
-        branches.other ??
-        branches.one ??
-        "";
-      return chosen.replace(/#/g, String(value));
-    },
-  );
+  const afterPlurals = replacePluralBlocks(template, params, locale);
   return afterPlurals.replace(/\{(\w+)\}/g, (_m, name: string) => {
     const v = params[name];
     return v == null ? `{${name}}` : String(v);
   });
+}
+
+function replacePluralBlocks(
+  input: string,
+  params: Record<string, string | number>,
+  locale: Locale,
+): string {
+  let out = "";
+  let i = 0;
+  while (i < input.length) {
+    const open = input.indexOf("{", i);
+    if (open === -1) {
+      out += input.slice(i);
+      break;
+    }
+    out += input.slice(i, open);
+    const block = parsePluralBlock(input, open);
+    if (!block) {
+      out += "{";
+      i = open + 1;
+      continue;
+    }
+    out += renderPluralBlock(block.name, block.casesStr, params, locale);
+    i = block.end;
+  }
+  return out;
+}
+
+function parsePluralBlock(
+  s: string,
+  open: number,
+): { name: string; casesStr: string; end: number } | null {
+  const head = PLURAL_OPEN_RE.exec(s.slice(open));
+  if (!head) return null;
+  let depth = 0;
+  let j = open;
+  for (; j < s.length; j++) {
+    if (s[j] === "{") depth++;
+    else if (s[j] === "}") {
+      depth--;
+      if (depth === 0) {
+        j++;
+        break;
+      }
+    }
+  }
+  if (depth !== 0) return null;
+  return { name: head[1], casesStr: s.slice(open + head[0].length, j - 1), end: j };
+}
+
+function renderPluralBlock(
+  name: string,
+  casesStr: string,
+  params: Record<string, string | number>,
+  locale: Locale,
+): string {
+  const raw = Number(params[name]);
+  const value = Number.isFinite(raw) ? raw : 0;
+  const category = new Intl.PluralRules(locale).select(value);
+
+  const branches: Record<string, string> = {};
+  let i = 0;
+  const n = casesStr.length;
+  while (i < n) {
+    while (i < n && /\s/.test(casesStr[i])) i++;
+    if (i >= n) break;
+    const keyStart = i;
+    while (i < n && !/\s/.test(casesStr[i]) && casesStr[i] !== "{") i++;
+    const key = casesStr.slice(keyStart, i).trim();
+    while (i < n && casesStr[i] !== "{") i++;
+    if (casesStr[i] !== "{") break;
+    let depth = 0;
+    const bodyStart = i;
+    for (; i < n; i++) {
+      if (casesStr[i] === "{") depth++;
+      else if (casesStr[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          i++;
+          break;
+        }
+      }
+    }
+    if (key) branches[key] = casesStr.slice(bodyStart + 1, i - 1);
+  }
+
+  const chosen =
+    branches[`=${value}`] ?? branches[category] ?? branches.other ?? branches.one ?? "";
+  return chosen.replace(/#/g, String(value));
 }
