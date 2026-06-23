@@ -8,6 +8,7 @@ import { itineraryItems } from "@/lib/db/schema";
 import { getTripWithMembership } from "./trips";
 import { geocode } from "@/lib/geocode";
 import { buildSeedFeed } from "@/lib/discovery/seed";
+import { isOverCap } from "@/lib/places/meter";
 import { quality } from "@/lib/discovery/score";
 import { getLocale } from "@/lib/i18n";
 import { createDecision } from "./decisions";
@@ -103,7 +104,11 @@ export async function planDay(input: {
     existing.map((e) => e.googlePlaceId).filter((id): id is string => !!id),
   );
 
-  // Pull the cached per-category feeds and rank each by quality.
+  // Pull the cached per-category feeds and rank each by quality. Honor the
+  // global spend kill-switch: over cap → serve only already-cached seeds so a
+  // Plan-this-day tap on a cold destination can't run fresh Google searches
+  // past the cap (the kill-switch must be absolute, not feed-route-only).
+  const capped = await isOverCap();
   const feeds = await Promise.all(
     NEEDED_CATEGORIES.map((c) =>
       buildSeedFeed({
@@ -111,6 +116,7 @@ export async function planDay(input: {
         center,
         category: c,
         languageCode: locale,
+        cacheOnly: capped,
       }).catch(() => [] as Place[]),
     ),
   );

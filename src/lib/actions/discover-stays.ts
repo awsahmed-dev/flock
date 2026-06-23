@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "./trips";
 import { geocode } from "@/lib/geocode";
 import { buildSeedFeed } from "@/lib/discovery/seed";
+import { isOverCap } from "@/lib/places/meter";
 import { quality } from "@/lib/discovery/score";
 import { getLocale } from "@/lib/i18n";
 
@@ -42,6 +43,7 @@ export async function discoverStays(tripId: string): Promise<{ stays: StayCard[]
     center,
     category: "stay",
     languageCode: locale,
+    cacheOnly: await isOverCap(), // honor the global spend kill-switch
   }).catch(() => []);
 
   const stays = [...places]

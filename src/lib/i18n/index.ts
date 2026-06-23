@@ -96,49 +96,123 @@ function lookup(dict: unknown, key: string): string | null {
   return typeof cur === "string" ? cur : null;
 }
 
-// B23: branch key can be a plural category (one, two, few, many, zero,
-// other) OR an exact-match like `=0` / `=1`. Both forms appear in real
-// ICU plural strings; previously only the keyword form matched, so any
-// translation using `=0 {All hotels booked}` rendered the raw template.
-const PLURAL_RE =
-  /\{(\w+),\s*plural,\s*((?:=?\w+\s*\{[^}]*\}\s*)+)\}/g;
+// Matches the OPENING of an ICU plural block: `{ name , plural ,`. We then walk
+// balanced braces ourselves to find the block end and the branch bodies — a
+// regex can't, because Arabic two/few/many branches embed `{count}`/`{currency}`
+// (nested braces) which broke the old `\{[^}]*\}` body match and leaked the raw
+// ICU skeleton to the user. Branch keys may be a category (one/two/few/many/
+// zero/other) or an exact match (`=0`).
+const PLURAL_OPEN_RE = /^\{\s*(\w+)\s*,\s*plural\s*,/;
 
 function interpolate(
   template: string,
   params: Record<string, string | number>,
   locale: Locale,
 ): string {
-  // First pass: ICU plural blocks. Match each block and replace it
-  // with the branch that fits the param's plural category.
-  const afterPlurals = template.replace(
-    PLURAL_RE,
-    (_match, name: string, cases: string) => {
-      const value = Number(params[name]);
-      const category = pluralCategory(value, locale);
-      const branches: Record<string, string> = {};
-      const branchRe = /(=?\w+)\s*\{([^}]*)\}/g;
-      let m: RegExpExecArray | null;
-      while ((m = branchRe.exec(cases)) !== null) {
-        branches[m[1]] = m[2];
-      }
-      // Exact-match `=N` wins over category. Falls back to category,
-      // then `other`, then `one` so missing branches degrade gracefully.
-      const chosen =
-        branches[`=${value}`] ??
-        branches[category] ??
-        branches.other ??
-        branches.one ??
-        "";
-      // `#` inside a branch is the numeric value.
-      return chosen.replace(/#/g, String(value));
-    },
-  );
-
-  // Second pass: simple {name} placeholders.
+  // First pass: ICU plural blocks, brace-aware so nested placeholders survive.
+  const afterPlurals = replacePluralBlocks(template, params, locale);
+  // Second pass: simple {name} placeholders (incl. any inside the chosen branch).
   return afterPlurals.replace(/\{(\w+)\}/g, (_match, name: string) => {
     const v = params[name];
     return v == null ? `{${name}}` : String(v);
   });
+}
+
+/** Scan the template, replacing each balanced `{name, plural, …}` block with the
+ *  branch that fits the param's plural category. Non-plural `{…}` is left intact
+ *  for the second placeholder pass. */
+function replacePluralBlocks(
+  input: string,
+  params: Record<string, string | number>,
+  locale: Locale,
+): string {
+  let out = "";
+  let i = 0;
+  while (i < input.length) {
+    const open = input.indexOf("{", i);
+    if (open === -1) {
+      out += input.slice(i);
+      break;
+    }
+    out += input.slice(i, open);
+    const block = parsePluralBlock(input, open);
+    if (!block) {
+      // Not a plural block (e.g. a plain `{currency}`) — keep the `{` and move on.
+      out += "{";
+      i = open + 1;
+      continue;
+    }
+    out += renderPluralBlock(block.name, block.casesStr, params, locale);
+    i = block.end;
+  }
+  return out;
+}
+
+/** If `{` at `open` starts a plural block, return its name, the raw cases string,
+ *  and the index just past its closing `}`. Otherwise null. */
+function parsePluralBlock(
+  s: string,
+  open: number,
+): { name: string; casesStr: string; end: number } | null {
+  const head = PLURAL_OPEN_RE.exec(s.slice(open));
+  if (!head) return null;
+  let depth = 0;
+  let j = open;
+  for (; j < s.length; j++) {
+    if (s[j] === "{") depth++;
+    else if (s[j] === "}") {
+      depth--;
+      if (depth === 0) {
+        j++;
+        break;
+      }
+    }
+  }
+  if (depth !== 0) return null; // unbalanced — bail, treat as literal
+  return { name: head[1], casesStr: s.slice(open + head[0].length, j - 1), end: j };
+}
+
+/** Parse `=0 {…} one {…} other {…}` (brace-aware bodies) and pick the branch. */
+function renderPluralBlock(
+  name: string,
+  casesStr: string,
+  params: Record<string, string | number>,
+  locale: Locale,
+): string {
+  const raw = Number(params[name]);
+  const value = Number.isFinite(raw) ? raw : 0;
+  const category = pluralCategory(value, locale);
+
+  const branches: Record<string, string> = {};
+  let i = 0;
+  const n = casesStr.length;
+  while (i < n) {
+    while (i < n && /\s/.test(casesStr[i])) i++; // skip ws
+    if (i >= n) break;
+    const keyStart = i;
+    while (i < n && !/\s/.test(casesStr[i]) && casesStr[i] !== "{") i++;
+    const key = casesStr.slice(keyStart, i).trim();
+    while (i < n && casesStr[i] !== "{") i++; // skip to body
+    if (casesStr[i] !== "{") break;
+    let depth = 0;
+    const bodyStart = i;
+    for (; i < n; i++) {
+      if (casesStr[i] === "{") depth++;
+      else if (casesStr[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          i++;
+          break;
+        }
+      }
+    }
+    if (key) branches[key] = casesStr.slice(bodyStart + 1, i - 1);
+  }
+
+  const chosen =
+    branches[`=${value}`] ?? branches[category] ?? branches.other ?? branches.one ?? "";
+  // `#` is the numeric value; nested {placeholder} resolved by the second pass.
+  return chosen.replace(/#/g, String(value));
 }
 
 /**
