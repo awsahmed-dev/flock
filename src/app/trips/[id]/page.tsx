@@ -18,7 +18,7 @@ import {
 import { and, eq } from "drizzle-orm";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import type { ActionHubStats } from "@/components/trips/trip-action-hub";
+import type { ActionHubStats } from "@/components/trips/pick-suggestion";
 import { getRates, convert } from "@/lib/fx";
 
 interface Props {

@@ -3,13 +3,12 @@
 import {
   X,
   MessageSquare,
-  CreditCard,
+  Ticket,
   Gavel,
   Users,
   Share2,
   Settings,
   Calendar,
-  Map as MapIcon,
   FileText,
   Image as ImageIcon,
   Check,
@@ -179,7 +178,7 @@ export function TripMoreSheet({
             onClick={openChat}
           />
           <Row
-            icon={CreditCard}
+            icon={Ticket}
             label={t("more.bookings")}
             href={`/trips/${tripId}/wallet`}
             onClick={onClose}
@@ -198,6 +197,22 @@ export function TripMoreSheet({
             meta={t("more.crewMeta")}
             onClick={openCrew}
           />
+          {/* P2-4: Docs is live (it's a mode inside Pack) — it belongs in
+              the working rows, not muted under "Coming soon". */}
+          <Row
+            icon={FileText}
+            label={t("more.docs")}
+            meta={t("more.docsMeta")}
+            href={`/trips/${tripId}/pack?view=docs`}
+            onClick={onClose}
+          />
+          {/* Calendar export is also live (downloads the .ics). */}
+          <Row
+            icon={Calendar}
+            label={t("more.calendar")}
+            meta={t("more.calendarMeta")}
+            href={`/api/trips/${tripId}/calendar.ics`}
+          />
           <Row
             icon={Share2}
             label={t("more.share")}
@@ -210,38 +225,21 @@ export function TripMoreSheet({
           />
         </div>
 
-        {/* Future surfaces — shown muted so users know they exist but
-            aren't ready yet. Wired as they ship. */}
+        {/* P2-4: "Coming soon" now holds ONLY genuinely-not-ready items,
+            rendered non-interactive (no href/onClick) so a muted row never
+            silently navigates. "Full map" was removed — it just re-opened
+            the Plan tab, duplicating a primary nav destination. Docs +
+            Calendar moved up into the live rows above. */}
         <div className="px-4 py-1 mt-1">
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
             {t("more.comingSoon")}
           </p>
         </div>
-        <div className="p-2 space-y-1 opacity-60">
+        <div className="p-2 space-y-1 opacity-60 pointer-events-none select-none">
           <Row
             icon={ImageIcon}
             label={t("more.photos")}
             meta={t("more.photosMeta")}
-          />
-          <Row
-            icon={FileText}
-            label={t("more.docs")}
-            meta={t("more.docsMeta")}
-            href={`/trips/${tripId}/pack?view=docs`}
-            onClick={onClose}
-          />
-          <Row
-            icon={Calendar}
-            label={t("more.calendar")}
-            meta={t("more.calendarMeta")}
-            href={`/api/trips/${tripId}/calendar.ics`}
-          />
-          <Row
-            icon={MapIcon}
-            label={t("more.fullMap")}
-            meta={t("more.fullMapMeta")}
-            href={`/trips/${tripId}/itinerary`}
-            onClick={onClose}
           />
         </div>
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Copy, Check, Users, Calendar, Wallet, ArrowRight, Clock, Link2, Sparkles,
-  MapPin, Backpack, Compass, Map as MapIcon, CreditCard as CardIcon,
+  MapPin, Backpack, Map as MapIcon, CreditCard as CardIcon,
   Wallet as WalletIcon, X as XIcon, AlertCircle,
 } from "lucide-react";
 import {
@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { AiPlannerPanel } from "./ai-planner-panel";
 import { PlanDaySheet } from "@/components/itinerary/plan-day-sheet";
-import { pickSuggestion, type ActionHubStats } from "./trip-action-hub";
+import { pickSuggestion, type ActionHubStats } from "./pick-suggestion";
 import { fmtAmount } from "@/lib/numerals";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -189,27 +189,18 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
           </div>
         </div>
 
-        {/* Plan-first primary actions. P5 "Plan this day" leads; the multi-day
-            wizard sits beside it as a calmer secondary (balanced 2:1, not a
-            giant bar next to a tiny chip). */}
-        <div className="flex items-stretch gap-2.5">
-          <button
-            type="button"
-            onClick={() => setPlanDayOpen(true)}
-            className="flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
-          >
-            <Sparkles className="w-4 h-4" />
-            {t("planDay.cta")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setAiOpen(true)}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl ring-1 ring-border/70 bg-card hover:bg-muted/50 px-4 py-3 text-sm font-bold transition-colors"
-          >
-            <Sparkles className="w-4 h-4 text-primary" />
-            {t("itinerary.aiPlan")}
-          </button>
-        </div>
+        {/* P0-3 / P1-3: exactly ONE plan CTA on the Overview. It opens the
+            single AI planner, where "one day" vs "whole trip" is a choice
+            inside the panel — no second AI button competing beside it, and
+            no duplication of the Plan page's controls. */}
+        <button
+          type="button"
+          onClick={() => setPlanDayOpen(true)}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+        >
+          <Sparkles className="w-4 h-4" />
+          {t("itinerary.aiEntry")}
+        </button>
 
         {/* Up next — the single smart router (calm, one accent). */}
         <Link
@@ -237,53 +228,43 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
         </Link>
 
-        {/* Snapshot — quiet, scannable trip metrics; each links to its page.
-            Replaces the loud 6-card grid that made the overview feel busy. */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <StatTile
+        {/* P1-4: one compact snapshot strip. Was four tall 3-line tiles
+            (icon block + big number + label) burning the most-expensive
+            vertical space to show one tiny number each. Now a single low
+            row of inline stat chips — icon · value · label on one line —
+            each still tappable to its page, at roughly a third the height.
+            P1-3: the standalone "Discover" router card was removed (it just
+            duplicated a nav tab); "Up Next" routes there when relevant. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <StatChip
             href={`/trips/${trip.id}/itinerary`}
             icon={Calendar}
-            accent="text-blue-600 dark:text-blue-400 bg-blue-500/10"
+            accent="text-blue-600 dark:text-blue-400"
             value={`${stats.daysWithItems}/${stats.totalDays}`}
             label={t("overview.daysPlanned")}
           />
-          <StatTile
+          <StatChip
             href={`/trips/${trip.id}/itinerary`}
             icon={MapPin}
-            accent="text-cyan-600 dark:text-cyan-400 bg-cyan-500/10"
+            accent="text-cyan-600 dark:text-cyan-400"
             value={String(stats.itineraryCount)}
             label={t("overview.places")}
           />
-          <StatTile
+          <StatChip
             href={`/trips/${trip.id}/expenses`}
             icon={Wallet}
-            accent="text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+            accent="text-emerald-600 dark:text-emerald-400"
             value={`${stats.currency} ${fmtAmount(stats.totalSpent)}`}
             label={t("overview.spent")}
           />
-          <StatTile
+          <StatChip
             href={`/trips/${trip.id}/pack?view=packing`}
             icon={Backpack}
-            accent="text-amber-600 dark:text-amber-400 bg-amber-500/10"
+            accent="text-amber-600 dark:text-amber-400"
             value={stats.packingTotal > 0 ? `${stats.packingPacked}/${stats.packingTotal}` : "—"}
             label={t("overview.packed")}
           />
         </div>
-
-        {/* Discover nudge — quiet, single line. */}
-        <Link
-          href={`/trips/${trip.id}/discover`}
-          className="group flex items-center gap-3 rounded-2xl ring-1 ring-cyan-500/20 bg-gradient-to-r from-cyan-500/[0.06] to-transparent p-3.5 hover:ring-cyan-500/40 transition-all"
-        >
-          <div className="w-9 h-9 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
-            <Compass className="w-4 h-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">{t("cards.discover")}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{t("cards.discoverHeadline")}</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180" />
-        </Link>
       </div>
 
       {/* ── Right rail — crew + invite ─────────────────────────────────── */}
@@ -360,6 +341,10 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
           initialDay={days[0] ?? null}
           crewSize={trip.members.length}
           isOwner={isOwner}
+          onChooseWholeTrip={() => {
+            setPlanDayOpen(false);
+            setAiOpen(true);
+          }}
         />
       )}
 
@@ -384,7 +369,14 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
 
 /* ──────────────────────────────────────────────────────────────────────── */
 
-function StatTile({
+/**
+ * P1-4: compact stat chip. A single short row — accent icon + value +
+ * label inline — so the four-metric snapshot occupies roughly a third of
+ * the old four-tall-tile height while each metric stays tappable to its
+ * destination. Chrome (icon + padding) is proportional to its one-number
+ * payload, not a hero card.
+ */
+function StatChip({
   href, icon: Icon, accent, value, label,
 }: {
   href: string;
@@ -396,13 +388,13 @@ function StatTile({
   return (
     <Link
       href={href}
-      className="group rounded-2xl ring-1 ring-border/60 bg-card p-3.5 sm:p-4 hover:ring-border hover:shadow-md hover:-translate-y-0.5 transition-all"
+      className="group flex items-center gap-2.5 rounded-xl ring-1 ring-border/60 bg-card px-3 py-2 hover:ring-border hover:bg-muted/30 transition-all"
     >
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2.5 ${accent}`}>
-        <Icon className="w-4 h-4" />
+      <Icon className={`w-4 h-4 shrink-0 ${accent}`} />
+      <div className="min-w-0">
+        <p className="text-sm font-extrabold tabular-nums tracking-tight leading-tight truncate">{value}</p>
+        <p className="text-[10px] text-muted-foreground leading-tight truncate">{label}</p>
       </div>
-      <p className="text-lg sm:text-xl font-extrabold tabular-nums tracking-tight truncate">{value}</p>
-      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{label}</p>
     </Link>
   );
 }

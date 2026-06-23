@@ -6,7 +6,7 @@ import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import {
   Sparkles, Coffee, Landmark, Utensils, Ticket, UtensilsCrossed,
-  Loader2, X, Star, Plus, Compass, Users,
+  Loader2, X, Star, Plus, Compass, Users, CalendarDays, CalendarRange, ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -33,6 +33,15 @@ interface Props {
   /** Crew size + role drive the "Send to crew → decision cards" path. */
   crewSize?: number;
   isOwner?: boolean;
+  /**
+   * P0-3: this is the single AI entry. The multi-day vibe wizard is no
+   * longer a sibling top-level button — it's the "Plan the whole trip"
+   * choice surfaced inside this panel. When the user picks it, we hand
+   * off to the wizard via this callback (parent closes the sheet + opens
+   * AiPlannerPanel). Omit it to skip the scope step and go straight to
+   * the single-day builder.
+   */
+  onChooseWholeTrip?: () => void;
 }
 
 /**
@@ -41,7 +50,7 @@ interface Props {
  * you don't want, then add the whole day in one tap. Every card is a real place
  * with its pin/photo/rating — AI curates, never invents.
  */
-export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize = 1, isOwner = false }: Props) {
+export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize = 1, isOwner = false, onChooseWholeTrip }: Props) {
   const t = useT();
   const router = useRouter();
   const [day, setDay] = useState<string>(initialDay ?? days[0] ?? "");
@@ -51,6 +60,13 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
   const [isAdding, startAdd] = useTransition();
   const [isSending, startSend] = useTransition();
   const hasCrew = crewSize >= 2;
+  // P0-3: when a whole-trip handoff is available we open on a scope
+  // choice (one day vs whole trip). Picking "one day" reveals the
+  // builder below; "whole trip" hands off to the wizard. With no
+  // handoff (e.g. a single-day trip) we skip straight to the builder.
+  const offerScope = Boolean(onChooseWholeTrip) && days.length > 1;
+  const [scopeChosen, setScopeChosen] = useState(false);
+  const showBuilder = !offerScope || scopeChosen;
 
   const build = useCallback(
     async (forDay: string) => {
@@ -71,17 +87,25 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
     [tripId, t],
   );
 
-  // (Re)build whenever the sheet opens or the chosen day changes.
+  // (Re)build once the builder is visible (i.e. scope is "one day"),
+  // whenever the sheet opens or the chosen day changes. We don't fire
+  // the planDay API while the user is still on the scope choice.
   useEffect(() => {
-    if (open && day) build(day);
+    if (open && showBuilder && day) build(day);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, day]);
+  }, [open, showBuilder, day]);
 
   // Sync the chosen day when the trigger passes a new initialDay.
   useEffect(() => {
     if (open && initialDay) setDay(initialDay);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialDay]);
+
+  // Reset the scope choice each time the sheet closes so it always
+  // re-opens on the chooser (when a handoff is available).
+  useEffect(() => {
+    if (!open) setScopeChosen(false);
+  }, [open]);
 
   const kept = (slots ?? []).filter((s) => !dropped.has(s.place.placeId));
 
@@ -131,13 +155,53 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
     <SidePanel
       open={open}
       onClose={onClose}
-      title={t("planDay.title")}
-      subtitle={t("planDay.subtitle")}
+      title={offerScope && !scopeChosen ? t("itinerary.aiEntry") : t("planDay.title")}
+      subtitle={offerScope && !scopeChosen ? t("planDay.scopeHeading") : t("planDay.subtitle")}
       icon={<Sparkles className="w-5 h-5" />}
       accentGradient="from-primary to-violet-600"
       width="md"
     >
       <div className="flex flex-col gap-4">
+        {/* P0-3: scope choice — the single AI entry now asks WHAT to plan
+            instead of forcing the user to pick between two near-identical
+            top-level buttons. "Plan one day" reveals the day builder
+            below; "Plan the whole trip" hands off to the multi-day vibe
+            wizard. */}
+        {offerScope && !scopeChosen && (
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => setScopeChosen(true)}
+              className="group flex items-center gap-3 rounded-2xl ring-1 ring-border/70 bg-card p-4 text-start hover:ring-primary/50 hover:bg-primary/[0.03] transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <CalendarDays className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">{t("planDay.scopeOneDay")}</p>
+                <p className="text-xs text-muted-foreground">{t("planDay.scopeOneDayDesc")}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-primary shrink-0 rtl:rotate-180" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onChooseWholeTrip?.()}
+              className="group flex items-center gap-3 rounded-2xl ring-1 ring-border/70 bg-card p-4 text-start hover:ring-primary/50 hover:bg-primary/[0.03] transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                <CalendarRange className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">{t("planDay.scopeWholeTrip")}</p>
+                <p className="text-xs text-muted-foreground">{t("planDay.scopeWholeTripDesc")}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-primary shrink-0 rtl:rotate-180" />
+            </button>
+          </div>
+        )}
+
+        {showBuilder && (
+        <>
         {/* Day picker */}
         {days.length > 1 && (
           <div className="-mx-1 px-1 overflow-x-auto scrollbar-none">
@@ -293,6 +357,8 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
               </button>
             )}
           </div>
+        )}
+        </>
         )}
       </div>
     </SidePanel>

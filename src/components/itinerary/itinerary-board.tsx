@@ -287,26 +287,21 @@ export function ItineraryBoard({
             </div>
           </div>
 
-          {/* Inline action buttons. P5: "Plan this day" is the headline AI
-              affordance (gradient, full-width); the multi-day wizard + manual
-              Add sit below it as secondary outline buttons. */}
+          {/* P0-3: exactly TWO action affordances — one AI entry + one
+              manual Add. "Plan this day" and "AI Plan" are no longer
+              siblings: the single AI button opens the planner, where
+              "one day" vs "whole trip" is a choice inside the panel.
+              Discover stays as a small icon shortcut (it's a separate
+              destination, not an add/AI affordance). */}
           <button
             type="button"
             onClick={() => setPlanDayOpen(true)}
             className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 text-white px-3 py-2.5 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
           >
             <Sparkles className="w-4 h-4" />
-            {t("planDay.cta")}
+            {t("itinerary.aiEntry")}
           </button>
           <div className="mt-2 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setAiOpen(true)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-primary/5 text-foreground px-3 py-2 text-xs font-bold transition-colors"
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              {t("itinerary.aiPlan")}
-            </button>
             <button
               type="button"
               onClick={() => openAddFor(focusedDay)}
@@ -512,6 +507,9 @@ export function ItineraryBoard({
       <div className="absolute z-40 end-4 sm:end-6 bottom-[80px] flex flex-col items-end gap-2 pointer-events-none lg:hidden">
         {addPickerOpen && (
           <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
+            {/* P0-3: two affordances — one AI entry (scope chosen inside
+                the panel) + one manual Add. No more "Plan this day" vs
+                "AI Plan" twins. */}
             <button
               type="button"
               onClick={() => {
@@ -521,18 +519,7 @@ export function ItineraryBoard({
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white shadow-lg px-4 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              {t("planDay.cta")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAddPickerOpen(false);
-                setAiOpen(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-full bg-card border border-border shadow-lg px-4 py-2 text-xs font-bold hover:border-primary/40 hover:bg-primary/5 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              {t("itinerary.aiPlan")}
+              {t("itinerary.aiEntry")}
             </button>
             <button
               type="button"
@@ -851,7 +838,9 @@ export function ItineraryBoard({
         />
       )}
 
-      {/* P5: "Plan this day" — assemble a real-place day from the engine. */}
+      {/* P0-3: the single AI entry. Opens on a scope choice — "Plan one
+          day" (the real-place day builder) vs "Plan the whole trip"
+          (hands off to the multi-day vibe wizard below). */}
       {planDayOpen && (
         <PlanDaySheet
           open={planDayOpen}
@@ -861,6 +850,10 @@ export function ItineraryBoard({
           initialDay={focusedDay}
           crewSize={crewSize}
           isOwner={isOwner}
+          onChooseWholeTrip={() => {
+            setPlanDayOpen(false);
+            setAiOpen(true);
+          }}
         />
       )}
     </div>

@@ -148,10 +148,10 @@
   },
   "nav": {
     "overview": "Overview",
-    "itinerary": "Itinerary",
+    "itinerary": "Plan",
     "votes": "Votes",
     "decisions": "Decisions",
-    "expenses": "Expenses",
+    "expenses": "Money",
     "pack": "Pack",
     "wallet": "Bookings",
     "dashboard": "Dashboard",
@@ -404,7 +404,8 @@
     "addNameAndDay": "Add a name and pick a day",
     "failedToAdd": "Couldn't add that — try again.",
     "addManuallyNamed": "Add “{name}” manually",
-    "notesPlaceholder": "anything to remember"
+    "notesPlaceholder": "anything to remember",
+    "aiEntry": "AI plan"
   },
   "discover": {
     "eyebrow": "Discover",
@@ -489,7 +490,8 @@
       "medical": "Medical",
       "outdoor": "Outdoor",
       "other": "Other"
-    }
+    },
+    "progressLine": "{packed}/{total} packed · {docs} {docs, plural, one {doc} other {docs}}"
   },
   "notifications": {
     "title": "Notifications",
@@ -626,7 +628,7 @@
     "staysSubtitle": "Top-rated places to stay in {destination}",
     "staysLoading": "Finding great stays…",
     "staysView": "View",
-    "totalLabel": "Total trip spend",
+    "totalLabel": "Booked value",
     "totalSubline": "{count, plural, =0 {No bookings yet} one {1 booking confirmed} other {# bookings confirmed}}",
     "todoTitle": "Still to book",
     "todoSub": "Hotels, flights, eSIM + activities derived from your plan",
@@ -639,7 +641,9 @@
     "snapshotTodo": "To book",
     "snapshotTodoSub": "Hotels, flights, more",
     "tabBooked": "Booked",
-    "tabTodo": "To book"
+    "tabTodo": "To book",
+    "pageTitle": "Bookings",
+    "jobLine": "The tickets and confirmations your crew carries."
   },
   "wallet": {
     "section": "Wallet",
@@ -746,9 +750,9 @@
     "step1Title": "Plan it on the map",
     "step1Body": "Add stops, get AI suggestions, see your trip on one map.",
     "step2Title": "Book what you need",
-    "step2Body": "Switch to Book mode in the Plan tab — hotels, flights, eSIM.",
-    "step3Title": "Carry it in your Wallet",
-    "step3Body": "Every confirmed ticket lands in your Wallet with a barcode."
+    "step2Body": "Open Bookings to add hotels, flights and eSIM — tickets you carry.",
+    "step3Title": "Carry it in Bookings",
+    "step3Body": "Every confirmed ticket lands in Bookings with a barcode."
   },
   "profile": {
     "menuLink": "Profile",
@@ -857,7 +861,12 @@
     "slotMorning": "Morning",
     "slotLunch": "Lunch",
     "slotAfternoon": "Afternoon",
-    "slotDinner": "Dinner"
+    "slotDinner": "Dinner",
+    "scopeOneDay": "Plan one day",
+    "scopeOneDayDesc": "A ready-made day of real places.",
+    "scopeWholeTrip": "Plan the whole trip",
+    "scopeWholeTripDesc": "An AI itinerary across every day, tuned to your vibe.",
+    "scopeHeading": "What should AI plan?"
   },
   "decisions": {
     "label": "Decide",

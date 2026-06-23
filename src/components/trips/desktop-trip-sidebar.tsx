@@ -11,7 +11,7 @@ import {
   Gavel,
   Wallet,
   Backpack,
-  CreditCard,
+  Ticket,
   Bell,
   MessageSquare,
   Settings,
@@ -77,13 +77,17 @@ interface Props {
   onMoreOpen: () => void;
 }
 
+// P0-1: canonical taxonomy — one label + one icon per route, shared with
+// every other nav surface. Plan (/itinerary), Money (/expenses, Wallet icon),
+// Bookings (/wallet, Ticket icon — distinct from Money's wallet so an icon
+// never means two destinations).
 const NAV_TABS = [
   { key: "nav.overview", href: "", icon: LayoutDashboard, badgeKey: null as null },
   { key: "nav.itinerary", href: "/itinerary", icon: MapPin, badgeKey: "itinerary" as const },
   { key: "nav.discover", href: "/discover", icon: Compass, badgeKey: null as null },
   { key: "nav.decisions", href: "/decisions", icon: Gavel, badgeKey: "decisions" as const },
   { key: "nav.expenses", href: "/expenses", icon: Wallet, badgeKey: "expenses" as const },
-  { key: "nav.wallet", href: "/wallet", icon: CreditCard, badgeKey: null as null },
+  { key: "nav.wallet", href: "/wallet", icon: Ticket, badgeKey: null as null },
   { key: "nav.pack", href: "/pack", icon: Backpack, badgeKey: null as null },
 ];
 
@@ -164,21 +168,16 @@ export function DesktopTripSidebar({
         </Link>
       </div>
 
-      {/* Trip context card */}
-      <div className="px-3 pt-3 pb-3 border-b border-border/40">
-        <div className="rounded-xl bg-gradient-to-br from-primary/5 via-violet-500/5 to-fuchsia-500/5 border border-primary/15 p-3">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-primary mb-1">
-            {t("nav.tripContextLabel")}
-          </p>
-          <p className="font-bold text-sm leading-snug line-clamp-2">{trip.name}</p>
-          <p className="text-[11px] text-muted-foreground truncate mt-1">
-            {trip.destination}
-          </p>
-          <p className="text-[10px] text-muted-foreground/80 mt-0.5 tabular-nums">
-            {format(parseDateOnly(trip.startDate), "d MMM")} –{" "}
-            {format(parseDateOnly(trip.endDate), "d MMM yyyy")}
-          </p>
-        </div>
+      {/* P1-4: slimmed trip context. Was a gradient hero panel restating
+          name/destination/dates with full chrome in a persistent rail —
+          chrome out of proportion to the info. Now a quiet two-line block:
+          trip name + "destination · dates" on one line, no gradient card. */}
+      <div className="px-4 pt-3 pb-3 border-b border-border/40">
+        <p className="font-bold text-sm leading-snug line-clamp-1">{trip.name}</p>
+        <p className="text-[11px] text-muted-foreground truncate mt-0.5 tabular-nums">
+          {trip.destination} · {format(parseDateOnly(trip.startDate), "d MMM")} –{" "}
+          {format(parseDateOnly(trip.endDate), "d MMM")}
+        </p>
       </div>
 
       {/* Nav tabs */}

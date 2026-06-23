@@ -148,10 +148,10 @@
   },
   "nav": {
     "overview": "نظرة عامة",
-    "itinerary": "البرنامج",
+    "itinerary": "خطّط",
     "votes": "التصويتات",
     "decisions": "القرارات",
-    "expenses": "المصاريف",
+    "expenses": "المال",
     "pack": "أمتعة",
     "wallet": "الحجوزات",
     "dashboard": "اللوحة",
@@ -404,7 +404,8 @@
     "addNameAndDay": "أضِف اسمًا واختر يومًا",
     "failedToAdd": "تعذّرت الإضافة — أعد المحاولة.",
     "addManuallyNamed": "أضِف “{name}” يدويًا",
-    "notesPlaceholder": "أي شيء تريد تذكّره"
+    "notesPlaceholder": "أي شيء تريد تذكّره",
+    "aiEntry": "خطّة ذكية"
   },
   "discover": {
     "eyebrow": "اكتشف",
@@ -489,7 +490,8 @@
       "medical": "طبي",
       "outdoor": "خارجي",
       "other": "أخرى"
-    }
+    },
+    "progressLine": "{packed}/{total} مُحضّر · {docs} مستند"
   },
   "notifications": {
     "title": "الإشعارات",
@@ -626,7 +628,7 @@
     "staysSubtitle": "أعلى أماكن الإقامة تقييمًا في {destination}",
     "staysLoading": "نبحث عن إقامات رائعة…",
     "staysView": "عرض",
-    "totalLabel": "إجمالي مصاريف الرحلة",
+    "totalLabel": "قيمة المحجوزات",
     "totalSubline": "{count, plural, =0 {لا حجوزات بعد} one {حجز واحد مؤكَّد} two {حجزان مؤكَّدان} few {{count} حجوزات مؤكَّدة} many {{count} حجزًا مؤكَّدًا} other {{count} حجز مؤكَّد}}",
     "todoTitle": "ما زال يحتاج حجز",
     "todoSub": "فنادق وطيران وشريحة eSIM وأنشطة مستخرجة من خطّتك",
@@ -639,7 +641,9 @@
     "snapshotTodo": "للحجز",
     "snapshotTodoSub": "فنادق وطيران وغيرها",
     "tabBooked": "محجوز",
-    "tabTodo": "للحجز"
+    "tabTodo": "للحجز",
+    "pageTitle": "الحجوزات",
+    "jobLine": "التذاكر والتأكيدات التي يحملها فريقك."
   },
   "wallet": {
     "section": "المحفظة",
@@ -746,9 +750,9 @@
     "step1Title": "خطّط رحلتك على الخريطة",
     "step1Body": "أضف الأماكن التي تريد زيارتها وشاهد رحلتك كلها على خريطة واحدة.",
     "step2Title": "احجز ما يلزمك",
-    "step2Body": "افتح تبويب \"الحجوزات\" داخل الخطة لحجز الفنادق والطيران وشرائح الإنترنت.",
-    "step3Title": "كل تذاكرك في محفظتك",
-    "step3Body": "بعد كل حجز، تظهر تذكرتك في المحفظة مع رمز الباركود جاهزًا."
+    "step2Body": "افتح \"الحجوزات\" لإضافة الفنادق والطيران وشرائح الإنترنت — تذاكر تحملها معك.",
+    "step3Title": "احملها في الحجوزات",
+    "step3Body": "كل تذكرة مؤكدة تظهر في الحجوزات مع باركود."
   },
   "profile": {
     "menuLink": "الملف الشخصي",
@@ -857,7 +861,12 @@
     "slotMorning": "صباحًا",
     "slotLunch": "الغداء",
     "slotAfternoon": "بعد الظهر",
-    "slotDinner": "العشاء"
+    "slotDinner": "العشاء",
+    "scopeOneDay": "خطّط يومًا واحدًا",
+    "scopeOneDayDesc": "يوم جاهز من أماكن حقيقية.",
+    "scopeWholeTrip": "خطّط الرحلة كاملة",
+    "scopeWholeTripDesc": "برنامج بالذكاء الاصطناعي لكل الأيام حسب ذوقك.",
+    "scopeHeading": "ماذا يخطّط الذكاء الاصطناعي؟"
   },
   "decisions": {
     "label": "قرار",

@@ -70,7 +70,9 @@ export function PackBoard({
 }: Props) {
   const router = useRouter();
   const t = useT();
-  const [view, setView] = useState<View>(initialView);
+  // P1-1: Packing is the page's namesake, so it's the default mode unless
+  // the URL explicitly asked for docs.
+  const [view, setView] = useState<View>(initialView ?? "packing");
   const [, startTransition] = useTransition();
 
   function switchTo(v: View) {
@@ -87,66 +89,46 @@ export function PackBoard({
   const packedCount = packing.filter((p) => p.packed).length;
   const totalPacking = packing.length;
 
+  // P1-1: one overall progress/summary line that states where the page is
+  // at a glance — packed ratio + doc count — instead of two competing
+  // section headers.
+  const progressLine = t("pack.progressLine", {
+    packed: packedCount,
+    total: totalPacking,
+    docs: docsCount,
+  });
+
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("pack.title")}
-        subtitle={t("pack.subtitle")}
+    <div className="space-y-4 max-w-2xl mx-auto">
+      {/* P1-1: ONE header stating the page's single job + ONE summary
+          line. No second toolbar. */}
+      <PageHeader title={t("pack.title")} subtitle={t("pack.subtitle")} />
+      <p className="text-xs font-medium text-muted-foreground -mt-2">
+        {progressLine}
+      </p>
+
+      {/* P1-1: ONE top-level segmented control (Packing | Docs) at every
+          breakpoint — no more two tab systems crammed side by side on
+          desktop. Each segment carries its own count; the body below
+          switches to one mode at a time, and each mode owns exactly one
+          primary "add" affordance (inside DocumentsBoard / PackingBoard).
+          On mobile this naturally stacks into one scannable column. */}
+      <SegmentedControl<View>
+        aria-label={t("pack.title")}
+        value={view}
+        onChange={switchTo}
+        options={[
+          {
+            value: "packing",
+            label: `${t("pack.packing")} · ${totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}`,
+            icon: Backpack,
+          },
+          { value: "docs", label: `${t("pack.docs")} · ${docsCount}`, icon: FileText },
+        ]}
       />
 
-      {/* Mobile only: segmented control between Docs and Packing.
-          On lg+ both render side by side so the toggle is unnecessary.
-          Uses the canonical full-width SegmentedControl so the tap
-          targets clear 40px (the old hand-rolled p-0.5 toggle was ~26px
-          tall with 12px icons). The Docs/Packing counts are appended to
-          the label so the single badge slot stays free for the ratio. */}
-      <div className="lg:hidden">
-        <SegmentedControl<View>
-          aria-label={t("pack.title")}
-          value={view}
-          onChange={switchTo}
-          options={[
-            { value: "docs", label: `${t("pack.docs")} · ${docsCount}`, icon: FileText },
-            {
-              value: "packing",
-              label: `${t("pack.packing")} · ${totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}`,
-              icon: Backpack,
-            },
-          ]}
-        />
-      </div>
-
-      {/* On lg+ render both panels side by side with a small section
-          header strip for each. Mobile keeps the segmented control above
-          and shows one panel at a time. */}
-      <div className="lg:grid lg:grid-cols-2 lg:gap-6">
-        <div className={view === "docs" ? "block" : "hidden lg:block"}>
-          <div className="hidden lg:flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center">
-              <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              {t("pack.docs")} · {docsCount}
-            </h3>
-          </div>
-          <DocumentsBoard
-            tripId={tripId}
-            userId={userId}
-            isOwner={isOwner}
-            documents={documents}
-            embedded
-          />
-        </div>
-        <div className={view === "packing" ? "block" : "hidden lg:block"}>
-          <div className="hidden lg:flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center">
-              <Backpack className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              {t("pack.packing")} ·{" "}
-              {totalPacking > 0 ? `${packedCount}/${totalPacking}` : "0"}
-            </h3>
-          </div>
+      <div>
+        {view === "packing" ? (
           <PackingBoard
             tripId={tripId}
             userId={userId}
@@ -154,7 +136,15 @@ export function PackBoard({
             members={members}
             embedded
           />
-        </div>
+        ) : (
+          <DocumentsBoard
+            tripId={tripId}
+            userId={userId}
+            isOwner={isOwner}
+            documents={documents}
+            embedded
+          />
+        )}
       </div>
     </div>
   );

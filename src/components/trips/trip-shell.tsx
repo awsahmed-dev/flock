@@ -17,13 +17,6 @@ import {
   Bell,
   LogOut,
   LayoutDashboard,
-  MapPin,
-  Compass,
-  Gavel,
-  Wallet,
-  FileText,
-  Backpack,
-  CreditCard,
   Settings,
   ChevronLeft,
   MessageSquare,
@@ -43,8 +36,6 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { TripMoreSheet } from "@/components/trips/trip-more-sheet";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import dynamicImport from "next/dynamic";
@@ -95,26 +86,15 @@ interface Props {
   children: React.ReactNode;
 }
 
-// Desktop top tabs — Members moved out (now a top-right "Users" icon
-// that opens a side panel, mirroring WhatsApp's group-info pattern).
-// B15-d: labels are i18n keys; resolved at render time so a runtime
-// language flip relabels the nav without a remount.
-const NAV_TABS = [
-  { key: "nav.overview", href: "", icon: LayoutDashboard },
-  { key: "nav.itinerary", href: "/itinerary", icon: MapPin },
-  { key: "nav.discover", href: "/discover", icon: Compass },
-  { key: "nav.decisions", href: "/decisions", icon: Gavel },
-  { key: "nav.expenses", href: "/expenses", icon: Wallet },
-  // B6: Documents + Packing merged into Pack with segmented control inside.
-  { key: "nav.pack", href: "/pack", icon: Backpack },
-];
+// P0-2: the desktop/tablet sub-nav tab list lived here. It's gone — the
+// left sidebar (lg+) and the bottom MobileNav (<lg) are now the only
+// primary nav surfaces, one per breakpoint. NAV_TABS is removed; the
+// sidebar owns its own canonical list (desktop-trip-sidebar.tsx).
 
 export function TripShell({ trip, isOwner, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // B18: Wallet tab is permanent for everyone now.
-  const showWalletTab = true;
   void searchParams;
   const t = useT();
   const supabase = createClient();
@@ -479,48 +459,16 @@ export function TripShell({ trip, isOwner, children }: Props) {
           </div>
         </div>
 
-        {/* Sub-nav tabs — hidden on mobile (the bottom MobileNav already
-            covers navigation, so the duplicate top tabs are noise). */}
-        <div className="hidden sm:flex max-w-6xl mx-auto px-4 sm:px-6 gap-1 overflow-x-auto pb-0 scrollbar-none">
-          {[
-            ...NAV_TABS,
-            ...(showWalletTab
-              ? [{ key: "nav.wallet", href: "/wallet", icon: CreditCard }]
-              : []),
-          ].map((tab) => {
-            const href = `/trips/${trip.id}${tab.href}`;
-            const isActive =
-              tab.href === ""
-                ? pathname === `/trips/${trip.id}`
-                : pathname.startsWith(href);
-
-            return (
-              <Link
-                key={tab.href}
-                href={href}
-                /* Eager prefetch on hover/touchstart — Next 16's "auto"
-                   default skips prefetch for dynamic routes, but trip
-                   tabs are the hot path. The prefetch warms the RSC
-                   payload + page bundle so click→render feels instant. */
-                prefetch
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-                {t(tab.key)}
-              </Link>
-            );
-          })}
-        </div>
+        {/* P0-2: the top horizontal sub-nav tab strip is removed. It was a
+            second parallel nav system on the sm–lg band (alongside the
+            bottom MobileNav), the classic "mobile pattern stretched to a
+            bigger screen" tell. One primary nav per breakpoint now:
+            phone + tablet use the bottom nav; lg+ uses the left sidebar. */}
       </header>
 
       {/* Body row — content + chat side by side */}
       <div className="flex flex-1 overflow-hidden w-full max-w-full">
-        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 pb-24 sm:pb-6 lg:px-8 lg:py-8">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8">
           {/* B27-r2: cap was max-w-5xl (1024px). On wide desktops with the
               new 256px sidebar that left ~768px for content — too narrow
               for proper 2-col grids on Expenses / Bookings / Settings.
