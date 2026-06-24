@@ -238,10 +238,18 @@ export function DesktopTripSidebar({
 
         {/* Tools hub — the single overflow entry. Distinct from the core
             destinations (grid icon + trailing chevron) so it reads as "a
-            drawer," not a peer tab. Opens the focused-door hub page. */}
+            drawer," not a peer tab. Opens the focused-door hub page. A small
+            dot lights the icon when something INSIDE Tools needs this user
+            (e.g. an open decision needing their vote) — mirrors the mobile
+            Tools slot's attention dot. */}
         {(() => {
           const toolsHref = `/trips/${trip.id}/tools`;
           const toolsActive = pathname.startsWith(toolsHref);
+          // Tools-resident signal only: Decisions lives inside the hub, so an
+          // open vote needing this user is a real "something in Tools needs
+          // you." (Plan/Money badges render on their own core rows above and
+          // must not drive this dot.)
+          const toolsDot = badges.decisions > 0;
           return (
             <Link
               href={toolsHref}
@@ -253,14 +261,19 @@ export function DesktopTripSidebar({
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
               )}
             >
-              <LayoutGrid
-                className={cn(
-                  "w-4 h-4 transition-transform shrink-0",
-                  toolsActive
-                    ? "text-primary"
-                    : "text-muted-foreground/80 group-hover:scale-110",
+              <span className="relative shrink-0">
+                <LayoutGrid
+                  className={cn(
+                    "w-4 h-4 transition-transform",
+                    toolsActive
+                      ? "text-primary"
+                      : "text-muted-foreground/80 group-hover:scale-110",
+                  )}
+                />
+                {toolsDot && (
+                  <span className="absolute -top-1 -end-1 w-2 h-2 rounded-full bg-destructive border-[1.5px] border-card" />
                 )}
-              />
+              </span>
               <span className="flex-1 text-start">{t("nav.tools")}</span>
               <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0 rtl:rotate-180" />
             </Link>

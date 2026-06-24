@@ -10,10 +10,6 @@ interface Props {
   tripId: string;
   onChatToggle: () => void;
   chatOpen: boolean;
-  /** Opens the Tools sheet (the mobile twin of the desktop Tools hub). */
-  onToolsOpen: () => void;
-  /** True while the Tools sheet is open — keeps the Tools tab lit. */
-  toolsOpen?: boolean;
   /** Small dot on Tools when any tool needs attention. */
   toolsDot?: boolean;
   /** Live counts shown as red badges on tab icons. Pass 0 to hide. */
@@ -29,10 +25,11 @@ interface Props {
 
 /**
  * Floating pill bottom nav (Telegram-style). Exactly 5 thumb-zone slots:
- * 4 CORE link tabs (Overview · Plan · Discover · Money) + a Tools button
- * that opens the Tools sheet — the mobile twin of the desktop Tools hub.
- * Each tab can show a red badge with a pending-action count; the active
- * tab has a tinted indicator pill behind it.
+ * 4 CORE link tabs (Overview · Plan · Discover · Money) + a Tools tab that
+ * NAVIGATES to the `/tools` hub page — the SAME page desktop opens (founder
+ * decision: Tools is a real page on both breakpoints; the old "More" sheet
+ * is retired). Each tab can show a red badge with a pending-action count;
+ * the active tab has a tinted indicator pill behind it.
  *
  * Founder-decided IA: Bookings + Pack leave the bottom nav into Tools; Chat
  * stays the overlay handle (its needs-vote badge lives on that handle/sheet,
@@ -42,8 +39,6 @@ export function MobileNav({
   tripId,
   onChatToggle,
   chatOpen,
-  onToolsOpen,
-  toolsOpen = false,
   toolsDot = false,
   badges = {},
 }: Props) {
@@ -109,34 +104,41 @@ export function MobileNav({
           );
         })}
 
-        {/* Tools — the 5th slot. Opens the Tools sheet (mobile twin of the
-            desktop hub), the single overflow concept. A small dot lights it
-            when any tool needs attention. */}
-        <button
-          type="button"
-          onClick={onToolsOpen}
-          aria-label={t("nav.tools")}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 rounded-full m-1 transition-all relative",
-            toolsOpen
-              ? "bg-primary/15 text-primary font-extrabold"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="relative">
-            <LayoutGrid
+        {/* Tools — the 5th slot. NAVIGATES to the /tools hub page (the same
+            page desktop opens) — the single overflow concept, now a real
+            page on both breakpoints. A small dot lights it when any tool
+            needs attention (e.g. an open vote needs you). */}
+        {(() => {
+          const toolsHref = `/trips/${tripId}/tools`;
+          const toolsActive = pathname.startsWith(toolsHref);
+          return (
+            <Link
+              href={toolsHref}
+              prefetch
+              aria-label={t("nav.tools")}
               className={cn(
-                "transition-transform",
-                toolsOpen ? "w-[22px] h-[22px]" : "w-5 h-5"
+                "flex-1 flex flex-col items-center justify-center gap-0.5 rounded-full m-1 transition-all relative",
+                toolsActive
+                  ? "bg-primary/15 text-primary font-extrabold"
+                  : "text-muted-foreground hover:text-foreground"
               )}
-              strokeWidth={toolsOpen ? 2.5 : 2}
-            />
-            {toolsDot && (
-              <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-destructive border-[1.5px] border-card" />
-            )}
-          </div>
-          <span className="text-[10px] tracking-wider">{t("nav.tools")}</span>
-        </button>
+            >
+              <div className="relative">
+                <LayoutGrid
+                  className={cn(
+                    "transition-transform",
+                    toolsActive ? "w-[22px] h-[22px]" : "w-5 h-5"
+                  )}
+                  strokeWidth={toolsActive ? 2.5 : 2}
+                />
+                {toolsDot && (
+                  <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-destructive border-[1.5px] border-card" />
+                )}
+              </div>
+              <span className="text-[10px] tracking-wider">{t("nav.tools")}</span>
+            </Link>
+          );
+        })()}
       </nav>
     </div>
   );

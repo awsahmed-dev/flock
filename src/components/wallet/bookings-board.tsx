@@ -5,23 +5,23 @@ import Link from "next/link";
 import {
   MapPin,
   Calendar,
-  Sparkles,
+  Mail,
+  Copy,
+  Check,
   Info,
-  Eye,
-  EyeOff,
   Hotel,
   Plane,
   Wifi,
   Ticket,
-  Compass,
-  Check,
   CheckCircle2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { useT } from "@/components/i18n/locale-provider";
 import { WalletBoard } from "@/components/wallet/wallet-board";
-import { MOCK_BOOKINGS } from "@/components/wallet/mock-bookings";
 
 interface Props {
   tripId: string;
@@ -44,147 +44,178 @@ interface Props {
 }
 
 /**
- * Bookings v3 — a true wallet (product-head brief §A1, the flagship rethink).
+ * Bookings v4 — honest first-run wallet (product-head structural rebuild).
  *
- * The page used to do three jobs: a status hero, a "Stays you'd love" hotel
- * carousel (Discover content in a Bookings costume), and the actual tickets.
- * Per the brief we EVICT, not rebalance:
- *   1. Hotel discovery left the building — `StaysRail` is gone; the Stay
- *      category now lives in Discover (the one home for discovery). The
- *      checklist's "Find on Discover →" deep-links there.
- *   2. The page leads with the held passes (WalletBoard) — the boarding-pass /
- *      wallet cards are the first substantial thing below the header. The
- *      moment of delight is the pass cards themselves.
- *   3. "Still to sort" is a quiet completion checklist, not a second store —
- *      each gap has at most ONE primary action (Find on Discover, or Mark
- *      booked). The booking happens elsewhere; Bookings only tracks the gap.
- *   4. The status header is a single honest line (state + booked value), never
- *      a "trip total spent" (that number is Money's, and only Money's).
+ * The previous version rendered MOCK_BOOKINGS — fabricated boarding passes
+ * (a Saudia flight, Mandarin Oriental, FlixBus…) shown as if they were the
+ * signed-in user's REAL bookings. On a real trip that's trust-destroying:
+ * the user knows they never booked a Saudia flight, so they stop believing
+ * the whole page. There is no persisted bookings store yet, so the DEFAULT
+ * real-trip view is now the honest empty / first-run state:
+ *
+ *   1. ONE warm explainer states the page's job in plain language.
+ *   2. The forward-email affordance is PROMOTED to the hero — it's the magic
+ *      of the page and the single visually dominant primary action. (Was a
+ *      muted side-rail card.)
+ *   3. "Still to sort" — the REAL itinerary gaps (stays / transport with no
+ *      booking, the same gap the Tools hub computes) — is the clear secondary
+ *      path. Its "Find on Discover" affordances are demoted to low-emphasis
+ *      TEXT links (a cross-sell, not the page's purpose — six identical black
+ *      pills were choice overload).
+ *   4. No fabricated passes and no bare money chip in the empty state. A user
+ *      can opt into a clearly-labelled SAMPLE preview to see the populated
+ *      layout — it is never presented as their real trip data.
  */
 export function BookingsBoard(props: Props) {
   const t = useT();
-  const [hideAmount, setHideAmount] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showSample, setShowSample] = useState(false);
 
-  // Booked value is reported in the bookings' OWN currency (the passes below are
-  // all priced in it) — not the trip's base currency, which would label e.g.
-  // SAR amounts as "USD" and contradict the cards. Falls back to trip currency
-  // only if there are no bookings.
-  const bookingCurrency = MOCK_BOOKINGS[0]?.currency ?? props.currency;
-  const totalSpend = MOCK_BOOKINGS.reduce((s, b) => s + b.price, 0);
-  const bookedCount = MOCK_BOOKINGS.length;
+  // A deterministic, per-trip forward address — honest (it's tied to THIS
+  // trip), not a fake shared "trip-abc@". Short slug from the trip id.
+  const forwardAddress = `trip-${props.tripId.slice(0, 8)}@inbox.paxawa.com`;
 
   const gaps = useMemo(() => buildGaps(props, t), [props, t]);
-  // Local "mark booked" — a gap can be cleared without leaving the page. The
-  // booking itself happens in Discover; this just tracks the checklist state.
+  // Local "mark booked" — a gap can be cleared without leaving the page.
   const [done, setDone] = useState<Set<string>>(new Set());
   const remaining = gaps.filter((g) => !done.has(g.id));
-  const todoCount = remaining.length;
 
   const dateRange = `${format(parseDateOnly(props.startDate), "d MMM")} – ${format(parseDateOnly(props.endDate), "d MMM yyyy")}`;
-  const formattedValue = `${bookingCurrency} ${totalSpend.toLocaleString()}`;
 
   function markBooked(id: string) {
     setDone((prev) => new Set(prev).add(id));
   }
 
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(forwardAddress);
+      setCopied(true);
+      toast.success(t("common.copied"));
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(t("trip.copyFailed"));
+    }
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 lg:max-w-none lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:items-start lg:space-y-0">
-      <div className="space-y-6 min-w-0">
-        {/* Header — the page's single job, stated once. */}
-        <div>
-          <h1 className="text-xl font-extrabold tracking-tight">{t("bookings.pageTitle")}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{t("bookings.jobLine")}</p>
-        </div>
+    <div className="max-w-2xl mx-auto space-y-6 lg:max-w-3xl">
+      {/* Header — the page's single job, stated warmly once. */}
+      <div>
+        <h1 className="text-xl font-extrabold tracking-tight lg:text-2xl">
+          {t("bookings.pageTitle")}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t("bookings.jobLine")}</p>
+      </div>
 
-        {/* Trip context breadcrumb. */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <MapPin className="w-3 h-3" />
-            <span className="font-bold text-foreground truncate">{props.tripName}</span>
-          </span>
-          <span>·</span>
-          <span className="truncate">{props.destination}</span>
-          <span>·</span>
-          <span className="inline-flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            {dateRange}
-          </span>
-        </div>
+      {/* Trip context breadcrumb. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <MapPin className="w-3 h-3" />
+          <span className="font-bold text-foreground truncate">{props.tripName}</span>
+        </span>
+        <span>·</span>
+        <span className="truncate">{props.destination}</span>
+        <span>·</span>
+        <span className="inline-flex items-center gap-1">
+          <Calendar className="w-3 h-3" />
+          {dateRange}
+        </span>
+      </div>
 
-        {/* §A1: the status header is a SINGLE honest line — state + booked value
-            — not a hero card. Tappable eye toggle for privacy. It reports
-            state; it never competes with Money's trip-spend total. */}
-        <div className="flex items-center justify-between gap-3 rounded-2xl bg-card border border-border/60 px-4 py-3">
-          <p className="text-sm font-bold tabular-nums leading-tight">
-            {hideAmount
-              ? t("bookings.statusLine", { booked: bookedCount, value: "••••", todo: todoCount })
-              : t("bookings.statusLine", { booked: bookedCount, value: formattedValue, todo: todoCount })}
-          </p>
-          <button
-            type="button"
-            onClick={() => setHideAmount((v) => !v)}
-            className="w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground shrink-0"
-            aria-label={hideAmount ? t("bookings.showAmount") : t("bookings.hideAmount")}
-          >
-            {hideAmount ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* §A1: the held passes are the page's PRIMARY content — the first
-            substantial thing below the header. The wallet/pass cards (barcode,
-            route arc, glass) are the moment of delight. */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 px-0.5">
-            <p className="text-[11px] font-extrabold tracking-widest uppercase text-muted-foreground">
-              {t("bookings.passesTitle")}
+      {/* ── HERO: forward-email = the single dominant primary action. This is
+          the magic of the page — get confirmations in. Premium glass/card
+          language, the loud thing on the screen. */}
+      <section className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/[0.04] to-transparent p-5 sm:p-6">
+        <div className="flex items-start gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Mail className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-extrabold leading-tight">
+              {t("bookings.heroTitle")}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1 leading-snug">
+              {t("bookings.heroBody")}
             </p>
-            <span className="text-[10px] text-muted-foreground">· {t("bookings.passesSub", { count: bookedCount })}</span>
           </div>
-          <WalletBoard
-            userId={props.userId}
-            tripName={props.tripName}
-            destination={props.destination}
-            startDate={props.startDate}
-            endDate={props.endDate}
-            embedded
-          />
-        </section>
+        </div>
 
-        {/* §A1: "Still to sort" — a quiet checklist of gaps, visibly NOT a
-            product grid. One primary action per row: route to Discover, or
-            mark as booked. */}
-        <Checklist
-          gaps={remaining}
-          tripId={props.tripId}
-          allDoneLabel={t("bookings.checklistAllDone")}
-          onMarkBooked={markBooked}
-        />
-      </div>
-
-      {/* Right rail on lg+ — forward-email hint + disclosure. Sticks to the top
-          as the list scrolls; flows under on mobile. */}
-      <div className="space-y-3 lg:sticky lg:top-6 lg:space-y-4">
-        <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold leading-snug">{t("wallet.forwardTitle")}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{t("wallet.forwardSub")}</p>
+        {/* The forward address as a copyable field — the primary CTA. */}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="flex-1 min-w-0 rounded-2xl bg-background/70 border border-border/60 px-4 py-3">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+              {t("bookings.heroAddressLabel")}
+            </p>
+            <p className="text-sm font-mono font-bold truncate" dir="ltr">
+              {forwardAddress}
+            </p>
           </div>
           <button
             type="button"
-            className="text-[11px] font-bold text-primary hover:opacity-80 shrink-0"
+            onClick={copyAddress}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-5 py-3 min-h-[44px] hover:opacity-90 transition-opacity shrink-0"
           >
-            {t("wallet.copyAddress")}
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? t("common.copied") : t("bookings.heroCopy")}
           </button>
         </div>
-
-        <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
-          <Info className="w-3 h-3 mt-0.5 shrink-0" />
-          <span>{t("plan.disclosure")}</span>
+        <p className="mt-2.5 text-[11px] text-muted-foreground leading-relaxed">
+          {t("bookings.heroHint")}
         </p>
-      </div>
+      </section>
+
+      {/* ── SECONDARY: "Still to sort" — the real itinerary gaps. A calm
+          checklist, NOT a product grid. Discover is a low-emphasis text link,
+          not a loud black pill. */}
+      <Checklist
+        gaps={remaining}
+        tripId={props.tripId}
+        allDoneLabel={t("bookings.checklistAllDone")}
+        onMarkBooked={markBooked}
+      />
+
+      {/* Disclosure — affiliate honesty. */}
+      <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
+        <Info className="w-3 h-3 mt-0.5 shrink-0" />
+        <span>{t("plan.disclosure")}</span>
+      </p>
+
+      {/* ── SAMPLE preview — opt-in, clearly demarcated. Lets a user see what
+          the populated wallet looks like WITHOUT ever presenting the example
+          passes as their real trip data. Collapsed by default. */}
+      <section className="space-y-3 pt-2 border-t border-dashed border-border/60">
+        <button
+          type="button"
+          onClick={() => setShowSample((v) => !v)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
+        >
+          {showSample ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          {showSample ? t("bookings.sampleHide") : t("bookings.sampleShow")}
+        </button>
+
+        {showSample && (
+          <div className="rounded-3xl border border-dashed border-amber-500/40 bg-amber-500/[0.04] p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-black tracking-widest uppercase px-2.5 py-1">
+                {t("bookings.sampleBadge")}
+              </span>
+              <p className="text-[11px] text-muted-foreground">{t("bookings.sampleCaption")}</p>
+            </div>
+            {/* The example wallet — passes here are SAMPLE content, never the
+                user's real bookings (which don't exist yet). */}
+            <div aria-hidden={false}>
+              <WalletBoard
+                userId={props.userId}
+                tripName={props.tripName}
+                destination={props.destination}
+                startDate={props.startDate}
+                endDate={props.endDate}
+                embedded
+              />
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -199,8 +230,7 @@ interface Gap {
   tone: GapTone;
   title: string;
   subtitle: string;
-  /** When set, the row's primary action deep-links into this Discover
-   *  category; otherwise the row only offers "Mark booked". */
+  /** When set, the row's text link deep-links into this Discover category. */
   discoverCategory?: string;
 }
 
@@ -212,9 +242,11 @@ const TONE: Record<GapTone, { bg: string; text: string }> = {
 };
 
 /**
- * The quiet "to book" checklist — a calm list of gaps, NOT a sales surface.
- * Each row: an icon, a one-line title + subtitle, and at most one primary
- * action (route to Discover, or mark booked).
+ * The quiet "still to sort" checklist — a calm list of the real gaps between
+ * what the trip needs and what's booked. Each row: an icon, a one-line
+ * title + subtitle, and at most one primary action (mark booked — the loop
+ * close) plus a LOW-EMPHASIS "Find on Discover" text link (a cross-sell, not
+ * a loud black pill).
  */
 function Checklist({
   gaps,
@@ -261,27 +293,33 @@ function Checklist({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-snug line-clamp-1">{g.title}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{g.subtitle}</p>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="truncate">{g.subtitle}</span>
+                    {g.discoverCategory && (
+                      <>
+                        <span className="text-muted-foreground/40">·</span>
+                        {/* Low-emphasis text link — a cross-sell, not a loud
+                            black pill. */}
+                        <Link
+                          href={discoverHref}
+                          prefetch={false}
+                          className="shrink-0 font-bold text-primary hover:underline"
+                        >
+                          {t("bookings.findOnDiscover")}
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Link
-                    href={discoverHref}
-                    prefetch={false}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background text-[11px] font-bold px-3 py-2 hover:opacity-90 transition-opacity"
-                  >
-                    <Compass className="w-3.5 h-3.5" />
-                    <span>{t("bookings.findOnDiscover")}</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => onMarkBooked(g.id)}
-                    aria-label={t("bookings.markBooked")}
-                    title={t("bookings.markBooked")}
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/40 transition-colors"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                </div>
+                {/* The one primary per row: mark booked (the loop close). */}
+                <button
+                  type="button"
+                  onClick={() => onMarkBooked(g.id)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/40 transition-colors text-[11px] font-bold px-3 py-2 min-h-[40px] shrink-0"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{t("bookings.markBooked")}</span>
+                </button>
               </li>
             );
           })}
@@ -293,9 +331,9 @@ function Checklist({
 
 /**
  * Derive the gap list from the trip + itinerary — what the trip needs that
- * isn't booked yet. Hotels route to Discover's Stay category; activities to
- * Discover too. Flight + eSIM are mark-only (no Discover category for them).
- * Mirrors the prior to-book accounting so the status line stays in sync.
+ * isn't booked yet. Mirrors the gap accounting the Tools hub uses so the two
+ * surfaces stay in sync. Hotels + activities deep-link to Discover; flight +
+ * eSIM are mark-only (no Discover category for them).
  */
 function buildGaps(props: Props, t: (k: string, p?: Record<string, string | number>) => string): Gap[] {
   const accommodationItems = props.items.filter((i) => i.type === "accommodation");

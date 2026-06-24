@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateTrip, deleteTrip } from "@/lib/actions/trip-settings";
+import { clearAllItineraryItems } from "@/lib/actions/itinerary";
 import { enableSharing, disableSharing, regenerateShareToken } from "@/lib/actions/share";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle, Globe, Copy, RefreshCw, EyeOff, Check, Link2 } from "lucide-react";
+import { Trash2, AlertTriangle, Globe, Copy, RefreshCw, EyeOff, Check, Link2, Eraser } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { useT } from "@/components/i18n/locale-provider";
 
@@ -28,6 +29,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [shareToken, setShareToken] = useState(initialShareToken);
   const [copied, setCopied] = useState(false);
 
@@ -63,6 +65,28 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
         router.push("/dashboard");
       } catch {
         toast.error(t("trip.settingsDeleteFailed"));
+      }
+    });
+  }
+
+  // Clear-plan relocated here from the old mobile Tools sheet — Trip
+  // settings is the natural home for an owner-only destructive bulk action.
+  // Two-tap arming gate so it can't be fat-fingered.
+  function handleClearPlan() {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      setTimeout(() => setConfirmClear(false), 4_000);
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await clearAllItineraryItems(tripId);
+        toast.success(t("trip.planCleared"));
+        setConfirmClear(false);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t("trip.clearFailed"));
+        setConfirmClear(false);
       }
     });
   }
@@ -250,6 +274,31 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
           <AlertTriangle className="w-4 h-4" />
           <h2 className="font-medium text-sm">{t("trip.settingsDangerZone")}</h2>
         </div>
+
+        {/* Clear plan — owner-only bulk reset, relocated from the retired
+            mobile Tools sheet. Wipes every day's itinerary items (the trip
+            itself survives). Two-tap arming so it isn't fat-fingered. */}
+        <div className="space-y-2 pb-3 border-b border-destructive/20">
+          <p className="text-sm text-muted-foreground">
+            {confirmClear ? t("trip.clearWarning") : t("trip.clearPlanMeta")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+            onClick={handleClearPlan}
+            disabled={isPending}
+          >
+            <Eraser className="w-3.5 h-3.5 me-1.5" />
+            {isPending
+              ? t("trip.clearingPlan")
+              : confirmClear
+                ? t("trip.clearConfirm")
+                : t("trip.clearPlan")}
+          </Button>
+        </div>
+
         <p className="text-sm text-muted-foreground">
           {t("trip.settingsDangerWarning")}
         </p>

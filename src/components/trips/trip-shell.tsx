@@ -32,7 +32,6 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { TripMoreSheet } from "@/components/trips/trip-more-sheet";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { format } from "@/lib/i18n/date-fns";
@@ -100,7 +99,6 @@ export function TripShell({ trip, isOwner, children }: Props) {
   const { theme, setTheme } = useTheme();
   const [chatOpen, setChatOpen] = useState(false);
   const [crewOpen, setCrewOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   // B19: load the signed-in user's avatar so the dropdown trigger shows
   // a personal touch instead of the generic "Me" label.
@@ -534,11 +532,9 @@ export function TripShell({ trip, isOwner, children }: Props) {
           tripId={trip.id}
           onChatToggle={() => setChatOpen((o) => !o)}
           chatOpen={chatOpen}
-          onToolsOpen={() => setMoreOpen(true)}
-          toolsOpen={moreOpen}
-          // Tools-resident signal only: the Decisions tile lives in the Tools
-          // sheet, so an open vote needing this user is a real "something in
-          // Tools needs you." (badges.itinerary belongs to the Plan tab — it
+          // Tools-resident signal only: the Decisions tile lives inside the
+          // Tools hub, so an open vote needing this user is a real "something
+          // in Tools needs you." (badges.itinerary belongs to the Plan tab — it
           // already renders its own count there — so it must not drive this dot.)
           toolsDot={badges.decisions > 0}
           badges={badges}
@@ -561,20 +557,6 @@ export function TripShell({ trip, isOwner, children }: Props) {
           <CrewSheetContent tripId={trip.id} shareToken={trip.shareToken ?? null} />
         </SidePanel>
       )}
-
-      {/* B20: trip More sheet — secondary trip surfaces consolidated
-          under one ⋯ icon to keep the topbar clean. Chat opens via the
-          existing chatOpen state; Crew via crewOpen. */}
-      <TripMoreSheet
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        tripId={trip.id}
-        isOwner={isOwner}
-        shareToken={trip.shareToken ?? null}
-        onCrewOpen={() => setCrewOpen(true)}
-        onChatOpen={() => setChatOpen(true)}
-        badges={{ chat: badges.chat, decisions: badges.decisions }}
-      />
 
       {/* PWA install prompt */}
       <InstallPrompt />

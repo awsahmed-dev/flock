@@ -73,6 +73,10 @@ export default async function ToolsPage({ params }: Props) {
   return (
     <ToolsHub
       tripId={id}
+      tripName={trip.name}
+      destination={trip.destination}
+      startDate={trip.startDate as string}
+      endDate={trip.endDate as string}
       isOwner={checkOwner(trip, user.id)}
       shareToken={trip.shareToken ?? null}
       stats={stats}
