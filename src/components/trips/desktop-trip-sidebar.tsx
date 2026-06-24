@@ -5,19 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ChevronLeft,
+  ChevronRight,
   LayoutDashboard,
   MapPin,
   Compass,
-  Gavel,
   Wallet,
-  Backpack,
-  Ticket,
   Bell,
   MessageSquare,
-  Settings,
-  Share2,
-  Check,
-  Calendar,
+  LayoutGrid,
   Sun,
   Moon,
   Monitor,
@@ -31,7 +26,6 @@ import { Logo } from "@/components/ui/logo";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { cn } from "@/lib/utils";
@@ -74,21 +68,18 @@ interface Props {
   isOwner: boolean;
   badges: { chat: number; itinerary: number; expenses: number; decisions: number };
   onChatOpen: () => void;
-  onMoreOpen: () => void;
 }
 
-// P0-1: canonical taxonomy — one label + one icon per route, shared with
-// every other nav surface. Plan (/itinerary), Money (/expenses, Wallet icon),
-// Bookings (/wallet, Ticket icon — distinct from Money's wallet so an icon
-// never means two destinations).
+// Per-trip CORE nav (the founder-decided IA): Overview · Plan · Discover ·
+// Money · Chat. Chat is a button (opens the side panel), handled separately
+// below. Everything secondary (Bookings, Pack, Crew, Calendar, Share,
+// Settings) now lives behind the single "Tools" hub entry. Decisions folded
+// into Chat — its needs-your-vote badge rides on the Chat entry.
 const NAV_TABS = [
   { key: "nav.overview", href: "", icon: LayoutDashboard, badgeKey: null as null },
   { key: "nav.itinerary", href: "/itinerary", icon: MapPin, badgeKey: "itinerary" as const },
   { key: "nav.discover", href: "/discover", icon: Compass, badgeKey: null as null },
-  { key: "nav.decisions", href: "/decisions", icon: Gavel, badgeKey: "decisions" as const },
   { key: "nav.expenses", href: "/expenses", icon: Wallet, badgeKey: "expenses" as const },
-  { key: "nav.wallet", href: "/wallet", icon: Ticket, badgeKey: null as null },
-  { key: "nav.pack", href: "/pack", icon: Backpack, badgeKey: null as null },
 ];
 
 export function DesktopTripSidebar({
@@ -96,14 +87,12 @@ export function DesktopTripSidebar({
   isOwner,
   badges,
   onChatOpen,
-  onMoreOpen,
 }: Props) {
   const t = useT();
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
-  const [shareCopied, setShareCopied] = useState(false);
   const [myProfile, setMyProfile] = useState<{
     displayName: string;
     avatarUrl: string | null;
@@ -131,15 +120,6 @@ export function DesktopTripSidebar({
       cancelled = true;
     };
   }, [supabase]);
-
-  function copyShare() {
-    if (!trip.shareToken) return;
-    const url = `${window.location.origin}/share/${trip.shareToken}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    });
-  }
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -220,54 +200,72 @@ export function DesktopTripSidebar({
           );
         })}
 
+        {/* Chat — CORE nav (decision hub). Opens the side panel. Carries
+            chat-unread + decisions needs-your-vote (Decisions folded in). */}
+        {(() => {
+          const chatActive = pathname.startsWith(`/trips/${trip.id}/chat`);
+          const chatBadge = badges.chat + badges.decisions;
+          return (
+            <button
+              type="button"
+              onClick={onChatOpen}
+              className={cn(
+                "group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                chatActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+              )}
+            >
+              <MessageSquare
+                className={cn(
+                  "w-4 h-4 transition-transform shrink-0",
+                  chatActive
+                    ? "text-primary"
+                    : "text-muted-foreground/80 group-hover:scale-110",
+                )}
+              />
+              <span className="flex-1 text-start">{t("nav.chat")}</span>
+              {chatBadge > 0 && (
+                <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                  {chatBadge > 99 ? "99+" : chatBadge}
+                </span>
+              )}
+            </button>
+          );
+        })()}
+
         <div className="h-px bg-border/40 my-2 mx-2" />
 
-        {/* Secondary actions */}
-        <button
-          type="button"
-          onClick={onChatOpen}
-          className="group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
-        >
-          <MessageSquare className="w-4 h-4 text-muted-foreground/80 group-hover:scale-110 transition-transform shrink-0" />
-          <span className="flex-1 text-start">{t("chat.chat")}</span>
-          {badges.chat > 0 && (
-            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
-              {badges.chat > 99 ? "99+" : badges.chat}
-            </span>
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={onMoreOpen}
-          className="group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
-        >
-          <Settings className="w-4 h-4 text-muted-foreground/80 group-hover:scale-110 transition-transform shrink-0" />
-          <span className="flex-1 text-start">{t("nav.tripSettings")}</span>
-        </button>
-        {trip.shareToken && (
-          <button
-            type="button"
-            onClick={copyShare}
-            className="group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
-          >
-            {shareCopied ? (
-              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-            ) : (
-              <Share2 className="w-4 h-4 text-muted-foreground/80 group-hover:scale-110 transition-transform shrink-0" />
-            )}
-            <span className="flex-1 text-start">
-              {shareCopied ? t("common.copied") : t("trip.copyInvite")}
-            </span>
-          </button>
-        )}
-        <a
-          href={`/api/trips/${trip.id}/calendar.ics`}
-          download
-          className="group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
-        >
-          <Calendar className="w-4 h-4 text-muted-foreground/80 group-hover:scale-110 transition-transform shrink-0" />
-          <span className="flex-1 text-start">{t("nav.addToCalendar")}</span>
-        </a>
+        {/* Tools hub — the single overflow entry. Distinct from the core
+            destinations (grid icon + trailing chevron) so it reads as "a
+            drawer," not a peer tab. Opens the focused-door hub page. */}
+        {(() => {
+          const toolsHref = `/trips/${trip.id}/tools`;
+          const toolsActive = pathname.startsWith(toolsHref);
+          return (
+            <Link
+              href={toolsHref}
+              prefetch
+              className={cn(
+                "group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                toolsActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+              )}
+            >
+              <LayoutGrid
+                className={cn(
+                  "w-4 h-4 transition-transform shrink-0",
+                  toolsActive
+                    ? "text-primary"
+                    : "text-muted-foreground/80 group-hover:scale-110",
+                )}
+              />
+              <span className="flex-1 text-start">{t("nav.tools")}</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0 rtl:rotate-180" />
+            </Link>
+          );
+        })()}
       </nav>
 
       {/* Account menu — pinned bottom */}

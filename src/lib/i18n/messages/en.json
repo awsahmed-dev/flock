@@ -168,7 +168,9 @@
     "matchSystem": "Match system",
     "keyboardShortcuts": "Keyboard shortcuts",
     "blogLink": "Blog & guides",
-    "discover": "Discover"
+    "discover": "Discover",
+    "chat": "Chat",
+    "tools": "Tools"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",
@@ -812,9 +814,32 @@
     "summary": "{items, plural, =0 {No items yet} one {Added 1 item} other {Added # items}} · {expenses, plural, =0 {no expenses yet} one {paid for 1 expense} other {paid for # expenses}}",
     "loadFailed": "Couldn't load stats — try again"
   },
+  "tools": {
+    "title": "Tools",
+    "subtitle": "Everything else for this trip, in one place.",
+    "bookings": "Bookings",
+    "bookingsStatus": "{count, plural, =0 {Nothing to book yet} one {# thing to book} other {# things to book}}",
+    "bookingsStatusAll": "All booked",
+    "pack": "Pack",
+    "packStatus": "{packed}/{total} packed · {docs, plural, =0 {no docs} one {# doc} other {# docs}}",
+    "packStatusEmpty": "Start your packing list",
+    "crew": "Crew",
+    "crewStatus": "{count, plural, one {# traveler} other {# travelers}} · invite more",
+    "decisions": "Decisions",
+    "decisionsStatus": "Vote together in chat",
+    "decisionsStatusOpen": "{count, plural, one {# open vote needs you} other {# open votes need you}}",
+    "calendar": "Add to calendar",
+    "calendarStatus": "Export trip dates as .ics",
+    "share": "Share invite",
+    "shareStatus": "Copy the invite link",
+    "shareStatusCopied": "Link copied",
+    "settings": "Trip settings",
+    "settingsStatus": "Name, dates, budget, members",
+    "ownerSection": "Owner only"
+  },
   "more": {
     "section": "Trip",
-    "title": "More",
+    "title": "Tools",
     "chat": "Chat",
     "chatMeta": "Talk with your crew",
     "votes": "Votes",

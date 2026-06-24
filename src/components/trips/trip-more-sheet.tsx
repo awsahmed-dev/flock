@@ -4,12 +4,12 @@ import {
   X,
   MessageSquare,
   Ticket,
+  Backpack,
   Gavel,
   Users,
   Share2,
   Settings,
   Calendar,
-  FileText,
   Image as ImageIcon,
   Check,
   ChevronRight,
@@ -168,54 +168,56 @@ export function TripMoreSheet({
           </button>
         </div>
 
-        {/* Trip-scoped rows */}
+        {/* Tools rows — the mobile twin of the desktop Tools hub. Same
+            canonical set: Chat (phone access to the decision hub, carries
+            the needs-vote badge), Bookings, Pack, Crew, Decisions (→ Chat
+            lens), Calendar, Share. Owner zone (Settings, Clear plan) below. */}
         <div className="p-2 space-y-1">
           <Row
             icon={MessageSquare}
             label={t("more.chat")}
             meta={t("more.chatMeta")}
-            badge={badges.chat}
+            badge={(badges.chat ?? 0) + (badges.decisions ?? 0)}
             onClick={openChat}
           />
           <Row
             icon={Ticket}
-            label={t("more.bookings")}
+            label={t("tools.bookings")}
             href={`/trips/${tripId}/wallet`}
             onClick={onClose}
           />
           <Row
-            icon={Gavel}
-            label={t("more.decisions")}
-            meta={t("more.decisionsMeta")}
-            badge={badges.decisions}
-            href={`/trips/${tripId}/decisions`}
+            icon={Backpack}
+            label={t("tools.pack")}
+            meta={t("more.docsMeta")}
+            href={`/trips/${tripId}/pack`}
             onClick={onClose}
           />
           <Row
             icon={Users}
-            label={t("more.crew")}
+            label={t("tools.crew")}
             meta={t("more.crewMeta")}
             onClick={openCrew}
           />
-          {/* P2-4: Docs is live (it's a mode inside Pack) — it belongs in
-              the working rows, not muted under "Coming soon". */}
+          {/* Decisions folded into Chat — this row routes to the Chat lens,
+              not a standalone page. Keeps the needs-vote affordance. */}
           <Row
-            icon={FileText}
-            label={t("more.docs")}
-            meta={t("more.docsMeta")}
-            href={`/trips/${tripId}/pack?view=docs`}
-            onClick={onClose}
+            icon={Gavel}
+            label={t("tools.decisions")}
+            meta={t("tools.decisionsStatus")}
+            badge={badges.decisions}
+            onClick={openChat}
           />
-          {/* Calendar export is also live (downloads the .ics). */}
+          {/* Calendar export (downloads the .ics). */}
           <Row
             icon={Calendar}
-            label={t("more.calendar")}
+            label={t("tools.calendar")}
             meta={t("more.calendarMeta")}
             href={`/api/trips/${tripId}/calendar.ics`}
           />
           <Row
             icon={Share2}
-            label={t("more.share")}
+            label={t("tools.share")}
             meta={
               copied ? t("common.copied") : t("more.shareMeta")
             }

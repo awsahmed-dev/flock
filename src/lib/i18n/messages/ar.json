@@ -168,7 +168,9 @@
     "matchSystem": "حسب النظام",
     "keyboardShortcuts": "اختصارات لوحة المفاتيح",
     "blogLink": "المدوّنة والأدلّة",
-    "discover": "اكتشف"
+    "discover": "اكتشف",
+    "chat": "الدردشة",
+    "tools": "الأدوات"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",
@@ -812,9 +814,32 @@
     "summary": "{items, plural, =0 {لم يضف عناصر بعد} one {أضاف عنصرًا واحدًا} two {أضاف عنصرين} few {أضاف {items} عناصر} many {أضاف {items} عنصرًا} other {أضاف {items} عنصرًا}} · {expenses, plural, =0 {لم يدفع مصاريف بعد} one {دفع مصروفًا واحدًا} two {دفع مصروفين} few {دفع {expenses} مصاريف} many {دفع {expenses} مصروفًا} other {دفع {expenses} مصروفًا}}",
     "loadFailed": "تعذّر تحميل الإحصاءات — حاول مرة أخرى"
   },
+  "tools": {
+    "title": "الأدوات",
+    "subtitle": "كل ما تبقّى لهذه الرحلة في مكان واحد.",
+    "bookings": "الحجوزات",
+    "bookingsStatus": "{count, plural, =0 {لا شيء للحجز بعد} one {عنصر واحد للحجز} two {عنصران للحجز} few {{count} عناصر للحجز} many {{count} عنصرًا للحجز} other {{count} عنصر للحجز}}",
+    "bookingsStatusAll": "كل الحجوزات تمّت",
+    "pack": "الأمتعة",
+    "packStatus": "{packed}/{total} مُعبّأة · {docs, plural, =0 {لا مستندات} one {مستند واحد} two {مستندان} few {{docs} مستندات} many {{docs} مستندًا} other {{docs} مستند}}",
+    "packStatusEmpty": "ابدأ قائمة أمتعتك",
+    "crew": "الفريق",
+    "crewStatus": "{count, plural, one {مسافر واحد} two {مسافران} few {{count} مسافرين} many {{count} مسافرًا} other {{count} مسافر}} · ادعُ المزيد",
+    "decisions": "القرارات",
+    "decisionsStatus": "صوّتوا معًا في الدردشة",
+    "decisionsStatusOpen": "{count, plural, one {تصويت مفتوح واحد ينتظرك} two {تصويتان مفتوحان ينتظرانك} few {{count} تصويتات مفتوحة تنتظرك} many {{count} تصويتًا مفتوحًا ينتظرك} other {{count} تصويت مفتوح ينتظرك}}",
+    "calendar": "أضف للتقويم",
+    "calendarStatus": "صدّر تواريخ الرحلة كملف .ics",
+    "share": "مشاركة الدعوة",
+    "shareStatus": "انسخ رابط الدعوة",
+    "shareStatusCopied": "تم نسخ الرابط",
+    "settings": "إعدادات الرحلة",
+    "settingsStatus": "الاسم، التواريخ، الميزانية، الأعضاء",
+    "ownerSection": "للمالك فقط"
+  },
   "more": {
     "section": "الرحلة",
-    "title": "المزيد",
+    "title": "الأدوات",
     "chat": "الدردشة",
     "chatMeta": "تحدّث مع الفريق",
     "votes": "التصويتات",

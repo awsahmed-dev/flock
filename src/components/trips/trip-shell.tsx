@@ -29,7 +29,6 @@ import {
   Moon,
   Monitor,
   UserCircle,
-  MoreHorizontal,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -269,7 +268,6 @@ export function TripShell({ trip, isOwner, children }: Props) {
         isOwner={isOwner}
         badges={badges}
         onChatOpen={() => setChatOpen(true)}
-        onMoreOpen={() => setMoreOpen(true)}
       />
 
       {/* Top bar — mobile only on lg+. Desktop nav lives in the sidebar. */}
@@ -308,22 +306,9 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 header. */}
             <NotificationBell />
 
-            {/* B20: single ··· More button replaces the previous Crew +
-                Settings header icons. Opens the TripMoreSheet which
-                holds Chat / Votes / Crew / Share / Trip settings and
-                the future Photos / Documents / Calendar / Full map. */}
-            <button
-              onClick={() => setMoreOpen(true)}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors relative"
-              title={t("more.title")}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-              {/* Tiny unread/open-vote indicator dot — gives the user a
-                  reason to open the sheet without making them count. */}
-              {(badges.chat > 0 || badges.itinerary > 0) && (
-                <span className="absolute top-1 end-1 w-1.5 h-1.5 rounded-full bg-destructive" />
-              )}
-            </button>
+            {/* The Tools overflow now lives in the bottom nav (the 5th
+                slot opens the same Tools sheet), so the header no longer
+                carries a redundant ··· button — one overflow concept. */}
 
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -492,9 +477,11 @@ export function TripShell({ trip, isOwner, children }: Props) {
             aria-label="Open chat"
           >
             <MessageSquare className="w-4 h-4" />
-            {badges.chat > 0 && (
+            {/* Decisions folded into Chat: the needs-your-vote count rides
+                on the Chat handle alongside chat-unread. */}
+            {badges.chat + badges.decisions > 0 && (
               <span className="min-w-[18px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-black flex items-center justify-center leading-none">
-                {badges.chat > 99 ? "99+" : badges.chat}
+                {badges.chat + badges.decisions > 99 ? "99+" : badges.chat + badges.decisions}
               </span>
             )}
           </button>
@@ -548,6 +535,9 @@ export function TripShell({ trip, isOwner, children }: Props) {
           tripId={trip.id}
           onChatToggle={() => setChatOpen((o) => !o)}
           chatOpen={chatOpen}
+          onToolsOpen={() => setMoreOpen(true)}
+          toolsOpen={moreOpen}
+          toolsDot={badges.itinerary > 0}
           badges={badges}
         />
       )}

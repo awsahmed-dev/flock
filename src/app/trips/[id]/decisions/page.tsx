@@ -1,29 +1,17 @@
-export const dynamic = "force-dynamic";
-
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/get-user";
-import { getTripWithMembership } from "@/lib/actions/trips";
-import { listDecisionsForLens } from "@/lib/actions/decisions";
-import { DecisionsBoard } from "@/components/decisions/decisions-board";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 /**
- * v2 Decisions lens — replaces the standalone Votes page. Lists every crew
- * decision (the chat-embedded place vote), defaulting to the ones still
- * waiting on the current user. Voting happens inline on each card.
+ * Decisions folded into Chat. The decision cards render inline in Chat
+ * (message-bubble `decision_card`) and the standalone /decisions tab was
+ * retired from nav. We keep the route as a permanent redirect so old links
+ * and notification deep-links don't 404 — they land in Chat where the
+ * decisions now live.
  */
-export default async function DecisionsPage({ params }: Props) {
+export default async function DecisionsRedirect({ params }: Props) {
   const { id } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect("/auth/login");
-
-  const trip = await getTripWithMembership(id, user.id);
-  if (!trip) redirect("/dashboard");
-
-  const rows = await listDecisionsForLens(id);
-
-  return <DecisionsBoard tripId={id} rows={rows} />;
+  redirect(`/trips/${id}/chat`);
 }
