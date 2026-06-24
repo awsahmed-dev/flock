@@ -265,7 +265,6 @@ export function TripShell({ trip, isOwner, children }: Props) {
           nothing under lg so mobile is untouched. */}
       <DesktopTripSidebar
         trip={trip}
-        isOwner={isOwner}
         badges={badges}
         onChatOpen={() => setChatOpen(true)}
       />
@@ -537,7 +536,11 @@ export function TripShell({ trip, isOwner, children }: Props) {
           chatOpen={chatOpen}
           onToolsOpen={() => setMoreOpen(true)}
           toolsOpen={moreOpen}
-          toolsDot={badges.itinerary > 0}
+          // Tools-resident signal only: the Decisions tile lives in the Tools
+          // sheet, so an open vote needing this user is a real "something in
+          // Tools needs you." (badges.itinerary belongs to the Plan tab — it
+          // already renders its own count there — so it must not drive this dot.)
+          toolsDot={badges.decisions > 0}
           badges={badges}
         />
       )}

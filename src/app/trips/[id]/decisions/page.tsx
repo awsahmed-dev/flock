@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -13,5 +13,7 @@ interface Props {
  */
 export default async function DecisionsRedirect({ params }: Props) {
   const { id } = await params;
-  redirect(`/trips/${id}/chat`);
+  // 308 Permanent — the fold is permanent, so browsers/crawlers can cache
+  // it and stop re-resolving the retired route (`redirect()` would emit 307).
+  permanentRedirect(`/trips/${id}/chat`);
 }

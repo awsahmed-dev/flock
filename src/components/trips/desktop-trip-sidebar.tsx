@@ -47,14 +47,16 @@ import {
  * Layout (lg+):
  *   - Logo + back-to-dashboard at top
  *   - Trip name + destination + dates as a card (context anchor)
- *   - Nav tabs as a vertical rail (Overview · Plan · Money · Bookings ·
- *     Pack · Votes), each with hover state + active indicator + badge
- *   - Chat / Notifications / More actions section
+ *   - CORE rail (Overview · Plan · Discover · Money · Chat), each with
+ *     hover state + active indicator + badge; Chat carries the needs-vote
+ *     count (Decisions folded into Chat)
+ *   - A divider, then the "Tools" hub entry (Bookings · Pack · Crew ·
+ *     Decisions · Calendar · Share · Settings live behind /tools)
  *   - Account menu pinned at the bottom — avatar + name + dropdown for
- *     theme / sign-out / share / etc.
+ *     theme / sign-out / etc.
  *
- * Mobile is untouched: the existing top bar + bottom MobileNav + sub-nav
- * tabs still render at <lg. This component is `hidden lg:flex` only.
+ * Mobile is untouched: the bottom MobileNav (Overview · Plan · Discover ·
+ * Money · Tools) renders at <lg. This component is `hidden lg:flex` only.
  */
 interface Props {
   trip: {
@@ -65,7 +67,6 @@ interface Props {
     endDate: string;
     shareToken?: string | null;
   };
-  isOwner: boolean;
   badges: { chat: number; itinerary: number; expenses: number; decisions: number };
   onChatOpen: () => void;
 }
@@ -84,7 +85,6 @@ const NAV_TABS = [
 
 export function DesktopTripSidebar({
   trip,
-  isOwner,
   badges,
   onChatOpen,
 }: Props) {
@@ -347,9 +347,6 @@ export function DesktopTripSidebar({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        {/* Owner hint — when not owner, settings entry stays available via
-            More button above, so we don't need to redundantly show it here. */}
-        {void isOwner}
       </div>
     </aside>
   );
