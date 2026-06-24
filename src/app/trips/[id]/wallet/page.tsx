@@ -17,13 +17,12 @@ interface Props {
 }
 
 /**
- * B24-followup: unified Bookings page. The previous version just stacked
- * <BookMode /> + <WalletBoard /> which gave the page two competing
- * headers, two duplicated max-w containers, and no shared spend metric.
- * The whole page is now owned by <BookingsBoard>, which renders one
- * trip-context header, one big spend tile, and an accordion of "Still
- * to book" + "Booked" sections so the user sees the bookings flow as
- * one continuous surface.
+ * Bookings page — owned entirely by <BookingsBoard>. The default real-trip
+ * view is an honest first-run state: a trip-context header, the forward-email
+ * affordance promoted to the hero (the page's one primary action), and a
+ * "Still to sort" checklist derived from real itinerary gaps. Example passes
+ * live behind an opt-in, clearly-badged sample toggle (default off) so no
+ * fabricated booking is ever shown as the user's real data.
  */
 export default async function WalletPage({ params }: Props) {
   const { id } = await params;
