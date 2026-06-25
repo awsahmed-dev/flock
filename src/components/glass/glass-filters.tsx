@@ -46,15 +46,15 @@ export function GlassFilters() {
     setMapUrl(url);
   }, []);
 
-  // Arm the refraction the frame after the filter element is committed to the
-  // DOM, then disarm + revoke the blob on unmount.
+  // Arm the refraction once the filter element is committed. This effect runs
+  // after the <svg> below is in the DOM (mapUrl is set → render → effect), so
+  // adding the class synchronously never references a missing filter. We do NOT
+  // use requestAnimationFrame here — rAF callbacks don't fire while the tab is
+  // backgrounded/occluded, which would leave the glass un-armed indefinitely.
   useEffect(() => {
     if (!mapUrl) return;
-    const id = requestAnimationFrame(() =>
-      document.documentElement.classList.add("glass-ready"),
-    );
+    document.documentElement.classList.add("glass-ready");
     return () => {
-      cancelAnimationFrame(id);
       document.documentElement.classList.remove("glass-ready");
       URL.revokeObjectURL(mapUrl);
     };
@@ -69,18 +69,22 @@ export function GlassFilters() {
       style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}
     >
       <defs>
+        {/* Filter region == the element's bounding box, with the map filling it
+            1:1, so the map's rounded-rect rim lands exactly on the element's
+            rim (a larger region pushes the bend ring outside the element and it
+            reads flat). scale = the px throw at the rim; tune for taste. */}
         <filter
           id="paxawa-glass"
-          x="-25%"
-          y="-25%"
-          width="150%"
-          height="150%"
+          x="0%"
+          y="0%"
+          width="100%"
+          height="100%"
           colorInterpolationFilters="sRGB"
         >
           <feImage
             href={mapUrl}
-            x="0"
-            y="0"
+            x="0%"
+            y="0%"
             width="100%"
             height="100%"
             preserveAspectRatio="none"
@@ -89,7 +93,7 @@ export function GlassFilters() {
           <feDisplacementMap
             in="SourceGraphic"
             in2="map"
-            scale="26"
+            scale="20"
             xChannelSelector="R"
             yChannelSelector="G"
           />

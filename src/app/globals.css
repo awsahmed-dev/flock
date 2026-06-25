@@ -172,6 +172,16 @@
    below, once the SVG filter exists — Chromium runs it on the GPU; Safari/FF
    keep this blur + specular (their true bend comes from the copy-lens, not
    from backdrop-filter). saturate() richens colour seen through the glass. */
+/* IMPORTANT — keep backdrop-filter in its OWN rule with no color-mix(). When a
+   rule mixes color-mix() (the .glass-light fill/border) with backdrop-filter,
+   Lightning CSS (Tailwind v4) splits it into color-mix @supports variants and
+   the backdrop-filter gets dropped from the applied branch — the glass goes
+   flat. Isolated here, it survives. */
+.glass-dark,
+.glass-light {
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+}
 .glass-dark {
   background-color: rgb(255 255 255 / 0.10);
   box-shadow:
@@ -179,8 +189,6 @@
     inset 0 0 0 1px rgb(255 255 255 / 0.12),
     inset 0 -10px 18px -12px rgb(0 0 0 / 0.28),
     0 6px 22px -10px rgb(0 0 0 / 0.45);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
 }
 .glass-dark:hover {
   background-color: rgb(255 255 255 / 0.18);
@@ -189,11 +197,9 @@
   background-color: color-mix(in oklab, var(--background) 68%, transparent);
   box-shadow:
     inset 0 1px 0.5px 0 rgb(255 255 255 / 0.8),
-    inset 0 0 0 1px color-mix(in oklab, var(--border) 55%, transparent),
+    inset 0 0 0 1px rgb(0 0 0 / 0.08),
     inset 0 -10px 18px -12px rgb(0 0 0 / 0.10),
     0 6px 22px -10px rgb(0 0 0 / 0.18);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
 }
 .glass-light:hover {
   background-color: color-mix(in oklab, var(--background) 84%, transparent);
@@ -202,11 +208,9 @@
 /* Refraction armed: once <GlassFilters> has injected #paxawa-glass and added
    `glass-ready`, fold the computed displacement into backdrop-filter so the
    backdrop actually bends at the rim. Lighter blur here so the bend stays
-   legible. Chromium bends; Safari/FF drop the url() and keep blur+saturate. */
-html.glass-ready .glass-dark {
-  backdrop-filter: blur(7px) saturate(1.5) url(#paxawa-glass);
-  -webkit-backdrop-filter: blur(7px) saturate(1.5);
-}
+   legible. Chromium bends; Safari/FF drop the url() and keep blur+saturate.
+   No color-mix in these rules either — same Lightning-CSS reason as above. */
+html.glass-ready .glass-dark,
 html.glass-ready .glass-light {
   backdrop-filter: blur(7px) saturate(1.5) url(#paxawa-glass);
   -webkit-backdrop-filter: blur(7px) saturate(1.5);
