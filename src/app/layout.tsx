@@ -6,6 +6,7 @@ import { Providers } from "@/components/providers";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { RegisterSW } from "@/components/pwa/register-sw";
+import { GlassFilters } from "@/components/glass/glass-filters";
 import { getLocale, getDictionary, isRtl } from "@/lib/i18n";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { setActiveLocale } from "@/lib/i18n/date-fns";
@@ -163,6 +164,7 @@ export default async function RootLayout({
         <LocaleProvider locale={locale} dict={dict}>
           <Providers>
             {children}
+            <GlassFilters />
             <PushNotificationInit />
             <OfflineBanner />
             <RegisterSW />
