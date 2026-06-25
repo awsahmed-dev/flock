@@ -172,16 +172,13 @@
    below, once the SVG filter exists — Chromium runs it on the GPU; Safari/FF
    keep this blur + specular (their true bend comes from the copy-lens, not
    from backdrop-filter). saturate() richens colour seen through the glass. */
-/* IMPORTANT — keep backdrop-filter in its OWN rule with no color-mix(). When a
-   rule mixes color-mix() (the .glass-light fill/border) with backdrop-filter,
-   Lightning CSS (Tailwind v4) splits it into color-mix @supports variants and
-   the backdrop-filter gets dropped from the applied branch — the glass goes
-   flat. Isolated here, it survives. */
-.glass-dark,
-.glass-light {
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-}
+/* NOTE — the blur/refraction (`backdrop-filter`) is injected at RUNTIME by
+   <GlassFilters>, NOT authored here. Lightning CSS (the Tailwind v4 / Next
+   build) strips hand-authored `backdrop-filter` from these rules, shipping them
+   empty, so the glass renders flat. A runtime <style> (which the bundler never
+   touches) is the reliable way to land a real backdrop-filter + the
+   url(#paxawa-glass) refraction. globals.css owns only the fill, the specular
+   rim and the a11y fallback below. */
 .glass-dark {
   background-color: rgb(255 255 255 / 0.10);
   box-shadow:
@@ -203,17 +200,6 @@
 }
 .glass-light:hover {
   background-color: color-mix(in oklab, var(--background) 84%, transparent);
-}
-
-/* Refraction armed: once <GlassFilters> has injected #paxawa-glass and added
-   `glass-ready`, fold the computed displacement into backdrop-filter so the
-   backdrop actually bends at the rim. Lighter blur here so the bend stays
-   legible. Chromium bends; Safari/FF drop the url() and keep blur+saturate.
-   No color-mix in these rules either — same Lightning-CSS reason as above. */
-html.glass-ready .glass-dark,
-html.glass-ready .glass-light {
-  backdrop-filter: blur(7px) saturate(1.5) url(#paxawa-glass);
-  -webkit-backdrop-filter: blur(7px) saturate(1.5);
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
