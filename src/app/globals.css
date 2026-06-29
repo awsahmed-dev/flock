@@ -217,76 +217,17 @@
 /* Tap-target floor (brief §1.7): ≥44×44 for every interactive element. */
 .tap-target { min-width: 44px; min-height: 44px; }
 
-/* ────────────────────────────────────────────────────────────────────────
-   The Paxawa Control Language — the glass material (docs §4 of the
-   product-head brief). ONE material for the floating control/overlay layer;
-   solid stays for content/text/tables. Two tones:
-     .glass-dark  — over photos/maps (white content)
-     .glass-light — over light content/sheets (foreground content)
-   Each pairs a translucent fill + hairline ring + blur. A subtle scrim is
-   baked into the fill so short labels/icons clear ≥4.5:1 over a bright photo
-   without depending on luck.
-
-   GUARDRAIL: prefers-reduced-transparency (or reduced-motion, which the same
-   users often set) drops the blur and swaps to a SOLID token automatically,
-   so the material degrades to a legible, opaque control — never a smeared,
-   low-contrast one. This is the non-negotiable a11y fallback from the brief. */
-/* "The details that bite": a real pane of glass isn't a blur with a border —
-   it catches light at the rim. Each tone layers a crisp top-edge sheen, a
-   hairline, a lower inner shadow for thickness, and a soft outer lift. The
-   refraction (the computed bend of the backdrop) is added by `html.glass-ready`
-   below, once the SVG filter exists — Chromium runs it on the GPU; Safari/FF
-   keep this blur + specular (their true bend comes from the copy-lens, not
-   from backdrop-filter). saturate() richens colour seen through the glass. */
-/* NOTE — the blur/refraction (`backdrop-filter`) is injected at RUNTIME by
-   <GlassFilters>, NOT authored here. Lightning CSS (the Tailwind v4 / Next
-   build) strips hand-authored `backdrop-filter` from these rules, shipping them
-   empty, so the glass renders flat. A runtime <style> (which the bundler never
-   touches) is the reliable way to land a real backdrop-filter + the
-   url(#paxawa-glass) refraction. globals.css owns only the fill, the specular
-   rim and the a11y fallback below. */
+/* The liquid-glass engine was removed in the reinvention (the brief uses plain
+   bg-card + Tailwind backdrop-blur on the tab bar). These two classes remain as
+   a minimal inert fallback only until the last legacy screens that reference
+   them (Discover) are rebuilt; remove fully then. */
 .glass-dark {
-  background-color: rgb(255 255 255 / 0.10);
-  box-shadow:
-    inset 0 1px 0.5px 0 rgb(255 255 255 / 0.55),
-    inset 0 0 0 1px rgb(255 255 255 / 0.12),
-    inset 0 -10px 18px -12px rgb(0 0 0 / 0.28),
-    0 6px 22px -10px rgb(0 0 0 / 0.45);
-}
-.glass-dark:hover {
-  background-color: rgb(255 255 255 / 0.18);
+  background-color: rgb(255 255 255 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.15);
 }
 .glass-light {
-  background-color: color-mix(in oklab, var(--background) 68%, transparent);
-  box-shadow:
-    inset 0 1px 0.5px 0 rgb(255 255 255 / 0.8),
-    inset 0 0 0 1px rgb(0 0 0 / 0.08),
-    inset 0 -10px 18px -12px rgb(0 0 0 / 0.10),
-    0 6px 22px -10px rgb(0 0 0 / 0.18);
-}
-.glass-light:hover {
-  background-color: color-mix(in oklab, var(--background) 84%, transparent);
-}
-
-@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
-  .glass-dark {
-    background-color: rgb(23 23 23 / 0.92);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .glass-dark:hover {
-    background-color: rgb(38 38 38 / 0.96);
-  }
-  .glass-light {
-    background-color: var(--background);
-    box-shadow: inset 0 0 0 1px var(--border);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .glass-light:hover {
-    background-color: var(--card);
-  }
+  background-color: rgb(0 0 0 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 /* B26: blog content typography. Replaces @tailwindcss/typography which
