@@ -1,20 +1,22 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Plus, Compass } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { trips, tripMembers, profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { TripGrid, SuggestedTrips } from "@/components/trips/trip-grid";
-import { PastTripsRow } from "@/components/dashboard/past-trips-row";
-import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
-import { parseISO, differenceInDays, isPast, isFuture } from "date-fns";
+import { differenceInCalendarDays, isFuture, isPast } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
-import Link from "next/link";
-import { Calendar, Clock, ArrowRight, Plus, Globe2, Plane } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
+import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
+import {
+  DashboardTripCard,
+  type TripStatusTone,
+} from "@/components/dashboard/dashboard-trip-card";
 import type { InferSelectModel } from "drizzle-orm";
 import type { trips as tripsTable } from "@/lib/db/schema";
 
@@ -43,13 +45,17 @@ function getTimeOfDay() {
   return "evening";
 }
 
+/**
+ * Dashboard / trip list (redesign brief Screen A). Minimal shell before a trip
+ * is selected: top bar (logo + avatar), greeting, a horizontal rail of active /
+ * upcoming trip cards with status chips, a Memories rail of past trips, and the
+ * + New-trip FAB. No stats bar, no sidebar, no "where to next" inspiration —
+ * only what Screen A specifies.
+ */
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
-  // B21: prefer the user's profile.display_name (editable from /account/
-  // profile) over the Supabase user_metadata. Falls back to first word of
-  // email only when nothing else is set.
   const profileRow = await db.query.profiles.findFirst({
     where: eq(profiles.id, user.id),
     columns: { displayName: true, avatarUrl: true },
@@ -70,219 +76,131 @@ export default async function DashboardPage() {
   const allTrips: Trip[] = userTrips.map((r) => r.trip);
 
   const now = new Date();
-  const ongoingTrips = allTrips.filter(
-    (t) => parseDateOnly(t.startDate) <= now && now <= parseDateOnly(t.endDate)
+  const ongoing = allTrips.filter(
+    (t) => parseDateOnly(t.startDate) <= now && now <= parseDateOnly(t.endDate),
   );
-  const upcomingTrips = allTrips
+  const upcoming = allTrips
     .filter((t) => isFuture(parseDateOnly(t.startDate)))
-    .sort((a, b) => parseDateOnly(a.startDate).getTime() - parseDateOnly(b.startDate).getTime());
-  const pastTrips = allTrips.filter((t) => isPast(parseDateOnly(t.endDate)));
+    .sort(
+      (a, b) =>
+        parseDateOnly(a.startDate).getTime() - parseDateOnly(b.startDate).getTime(),
+    );
+  const past = allTrips
+    .filter((t) => isPast(parseDateOnly(t.endDate)))
+    .sort(
+      (a, b) =>
+        parseDateOnly(b.endDate).getTime() - parseDateOnly(a.endDate).getTime(),
+    );
+  const activeUpcoming = [...ongoing, ...upcoming];
 
-  const totalDays = allTrips.reduce(
-    (s, t) => s + differenceInDays(parseDateOnly(t.endDate), parseDateOnly(t.startDate)) + 1,
-    0
-  );
-
-  // Best trip to spotlight: ongoing first, then soonest upcoming
-  const spotlight: Trip | null = ongoingTrips[0] || upcomingTrips[0] || null;
-
-  const timeOfDay = getTimeOfDay();
-  const timeEmoji = { morning: "☀️", afternoon: "🌤️", evening: "🌙" }[timeOfDay];
-
-  // B15-d: pull the dictionary so the stats chips, greeting + spotlight
-  // text are translated server-side.
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const t = (k: string, p?: Record<string, string | number>) =>
     tFromDict(dict, k, p, locale);
+  const timeOfDay = getTimeOfDay();
 
-  // B15-i: dropped the {count} interpolation in these labels — the chip
-  // already renders s.value next to it, so a label like "5 total trips"
-  // alongside the "5" pill produced the duplicated "5 5 total trips"
-  // bug spotted in screenshot. Labels are now plain noun strings.
-  const stats = [
-    { label: t("dashboard.totalTrips"), value: allTrips.length, color: "text-primary", bg: "bg-primary/8" },
-    { label: t("dashboard.upcomingCount"), value: upcomingTrips.length, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
-    { label: t("dashboard.daysPlanned"), value: totalDays, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
-    { label: t("dashboard.pastTrips"), value: pastTrips.length, color: "text-muted-foreground", bg: "bg-muted/60" },
-  ];
+  function statusFor(trip: Trip): { label: string; tone: TripStatusTone } {
+    const start = parseDateOnly(trip.startDate);
+    const end = parseDateOnly(trip.endDate);
+    if (start <= now && now <= end) return { label: t("dashboard.statusNow"), tone: "now" };
+    const d = differenceInCalendarDays(start, now);
+    if (d <= 30) return { label: t("dashboard.statusInDays", { count: d }), tone: "soon" };
+    return { label: t("dashboard.statusUpcoming"), tone: "upcoming" };
+  }
+  function datesLabel(trip: Trip): string {
+    return `${format(parseDateOnly(trip.startDate), "d MMM")} – ${format(parseDateOnly(trip.endDate), "d MMM")}`;
+  }
+
+  const empty = allTrips.length === 0;
 
   return (
-    <DashboardShell
-      accountMenu={
+    <div className="min-h-svh bg-background text-foreground flex flex-col">
+      {/* Top bar — logo left, avatar right (brief Screen A). */}
+      <header className="h-[52px] shrink-0 flex items-center justify-between px-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-30">
+        <Link href="/dashboard" aria-label="Paxawa" className="text-foreground">
+          <Logo variant="full" size="sm" />
+        </Link>
         <DashboardAccountMenu
           displayName={profileRow?.displayName ?? firstName}
           avatarUrl={profileRow?.avatarUrl ?? null}
           userId={user.id}
         />
-      }
-      user={{
-        displayName: profileRow?.displayName ?? firstName,
-        avatarUrl: profileRow?.avatarUrl ?? null,
-        userId: user.id,
-      }}
-    >
-      {/* B24-followup: consistent vertical rhythm between sections. Was a
-          chaotic mix of mb-4 / mb-6 / mb-8 / no-margin that made the
-          Memories row sit flush against the trips grid. Now every
-          section is a child of one space-y wrapper. */}
-      <div className="space-y-10 sm:space-y-12">
-      <div className="space-y-4">
-        {/* ── Greeting row: name + new-trip CTA only. Profile lives in
-            the global header now, not next to the action button. */}
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div className="min-w-0">
-            {/* B28: contextual date label above the greeting — the
-                Mondays-style 'Thursday, 20th February' touch that makes
-                the dashboard feel like a real workspace product. */}
-            <p className="hidden lg:block text-xs font-medium text-muted-foreground mb-2 tabular-nums">
-              {format(new Date(), "EEEE, d MMMM yyyy")}
-            </p>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-              {t(`greeting.${timeOfDay}`, { name: firstName })}
-            </h1>
-            {allTrips.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("greeting.tripsSummaryEmpty")}
-              </p>
-            )}
-          </div>
-          <Link
-            href="/trips/new"
-            prefetch
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-3.5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-opacity lg:px-4 lg:py-3"
-          >
-            <Plus className="w-4 h-4" />
-            {t("dashboard.newTrip")}
-          </Link>
-        </div>
+      </header>
 
-        {allTrips.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {stats.map((s) => (
-              <div
-                key={s.label}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2.5 py-1 text-[11px]"
-              >
-                <span className={`font-bold tabular-nums ${s.color}`}>{s.value}</span>
-                <span className="text-muted-foreground">{s.label.toLowerCase()}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Spotlight: ongoing or soonest upcoming ─────────────────── */}
-      {spotlight && (
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 pb-[calc(96px+env(safe-area-inset-bottom))] space-y-8">
+        {/* Greeting */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
-              ongoingTrips.length > 0
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
-            }`}>
-              {ongoingTrips.length > 0 ? (
-                <>
-                  <span className="relative flex w-2 h-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-                    <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
-                  </span>
-                  Ongoing now
-                </>
-              ) : (
-                <>
-                  <Plane className="w-3 h-3" />
-                  Up next
-                </>
-              )}
-            </span>
-          </div>
-
-          <Link href={`/trips/${spotlight.id}`}>
-            <div className={`group relative rounded-2xl ${spotlight.heroImageUrl ? "" : `bg-gradient-to-br ${getGradient(spotlight.id)}`} p-6 lg:p-8 overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-200 min-h-[200px] lg:min-h-[240px]`}>
-              {/* B19: destination photo behind the spotlight card.
-                  B28: previous overlay was bg-gradient-to-br from-black/60
-                  via-black/35 to-black/55 which painted the photo nearly
-                  uniformly dark — the city skyline was invisible behind a
-                  60% black wash. New overlay: bottom-up gradient that
-                  keeps the upper 2/3 of the photo bright and only darkens
-                  near the text at the bottom. */}
-              {spotlight.heroImageUrl && (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={spotlight.heroImageUrl}
-                    alt={spotlight.destination}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-                </>
-              )}
-              {/* Decorative orbs — fewer + softer on photo backgrounds. */}
-              {!spotlight.heroImageUrl && (
-                <>
-                  <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
-                  <div className="absolute right-12 -bottom-6 w-24 h-24 rounded-full bg-white/8" />
-                </>
-              )}
-
-              <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                  <p className="text-white/70 text-xs font-medium uppercase tracking-widest mb-1.5">
-                    {spotlight.destination}
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                    {spotlight.name}
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-3 mt-3">
-                    <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {format(parseDateOnly(spotlight.startDate), "MMM d")} –{" "}
-                      {format(parseDateOnly(spotlight.endDate), "MMM d, yyyy")}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                      <Clock className="w-3.5 h-3.5" />
-                      {differenceInDays(parseDateOnly(spotlight.endDate), parseDateOnly(spotlight.startDate)) + 1} days
-                    </span>
-                    {spotlight.budgetTotal && (
-                      <span className="flex items-center gap-1.5 text-white/80 text-sm">
-                        <Globe2 className="w-3.5 h-3.5" />
-                        {spotlight.currency} {spotlight.budgetTotal.toLocaleString()} budget
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 transition-colors backdrop-blur">
-                    {t("dashboard.openTrip")}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Link>
+          <p className="type-caption text-tertiary">{format(now, "EEEE, d MMMM")}</p>
+          <h1 className="type-display mt-1">{t(`greeting.${timeOfDay}`, { name: firstName })}</h1>
         </div>
-      )}
 
-      {allTrips.filter((t) => !isPast(parseDateOnly(t.endDate))).length > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-              {t("dashboard.activeTripsHeading")}
-            </h2>
-            <div className="flex-1 h-px bg-border/60" />
+        {empty ? (
+          <div className="rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center">
+            <Compass className="w-8 h-8 mx-auto text-tertiary" />
+            <p className="mt-3 type-body-lg font-semibold">{t("dashboard.noTripsYet")}</p>
+            <Link
+              href="/trips/new"
+              prefetch
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-5 h-11 text-sm font-bold"
+            >
+              <Plus className="w-4 h-4" />
+              {t("dashboard.newTrip")}
+            </Link>
           </div>
-          <TripGrid trips={allTrips.filter((t) => !isPast(parseDateOnly(t.endDate)))} />
-        </section>
-      )}
+        ) : (
+          <>
+            {activeUpcoming.length > 0 && (
+              <section>
+                <h2 className="type-caption text-tertiary mb-3">{t("dashboard.yourTrips")}</h2>
+                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-1">
+                  {activeUpcoming.map((trip) => (
+                    <DashboardTripCard
+                      key={trip.id}
+                      href={`/trips/${trip.id}`}
+                      name={trip.name}
+                      dates={datesLabel(trip)}
+                      photo={trip.heroImageUrl ?? null}
+                      gradient={getGradient(trip.id)}
+                      status={statusFor(trip)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
-      {pastTrips.length > 0 && (
-        <PastTripsRow trips={pastTrips} />
-      )}
+            {past.length > 0 && (
+              <section>
+                <h2 className="type-caption text-tertiary mb-3">{t("dashboard.memories")}</h2>
+                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-1">
+                  {past.map((trip) => (
+                    <DashboardTripCard
+                      key={trip.id}
+                      href={`/trips/${trip.id}`}
+                      name={trip.name}
+                      dates={datesLabel(trip)}
+                      photo={trip.heroImageUrl ?? null}
+                      gradient={getGradient(trip.id)}
+                      variant="memory"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </main>
 
-      {allTrips.length > 0 && <SuggestedTrips />}
-      </div>
-    </DashboardShell>
+      {/* + New trip — fixed FAB, 56px accent circle, bottom-right (brief Screen A). */}
+      {!empty && (
+        <Link
+          href="/trips/new"
+          prefetch
+          aria-label={t("dashboard.newTrip")}
+          className="fixed end-5 bottom-[calc(24px+env(safe-area-inset-bottom))] z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground elev-lg flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <Plus className="w-7 h-7" />
+        </Link>
+      )}
+    </div>
   );
 }

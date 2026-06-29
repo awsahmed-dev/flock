@@ -190,7 +190,14 @@
     "allTripsHeading": "كل الرحلات",
     "activeTripsHeading": "رحلاتك",
     "pastTripsHeading": "ذكرياتك",
-    "openTrip": "افتح الرحلة"
+    "openTrip": "افتح الرحلة",
+    "statusNow": "الآن",
+    "statusUpcoming": "قادمة",
+    "statusPast": "سابقة",
+    "statusInDays": "بعد {count} {count, plural, one {يوم} two {يومين} few {أيام} many {يومًا} other {يوم}}",
+    "memories": "ذكريات",
+    "yourTrips": "رحلاتك",
+    "noTripsYet": "لا رحلات بعد — ابدأ أول رحلة."
   },
   "actionHub": {
     "chatLabel": "الدردشة",

@@ -190,7 +190,14 @@
     "allTripsHeading": "All trips",
     "activeTripsHeading": "Your trips",
     "pastTripsHeading": "Memories",
-    "openTrip": "Open trip"
+    "openTrip": "Open trip",
+    "statusNow": "NOW",
+    "statusUpcoming": "UPCOMING",
+    "statusPast": "PAST",
+    "statusInDays": "IN {count} {count, plural, one {DAY} other {DAYS}}",
+    "memories": "Memories",
+    "yourTrips": "Your trips",
+    "noTripsYet": "No trips yet — start your first one."
   },
   "actionHub": {
     "chatLabel": "Chat",
