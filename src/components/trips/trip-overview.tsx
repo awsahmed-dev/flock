@@ -95,12 +95,11 @@ function getTripStatus(
  * snapshot strip, and crew — leaning on the sidebar/bottom-nav for navigation
  * rather than duplicating every tab as a tile.
  */
-export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
+export function TripOverview({ trip, userId, stats, hero }: Props) {
   const t = useT();
   useLocale();
   const isOwner =
     trip.members.find((m) => (m.userId ?? m.user?.id ?? m.id) === userId)?.role === "owner";
-  const [copied, setCopied] = useState(false);
   const [statsMember, setStatsMember] = useState<Member | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [planDayOpen, setPlanDayOpen] = useState(false);
@@ -115,13 +114,6 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
     end: parseDateOnly(trip.endDate),
   }).map((d) => dfFormat(d, "yyyy-MM-dd"));
 
-  async function copyInviteLink() {
-    if (!inviteUrl) return;
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    toast.success(t("common.copied"));
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   return (
     <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_340px] lg:gap-7 lg:items-start">
@@ -311,26 +303,6 @@ export function TripOverview({ trip, inviteUrl, userId, stats, hero }: Props) {
             ))}
           </div>
 
-          {inviteUrl ? (
-            <div className="flex items-center gap-2 rounded-xl ring-1 ring-border/70 bg-muted/30 ps-3 pe-1 py-1">
-              <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="text-[11px] text-muted-foreground truncate font-mono flex-1">
-                {inviteUrl.replace(/^https?:\/\//, "")}
-              </span>
-              <button
-                type="button"
-                onClick={copyInviteLink}
-                className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                  copied ? "bg-emerald-600 text-white" : "bg-gradient-to-r from-primary to-violet-600 text-white hover:opacity-90"
-                }`}
-              >
-                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied ? t("common.copied") : t("trip.copyInvite")}
-              </button>
-            </div>
-          ) : (
-            <p className="text-[11px] text-muted-foreground italic">{t("trip.noInviteToken")}</p>
-          )}
         </div>
       </div>
 

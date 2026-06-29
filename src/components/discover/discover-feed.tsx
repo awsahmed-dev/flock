@@ -219,8 +219,6 @@ export function DiscoverFeed({
     },
     [emit],
   );
-  // Quick-add from the card rail: lands on day 1 (the detail panel lets you pick).
-  const onQuickAdd = useCallback((s: ScoredPlace) => onOpen(s), [onOpen]);
 
   // ── Map adapter ──────────────────────────────────────────────────────────
   const mapItems = useMemo<PlanMapItem[]>(
@@ -398,7 +396,7 @@ export function DiscoverFeed({
   }
 
   return (
-    <div className="relative rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
+    <div className="relative h-[calc(100dvh-60px)] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
       {/* Floating controls — the glass control layer (Paxawa Control Language,
           §4). Glass-on-dark chips + buttons float over the cinematic photo. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
@@ -453,7 +451,7 @@ export function DiscoverFeed({
 
       {/* Map view — pins + a floating card carousel synced to them */}
       {view === "map" ? (
-        <div className="relative h-[80svh] sm:h-[72svh]">
+        <div className="relative h-full">
           <MapboxPlanMap
             items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
             highlightedItemId={highlightedId} onItemClick={focusCarousel} days={[DISCOVER_DAY]}
@@ -511,14 +509,14 @@ export function DiscoverFeed({
           )}
         </div>
       ) : state === "loading" && candidates.length === 0 ? (
-        <div className="h-[80svh] sm:h-[72svh] flex items-center justify-center">
+        <div className="h-full flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-white/70">
             <Sparkles className="w-7 h-7 animate-pulse" />
             <p className="text-sm">{t("discover.curating")}</p>
           </div>
         </div>
       ) : ranked.length === 0 && state === "idle" ? (
-        <div className="h-[80svh] sm:h-[72svh] flex items-center justify-center">
+        <div className="h-full flex items-center justify-center">
           <div className="flex flex-col items-center gap-2 text-white/70 text-center px-8">
             <Compass className="w-8 h-8" />
             <p className="font-semibold">{t("discover.emptyTitle")}</p>
@@ -526,17 +524,18 @@ export function DiscoverFeed({
           </div>
         </div>
       ) : (
-        /* Immersive stream */
+        /* Immersive stream — each card fills the viewport minus the tab bar;
+           snap-scroll shows one place at a time, the next peeks below. */
         <div
           ref={containerRef}
-          className="h-[80svh] sm:h-[72svh] overflow-y-auto snap-y snap-mandatory scrollbar-none px-3 pt-16 pb-6 space-y-3 flex flex-col items-center"
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-none"
         >
           {ranked.map((s) => (
-            <div key={s.place.placeId} className="w-full">
+            <div key={s.place.placeId} className="w-full h-full shrink-0 snap-start snap-always">
               <PlaceCard
                 scored={s} center={center}
-                saved={saved.has(s.place.placeId)} added={added.has(s.place.placeId)}
-                onOpen={onOpen} onSave={onSave} onAdd={onQuickAdd} onHover={setHighlightedId}
+                saved={saved.has(s.place.placeId)}
+                onOpen={onOpen} onSave={onSave} onHover={setHighlightedId}
               />
             </div>
           ))}
@@ -545,15 +544,6 @@ export function DiscoverFeed({
               <Loader2 className="w-5 h-5 animate-spin text-white/60" />
             </div>
           )}
-        </div>
-      )}
-
-      {/* Required attribution (dark) */}
-      {view === "stream" && (
-        <div className="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none z-10">
-          <span className="text-[10px] text-white/40">
-            {t("discover.poweredBy")} <span className="font-semibold">Google</span>
-          </span>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Plus, Check, Star, MapPin, Sparkles, Info } from "lucide-react";
+import { Heart, Star, MapPin, Sparkles } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -28,19 +28,15 @@ export function PlaceCard({
   scored,
   center,
   saved,
-  added = false,
   onOpen,
   onSave,
-  onAdd,
   onHover,
 }: {
   scored: ScoredPlace;
   center: [number, number] | null;
   saved: boolean;
-  added?: boolean;
   onOpen: (s: ScoredPlace) => void;
   onSave: (s: ScoredPlace) => void;
-  onAdd?: (s: ScoredPlace) => void;
   onHover?: (placeId: string | null) => void;
 }) {
   const t = useT();
@@ -57,7 +53,7 @@ export function PlaceCard({
       onClick={() => onOpen(scored)}
       onMouseEnter={() => onHover?.(p.placeId)}
       onMouseLeave={() => onHover?.(null)}
-      className="group relative snap-start snap-always shrink-0 w-full h-[72svh] sm:h-[74vh] rounded-2xl sm:rounded-[1.75rem] overflow-hidden cursor-pointer ring-1 ring-white/10 bg-neutral-900 select-none"
+      className="group relative w-full h-full overflow-hidden cursor-pointer bg-neutral-900 select-none"
     >
       {photo ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -96,32 +92,25 @@ export function PlaceCard({
         )}
       </div>
 
-      {/* Right action rail (TikTok-style) */}
-      <div className="absolute end-3.5 bottom-32 sm:bottom-28 flex flex-col items-center gap-3.5">
-        <RailButton
-          onClick={(e) => { e.stopPropagation(); onSave(scored); }}
-          label={t("discover.save")}
-          active={saved}
-        >
-          <Heart className={`w-6 h-6 ${saved ? "fill-rose-500 text-rose-500" : "text-white"}`} />
-        </RailButton>
-        {onAdd && (
-          <RailButton
-            onClick={(e) => { e.stopPropagation(); if (!added) onAdd(scored); }}
-            label={added ? t("discover.addedBadge") : t("itinerary.addToDay")}
-            active={added}
-            accent={!added}
-          >
-            {added ? <Check className="w-6 h-6 text-white" /> : <Plus className="w-6 h-6 text-white" />}
-          </RailButton>
-        )}
-        <RailButton onClick={(e) => { e.stopPropagation(); onOpen(scored); }} label={t("discover.details")}>
-          <Info className="w-6 h-6 text-white" />
-        </RailButton>
-      </div>
+      {/* Save — the only on-card action (the side rail was removed so nothing
+          blocks the photo). Add-to-day / Suggest-to-crew live in the detail
+          sheet, opened by tapping the card. 44×44 tap target, white icon. */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onSave(scored); }}
+        aria-label={t("discover.save")}
+        className="absolute top-4 end-4 z-10 w-11 h-11 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center ring-1 ring-white/15 active:scale-90 transition-transform"
+      >
+        <Heart className={`w-6 h-6 ${saved ? "fill-rose-500 text-rose-500" : "text-white"}`} />
+      </button>
+
+      {/* Powered-by-Google attribution — inside the card overlay, bottom-end. */}
+      <span className="absolute bottom-1.5 end-3 z-10 text-[10px] text-white/45 pointer-events-none">
+        {t("discover.poweredBy")} <span className="font-semibold">Google</span>
+      </span>
 
       {/* Bottom content */}
-      <div className="absolute inset-x-0 bottom-0 ps-5 pe-20 pt-5 pb-5">
+      <div className="absolute inset-x-0 bottom-0 ps-5 pe-5 pt-5 pb-7">
         <h3 className="text-white font-bold text-2xl sm:text-[1.7rem] leading-[1.1] tracking-[-0.02em] drop-shadow-sm line-clamp-2">
           {p.name}
         </h3>
@@ -151,37 +140,6 @@ export function PlaceCard({
         )}
       </div>
     </article>
-  );
-}
-
-function RailButton({
-  children,
-  onClick,
-  label,
-  active = false,
-  accent = false,
-}: {
-  children: React.ReactNode;
-  onClick: (e: React.MouseEvent) => void;
-  label: string;
-  active?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center shadow-lg ring-1 transition-all hover:scale-110 active:scale-95 ${
-        accent
-          ? "bg-gradient-to-br from-primary to-violet-600 ring-white/20"
-          : active
-            ? "bg-white/25 ring-white/30"
-            : "bg-black/35 ring-white/15 hover:bg-black/50"
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 

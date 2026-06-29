@@ -93,13 +93,19 @@ export function TripShell({ trip, isOwner, children }: Props) {
     pathname === base ||
     pathname === `${base}/discover` ||
     pathname === `${base}/expenses`;
+  // Discover is fully immersive (brief Screen D): no shell top bar, the photo
+  // card fills the viewport down to the tab bar. Discover carries its own
+  // floating controls (chips / search / map toggle).
+  const immersive = pathname.startsWith(`${base}/discover`);
 
   return (
     <div className="min-h-svh flex flex-col bg-background text-foreground">
       <DesktopModeNav tripId={trip.id} tripName={trip.name} />
 
       <div className="flex flex-col min-h-svh xl:ps-[280px]">
-        {/* Top bar — 52px, left-aligned, avatar right (brief §2.2). */}
+        {/* Top bar — 52px, left-aligned, avatar right (brief §2.2). Hidden on
+            the immersive Discover screen. */}
+        {!immersive && (
         <header className="h-[52px] shrink-0 flex items-center justify-between gap-3 px-4 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30">
           <div className="flex items-center gap-1.5 min-w-0">
             {isModeRoot ? (
@@ -158,10 +164,12 @@ export function TripShell({ trip, isOwner, children }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+        )}
 
         {/* Screen content. Bottom padding clears the fixed tab bar on mobile;
-            the desktop sidebar handles its own offset above. */}
-        <main className="flex-1 min-w-0 pb-[calc(60px+env(safe-area-inset-bottom))] xl:pb-0">
+            the desktop sidebar handles its own offset above. Discover is
+            immersive — it manages its own full-height + tab-bar clearance. */}
+        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(60px+env(safe-area-inset-bottom))] xl:pb-0"}>
           {children}
         </main>
 

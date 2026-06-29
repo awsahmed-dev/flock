@@ -170,9 +170,16 @@ export function AddExpenseDialog({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 me-1" />{t("expenses.logExpense")}
-      </Button>
+      {/* Fixed FAB (redesign brief §E): 56px accent circle, bottom-right, above
+          the mobile tab bar (60px) + safe area; tucks to the corner on desktop. */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t("expenses.logExpense")}
+        className="fixed end-4 xl:end-6 bottom-[calc(72px+env(safe-area-inset-bottom))] xl:bottom-6 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
       <BottomSheet
         open={open}
         onClose={() => setOpen(false)}
