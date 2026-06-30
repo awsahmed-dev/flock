@@ -49,7 +49,18 @@ export function BottomTabBar({ tripId }: { tripId: string }) {
   return (
     <nav
       aria-label="Trip sections"
-      className="xl:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
+      className="xl:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-background/75 pb-[env(safe-area-inset-bottom)]"
+      style={{
+        // Inline, NOT a class: the build (Lightning CSS) strips backdrop-filter
+        // from stylesheets — both hand-authored CSS and Tailwind's backdrop-blur
+        // utility (verified live: both compute to `none`). Inline styles bypass
+        // the bundler so the glass blur actually renders. translateZ(0) forces
+        // GPU compositing so the blur stays smooth while the page scrolls.
+        backdropFilter: "blur(24px) saturate(180%)",
+        WebkitBackdropFilter: "blur(24px) saturate(180%)",
+        transform: "translateZ(0)",
+        willChange: "transform",
+      }}
     >
       {TABS.map((tab) => {
         const active = tab.isActive(pathname, base);
