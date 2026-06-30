@@ -1,12 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 export type TripStatusTone = "now" | "soon" | "upcoming" | "past";
 
 /**
- * Dashboard trip card (redesign brief Screen A). Full-bleed destination photo,
- * dark bottom gradient, trip name + dates bottom-left, status chip bottom-right.
- * Two sizes: "full" for the active/upcoming rail, "memory" for past trips.
- * The whole card is the tap target → opens the trip.
+ * Dashboard trip card (redesign brief Screen A). A destination-matched gradient
+ * is ALWAYS the base layer; the photo lays over it and, if the URL is missing or
+ * fails to load, we fall back to the gradient (never a dark rectangle — the live
+ * bug from the continuation brief §5). Dark bottom gradient keeps the name/dates
+ * legible; status chip bottom-right. Two sizes: "full" rail + "memory" past trips.
  */
 export function DashboardTripCard({
   href,
@@ -25,6 +29,8 @@ export function DashboardTripCard({
   status?: { label: string; tone: TripStatusTone };
   variant?: "full" | "memory";
 }) {
+  const [imgOk, setImgOk] = useState(true);
+
   const chipTone: Record<TripStatusTone, string> = {
     now: "bg-success text-black",
     soon: "bg-primary text-white",
@@ -36,23 +42,25 @@ export function DashboardTripCard({
     <Link
       href={href}
       prefetch
-      className={`relative shrink-0 snap-start overflow-hidden rounded-2xl bg-neutral-800 elev-sm transition-transform active:scale-[0.98] ${
+      className={`relative shrink-0 snap-start overflow-hidden rounded-2xl elev-md transition-transform active:scale-[0.98] ${
         variant === "full"
           ? "w-[84vw] max-w-[420px] h-[200px] sm:w-[360px]"
           : "w-[150px] h-[180px]"
       }`}
     >
-      {photo ? (
+      {/* Always-present gradient base — the photo lays over it. */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
+      {photo && imgOk && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={photo}
           alt={name}
           loading="lazy"
+          onError={() => setImgOk(false)}
           className="absolute inset-0 w-full h-full object-cover"
         />
-      ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
       )}
+      {/* Legibility scrim for the name/dates. */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-3.5 flex items-end justify-between gap-2">
         <div className="min-w-0">

@@ -119,7 +119,6 @@ export function TripOverview({ trip, userId, stats, hero }: Props) {
     <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_340px] lg:gap-7 lg:items-start">
       {/* ── Left column — hero + plan actions + up-next + snapshot ─────── */}
       <div className="space-y-6 min-w-0">
-        <FirstRunOnboarding tripId={trip.id} />
 
         {/* Hero — refined, more breathing room, a single clear status pill. */}
         <div className={`relative rounded-3xl ${hero ? "" : `bg-gradient-to-br ${gradient}`} overflow-hidden`}>
@@ -377,76 +376,3 @@ function StatChip({
   );
 }
 
-/**
- * One-time onboarding strip explaining the Plan → Book → Wallet loop.
- * Dismissible, persisted per-user in localStorage.
- */
-function FirstRunOnboarding({ tripId }: { tripId: string }) {
-  const t = useT();
-  const searchParams = useSearchParams();
-  const showPreview = true;
-  void searchParams;
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
-    if (!showPreview) return;
-    const seen = localStorage.getItem("paxawa.onboarding.bookingLoop.seen");
-    setDismissed(seen === "1");
-  }, [showPreview]);
-
-  function dismiss() {
-    localStorage.setItem("paxawa.onboarding.bookingLoop.seen", "1");
-    setDismissed(true);
-  }
-
-  if (!showPreview || dismissed) return null;
-
-  return (
-    <div className="relative rounded-2xl ring-1 ring-primary/25 bg-gradient-to-br from-primary/5 via-violet-500/5 to-fuchsia-500/5 p-4 overflow-hidden">
-      <button
-        type="button"
-        onClick={dismiss}
-        className="absolute top-2 end-2 w-7 h-7 rounded-full hover:bg-foreground/10 flex items-center justify-center"
-        aria-label={t("affiliate.dismiss")}
-      >
-        <XIcon className="w-3.5 h-3.5 text-muted-foreground" />
-      </button>
-      <p className="text-[10px] font-bold tracking-widest uppercase text-primary mb-2">
-        {t("onboarding.howItWorks")}
-      </p>
-      <ol className="space-y-2">
-        <li className="flex items-start gap-3">
-          <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0 mt-0.5">
-            <MapIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">{t("onboarding.step1Title")}</p>
-            <p className="text-[11px] text-muted-foreground">{t("onboarding.step1Body")}</p>
-          </div>
-        </li>
-        <li className="flex items-start gap-3">
-          <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0 mt-0.5">
-            <CardIcon className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">{t("onboarding.step2Title")}</p>
-            <p className="text-[11px] text-muted-foreground">{t("onboarding.step2Body")}</p>
-          </div>
-        </li>
-        <li className="flex items-start gap-3">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
-            <WalletIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">
-              <Link href={`/trips/${tripId}/wallet`} className="hover:underline">
-                {t("onboarding.step3Title")}
-              </Link>
-            </p>
-            <p className="text-[11px] text-muted-foreground">{t("onboarding.step3Body")}</p>
-          </div>
-        </li>
-      </ol>
-    </div>
-  );
-}
