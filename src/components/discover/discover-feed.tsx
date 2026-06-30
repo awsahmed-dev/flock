@@ -61,7 +61,7 @@ const CAT_KEY: Record<string, string> = {
  * room for future refinements (price, open-now, rating) without growing the
  * rail to a dozen chips.
  */
-const INLINE_CATEGORIES: PlaceCategoryKey[] = ["eat", "sight"];
+const INLINE_CATEGORIES: PlaceCategoryKey[] = ["eat", "sight", "stay"];
 
 type FetchState = "idle" | "loading" | "error" | "capped" | "unconfigured";
 
@@ -92,6 +92,7 @@ export function DiscoverFeed({
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [view, setView] = useState<"stream" | "map">("stream");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [wishlistOpen, setWishlistOpen] = useState(false);
   const isDesktop = useIsDesktop();
 
   const searching = query.trim().length >= 2;
@@ -129,6 +130,12 @@ export function DiscoverFeed({
     return r;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates, rankVector, searching, center]);
+
+  // Saved/wishlist list — the saved places present in the current feed.
+  const savedList = useMemo(
+    () => ranked.filter((s) => saved.has(s.place.placeId)),
+    [ranked, saved],
+  );
 
   const featuresRef = useRef<Map<string, PlaceFeatures>>(new Map());
   featuresRef.current = useMemo(
@@ -439,6 +446,17 @@ export function DiscoverFeed({
           <GlassButton iconOnly active={view === "map"} onClick={() => setView((v) => (v === "stream" ? "map" : "stream"))} aria-label={t(view === "stream" ? "discover.viewMap" : "discover.viewList")}>
             <MapIcon className="w-[18px] h-[18px]" />
           </GlassButton>
+          {/* Wishlist — heart with a saved-count badge, opens the saved sheet. */}
+          <GlassButton iconOnly active={wishlistOpen} onClick={() => setWishlistOpen(true)} aria-label={t("discover.savedTitle")}>
+            <span className="relative inline-flex">
+              <Heart className={`w-[18px] h-[18px] ${saved.size > 0 ? "fill-rose-500 text-rose-500" : ""}`} />
+              {saved.size > 0 && (
+                <span className="absolute -top-2.5 -end-2.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center leading-none">
+                  {saved.size}
+                </span>
+              )}
+            </span>
+          </GlassButton>
         </div>
       </div>
 
@@ -561,6 +579,55 @@ export function DiscoverFeed({
         crewSize={crewSize} isOwner={isOwner}
         onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
       />
+
+      {/* Wishlist — saved places in a bottom sheet (heart badge in the top bar). */}
+      <BottomSheet
+        open={wishlistOpen}
+        onClose={() => setWishlistOpen(false)}
+        title={t("discover.savedTitle")}
+        subtitle={t("discover.savedCount", { count: saved.size })}
+        size="md"
+      >
+        {savedList.length === 0 ? (
+          <div className="py-10 text-center text-muted-foreground text-sm">{t("discover.savedEmpty")}</div>
+        ) : (
+          <ul className="space-y-2 pb-1">
+            {savedList.map((s) => {
+              const photo = s.place.photoRef
+                ? `/api/discover/photo?ref=${encodeURIComponent(s.place.photoRef)}&w=200`
+                : null;
+              return (
+                <li
+                  key={s.place.placeId}
+                  onClick={() => { setWishlistOpen(false); onOpen(s); }}
+                  className="flex items-center gap-3 rounded-2xl bg-muted/50 p-2 cursor-pointer hover:bg-muted transition-colors"
+                >
+                  <span className="w-14 h-14 rounded-xl bg-muted overflow-hidden shrink-0">
+                    {photo && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photo} alt={s.place.name} className="w-full h-full object-cover" />
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold text-sm truncate">{s.place.name}</span>
+                    {s.place.rating != null && (
+                      <span className="block text-xs text-muted-foreground tabular-nums">★ {s.place.rating.toFixed(1)}</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onSave(s); }}
+                    aria-label={t("discover.save")}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-rose-500 shrink-0 active:scale-90 transition-transform"
+                  >
+                    <Heart className="w-5 h-5 fill-rose-500" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </BottomSheet>
     </div>
   );
 }
