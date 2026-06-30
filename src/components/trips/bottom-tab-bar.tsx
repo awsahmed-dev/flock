@@ -71,13 +71,26 @@ export function BottomTabBar({ tripId }: { tripId: string }) {
             href={`${base}${tab.href}`}
             prefetch
             aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 h-[60px] min-w-[44px] transition-colors",
-              active ? "text-primary" : "text-tertiary hover:text-foreground",
-            )}
+            className="flex-1 flex items-center justify-center h-[60px] min-w-[44px]"
           >
-            <Icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
-            <span className="text-[11px] font-semibold tracking-wide">{tab.label}</span>
+            {/* Pill wraps just the icon + label, not the full ⅓-width cell, so
+                the highlight stays tight around the content. Active = accent
+                pill (0.18) + accent text; inactive = tertiary, with a 0.10 pill
+                on hover (desktop) / press (mobile). Background colour survives
+                the build, unlike backdrop-filter, so Tailwind state utilities
+                are safe; the static active fill is inline for an exact value. */}
+            <span
+              className={cn(
+                "flex flex-col items-center gap-1 px-4 py-1 rounded-full transition-colors duration-150",
+                active
+                  ? "text-primary"
+                  : "text-tertiary hover:bg-[rgba(107,92,231,0.10)] active:bg-[rgba(107,92,231,0.10)]",
+              )}
+              style={active ? { background: "rgba(107, 92, 231, 0.18)" } : undefined}
+            >
+              <Icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
+              <span className="text-[11px] font-semibold tracking-wide">{tab.label}</span>
+            </span>
           </Link>
         );
       })}
