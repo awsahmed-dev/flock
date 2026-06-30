@@ -39,17 +39,18 @@ import { useT } from "@/components/i18n/locale-provider";
 
 interface Prediction {
   placeId?: string;
-  description?: string;
-  text?: string;
-  mainText?: string;
-  secondaryText?: string;
+  primary?: string;
+  secondary?: string;
 }
 
 function predictionLabel(p: Prediction): string {
-  return p.mainText || p.description || p.text || "";
+  return p.primary || "";
 }
 function predictionSub(p: Prediction): string {
-  return p.secondaryText || (p.description && p.mainText ? p.description : "") || "";
+  return p.secondary || "";
+}
+function predictionDestination(p: Prediction): string {
+  return [p.primary, p.secondary].filter(Boolean).join(", ");
 }
 
 const ISO = (d: Date) => dfFormat(d, "yyyy-MM-dd");
@@ -450,9 +451,9 @@ function DestinationAutocomplete({
               key={p.placeId ?? i}
               type="button"
               onClick={() => {
-                const label = predictionLabel(p);
-                onPick(label);
-                setQ(label);
+                const dest = predictionDestination(p);
+                onPick(dest);
+                setQ(dest);
                 setOpenList(false);
               }}
               className="w-full flex items-start gap-2.5 px-3.5 py-3 text-start hover:bg-secondary transition-colors border-b border-border last:border-0"
