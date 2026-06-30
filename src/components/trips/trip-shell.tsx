@@ -93,10 +93,10 @@ export function TripShell({ trip, isOwner, children }: Props) {
     pathname === base ||
     pathname === `${base}/discover` ||
     pathname === `${base}/expenses`;
-  // Discover is fully immersive (brief Screen D): no shell top bar, the photo
-  // card fills the viewport down to the tab bar. Discover carries its own
-  // floating controls (chips / search / map toggle).
-  const immersive = pathname.startsWith(`${base}/discover`);
+  // Immersive screens have no shell top bar and fill the viewport: Discover
+  // (Screen D) and the NOW cockpit (Screen C, the trip root — full-screen map
+  // + its own draggable sheet). They carry their own controls.
+  const immersive = pathname === base || pathname.startsWith(`${base}/discover`);
 
   return (
     <div className="min-h-svh flex flex-col bg-background text-foreground">

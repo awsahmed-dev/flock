@@ -956,5 +956,18 @@
     "next": "Next",
     "createTrip": "Create trip",
     "failed": "Could not create the trip. Try again."
+  },
+  "now": {
+    "today": "Today",
+    "stops": "{count, plural, =0 {no stops} one {# stop} other {# stops}}",
+    "noStops": "Nothing planned for this day yet.",
+    "logExpense": "Log expense",
+    "chat": "Chat",
+    "fullMap": "Full map",
+    "addToday": "Add to today",
+    "aiFill": "AI fill gaps",
+    "spent": "Spent",
+    "left": "left",
+    "setBudget": "Set a budget"
   }
 }

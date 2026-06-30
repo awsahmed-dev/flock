@@ -61,6 +61,8 @@ interface Props {
   /** Show the sequence number inside each pin (default true). Discover sets
    *  false → plain place pins, not numbered itinerary stops. */
   numbered?: boolean;
+  /** Mapbox style id (e.g. "dark-v11" for the NOW cockpit). Default streets-v12. */
+  mapStyle?: string;
 }
 
 // Roamy uses ROY G BIV-ish palette per day. We replicate with 8 hues so
@@ -91,6 +93,7 @@ export function MapboxPlanMap({
   showRoutes = true,
   pinColor,
   numbered = true,
+  mapStyle = "streets-v12",
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -137,7 +140,7 @@ export function MapboxPlanMap({
         // off a TileJSON request, leaving the map stuck on its base
         // land color forever. Direct URL bypasses the broken resolver
         // and lets Mapbox process the style JSON normally.
-        style: `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${token}`,
+        style: `https://api.mapbox.com/styles/v1/mapbox/${mapStyle}?access_token=${token}`,
         center: initialCenter,
         zoom: 12,
         attributionControl: true,
