@@ -36,7 +36,8 @@
     "bookingLink": "Booking link",
     "notes": "Notes",
     "manage": "Manage",
-    "clear": "Clear"
+    "clear": "Clear",
+    "remove": "Remove"
   },
   "form": {
     "pickFileFirst": "Pick a file first",
@@ -931,5 +932,29 @@
     "lensEmptyBody": "Suggest a place from Discover and your crew can vote on it right here.",
     "lensEmptyCta": "Open Discover",
     "filterEmpty": "Nothing here right now."
+  },
+  "create": {
+    "whereTitle": "Where are you going?",
+    "destPlaceholder": "Tokyo, Bali, anywhere…",
+    "durWeekend": "Weekend",
+    "dur1Week": "1 Week",
+    "dur2Weeks": "2 Weeks",
+    "dur1Month": "1 Month",
+    "durCustom": "Custom",
+    "nameLabel": "Trip name",
+    "namePlaceholder": "Name your trip",
+    "crewTitle": "Who is coming?",
+    "crewPlaceholder": "Email or phone",
+    "addAnother": "Add another",
+    "crewHint": "You can invite them from the trip once it is created.",
+    "justMe": "Just me for now",
+    "budgetTitle": "What is the rough budget?",
+    "budgetSub": "Per person, or total — your call.",
+    "total": "Total",
+    "perPerson": "Per person",
+    "skipBudget": "Skip for now",
+    "next": "Next",
+    "createTrip": "Create trip",
+    "failed": "Could not create the trip. Try again."
   }
 }

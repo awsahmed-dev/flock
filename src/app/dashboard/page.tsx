@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Compass } from "lucide-react";
+import { Compass } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { trips, tripMembers, profiles } from "@/lib/db/schema";
@@ -13,6 +13,7 @@ import { parseDateOnly } from "@/lib/date-only";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { Logo } from "@/components/ui/logo";
 import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
+import { NewTripTrigger } from "@/components/trips/new-trip-trigger";
 import {
   DashboardTripCard,
   type TripStatusTone,
@@ -138,14 +139,9 @@ export default async function DashboardPage() {
           <div className="rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center">
             <Compass className="w-8 h-8 mx-auto text-tertiary" />
             <p className="mt-3 type-body-lg font-semibold">{t("dashboard.noTripsYet")}</p>
-            <Link
-              href="/trips/new"
-              prefetch
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-5 h-11 text-sm font-bold"
-            >
-              <Plus className="w-4 h-4" />
-              {t("dashboard.newTrip")}
-            </Link>
+            <div className="mt-4">
+              <NewTripTrigger variant="inline" label={t("dashboard.newTrip")} />
+            </div>
           </div>
         ) : (
           <>
@@ -190,17 +186,8 @@ export default async function DashboardPage() {
         )}
       </main>
 
-      {/* + New trip — fixed FAB, 56px accent circle, bottom-right (brief Screen A). */}
-      {!empty && (
-        <Link
-          href="/trips/new"
-          prefetch
-          aria-label={t("dashboard.newTrip")}
-          className="fixed end-5 bottom-[calc(24px+env(safe-area-inset-bottom))] z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground elev-lg flex items-center justify-center active:scale-95 transition-transform"
-        >
-          <Plus className="w-7 h-7" />
-        </Link>
-      )}
+      {/* + New trip — fixed FAB opening the 3-step create sheet (Screen A/B). */}
+      {!empty && <NewTripTrigger variant="fab" label={t("dashboard.newTrip")} />}
     </div>
   );
 }

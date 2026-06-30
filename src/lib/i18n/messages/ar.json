@@ -36,7 +36,8 @@
     "bookingLink": "رابط الحجز",
     "notes": "ملاحظات",
     "manage": "إدارة",
-    "clear": "مسح"
+    "clear": "مسح",
+    "remove": "إزالة"
   },
   "form": {
     "pickFileFirst": "اختر ملفًا أولًا",
@@ -931,5 +932,29 @@
     "lensEmptyBody": "اقترح مكانًا من «اكتشف» ليصوّت عليه فريقك هنا.",
     "lensEmptyCta": "افتح اكتشف",
     "filterEmpty": "لا شيء هنا حاليًا."
+  },
+  "create": {
+    "whereTitle": "إلى أين تذهب؟",
+    "destPlaceholder": "طوكيو، بالي، أي مكان…",
+    "durWeekend": "نهاية الأسبوع",
+    "dur1Week": "أسبوع",
+    "dur2Weeks": "أسبوعان",
+    "dur1Month": "شهر",
+    "durCustom": "مخصص",
+    "nameLabel": "اسم الرحلة",
+    "namePlaceholder": "سمِّ رحلتك",
+    "crewTitle": "من سيأتي؟",
+    "crewPlaceholder": "بريد أو هاتف",
+    "addAnother": "أضف آخر",
+    "crewHint": "يمكنك دعوتهم من الرحلة بعد إنشائها.",
+    "justMe": "بمفردي الآن",
+    "budgetTitle": "ما الميزانية التقريبية؟",
+    "budgetSub": "للفرد أو الإجمالي — أنت تقرر.",
+    "total": "الإجمالي",
+    "perPerson": "للفرد",
+    "skipBudget": "تخطٍّ الآن",
+    "next": "التالي",
+    "createTrip": "أنشئ الرحلة",
+    "failed": "تعذّر إنشاء الرحلة. حاول مجددًا."
   }
 }
