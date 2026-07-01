@@ -320,3 +320,13 @@
   color: #f0abfc;
   margin-bottom: 0.25rem;
 }
+
+/* §9 dynamic nav — Tools speed-dial item rise (staggered via inline delay).
+   Keyframes/animation survive Lightning CSS (only backdrop-filter is stripped). */
+@keyframes dyn-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dyn-speed-item {
+  animation: dyn-rise 200ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}

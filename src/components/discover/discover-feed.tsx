@@ -215,6 +215,28 @@ export function DiscoverFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
+  // §9: the dynamic bottom nav (a sibling route component) drives the Saved
+  // sheet + Search input via window events, and reads the wishlist count for
+  // its badge.
+  useEffect(() => {
+    const openWishlist = () => setWishlistOpen(true);
+    const toggleSearch = () => setSearchOpen((v) => !v);
+    const sendCount = () =>
+      window.dispatchEvent(new CustomEvent("discover:savedCount", { detail: saved.size }));
+    window.addEventListener("discover:openWishlist", openWishlist);
+    window.addEventListener("discover:toggleSearch", toggleSearch);
+    window.addEventListener("discover:requestCount", sendCount);
+    return () => {
+      window.removeEventListener("discover:openWishlist", openWishlist);
+      window.removeEventListener("discover:toggleSearch", toggleSearch);
+      window.removeEventListener("discover:requestCount", sendCount);
+    };
+  }, [saved.size]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("discover:savedCount", { detail: saved.size }));
+  }, [saved.size]);
+
   // §3-C: no query→API effect — typing filters the loaded cards locally
   // (see `visible`); only category changes refetch (effect above).
 

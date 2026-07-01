@@ -173,7 +173,15 @@
     "blogLink": "Blog & guides",
     "discover": "Discover",
     "chat": "Chat",
-    "tools": "Tools"
+    "tools": "Tools",
+    "search": "Search",
+    "addTitle": "What do you want to add?",
+    "addPlace": "Add place to today",
+    "aiFillDay": "AI fill my day",
+    "suggestCrew": "Suggest a stop to crew",
+    "now": "Now",
+    "manage": "Manage",
+    "add": "Add"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",

@@ -23,7 +23,7 @@ import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
-import { BottomTabBar } from "@/components/trips/bottom-tab-bar";
+import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
 import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
 
 interface Trip {
@@ -186,7 +186,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
           {children}
         </main>
 
-        <BottomTabBar tripId={trip.id} />
+        <DynamicBottomNav tripId={trip.id} />
       </div>
     </div>
   );
