@@ -8,11 +8,13 @@ import { toast } from "sonner";
 import {
   Home, Compass, LayoutGrid, Wrench, Plus, Heart, Search,
   Map as MapIcon, MessageSquare, Wallet, Sparkles, MapPin, ChevronRight,
+  Users, CalendarDays,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
+import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 
 /**
@@ -27,11 +29,15 @@ import { useT } from "@/components/i18n/locale-provider";
  * is INLINE everywhere — the bundler strips it from stylesheets.
  */
 const PILL_GLASS = {
+  // Fix 5 (pass 2): border-radius is INLINE so the pill is always rounded — on
+  // light MANAGE pages it stayed a flat full-width dark bar when the radius came
+  // only from a class. The dark glass is intentional on light pages (contrast).
+  borderRadius: "20px",
   background: "rgba(10,10,10,0.82)",
   backdropFilter: "blur(24px) saturate(180%)",
   WebkitBackdropFilter: "blur(24px) saturate(180%)",
   border: "1px solid rgba(255,255,255,0.10)",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
   transform: "translateZ(0)",
 } as const;
 
@@ -47,10 +53,18 @@ export function DynamicBottomNav({
   tripId,
   destination = "",
   days = [],
+  upcoming = false,
+  currency = "USD",
+  budgetTotal = null,
 }: {
   tripId: string;
   destination?: string;
   days?: string[];
+  /** Fix 4-B/6: an upcoming (not-yet-started) trip has no NOW cockpit — the
+   *  root shows the pre-start overview, so hide Tools and swap the [+] sheet. */
+  upcoming?: boolean;
+  currency?: string;
+  budgetTotal?: number | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -70,6 +84,8 @@ export function DynamicBottomNav({
   const [speedDial, setSpeedDial] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
+  const [getReadyOpen, setGetReadyOpen] = useState(false);
+  const [budgetOpen, setBudgetOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
@@ -116,8 +132,9 @@ export function DynamicBottomNav({
       <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+8px)] pointer-events-none">
         <div className="relative mx-auto max-w-lg pointer-events-auto">
           {/* Fix 2: Tools speed-dial — floating content-width pills stacked above
-              the left slot (flex-col-reverse → item[0] closest to the button). */}
-          {mode === "now" && (
+              the left slot (flex-col-reverse → item[0] closest to the button).
+              Fix 6: only on the active NOW cockpit — not on an upcoming trip. */}
+          {mode === "now" && !upcoming && (
             <div className={cn("absolute bottom-full start-1 mb-3 flex flex-col-reverse gap-2", !speedDial && "pointer-events-none")}>
               {speedItems.map((it, i) => {
                 const Icon = it.icon;
@@ -153,9 +170,10 @@ export function DynamicBottomNav({
             className="flex items-center h-14 rounded-2xl overflow-hidden"
             style={PILL_GLASS}
           >
-            {/* LEFT slot */}
-            <Slot show={mode === "now" || mode === "discover"}>
-              {mode === "now" && (
+            {/* LEFT slot — Fix 6: Tools only on the active NOW cockpit; hidden on
+                upcoming trips and (already) on Manage. */}
+            <Slot show={(mode === "now" && !upcoming) || mode === "discover"}>
+              {mode === "now" && !upcoming && (
                 <SlotButton onClick={() => setSpeedDial((v) => !v)} icon={Wrench} label={t("nav.tools")} rotated={speedDial} />
               )}
               {mode === "discover" && (
@@ -189,10 +207,11 @@ export function DynamicBottomNav({
               );
             })}
 
-            {/* RIGHT slot */}
+            {/* RIGHT slot — [+] shows on NOW (active OR upcoming); the sheet it
+                opens differs (4-B). */}
             <Slot show={mode === "now" || mode === "discover"}>
               {mode === "now" && (
-                <SlotButton onClick={() => setPlusOpen(true)} icon={Plus} label={t("nav.add")} accent />
+                <SlotButton onClick={() => (upcoming ? setGetReadyOpen(true) : setPlusOpen(true))} icon={Plus} label={t("nav.add")} accent />
               )}
               {mode === "discover" && (
                 <SlotButton onClick={() => dispatch("discover:toggleSearch")} icon={Search} label={t("nav.search")} />
@@ -225,6 +244,17 @@ export function DynamicBottomNav({
         days={days}
         defaultDay={defaultDay}
       />
+
+      {/* Fix 4-B: the upcoming-trip [+] sheet — get-ready actions, not the
+          active-trip "add to today" set. */}
+      <BottomSheet open={getReadyOpen} onClose={() => setGetReadyOpen(false)} title={t("nav.getReadyTitle")} size="sm">
+        <div className="divide-y divide-border/60">
+          <ActionRow icon={Users} label={t("nav.inviteCrew")} onClick={() => { setGetReadyOpen(false); router.push(`${base}/members`); }} />
+          <ActionRow icon={CalendarDays} label={t("nav.planDay")} onClick={() => { setGetReadyOpen(false); router.push(`${base}/itinerary`); }} />
+          <ActionRow icon={Wallet} label={t("nav.setBudget")} onClick={() => { setGetReadyOpen(false); setBudgetOpen(true); }} />
+        </div>
+      </BottomSheet>
+      <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={currency} total={budgetTotal} />
     </div>
   );
 }

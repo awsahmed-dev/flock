@@ -283,7 +283,10 @@ export function NowCockpit({
           <div className="w-9 h-1 rounded-full bg-white/20" />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+        <div
+          className="flex-1 overflow-y-auto px-4"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
+        >
           {/* Budget bar — §2-D: with no budget yet, tapping opens the set-budget
               sheet; once set, tapping opens the full expenses view. */}
           {budget.total != null ? (
@@ -333,7 +336,7 @@ export function NowCockpit({
 
           {/* Item list */}
           {dayItems.length === 0 ? (
-            <div className="py-10 text-center text-white/40 text-sm">{t("now.noStops")}</div>
+            <div className="min-h-[26svh] flex items-center justify-center text-center text-white/40 text-sm">{t("now.noStops")}</div>
           ) : (
             <ul className="space-y-2">
               {dayItems.map((item, idx) => (

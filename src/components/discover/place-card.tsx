@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Star, MapPin, Sparkles } from "lucide-react";
+import { Heart, Star, MapPin } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -72,25 +72,11 @@ export function PlaceCard({
       {/* Cinematic scrim — strong at bottom, faint at top for tag legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/35 pointer-events-none" />
 
-      {/* Tags (top-start) */}
-      <div className="absolute top-4 start-4 flex flex-wrap gap-1.5">
-        {scored.tags.includes("ai_pick") && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-md text-white px-3 py-1.5 text-xs font-bold ring-1 ring-white/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            {t("discover.tagAiPick")}
-          </span>
-        )}
-        {scored.tags.includes("hidden_gem") && (
-          <span className="rounded-full bg-amber-400/90 backdrop-blur-md text-amber-950 px-3 py-1.5 text-xs font-bold">
-            {t("discover.tagHiddenGem")}
-          </span>
-        )}
-        {scored.tags.includes("crew_favorite") && (
-          <span className="rounded-full bg-cyan-400/90 backdrop-blur-md text-cyan-950 px-3 py-1.5 text-xs font-bold">
-            {t("discover.tagCrewFav")}
-          </span>
-        )}
-      </div>
+      {/* Fix 2 (pass 2): the editorial "AI pick" / "Hidden gem" badges were
+          removed — at top-4 start-4 they collided with the filter chip bar and
+          leaked garbled text through the gaps. The category is already shown in
+          the bottom meta row, so no editorial label is needed. `scored.tags`
+          still drives ranking; we just don't render the visual badge. */}
 
       {/* Save — the only on-card action (the side rail was removed so nothing
           blocks the photo). Add-to-day / Suggest-to-crew live in the detail

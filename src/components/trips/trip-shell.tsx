@@ -34,6 +34,8 @@ interface Trip {
   startDate: string;
   endDate: string;
   shareToken?: string | null;
+  currency: string;
+  budgetTotal: number | null;
 }
 
 interface Props {
@@ -192,7 +194,14 @@ export function TripShell({ trip, isOwner, children }: Props) {
           {children}
         </main>
 
-        <DynamicBottomNav tripId={trip.id} destination={trip.destination} days={navDays} />
+        <DynamicBottomNav
+          tripId={trip.id}
+          destination={trip.destination}
+          days={navDays}
+          upcoming={!started}
+          currency={trip.currency}
+          budgetTotal={trip.budgetTotal}
+        />
       </div>
     </div>
   );

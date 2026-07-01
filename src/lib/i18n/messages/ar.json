@@ -182,7 +182,11 @@
     "now": "الآن",
     "manage": "إدارة",
     "add": "إضافة",
-    "aiComingSoon": "تخطيط الذكاء الاصطناعي قريبًا"
+    "aiComingSoon": "تخطيط الذكاء الاصطناعي قريبًا",
+    "getReadyTitle": "استعد لرحلتك",
+    "inviteCrew": "ادعُ الرفاق",
+    "planDay": "خطّط ليوم",
+    "setBudget": "حدد ميزانية الرحلة"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",

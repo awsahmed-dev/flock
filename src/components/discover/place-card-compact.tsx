@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, Star, MapPin, Sparkles, Check } from "lucide-react";
+import { Heart, Star, MapPin, Check } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,6 @@ export function PlaceCardCompact({
   const p = scored.place;
   const photo = p.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=500` : null;
   const price = p.priceLevel != null && p.priceLevel > 0 ? "$".repeat(p.priceLevel) : null;
-  const isAiPick = scored.tags?.includes("ai_pick");
 
   return (
     <button
@@ -68,11 +67,8 @@ export function PlaceCardCompact({
             {p.name.charAt(0)}
           </div>
         )}
-        {isAiPick && (
-          <span className="absolute top-2 start-2 inline-flex items-center gap-1 rounded-full bg-primary/90 text-primary-foreground px-2 py-0.5 text-[10px] font-bold backdrop-blur">
-            <Sparkles className="w-3 h-3" />{t("discover.tagAiPick")}
-          </span>
-        )}
+        {/* Fix 2 (pass 2): editorial "AI pick" badge removed for consistency
+            with the immersive card — no editorial label on cards. */}
         <span
           role="button"
           tabIndex={-1}

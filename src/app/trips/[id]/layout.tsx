@@ -36,6 +36,8 @@ export default async function TripLayout({ children, params }: Props) {
     startDate: trip.startDate,   // date column → already a string from Drizzle
     endDate: trip.endDate,
     shareToken: trip.shareToken ?? null,
+    currency: trip.currency,
+    budgetTotal: trip.budgetTotal != null ? Number(trip.budgetTotal) : null,
   };
 
   return (

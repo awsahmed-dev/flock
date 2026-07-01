@@ -41,18 +41,24 @@ export function PreStartOverview({
 }) {
   const base = `/trips/${tripId}`;
   return (
-    <div className="min-h-svh bg-background text-foreground pb-[calc(90px+env(safe-area-inset-bottom))]">
-      {/* Hero */}
-      <div className="relative h-[240px] rounded-b-3xl overflow-hidden">
+    <div
+      className="min-h-svh bg-background text-foreground"
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
+    >
+      {/* Hero — 4-E: min 260px so the name + dates aren't cramped. */}
+      <div className="relative min-h-[260px] rounded-b-3xl overflow-hidden">
         {heroImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={heroImageUrl} alt={destination} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-violet-800/50" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.75) 100%)" }}
+        />
         <div className="absolute inset-x-0 bottom-0 p-5">
-          <h1 className="type-h1 text-white">{name}</h1>
+          <h1 className="type-h1 text-white font-bold">{name}</h1>
           <p className="type-body-sm text-white/80 mt-1">{destination} · {dates}</p>
         </div>
       </div>
@@ -75,11 +81,11 @@ export function PreStartOverview({
               {days.map((d) => (
                 <div
                   key={d.key}
-                  className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold ${
+                  className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold ${
                     d.hasItems
                       ? "bg-primary text-white"
-                      : "bg-secondary text-muted-foreground ring-1 ring-border"
-                  } ${d.isToday ? "ring-2 ring-primary" : ""}`}
+                      : "border-2 border-primary bg-transparent text-primary"
+                  } ${d.isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
                 >
                   {d.label}
                 </div>
@@ -90,9 +96,9 @@ export function PreStartOverview({
 
         {/* 2×2 stats — quality labels, tappable */}
         <div className="grid grid-cols-2 gap-3">
-          <StatCard href={`${base}/itinerary`} icon={MapPin} label="Places planned" value={String(placesCount)} />
+          <StatCard href={`${base}/itinerary`} icon={MapPin} label="Places planned" value={placesCount > 0 ? `${placesCount} stops` : "None yet"} />
           <StatCard href={`${base}/expenses`} icon={Wallet} label="Budget" value={budget.total != null ? `${budget.currency} ${Math.round(budget.total).toLocaleString()}` : "Open"} />
-          <StatCard href={`${base}/members`} icon={Users} label="Crew" value={String(crewCount)} />
+          <StatCard href={`${base}/members`} icon={Users} label="Crew" value={crewCount === 1 ? "1 person" : `${crewCount} people`} />
           <StatCard href={`${base}/pack`} icon={Backpack} label="Packing" value={`${packing.packed}/${packing.total}`} />
         </div>
 

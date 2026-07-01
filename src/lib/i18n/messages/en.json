@@ -182,7 +182,11 @@
     "now": "Now",
     "manage": "Manage",
     "add": "Add",
-    "aiComingSoon": "AI planning coming soon"
+    "aiComingSoon": "AI planning coming soon",
+    "getReadyTitle": "Get ready for your trip",
+    "inviteCrew": "Invite crew",
+    "planDay": "Plan a day",
+    "setBudget": "Set trip budget"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",
