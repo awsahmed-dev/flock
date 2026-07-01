@@ -10,7 +10,7 @@ import {
   UserPlus,
   Trash2,
 } from "lucide-react";
-import { ShareTripSheet } from "@/components/trips/share-trip-sheet";
+import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { format as isoFmt } from "date-fns";
@@ -53,6 +53,7 @@ export function NowCockpit({
   days,
   items,
   budget,
+  crew = [],
 }: {
   tripId: string;
   tripName: string;
@@ -60,6 +61,7 @@ export function NowCockpit({
   days: string[];
   items: NowItem[];
   budget: { total: number | null; spent: number; currency: string };
+  crew?: CrewMember[];
 }) {
   const t = useT();
   const router = useRouter();
@@ -346,6 +348,7 @@ export function NowCockpit({
         onClose={() => setShareOpen(false)}
         tripId={tripId}
         tripName={tripName}
+        crew={crew}
       />
       <BudgetSheet
         open={budgetOpen}

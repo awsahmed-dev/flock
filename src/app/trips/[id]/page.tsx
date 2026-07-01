@@ -130,6 +130,13 @@ export default async function TripPage({ params }: Props) {
     );
   }
 
+  // §7: crew for the share sheet's "N people in this trip" section.
+  const crew = trip.members.map((m) => ({
+    userId: m.userId,
+    displayName: m.displayName,
+    avatarUrl: m.user?.avatarUrl ?? null,
+  }));
+
   return (
     <NowCockpit
       tripId={id}
@@ -142,6 +149,7 @@ export default async function TripPage({ params }: Props) {
         spent,
         currency: tripCurrency,
       }}
+      crew={crew}
     />
   );
 }

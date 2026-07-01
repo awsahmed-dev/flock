@@ -992,6 +992,8 @@
     "copy": "Copy",
     "copied": "Copied",
     "share": "Share",
-    "error": "Couldn't create an invite link. Try again."
+    "error": "Couldn't create an invite link. Try again.",
+    "inviteTo": "Invite to {name}",
+    "peopleCount": "{count, plural, one {# person in this trip} other {# people in this trip}}"
   }
 }

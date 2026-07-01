@@ -5,6 +5,13 @@ import { Copy, Check, Share2, Loader2 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createTripInvite } from "@/lib/actions/invite";
 import { useT } from "@/components/i18n/locale-provider";
+import { UserAvatar } from "@/components/ui/user-avatar";
+
+export interface CrewMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
 
 /**
  * Share/invite sheet (Bug 5). Lazily mints — or reuses — a trip invite link
@@ -16,11 +23,13 @@ export function ShareTripSheet({
   onClose,
   tripId,
   tripName,
+  crew = [],
 }: {
   open: boolean;
   onClose: () => void;
   tripId: string;
   tripName: string;
+  crew?: CrewMember[];
 }) {
   const t = useT();
   const [url, setUrl] = useState<string | null>(null);
@@ -63,7 +72,7 @@ export function ShareTripSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title={t("share.title")} subtitle={t("share.subtitle")} size="sm">
+    <BottomSheet open={open} onClose={onClose} title={t("share.inviteTo", { name: tripName })} subtitle={t("share.subtitle")} size="sm">
       {error ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("share.error")}</p>
       ) : !url ? (
@@ -71,7 +80,7 @@ export function ShareTripSheet({
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="space-y-3 pb-1">
+        <div className="space-y-3">
           <div className="rounded-2xl border border-border bg-muted/40 p-1.5 flex items-center gap-2">
             <input
               readOnly
@@ -97,6 +106,25 @@ export function ShareTripSheet({
           >
             <Share2 className="w-5 h-5" /> {t("share.share")}
           </button>
+
+          {/* §7: current crew — avatars + first names + a count. */}
+          {crew.length > 0 && (
+            <div className="pt-3 mt-1 border-t border-border">
+              <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-muted-foreground mb-2.5">
+                {t("share.peopleCount", { count: crew.length })}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {crew.map((m) => (
+                  <div key={m.userId} className="flex flex-col items-center gap-1 w-14">
+                    <UserAvatar name={m.displayName} avatarUrl={m.avatarUrl} seed={m.userId} size="md" />
+                    <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                      {m.displayName.split(" ")[0]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </BottomSheet>
