@@ -34,7 +34,7 @@ export function PageHeader({ backHref, title, subtitle, action }: Props) {
           <Link
             href={backHref}
             aria-label="Back"
-            className="shrink-0 -ms-1 w-8 h-8 rounded-lg hover:bg-accent/40 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="shrink-0 -ms-1 w-8 h-8 rounded-lg hover:bg-accent/40 flex items-center justify-center text-foreground hover:opacity-70 transition-opacity"
           >
             <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
           </Link>

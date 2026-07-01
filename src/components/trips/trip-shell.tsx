@@ -22,6 +22,7 @@ import {
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
+import { parseDateOnly } from "@/lib/date-only";
 import { BottomTabBar } from "@/components/trips/bottom-tab-bar";
 import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
 
@@ -96,12 +97,32 @@ export function TripShell({ trip, isOwner, children }: Props) {
   // Immersive screens have no shell top bar and fill the viewport: Discover
   // (Screen D) and the NOW cockpit (Screen C, the trip root — full-screen map
   // + its own draggable sheet). They carry their own controls.
-  const immersive = pathname === base || pathname.startsWith(`${base}/discover`);
-  // Bug 2: the Full Map (/itinerary) is a dark, map-first surface like NOW.
-  // Render the ENTIRE shell dark for it — otherwise the light top bar (and the
-  // white body behind it) sit above a dark board, and the header's icons wash
-  // out. `dark` on the root flips the header, body and tab bar to dark tokens.
-  const darkChrome = immersive || pathname === `${base}/itinerary`;
+  const started = parseDateOnly(trip.startDate) <= new Date();
+  const isDiscover = pathname.startsWith(`${base}/discover`);
+  const immersive = pathname === base || isDiscover;
+  // Dark-chrome routes render the WHOLE shell dark (header + body + tab bar).
+  // Discover and the Full Map are always dark; the trip root and Chat go dark
+  // only while the trip is ACTIVE (started). An upcoming trip's root shows the
+  // LIGHT pre-start overview and its Chat stays light — so we must NOT blanket-
+  // dark every immersive route (that was darkening the pre-start briefing).
+  const darkChrome =
+    isDiscover ||
+    pathname === `${base}/itinerary` ||
+    (started && pathname === base) ||
+    (started && pathname === `${base}/chat`);
+
+  // 0-B / 0-C: the `dark` class on our root flips descendant tokens, but the
+  // <body> element is our ANCESTOR — its own background stays light, so
+  // `getComputedStyle(document.body)` reads white on dark pages. Set it
+  // explicitly on dark-chrome routes and restore it when leaving.
+  useEffect(() => {
+    if (!darkChrome) return;
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#0a0a0a";
+    return () => {
+      document.body.style.backgroundColor = prev;
+    };
+  }, [darkChrome]);
 
   return (
     <div className={`min-h-svh flex flex-col bg-background text-foreground ${darkChrome ? "dark" : ""}`}>
@@ -117,7 +138,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
               <Link
                 href="/dashboard"
                 aria-label="All trips"
-                className="xl:hidden -ms-2 flex items-center justify-center w-11 h-11 rounded-full text-muted-foreground hover:text-foreground"
+                className="xl:hidden -ms-2 flex items-center justify-center w-11 h-11 rounded-full text-foreground hover:opacity-70"
               >
                 <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
               </Link>
@@ -126,7 +147,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 type="button"
                 onClick={() => router.back()}
                 aria-label="Back"
-                className="-ms-2 flex items-center justify-center w-11 h-11 rounded-full text-muted-foreground hover:text-foreground"
+                className="-ms-2 flex items-center justify-center w-11 h-11 rounded-full text-foreground hover:opacity-70"
               >
                 <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
               </button>
