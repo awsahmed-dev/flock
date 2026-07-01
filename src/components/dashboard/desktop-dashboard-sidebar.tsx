@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   Plus,
-  BookOpen,
   UserCircle,
   Bell,
   Sun,
@@ -127,13 +126,6 @@ export function DesktopDashboardSidebar({
 
         <div className="h-px bg-border/40 my-3 mx-2" />
 
-        <Link
-          href="/blog"
-          className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
-        >
-          <BookOpen className="w-4 h-4 text-muted-foreground/80 group-hover:scale-110 transition-transform shrink-0" />
-          <span className="flex-1">{t("nav.blogLink")}</span>
-        </Link>
         <Link
           href="/account/notifications"
           className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
