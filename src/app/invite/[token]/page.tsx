@@ -1,33 +1,15 @@
-// Tester 3 finding: previously this page auto-joined a signed-in visitor
-// the instant they clicked the link, with no chance to review who invited
-// them or what the trip even was. New flow: always show a preview card
-// with trip + budget + member list + inviter, and require an explicit
-// Accept / Decline. Anonymous visitors still see the existing join form.
-
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
-import {
-  tripInvites,
-  tripMembers,
-  profiles,
-} from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { tripInvites, tripMembers, profiles, itineraryItems } from "@/lib/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { JoinTripForm } from "@/components/trips/join-trip-form";
 import { InvitePreviewActions } from "@/components/trips/invite-preview";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { MapPin, Calendar, Users, Wallet, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
-import Link from "next/link";
-import { parseISO, differenceInDays } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 
@@ -35,6 +17,12 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
+/**
+ * Trip invite landing (redesign brief Screen G). The first thing an invited
+ * person sees: full-bleed destination photo, who invited them, the crew, a
+ * non-interactive mini map + a plan preview, and one clear "Join the trip" CTA.
+ * No raw invite URL anywhere. The join logic (auth-aware) is preserved.
+ */
 export default async function InvitePage({ params }: Props) {
   const { token } = await params;
 
@@ -52,23 +40,38 @@ export default async function InvitePage({ params }: Props) {
   const days =
     differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
 
-  // Member roster (display names only — no PII).
   const members = await db
     .select({ displayName: tripMembers.displayName, role: tripMembers.role })
     .from(tripMembers)
     .where(eq(tripMembers.tripId, invite.tripId));
 
-  // Inviter name (createdBy on the invite row).
   const inviter = await db.query.profiles.findFirst({
     where: eq(profiles.id, invite.createdBy),
     columns: { displayName: true },
   });
 
-  // Signed-in vs anonymous decides which CTA we show.
+  // Plan preview + mini-map center from the itinerary.
+  const items = await db
+    .select({
+      title: itineraryItems.title,
+      lat: itineraryItems.locationLat,
+      lng: itineraryItems.locationLng,
+    })
+    .from(itineraryItems)
+    .where(eq(itineraryItems.tripId, invite.tripId))
+    .orderBy(asc(itineraryItems.sortOrder))
+    .limit(12);
+
+  const planPreview = items.map((i) => i.title).slice(0, 3);
+  const mapPin = items.find((i) => i.lat != null && i.lng != null);
+  const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const staticMapUrl =
+    mapPin && mapToken
+      ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-l+6b5ce7(${mapPin.lng},${mapPin.lat})/${mapPin.lng},${mapPin.lat},10,0/640x280@2x?access_token=${mapToken}`
+      : null;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  // Idempotent: if signed in and already a member, route them in.
   if (user) {
     const existing = await db.query.tripMembers.findFirst({
       where: and(
@@ -79,149 +82,109 @@ export default async function InvitePage({ params }: Props) {
     if (existing) redirect(`/trips/${invite.tripId}`);
   }
 
+  const inviterName = inviter?.displayName ?? "Someone";
+  const dateLabel = `${format(parseDateOnly(trip.startDate), "d MMM")} – ${format(parseDateOnly(trip.endDate), "d MMM yyyy")}`;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-muted/20">
-      <div className="w-full max-w-md">
-        <div className="flex flex-col items-center gap-2 mb-6">
-          <Link
-            href="/"
-            className="flex items-center mb-2 text-foreground"
-            aria-label="Paxawa home"
-          >
-            <Logo variant="full" size="md" />
-          </Link>
-          <p className="text-xs text-muted-foreground">
-            <strong className="text-foreground">
-              {inviter?.displayName ?? "Someone"}
-            </strong>{" "}
-            invited you to a trip
+    <div className="relative min-h-svh flex flex-col items-center justify-center px-4 py-10 overflow-hidden">
+      {/* Full-bleed destination photo + dark overlay. */}
+      {trip.heroImageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={trip.heroImageUrl}
+          alt={trip.destination}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-violet-800/50" />
+      )}
+      <div className="absolute inset-0 bg-black/60" />
+
+      {/* Logo top-center. */}
+      <div className="absolute top-6 inset-x-0 flex justify-center">
+        <div className="text-white">
+          <Logo variant="full" size="sm" />
+        </div>
+      </div>
+
+      {/* Center card. */}
+      <div className="relative w-full max-w-md rounded-3xl bg-card text-card-foreground elev-lg p-6 mt-8">
+        {/* Inviter */}
+        <div className="flex items-center gap-3">
+          <span className="w-16 h-16 rounded-full bg-primary/15 text-primary flex items-center justify-center text-2xl font-extrabold shrink-0">
+            {inviterName.charAt(0).toUpperCase()}
+          </span>
+          <p className="type-body-lg">
+            <span className="font-bold">{inviterName}</span> is planning a trip
           </p>
         </div>
 
-        <Card className="overflow-hidden">
-          {/* Hero strip */}
-          <div className="bg-gradient-to-br from-primary/12 via-violet-500/10 to-fuchsia-500/10 px-5 py-6 border-b border-border/60">
-            <CardTitle className="text-2xl tracking-tight leading-tight">
-              {trip.name}
-            </CardTitle>
-            <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground flex-wrap">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                {trip.destination}
+        <h1 className="type-h1 mt-5">{trip.name}</h1>
+        <p className="type-body-sm text-muted-foreground mt-1">
+          {trip.destination} · {dateLabel} · {days} day{days !== 1 ? "s" : ""}
+        </p>
+
+        {/* Crew avatars */}
+        {members.length > 0 && (
+          <div className="mt-5 flex items-center gap-3">
+            {members.slice(0, 4).map((m, i) => (
+              <div key={i} className="flex flex-col items-center gap-1 w-12">
+                <span className="w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center text-sm font-bold">
+                  {m.displayName.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                  {m.displayName.split(" ")[0]}
+                </span>
+              </div>
+            ))}
+            {members.length > 4 && (
+              <span className="text-xs text-muted-foreground self-start mt-2.5">
+                +{members.length - 4} more
               </span>
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                {format(parseDateOnly(trip.startDate), "MMM d")} –{" "}
-                {format(parseDateOnly(trip.endDate), "MMM d, yyyy")}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                {days} day{days !== 1 ? "s" : ""}
-              </span>
-            </div>
+            )}
           </div>
+        )}
 
-          <CardContent className="pt-5 space-y-5">
-            {/* Stats row */}
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard
-                icon={<Users className="w-3.5 h-3.5 text-blue-500" />}
-                label="Crew"
-                value={`${members.length} traveler${members.length !== 1 ? "s" : ""}`}
-              />
-              {trip.budgetTotal != null && trip.budgetTotal > 0 ? (
-                <StatCard
-                  icon={<Wallet className="w-3.5 h-3.5 text-emerald-500" />}
-                  label="Trip budget"
-                  value={`${trip.currency} ${trip.budgetTotal.toLocaleString()}`}
-                />
-              ) : (
-                <StatCard
-                  icon={<Wallet className="w-3.5 h-3.5 text-muted-foreground" />}
-                  label="Budget"
-                  value="Open"
-                />
-              )}
-            </div>
+        {/* Mini map (non-interactive) */}
+        {staticMapUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={staticMapUrl}
+            alt={`Map of ${trip.destination}`}
+            className="mt-5 w-full h-[140px] object-cover rounded-2xl border border-border"
+          />
+        )}
 
-            {/* Member preview */}
-            {members.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-2">
-                  Already in
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {members.slice(0, 6).map((m, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-xs"
-                    >
-                      <span className="w-4 h-4 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[9px] font-bold">
-                        {m.displayName.charAt(0).toUpperCase()}
-                      </span>
-                      {m.displayName}
-                      {m.role === "owner" && (
-                        <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wide">
-                          host
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                  {members.length > 6 && (
-                    <span className="text-xs text-muted-foreground self-center">
-                      +{members.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
+        {/* Plan preview pills */}
+        {planPreview.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {planPreview.map((title, i) => (
+              <span
+                key={i}
+                className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground max-w-full truncate"
+              >
+                {title}
+              </span>
+            ))}
+          </div>
+        )}
 
-            <CardDescription className="text-xs leading-relaxed">
-              You'll be added as a member. You can leave at any time from the
-              trip's Crew menu.
-            </CardDescription>
-
-            {/* Action row */}
-            {user ? (
-              <InvitePreviewActions token={token} />
-            ) : (
-              <div className="pt-1 border-t border-border/60">
-                <p className="text-xs font-bold tracking-wider uppercase text-muted-foreground mb-3 mt-4">
-                  Join the trip
-                </p>
-                <JoinTripForm token={token} tripId={invite.tripId} />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* CTA — auth-aware join (preserved logic). */}
+        <div className="mt-6">
+          {user ? (
+            <InvitePreviewActions token={token} />
+          ) : (
+            <JoinTripForm token={token} tripId={invite.tripId} />
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border/60 bg-muted/30 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <p className="text-sm font-bold mt-1 tabular-nums">{value}</p>
     </div>
   );
 }
 
 function InviteEmpty({ kind }: { kind: "invalid" | "expired" }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-svh flex items-center justify-center px-4">
       <Card className="w-full max-w-sm text-center">
         <CardContent className="pt-8 pb-6">
           <div className="text-4xl mb-4">{kind === "invalid" ? "🔗" : "⏰"}</div>
