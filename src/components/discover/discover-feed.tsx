@@ -403,7 +403,7 @@ export function DiscoverFeed({
   }
 
   return (
-    <div className="relative h-[calc(100dvh-60px)] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
+    <div className="relative h-[calc(100dvh-60px-env(safe-area-inset-bottom))] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
       {/* Floating controls — the glass control layer (Paxawa Control Language,
           §4). Glass-on-dark chips + buttons float over the cinematic photo. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">

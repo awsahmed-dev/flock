@@ -63,6 +63,10 @@ interface Props {
   numbered?: boolean;
   /** Mapbox style id (e.g. "dark-v11" for the NOW cockpit). Default streets-v12. */
   mapStyle?: string;
+  /** Padding (px) applied when fitting the route into view. The NOW cockpit
+   *  passes the resting bottom-sheet height as `bottom` so today's route sits
+   *  in the visible strip above the sheet instead of hiding behind it. */
+  fitPadding?: { top: number; bottom: number; left: number; right: number };
 }
 
 // Roamy uses ROY G BIV-ish palette per day. We replicate with 8 hues so
@@ -94,6 +98,7 @@ export function MapboxPlanMap({
   pinColor,
   numbered = true,
   mapStyle = "streets-v12",
+  fitPadding,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -321,17 +326,34 @@ export function MapboxPlanMap({
     // ── Polylines: one feature per day, using road-following route
     //    from Directions when available, else straight line as fallback.
     //    Discover (showRoutes=false) draws none — its pins aren't a route.
-    const features = (showRoutes ? [...byDay.entries()] : [])
+    //    Fix 5: EVERY day's route renders (multi-colored per the day palette,
+    //    never collapsed to one accent) with the focused day emphasized (4px,
+    //    full opacity) and the rest dimmed context (2px, 30%). Markers below
+    //    still show only the focused day, so the map stays uncluttered.
+    const lineByDay = new Map<string, PlanMapItem[]>();
+    for (const it of items) {
+      if (!Number.isFinite(it.lat) || !Number.isFinite(it.lng)) continue;
+      const arr = lineByDay.get(it.dayDate) ?? [];
+      arr.push(it);
+      lineByDay.set(it.dayDate, arr);
+    }
+    const features = (showRoutes ? [...lineByDay.entries()] : [])
       .filter(([, dayItems]) => dayItems.length >= 2)
       .map(([day, dayItems]) => {
         const cached = routeCacheRef.current.get(routeKey(day, dayItems));
         const coordinates = cached ?? dayItems.map((i) => [i.lng, i.lat] as [number, number]);
         return {
           type: "Feature" as const,
-          properties: { day, color: pinColor ?? colorForDay(day, dayIndex) },
+          properties: {
+            day,
+            color: colorForDay(day, dayIndex),
+            focused: !focusedDay || day === focusedDay,
+          },
           geometry: { type: "LineString" as const, coordinates },
         };
-      });
+      })
+      // Focused day last → its line paints on top of the dimmed ones.
+      .sort((a, b) => Number(a.properties.focused) - Number(b.properties.focused));
 
     const collection = { type: "FeatureCollection" as const, features };
 
@@ -347,8 +369,8 @@ export function MapboxPlanMap({
       layout: { "line-join": "round", "line-cap": "round" },
       paint: {
         "line-color": ["get", "color"],
-        "line-width": 4,
-        "line-opacity": 0.9,
+        "line-width": ["case", ["get", "focused"], 4, 2],
+        "line-opacity": ["case", ["get", "focused"], 0.95, 0.3],
       },
     });
 
@@ -417,12 +439,13 @@ export function MapboxPlanMap({
       fitTargets = items.filter((i) => Number.isFinite(i.lat) && Number.isFinite(i.lng))
         .map((i) => [i.lng, i.lat]);
     }
+    const pad = fitPadding ?? { top: 80, right: 60, bottom: 240, left: 60 };
     if (fitTargets.length === 1) {
-      map.flyTo({ center: fitTargets[0], zoom: 15, duration: 700 });
+      map.flyTo({ center: fitTargets[0], zoom: 15, duration: 700, padding: pad });
     } else if (fitTargets.length > 1) {
       const bounds = new mapboxgl.LngLatBounds(fitTargets[0], fitTargets[0]);
       for (const c of fitTargets) bounds.extend(c);
-      map.fitBounds(bounds, { padding: { top: 80, right: 60, bottom: 240, left: 60 }, maxZoom: 16, duration: 700 });
+      map.fitBounds(bounds, { padding: pad, maxZoom: 16, duration: 700 });
     }
   }, [items, focusedDay, highlightedItemId, ready, routeVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 

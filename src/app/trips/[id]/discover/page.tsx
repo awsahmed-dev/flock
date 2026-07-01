@@ -58,8 +58,11 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const t = (k: string, p?: Record<string, string | number>) => tFromDict(dict, k, p, locale);
 
   return (
-    <div className="-mx-4 -mt-6 sm:mx-auto sm:mt-0 sm:max-w-[680px] sm:space-y-3 lg:max-w-none lg:space-y-4">
-      {/* Header — desktop framing only; mobile is full-bleed immersive */}
+    <div className="sm:mx-auto sm:max-w-[680px] sm:space-y-3 lg:max-w-none lg:space-y-4">
+      {/* Header — desktop framing only; mobile is full-bleed immersive.
+          No mobile negative margins: the immersive trip-shell <main> has zero
+          padding, so the feed sits flush at the top-left already; the old
+          -mx-4 -mt-6 (meant to cancel a padded main) shifted it off-screen. */}
       <div className="hidden sm:flex items-baseline justify-between gap-3">
         <h1 className="text-2xl sm:text-[1.9rem] font-extrabold tracking-[-0.02em] leading-tight">
           {t("discover.title", { destination: trip.destination })}

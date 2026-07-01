@@ -25,6 +25,10 @@ const MapboxPlanMap = dynamic(
   { ssr: false, loading: () => <div className="absolute inset-0 bg-[#0a0a0a]" /> },
 );
 
+// Sheet snap points as a fraction of the viewport height.
+const REST_FRAC = 0.45;
+const FULL_FRAC = 0.92;
+
 export interface NowItem {
   id: string;
   dayDate: string;
@@ -114,25 +118,50 @@ export function NowCockpit({
   }
 
   // ── Draggable sheet ──────────────────────────────────────────────────────
-  const dragStart = useRef<number | null>(null);
+  // Fix 4: true touch drag. pointermove sets the sheet height live; on release
+  // it snaps to the resting (45svh) or expanded (92svh) state by drag direction
+  // and distance (a 20%-of-viewport threshold). A tap (no movement) toggles.
+  const sheetDrag = useRef<{ startY: number; startH: number; moved: boolean } | null>(null);
+  const [dragH, setDragH] = useState<number | null>(null);
+
   function onHandleDown(e: React.PointerEvent) {
-    dragStart.current = e.clientY;
+    const vh = window.innerHeight;
+    sheetDrag.current = {
+      startY: e.clientY,
+      startH: (expanded ? FULL_FRAC : REST_FRAC) * vh,
+      moved: false,
+    };
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   }
   function onHandleMove(e: React.PointerEvent) {
-    if (dragStart.current == null) return;
-    const dy = e.clientY - dragStart.current;
-    if (dy < -36 && !expanded) {
-      setExpanded(true);
-      dragStart.current = null;
-    } else if (dy > 36 && expanded) {
-      setExpanded(false);
-      dragStart.current = null;
-    }
+    const d = sheetDrag.current;
+    if (!d) return;
+    const vh = window.innerHeight;
+    const dy = e.clientY - d.startY;
+    if (Math.abs(dy) > 4) d.moved = true;
+    // Dragging up (negative dy) grows the sheet; clamp between the two snaps.
+    const next = Math.min(FULL_FRAC * vh, Math.max(REST_FRAC * vh, d.startH - dy));
+    setDragH(next);
   }
-  function onHandleUp() {
-    dragStart.current = null;
+  function onHandleUp(e: React.PointerEvent) {
+    const d = sheetDrag.current;
+    sheetDrag.current = null;
+    if (!d) return;
+    const dy = e.clientY - d.startY; // + dragged down, − dragged up
+    const threshold = 0.2 * window.innerHeight;
+    if (!d.moved) setExpanded((x) => !x);
+    else if (dy < -threshold) setExpanded(true);
+    else if (dy > threshold) setExpanded(false);
+    setDragH(null);
   }
+
+  // Fit today's route into the strip visible above the resting sheet (Fix 5).
+  const fitPadding = useMemo(() => {
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const restSheet = Math.round(vh * REST_FRAC);
+    // Occluded bottom = resting sheet + the 60px mobile tab bar; +24 breathing.
+    return { top: 24, bottom: restSheet + 60 + 24, left: 24, right: 24 };
+  }, []);
 
   const budgetPct =
     budget.total && budget.total > 0
@@ -155,6 +184,7 @@ export function NowCockpit({
           numbered
           pinColor="#6b5ce7"
           mapStyle="dark-v11"
+          fitPadding={fitPadding}
         />
       </div>
 
@@ -183,21 +213,23 @@ export function NowCockpit({
 
       {/* Bottom sheet — sits above the mobile tab bar (60px); flush on desktop. */}
       <div
-        className="absolute inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] xl:bottom-0 z-30 flex flex-col rounded-t-3xl border-t border-white/10 transition-[height] duration-300 ease-out"
+        className={`absolute inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] xl:bottom-0 z-30 flex flex-col rounded-t-3xl border-t border-white/10 ${
+          dragH == null ? "transition-[height] duration-300 ease-out" : ""
+        }`}
         style={{
-          height: expanded ? "92svh" : "45svh",
+          height: dragH != null ? `${dragH}px` : expanded ? "92svh" : "45svh",
           background: "rgba(10,10,10,0.92)",
           backdropFilter: "blur(40px)",
           WebkitBackdropFilter: "blur(40px)",
         }}
       >
-        {/* Handle */}
+        {/* Handle — drag to resize, tap to toggle. */}
         <div
           className="shrink-0 pt-3 pb-1 flex justify-center cursor-grab touch-none"
           onPointerDown={onHandleDown}
           onPointerMove={onHandleMove}
           onPointerUp={onHandleUp}
-          onClick={() => setExpanded((e) => !e)}
+          onPointerCancel={onHandleUp}
         >
           <div className="w-9 h-1 rounded-full bg-white/20" />
         </div>

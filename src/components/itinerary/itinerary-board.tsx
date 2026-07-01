@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -222,10 +222,13 @@ export function ItineraryBoard({
   // 100dvh handles iOS soft keyboard correctly. Bottom-nav is ~5.5rem
   // including its safe-area padding. Negative margins pull the canvas
   // edge-to-edge inside the trip page's padded main content.
+  // Fix 2: the Full Map is reached from the dark NOW cockpit, so the whole
+  // surface is forced dark (the `dark` class flips every card/border/text token
+  // to its dark value) instead of a dark map under a light day-list + sheet.
   const containerCls =
-    "relative -mx-4 sm:-mx-6 lg:-mx-6 -mt-4 sm:-mt-6 " +
+    "dark relative -mx-4 sm:-mx-6 lg:-mx-6 -mt-4 sm:-mt-6 " +
     "h-[calc(100dvh-3.5rem-5.5rem)] sm:h-[calc(100dvh-3.5rem)] " +
-    "overflow-hidden";
+    "overflow-hidden bg-[#0a0a0a] text-[#f5f5f7]";
 
   return (
     <div className={containerCls}>
@@ -329,7 +332,7 @@ export function ItineraryBoard({
                 onClick={() => setFocusedDay(null)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
                   focusedDay === null
-                    ? "bg-foreground text-background"
+                    ? "bg-primary text-white"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -346,7 +349,7 @@ export function ItineraryBoard({
                     onClick={() => setFocusedDay(day)}
                     className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
                       active
-                        ? "bg-foreground text-background"
+                        ? "bg-primary text-white"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -607,7 +610,7 @@ export function ItineraryBoard({
                 onClick={() => setFocusedDay(null)}
                 className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                   focusedDay === null
-                    ? "bg-foreground text-background"
+                    ? "bg-primary text-white"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -624,7 +627,7 @@ export function ItineraryBoard({
                     onClick={() => setFocusedDay(day)}
                     className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                       active
-                        ? "bg-foreground text-background"
+                        ? "bg-primary text-white"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -902,6 +905,24 @@ function SortableItemRow({
   const TypeCfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;
   const TypeIcon = TypeCfg.icon;
 
+  // Fix 3: horizontal swipe-left to reveal a delete zone. Reordering is
+  // handle-only (dnd-kit listeners live on the grip button), so a horizontal
+  // pointer drag on the row body never activates the vertical DnD sensor.
+  const [dx, setDx] = useState(0);
+  const swipeStartX = useRef<number | null>(null);
+  function onSwipeDown(e: React.PointerEvent) {
+    swipeStartX.current = e.clientX;
+  }
+  function onSwipeMove(e: React.PointerEvent) {
+    if (swipeStartX.current == null) return;
+    const d = e.clientX - swipeStartX.current;
+    if (d < 0) setDx(Math.max(d, -88));
+  }
+  function onSwipeUp() {
+    swipeStartX.current = null;
+    setDx((cur) => (cur < -56 ? -72 : 0));
+  }
+
   const localPrice =
     item.costEstimate != null && localCurrency && localCurrency !== currency && fxRates
       ? convert(item.costEstimate, currency, localCurrency, fxRates)
@@ -934,12 +955,34 @@ function SortableItemRow({
       ref={setNodeRef}
       style={style}
       id={`item-${item.id}`}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      className={`group relative flex items-stretch rounded-2xl ring-1 bg-card overflow-hidden shadow-sm hover:shadow-md transition-all ${
-        isDragging ? "opacity-40" : ""
-      } ${highlighted ? "ring-primary/60 shadow-md shadow-primary/20" : "ring-border/60 hover:ring-border"}`}
+      className={`relative overflow-hidden rounded-2xl ${isDragging ? "opacity-40" : ""}`}
     >
+      {/* Delete zone revealed under the row on swipe-left. */}
+      {canManage && (
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="Delete"
+          className="absolute inset-y-0 end-0 w-[72px] flex items-center justify-center bg-destructive text-white"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+      )}
+      <div
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onPointerDown={canManage ? onSwipeDown : undefined}
+        onPointerMove={canManage ? onSwipeMove : undefined}
+        onPointerUp={canManage ? onSwipeUp : undefined}
+        onPointerCancel={canManage ? onSwipeUp : undefined}
+        style={{
+          transform: `translateX(${dx}px)`,
+          transition: swipeStartX.current == null ? "transform 150ms ease" : "none",
+        }}
+        className={`group relative flex items-stretch ring-1 bg-card shadow-sm hover:shadow-md transition-[box-shadow] touch-pan-y ${
+          highlighted ? "ring-primary/60 shadow-md shadow-primary/20" : "ring-border/60 hover:ring-border"
+        }`}
+      >
       <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-3 border-e border-border/40 shrink-0">
         <div
           className={`w-7 h-7 ${paletteDot} text-white rounded-full flex items-center justify-center text-xs font-extrabold`}
@@ -1036,35 +1079,22 @@ function SortableItemRow({
               <ExternalLink className="w-5 h-5" />
             </a>
           )}
+          {/* Edit stays hover-only on desktop. Delete is swipe-left (the red
+              zone revealed behind the row) — no always-visible trash icon, so
+              it works on touch without a permanent destructive control. */}
           {canManage && (
-            <>
-              {/* Edit stays hover-only on desktop — the row is already
-                  tappable, and most users edit far less than they delete.
-                  Delete is now always visible: requested by user, and
-                  hiding destructive actions behind hover doesn't work on
-                  touch devices anyway. Tinted destructive-red so it's
-                  immediately recognizable but not loud enough to invite
-                  mis-tap. */}
-              <button
-                type="button"
-                onClick={onEdit}
-                title="Edit"
-                className="hidden sm:inline-flex opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={onDelete}
-                title="Delete"
-                className="p-1.5 rounded-lg text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-all"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={onEdit}
+              title="Edit"
+              className="hidden sm:inline-flex opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
           )}
         </div>
       )}
+      </div>
     </li>
   );
 }
