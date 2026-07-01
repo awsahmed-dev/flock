@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { documents, packingItems } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { PackBoard } from "@/components/pack/pack-board";
+import { ManageTabs } from "@/components/trips/manage-tabs";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -42,7 +43,9 @@ export default async function PackRoute({ params, searchParams }: Props) {
   ]);
 
   return (
-    <PackBoard
+    <>
+      <ManageTabs tripId={id} active="pack" />
+      <PackBoard
       tripId={id}
       userId={user.id}
       isOwner={isOwner}
@@ -76,5 +79,6 @@ export default async function PackRoute({ params, searchParams }: Props) {
         avatarUrl: m.user?.avatarUrl ?? null,
       }))}
     />
+    </>
   );
 }

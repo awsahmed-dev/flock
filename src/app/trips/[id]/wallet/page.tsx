@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { BookingsBoard } from "@/components/wallet/bookings-board";
+import { ManageTabs } from "@/components/trips/manage-tabs";
 import { getLocale } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { itineraryItems } from "@/lib/db/schema";
@@ -45,7 +46,9 @@ export default async function WalletPage({ params }: Props) {
   }).map((d) => format(d, "yyyy-MM-dd"));
 
   return (
-    <BookingsBoard
+    <>
+      <ManageTabs tripId={trip.id} active="bookings" />
+      <BookingsBoard
       tripId={trip.id}
       tripName={trip.name}
       destination={trip.destination}
@@ -64,5 +67,6 @@ export default async function WalletPage({ params }: Props) {
         locationName: i.locationName ?? null,
       }))}
     />
+    </>
   );
 }

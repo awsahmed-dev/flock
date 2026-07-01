@@ -972,5 +972,10 @@
     "spent": "Spent",
     "left": "left",
     "setBudget": "Set a budget"
+  },
+  "manage": {
+    "expenses": "Expenses",
+    "bookings": "Bookings",
+    "pack": "Pack"
   }
 }
