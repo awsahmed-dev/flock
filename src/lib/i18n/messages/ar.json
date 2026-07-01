@@ -114,7 +114,8 @@
     "suggestActivityAction": "اقترح نشاطًا",
     "enterToSend": "Enter للإرسال",
     "addOption": "إضافة خيار",
-    "suggestPlaceAction": "اقترح مكانًا"
+    "suggestPlaceAction": "اقترح مكانًا",
+    "photoAction": "صورة"
   },
   "states": {
     "nothingYet": "لا شيء حتى الآن",

@@ -47,6 +47,8 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
   const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  // Local-only picked photos (no server upload yet) — rendered inline.
+  const [localImages, setLocalImages] = useState<string[]>([]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -100,7 +102,7 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
             <span className="text-4xl mb-3">💬</span>
             <p className="font-medium">Start the conversation</p>
             <p className="text-sm mt-1 max-w-xs">
-              Paste hotel links, use /expense to log costs, or /vote to decide together
+              Paste hotel links or use /expense to log costs
             </p>
           </div>
         )}
@@ -129,6 +131,16 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
           );
         })}
 
+        {localImages.map((url, i) => (
+          <div key={`local-img-${i}`} className="flex justify-end">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt=""
+              className="max-w-[70%] rounded-2xl border border-border shadow-sm"
+            />
+          </div>
+        ))}
         <div ref={bottomRef} />
       </div>
 
@@ -137,6 +149,7 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
         tripId={tripId}
         replyTo={replyTo}
         onClearReply={() => setReplyTo(null)}
+        onPickImage={(url) => setLocalImages((prev) => [...prev, url])}
       />
     </div>
   );

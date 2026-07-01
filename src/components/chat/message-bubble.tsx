@@ -665,6 +665,22 @@ export function MessageBubble({
           />
         )}
 
+        {/* Fallback — a message that renders no content (null/empty body,
+            missing card metadata, or an unsupported legacy type like image/
+            voice) would otherwise be an empty bubble showing only the read
+            check. Show a grey attachment placeholder instead. */}
+        {!(
+          (message.type === "text" && message.body) ||
+          (message.type === "link_card" && message.metadata) ||
+          (message.type === "expense_card" && message.metadata) ||
+          (message.type === "vote_card" && message.metadata) ||
+          (message.type === "decision_card" && message.metadata)
+        ) && (
+          <div className="inline-flex items-center gap-1.5 rounded-2xl bg-muted px-4 py-2.5 text-sm italic text-muted-foreground">
+            📎 Attachment
+          </div>
+        )}
+
         {/* Reactions */}
         <ReactionBar
           reactions={message.reactions}

@@ -114,7 +114,8 @@
     "suggestActivityAction": "Suggest activity",
     "enterToSend": "Enter to send",
     "addOption": "Add option",
-    "suggestPlaceAction": "Suggest place"
+    "suggestPlaceAction": "Suggest place",
+    "photoAction": "Photo"
   },
   "states": {
     "nothingYet": "Nothing yet",

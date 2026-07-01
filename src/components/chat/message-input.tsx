@@ -9,9 +9,8 @@ import {
   X,
   Plus,
   ReceiptText,
-  Vote,
   MapPin,
-  ChevronDown,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,106 +116,6 @@ function ExpenseForm({
   );
 }
 
-// ─── Inline vote form ─────────────────────────────────────────────────────────
-
-function VoteForm({
-  tripId,
-  onSent,
-  onCancel,
-}: {
-  tripId: string;
-  onSent: () => void;
-  onCancel: () => void;
-}) {
-  const t = useT();
-  const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState(["", ""]);
-  const [isPending, startTransition] = useTransition();
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const validOptions = options.filter((o) => o.trim());
-    if (!question || validOptions.length < 2) return;
-
-    const fd = new FormData();
-    fd.set("tripId", tripId);
-    fd.set("body", `/vote ${question}`);
-    startTransition(async () => {
-      try {
-        await sendMessage(fd);
-        onSent();
-      } catch {
-        toast.error(t("chat.failedToPostVote"));
-      }
-    });
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-xl border bg-purple-50 dark:bg-purple-950/20 p-3 space-y-2"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-purple-600 dark:text-purple-400">
-          <Vote className="w-3.5 h-3.5" />
-          Create a vote
-        </div>
-        <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <Input
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="What should the group decide?"
-        required
-        className="h-8 text-sm"
-        autoFocus
-      />
-      <div className="space-y-1.5">
-        {options.map((opt, i) => (
-          <div key={i} className="flex gap-1.5">
-            <Input
-              value={opt}
-              onChange={(e) =>
-                setOptions((prev) => prev.map((o, j) => (j === i ? e.target.value : o)))
-              }
-              placeholder={`Option ${i + 1}`}
-              className="flex-1 h-8 text-sm"
-            />
-            {options.length > 2 && (
-              <button
-                type="button"
-                onClick={() => setOptions((prev) => prev.filter((_, j) => j !== i))}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => setOptions((prev) => [...prev, ""])}
-          className="text-xs text-primary hover:underline"
-        >
-          + Add option
-        </button>
-      </div>
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={isPending || !question || options.filter((o) => o.trim()).length < 2}
-          className="h-8 px-3"
-        >
-          Post vote
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 // ─── Inline itinerary form ────────────────────────────────────────────────────
 
 function ItineraryForm({
@@ -298,15 +197,30 @@ interface Props {
   onAfterSend?: () => void;
   onTyping?: () => void;
   compact?: boolean; // true when inside sidebar
+  /** Local-only: a picked photo (data URL) to render inline in the thread. */
+  onPickImage?: (dataUrl: string) => void;
 }
 
-export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyping, compact }: Props) {
+export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyping, compact, onPickImage }: Props) {
   const t = useT();
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    setActionsOpen(false);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") onPickImage?.(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
 
   // Debounced typing broadcast — fires at most once per 2s while typing
   const handleTypingBroadcast = useCallback(() => {
@@ -386,6 +300,16 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
 
       {/* Text input row */}
       <form onSubmit={handleSubmit} className="flex items-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => setActionsOpen((o) => !o)}
+          aria-label={t("chat.moreAction")}
+          className={`shrink-0 h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${
+            actionsOpen ? "bg-primary/15 text-primary" : "bg-muted/40 text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Plus className={`w-5 h-5 transition-transform ${actionsOpen ? "rotate-45" : ""}`} />
+        </button>
         <textarea
           ref={textareaRef}
           data-chat-input
@@ -415,42 +339,44 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
         </Button>
       </form>
 
-      {/* Action buttons row — bumped from ~24px chips to a 36px+ pill so
-          they clear a comfortable thumb target; icons up to 16px. */}
-      <div className="flex items-center gap-1.5">
-        {/* Always-visible primary actions */}
-        <button
-          type="button"
-          onClick={() => setActiveAction(activeAction === "expense" ? null : "expense")}
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
-            activeAction === "expense"
-              ? "bg-orange-100 border-orange-300 text-orange-700 shadow-sm dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300"
-              : "bg-muted/40 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 text-muted-foreground border-border/60"
-          }`}
-        >
-          <ReceiptText className="w-4 h-4" />
-          {t("chat.expenseAction")}
-        </button>
+      {/* Action row — hidden until the user taps + (brief Screen F): the
+          default composer is just the input + send. */}
+      {actionsOpen && (
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveAction(activeAction === "expense" ? null : "expense")}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
+              activeAction === "expense"
+                ? "bg-orange-100 border-orange-300 text-orange-700 shadow-sm dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300"
+                : "bg-muted/40 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 text-muted-foreground border-border/60"
+            }`}
+          >
+            <ReceiptText className="w-4 h-4" />
+            {t("chat.expenseAction")}
+          </button>
 
-        {/* Suggest place — replaces the retired Vote action (§0). Opens the
-            place-suggestion form which drops a place into the chat thread. */}
-        <button
-          type="button"
-          onClick={() => setActiveAction(activeAction === "itinerary" ? null : "itinerary")}
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
-            activeAction === "itinerary"
-              ? "bg-primary/15 border-primary/40 text-primary shadow-sm"
-              : "bg-muted/40 hover:bg-primary/10 hover:border-primary/30 hover:text-primary text-muted-foreground border-border/60"
-          }`}
-        >
-          <MapPin className="w-4 h-4" />
-          {t("chat.suggestPlaceAction")}
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveAction(activeAction === "itinerary" ? null : "itinerary")}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
+              activeAction === "itinerary"
+                ? "bg-primary/15 border-primary/40 text-primary shadow-sm"
+                : "bg-muted/40 hover:bg-primary/10 hover:border-primary/30 hover:text-primary text-muted-foreground border-border/60"
+            }`}
+          >
+            <MapPin className="w-4 h-4" />
+            {t("chat.suggestPlaceAction")}
+          </button>
 
-        <span className="ms-auto text-[10px] text-muted-foreground hidden sm:block">
-          {t("chat.enterToSend")}
-        </span>
-      </div>
+          {/* Photo — native picker; rendered inline (local-only for now). */}
+          <label className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold cursor-pointer bg-muted/40 hover:bg-primary/10 hover:border-primary/30 hover:text-primary text-muted-foreground border-border/60 transition-all">
+            <ImageIcon className="w-4 h-4" />
+            {t("chat.photoAction")}
+            <input type="file" accept="image/*" capture="environment" hidden onChange={handlePhoto} />
+          </label>
+        </div>
+      )}
     </div>
   );
 }
