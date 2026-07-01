@@ -979,5 +979,14 @@
     "expenses": "Expenses",
     "bookings": "Bookings",
     "pack": "Pack"
+  },
+  "share": {
+    "title": "Invite crew",
+    "subtitle": "Share this link — friends tap it to join the trip",
+    "linkLabel": "Invite link",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share",
+    "error": "Couldn't create an invite link. Try again."
   }
 }

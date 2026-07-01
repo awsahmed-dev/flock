@@ -11,8 +11,11 @@ import {
   MessageSquare,
   Map as MapIcon,
   ChevronRight,
+  ChevronLeft,
+  UserPlus,
   Trash2,
 } from "lucide-react";
+import { ShareTripSheet } from "@/components/trips/share-trip-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
@@ -49,12 +52,14 @@ export interface NowItem {
  */
 export function NowCockpit({
   tripId,
+  tripName,
   center,
   days,
   items,
   budget,
 }: {
   tripId: string;
+  tripName: string;
   center: [number, number] | null;
   days: string[];
   items: NowItem[];
@@ -71,6 +76,7 @@ export function NowCockpit({
   const [selectedDay, setSelectedDay] = useState(defaultDay);
   const [expanded, setExpanded] = useState(false);
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set());
+  const [shareOpen, setShareOpen] = useState(false);
 
   const dayItems = useMemo(
     () => items.filter((i) => i.dayDate === selectedDay && !optimisticDeleted.has(i.id)),
@@ -185,7 +191,31 @@ export function NowCockpit({
           pinColor="#6b5ce7"
           mapStyle="dark-v11"
           fitPadding={fitPadding}
+          showNav={false}
         />
+      </div>
+
+      {/* Floating top bar — the immersive cockpit's nav: back to all trips
+          (mobile; desktop has the sidebar) on the left, invite crew on the
+          right. Buttons opt back into pointer events over the map. */}
+      <div className="absolute top-0 inset-x-0 z-20 flex items-center gap-2 px-3 pt-[max(env(safe-area-inset-top),0.75rem)] pb-8 bg-gradient-to-b from-black/55 to-transparent pointer-events-none">
+        <Link
+          href="/dashboard"
+          aria-label={t("nav.allTrips")}
+          className="xl:hidden pointer-events-auto w-11 h-11 rounded-full bg-black/35 ring-1 ring-white/15 flex items-center justify-center text-white active:scale-95 transition-transform"
+          style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          <ChevronLeft className="w-6 h-6 rtl:rotate-180" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          aria-label={t("share.title")}
+          className="ms-auto pointer-events-auto w-11 h-11 rounded-full bg-black/35 ring-1 ring-white/15 flex items-center justify-center text-white active:scale-95 transition-transform"
+          style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          <UserPlus className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Floating action row — over the map, above the sheet. Hidden when the
@@ -304,6 +334,13 @@ export function NowCockpit({
           <QuickBtn href={`/trips/${tripId}/itinerary`} icon={MapIcon} label={t("now.fullMap")} />
         </div>
       </div>
+
+      <ShareTripSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        tripId={tripId}
+        tripName={tripName}
+      />
     </div>
   );
 }

@@ -97,9 +97,14 @@ export function TripShell({ trip, isOwner, children }: Props) {
   // (Screen D) and the NOW cockpit (Screen C, the trip root — full-screen map
   // + its own draggable sheet). They carry their own controls.
   const immersive = pathname === base || pathname.startsWith(`${base}/discover`);
+  // Bug 2: the Full Map (/itinerary) is a dark, map-first surface like NOW.
+  // Render the ENTIRE shell dark for it — otherwise the light top bar (and the
+  // white body behind it) sit above a dark board, and the header's icons wash
+  // out. `dark` on the root flips the header, body and tab bar to dark tokens.
+  const darkChrome = immersive || pathname === `${base}/itinerary`;
 
   return (
-    <div className="min-h-svh flex flex-col bg-background text-foreground">
+    <div className={`min-h-svh flex flex-col bg-background text-foreground ${darkChrome ? "dark" : ""}`}>
       <DesktopModeNav tripId={trip.id} tripName={trip.name} />
 
       <div className="flex flex-col min-h-svh xl:ps-[280px]">
@@ -112,7 +117,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
               <Link
                 href="/dashboard"
                 aria-label="All trips"
-                className="xl:hidden -ms-2 flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground"
+                className="xl:hidden -ms-2 flex items-center justify-center w-11 h-11 rounded-full text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
               </Link>
@@ -121,7 +126,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
                 type="button"
                 onClick={() => router.back()}
                 aria-label="Back"
-                className="-ms-2 flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground"
+                className="-ms-2 flex items-center justify-center w-11 h-11 rounded-full text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
               </button>

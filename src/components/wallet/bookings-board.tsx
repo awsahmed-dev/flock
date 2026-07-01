@@ -8,20 +8,15 @@ import {
   Mail,
   Copy,
   Check,
-  Info,
   Hotel,
   Plane,
-  Wifi,
   Ticket,
   CheckCircle2,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { useT } from "@/components/i18n/locale-provider";
-import { WalletBoard } from "@/components/wallet/wallet-board";
 
 interface Props {
   tripId: string;
@@ -69,7 +64,6 @@ interface Props {
 export function BookingsBoard(props: Props) {
   const t = useT();
   const [copied, setCopied] = useState(false);
-  const [showSample, setShowSample] = useState(false);
 
   // A deterministic, per-trip forward address — honest (it's tied to THIS
   // trip), not a fake shared "trip-abc@". Short slug from the trip id.
@@ -174,48 +168,6 @@ export function BookingsBoard(props: Props) {
         onMarkBooked={markBooked}
       />
 
-      {/* Disclosure — affiliate honesty. */}
-      <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
-        <Info className="w-3 h-3 mt-0.5 shrink-0" />
-        <span>{t("plan.disclosure")}</span>
-      </p>
-
-      {/* ── SAMPLE preview — opt-in, clearly demarcated. Lets a user see what
-          the populated wallet looks like WITHOUT ever presenting the example
-          passes as their real trip data. Collapsed by default. */}
-      <section className="space-y-3 pt-2 border-t border-dashed border-border/60">
-        <button
-          type="button"
-          onClick={() => setShowSample((v) => !v)}
-          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
-        >
-          {showSample ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          {showSample ? t("bookings.sampleHide") : t("bookings.sampleShow")}
-        </button>
-
-        {showSample && (
-          <div className="rounded-3xl border border-dashed border-amber-500/40 bg-amber-500/[0.04] p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-black tracking-widest uppercase px-2.5 py-1">
-                {t("bookings.sampleBadge")}
-              </span>
-              <p className="text-[11px] text-muted-foreground">{t("bookings.sampleCaption")}</p>
-            </div>
-            {/* The example wallet — passes here are SAMPLE content, never the
-                user's real bookings (which don't exist yet). */}
-            <div aria-hidden={false}>
-              <WalletBoard
-                userId={props.userId}
-                tripName={props.tripName}
-                destination={props.destination}
-                startDate={props.startDate}
-                endDate={props.endDate}
-                embedded
-              />
-            </div>
-          </div>
-        )}
-      </section>
     </div>
   );
 }
@@ -373,14 +325,6 @@ function buildGaps(props: Props, t: (k: string, p?: Record<string, string | numb
     tone: "violet",
     title: t("bookings.checklistFlight"),
     subtitle: t("bookings.checklistFlightSub", { destination: cities[0] ?? props.destination }),
-  });
-
-  gaps.push({
-    id: "esim",
-    icon: Wifi,
-    tone: "emerald",
-    title: t("bookings.checklistEsim"),
-    subtitle: t("bookings.checklistEsimSub", { destination: props.destination }),
   });
 
   for (const item of activityItems.slice(0, 3)) {

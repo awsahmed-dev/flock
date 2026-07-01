@@ -133,6 +133,7 @@ export default async function TripPage({ params }: Props) {
   return (
     <NowCockpit
       tripId={id}
+      tripName={trip.name}
       center={center}
       days={days}
       items={items}

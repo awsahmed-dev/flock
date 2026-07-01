@@ -67,6 +67,9 @@ interface Props {
    *  passes the resting bottom-sheet height as `bottom` so today's route sits
    *  in the visible strip above the sheet instead of hiding behind it. */
   fitPadding?: { top: number; bottom: number; left: number; right: number };
+  /** Show the top-right zoom control. Off in the immersive NOW cockpit, where
+   *  it would collide with the floating top-bar buttons (pinch-zoom works). */
+  showNav?: boolean;
 }
 
 // Roamy uses ROY G BIV-ish palette per day. We replicate with 8 hues so
@@ -99,6 +102,7 @@ export function MapboxPlanMap({
   numbered = true,
   mapStyle = "streets-v12",
   fitPadding,
+  showNav = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -180,7 +184,9 @@ export function MapboxPlanMap({
     // reliably rendering.
     (window as any).__mb = map;
 
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+    if (showNav) {
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+    }
 
     // B15: localize on-map labels. The streets-v12 style ships a
     // text-field expression that falls back to the local name; we

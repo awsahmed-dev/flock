@@ -7,9 +7,41 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { randomBytes } from "crypto";
 import { getBaseUrl } from "@/lib/base-url";
+import { getCurrentUser } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/send";
 import { renderInviteAccepted } from "@/lib/email/templates";
 import { sendPush } from "@/lib/push/send";
+
+/**
+ * Get (or lazily create) a shareable invite link for a trip. Any member can
+ * generate one — inviting crew is a member action, not owner-only. Reuses an
+ * existing non-expired invite so a trip has one stable link. Returns the full
+ * absolute URL to the /invite/[token] join landing (Screen G).
+ */
+export async function createTripInvite(tripId: string): Promise<string> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not signed in");
+
+  const member = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, user.id)),
+  });
+  if (!member) throw new Error("Only trip members can create an invite link");
+
+  const existing = await db.query.tripInvites.findFirst({
+    where: eq(tripInvites.tripId, tripId),
+  });
+  const stillValid =
+    existing && (!existing.expiresAt || new Date() <= existing.expiresAt);
+
+  let token: string;
+  if (stillValid) {
+    token = existing!.token;
+  } else {
+    token = randomBytes(16).toString("hex");
+    await db.insert(tripInvites).values({ tripId, token, createdBy: user.id });
+  }
+  return `${getBaseUrl()}/invite/${token}`;
+}
 
 export async function joinTripAsGuest(formData: FormData) {
   const token = formData.get("token") as string;
