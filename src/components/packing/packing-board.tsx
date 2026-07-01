@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Backpack,
@@ -103,6 +103,11 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
     return map;
   }, [items, userId]);
 
+  const memberById = useMemo(
+    () => new Map(members.map((m) => [m.userId, m] as const)),
+    [members],
+  );
+
   const counts = {
     shared: { total: shared.length, packed: shared.filter((i) => i.packed).length },
     mine: { total: mine.length, packed: mine.filter((i) => i.packed).length },
@@ -169,7 +174,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-full">
+    <div className="flex flex-col gap-6 max-w-full pb-24">
       {/* B8/B6: PageHeader is hidden when embedded inside PackBoard (which
           owns the shared title). The "Start with suggestions" CTA stays
           visible in both modes — surfaced on its own row when embedded. */}
@@ -239,28 +244,55 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
         />
       )}
 
-      {/* Add-item row */}
+      {/* List */}
+      {tab === "shared" && (
+        <CategoryList
+          items={shared}
+          onToggle={toggle}
+          onDelete={remove}
+          userId={userId}
+          memberById={memberById}
+        />
+      )}
+
+      {tab === "mine" && (
+        <CategoryList
+          items={mine}
+          onToggle={toggle}
+          onDelete={remove}
+          userId={userId}
+          memberById={memberById}
+        />
+      )}
+
+      {tab === "crew" && (
+        <CrewView
+          members={members}
+          crewByMember={crewByMember}
+          userId={userId}
+        />
+      )}
+
+      {/* §4: fixed add-item bar — never inside the scroll; sits above the tab
+          bar with safe-area inset. Hidden on the read-only Crew tab. */}
       {tab !== "crew" && (
-        <div className="flex flex-col sm:flex-row gap-2 rounded-xl border border-border bg-card p-2.5">
-          <input
-            type="text"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder={
-              tab === "shared"
-                ? t("pack.whatDoesGroupNeed")
-                : t("pack.whatYouNeed")
-            }
-            className="flex-1 min-w-0 bg-transparent text-sm px-2 h-10 outline-none placeholder:text-muted-foreground"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") add(tab === "shared" ? "shared" : "mine");
-            }}
-          />
-          <div className="flex items-stretch gap-2">
+        <div className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] xl:bottom-0 xl:start-[280px] z-30 bg-card border-t border-border">
+          <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-stretch gap-2">
+            <input
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              placeholder={tab === "shared" ? t("pack.whatDoesGroupNeed") : t("pack.whatYouNeed")}
+              className="flex-1 min-w-0 rounded-lg bg-muted/40 border border-border text-sm px-3 h-10 outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") add(tab === "shared" ? "shared" : "mine");
+              }}
+            />
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              className="flex-1 sm:flex-none bg-muted/40 text-xs font-semibold rounded-lg px-2.5 h-10 outline-none border border-border"
+              aria-label="Category"
+              className="shrink-0 max-w-[104px] bg-muted/40 text-xs font-semibold rounded-lg px-2 h-10 outline-none border border-border"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -272,40 +304,14 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
               type="button"
               disabled={isPending}
               onClick={() => add(tab === "shared" ? "shared" : "mine")}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-violet-600 text-white text-sm font-bold px-4 h-10 hover:opacity-90 transition-opacity disabled:opacity-50"
+              aria-label={t("pack.add")}
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-bold px-4 h-10 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
-              {t("pack.add")}
+              <span className="hidden sm:inline">{t("pack.add")}</span>
             </button>
           </div>
         </div>
-      )}
-
-      {/* List */}
-      {tab === "shared" && (
-        <CategoryList
-          items={shared}
-          onToggle={toggle}
-          onDelete={remove}
-          userId={userId}
-        />
-      )}
-
-      {tab === "mine" && (
-        <CategoryList
-          items={mine}
-          onToggle={toggle}
-          onDelete={remove}
-          userId={userId}
-        />
-      )}
-
-      {tab === "crew" && (
-        <CrewView
-          members={members}
-          crewByMember={crewByMember}
-          userId={userId}
-        />
       )}
     </div>
   );
@@ -361,9 +367,9 @@ function ProgressBar({ packed, total }: { packed: number; total: number }) {
         </span>
         <span className="font-bold text-foreground tabular-nums">{pct}%</span>
       </div>
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
+      <div className="h-1 rounded-full bg-muted overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
+          className="h-full bg-primary transition-all duration-300"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -376,11 +382,13 @@ function CategoryList({
   onToggle,
   onDelete,
   userId,
+  memberById,
 }: {
   items: Item[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   userId: string;
+  memberById: Map<string, Member>;
 }) {
   const t = useT();
   const grouped = useMemo(() => {
@@ -427,6 +435,7 @@ function CategoryList({
                     item.createdBy === userId || item.userId === userId
                   }
                   onDelete={() => onDelete(item.id)}
+                  adder={memberById.get(item.createdBy)}
                 />
               ))}
             </div>
@@ -442,63 +451,87 @@ function PackingRow({
   onToggle,
   onDelete,
   canDelete,
+  adder,
 }: {
   item: Item;
   onToggle: () => void;
   onDelete: () => void;
   canDelete: boolean;
+  adder?: Member;
 }) {
   const t = useT();
+  // §4: swipe-left reveals a red delete zone (no always-visible trash icon).
+  const [dx, setDx] = useState(0);
+  const startX = useRef<number | null>(null);
+  function down(e: React.PointerEvent) {
+    if (canDelete) startX.current = e.clientX;
+  }
+  function move(e: React.PointerEvent) {
+    if (startX.current == null) return;
+    const d = e.clientX - startX.current;
+    if (d < 0) setDx(Math.max(d, -88));
+  }
+  function up() {
+    startX.current = null;
+    setDx((cur) => (cur < -56 ? -72 : 0));
+  }
+
   return (
-    <div
-      className={`group flex items-center gap-3 rounded-xl border bg-card p-3 transition-all ${
-        item.packed ? "border-emerald-500/30 bg-emerald-500/5" : "border-border"
-      }`}
-    >
-      {/* Checkbox: the visible tick stays 24px but the tap area is padded
-          out to a full 40px target (-m-2 keeps the row layout tight). */}
-      <button
-        type="button"
-        onClick={onToggle}
-        className="-m-2 p-2 shrink-0"
-        aria-label={item.packed ? t("pack.markNotPacked") : t("pack.markPacked")}
-      >
-        <span
-          className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
-            item.packed
-              ? "bg-emerald-500 text-white"
-              : "border-2 border-muted-foreground/40 hover:border-primary"
-          }`}
-        >
-          {item.packed && <Check className="w-3.5 h-3.5" />}
-        </span>
-      </button>
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium truncate ${
-            item.packed ? "line-through text-muted-foreground" : ""
-          }`}
-        >
-          {item.label}
-        </p>
-        {item.notes && (
-          <p className="text-xs text-muted-foreground truncate">{item.notes}</p>
-        )}
-      </div>
+    <div className="relative overflow-hidden rounded-xl">
       {canDelete && (
-        /* Delete was opacity-0 + group-hover only — invisible and
-           unreachable on touch (no hover). Always shown on mobile;
-           hover-reveal kept on desktop where the row is denser. The hit
-           area is a full 40px square. */
         <button
           type="button"
           onClick={onDelete}
-          className="shrink-0 w-10 h-10 -me-1.5 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive lg:opacity-0 lg:group-hover:opacity-100 transition-all"
           aria-label={t("pack.deleteItem")}
+          className="absolute inset-y-0 end-0 w-[72px] flex items-center justify-center bg-destructive text-white"
         >
           <Trash2 className="w-4 h-4" />
         </button>
       )}
+      <div
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={up}
+        onPointerCancel={up}
+        style={{ transform: `translateX(${dx}px)`, transition: startX.current == null ? "transform 150ms ease" : "none" }}
+        className={`relative flex items-center gap-3 border p-3 bg-card touch-pan-y ${
+          item.packed ? "border-emerald-500/40" : "border-border"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={onToggle}
+          className="-m-2 p-2 shrink-0"
+          aria-label={item.packed ? t("pack.markNotPacked") : t("pack.markPacked")}
+        >
+          <span
+            className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+              item.packed
+                ? "bg-emerald-500 text-white"
+                : "border-2 border-muted-foreground/40 hover:border-primary"
+            }`}
+          >
+            {item.packed && <Check className="w-3.5 h-3.5" />}
+          </span>
+        </button>
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-sm font-medium truncate ${
+              item.packed ? "line-through text-muted-foreground opacity-70" : ""
+            }`}
+          >
+            {item.label}
+          </p>
+          {item.notes && (
+            <p className="text-xs text-muted-foreground truncate">{item.notes}</p>
+          )}
+        </div>
+        {adder && (
+          <span className="shrink-0" title={adder.displayName}>
+            <UserAvatar name={adder.displayName} avatarUrl={adder.avatarUrl} seed={adder.userId} size="sm" />
+          </span>
+        )}
+      </div>
     </div>
   );
 }
