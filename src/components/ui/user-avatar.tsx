@@ -3,8 +3,8 @@
 /**
  * B19: single source of truth for user avatars across the app.
  *
- * Falls back to initials on a deterministic colored background (matching
- * the AVATAR_COLORS palette in trip-overview) when no avatarUrl is set.
+ * Falls back to initials on a deterministic colored background (derived from
+ * the name via the local palette below) when no avatarUrl is set.
  * Always renders a perfect circle and clips overflow so any user-uploaded
  * image looks consistent regardless of aspect ratio.
  *
