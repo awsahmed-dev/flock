@@ -23,6 +23,7 @@ import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
+import { eachDayOfInterval, format as isoFmt } from "date-fns";
 import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
 import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
 
@@ -93,6 +94,11 @@ export function TripShell({ trip, isOwner, children }: Props) {
   // (Screen D) and the NOW cockpit (Screen C, the trip root — full-screen map
   // + its own draggable sheet). They carry their own controls.
   const started = parseDateOnly(trip.startDate) <= new Date();
+  // Day list for the nav's "Add place to today" sub-sheet (Fix 5).
+  const navDays = eachDayOfInterval({
+    start: parseDateOnly(trip.startDate),
+    end: parseDateOnly(trip.endDate),
+  }).map((d) => isoFmt(d, "yyyy-MM-dd"));
   const isDiscover = pathname.startsWith(`${base}/discover`);
   const immersive = pathname === base || isDiscover;
   // Dark-chrome routes render the WHOLE shell dark (header + body + tab bar).
@@ -186,7 +192,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
           {children}
         </main>
 
-        <DynamicBottomNav tripId={trip.id} />
+        <DynamicBottomNav tripId={trip.id} destination={trip.destination} days={navDays} />
       </div>
     </div>
   );

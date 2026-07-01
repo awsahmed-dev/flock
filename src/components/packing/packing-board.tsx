@@ -252,6 +252,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
           onDelete={remove}
           userId={userId}
           memberById={memberById}
+          scope="shared"
         />
       )}
 
@@ -262,6 +263,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
           onDelete={remove}
           userId={userId}
           memberById={memberById}
+          scope="mine"
         />
       )}
 
@@ -276,13 +278,13 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
       {/* §4: fixed add-item bar — never inside the scroll; sits above the tab
           bar with safe-area inset. Hidden on the read-only Crew tab. */}
       {tab !== "crew" && (
-        <div className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] xl:bottom-0 xl:start-[280px] z-30 bg-card border-t border-border">
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+80px)] xl:bottom-0 xl:start-[280px] z-30 bg-card border-t border-border">
           <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-stretch gap-2">
             <input
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
-              placeholder={tab === "shared" ? t("pack.whatDoesGroupNeed") : t("pack.whatYouNeed")}
+              placeholder={t("pack.addItemShort")}
               className="flex-1 min-w-0 rounded-lg bg-muted/40 border border-border text-sm px-3 h-10 outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
               onKeyDown={(e) => {
                 if (e.key === "Enter") add(tab === "shared" ? "shared" : "mine");
@@ -383,12 +385,14 @@ function CategoryList({
   onDelete,
   userId,
   memberById,
+  scope,
 }: {
   items: Item[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   userId: string;
   memberById: Map<string, Member>;
+  scope: "shared" | "mine";
 }) {
   const t = useT();
   const grouped = useMemo(() => {
@@ -404,10 +408,10 @@ function CategoryList({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
-        <Backpack className="w-8 h-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm font-medium">{t("pack.nothingOnList")}</p>
-        <p className="text-xs mt-1">{t("pack.addToStart")}</p>
+      <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
+        <Backpack className="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <p className="text-sm font-semibold text-foreground">{t("pack.nothingHere")}</p>
+        <p className="text-xs mt-1">{scope === "shared" ? t("pack.sharedHint") : t("pack.mineHint")}</p>
       </div>
     );
   }

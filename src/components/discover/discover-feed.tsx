@@ -64,7 +64,7 @@ const CAT_KEY: Record<string, string> = {
  * room for future refinements (price, open-now, rating) without growing the
  * rail to a dozen chips.
  */
-const INLINE_CATEGORIES: PlaceCategoryKey[] = ["eat", "sight", "stay"];
+const INLINE_CATEGORIES: PlaceCategoryKey[] = ["eat", "sight", "stay", "activity"];
 
 type FetchState = "idle" | "loading" | "error" | "capped" | "unconfigured";
 
@@ -505,57 +505,49 @@ export function DiscoverFeed({
       {/* Floating controls — the glass control layer (Paxawa Control Language,
           §4). Glass-on-dark chips + buttons float over the cinematic photo. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
-        <div className="flex items-center gap-2">
-          {/* A2: top categories inline + one glass Filters pill (badge when
-              active) — every category reachable without a hidden swipe. */}
-          <CategoryStrip
-            tone="glass"
-            category={category}
-            searching={searching}
-            activeFilterCount={activeFilterCount}
-            onSelect={selectCategory}
-            onOpenFilters={() => setFiltersOpen(true)}
-            className="flex-1 min-w-0"
-          />
-
-          {searchOpen || searching ? (
-            <div className="relative shrink-0 w-32 sm:w-56">
+        {searchOpen ? (
+          /* Fix 4 / §9-E: the search bar slides in when tapped from the nav's
+             Search slot; the ✕ restores the category strip. */
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
               <input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onBlur={() => !query && setSearchOpen(false)}
                 placeholder={t("discover.searchPlaceholder")}
                 className="w-full rounded-full glass-dark text-white placeholder:text-white/50 ps-9 pe-8 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               />
               {query && (
-                <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }}
+                <button type="button" onClick={() => setQuery("")}
                   className="absolute end-2.5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white" aria-label={t("common.clear")}>
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-          ) : (
-            <GlassButton iconOnly onClick={() => setSearchOpen(true)} aria-label={t("discover.searchPlaceholder")}>
-              <Search className="w-[18px] h-[18px]" />
-            </GlassButton>
-          )}
-          <GlassButton iconOnly active={view === "map"} onClick={() => setView((v) => (v === "stream" ? "map" : "stream"))} aria-label={t(view === "stream" ? "discover.viewMap" : "discover.viewList")}>
-            <MapIcon className="w-[18px] h-[18px]" />
-          </GlassButton>
-          {/* Wishlist — heart with a saved-count badge, opens the saved sheet. */}
-          <GlassButton iconOnly active={wishlistOpen} onClick={() => setWishlistOpen(true)} aria-label={t("discover.savedTitle")}>
-            <span className="relative inline-flex">
-              <Heart className={`w-[18px] h-[18px] ${saved.size > 0 ? "fill-rose-500 text-rose-500" : ""}`} />
-              {saved.size > 0 && (
-                <span className="absolute -top-2.5 -end-2.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center leading-none">
-                  {saved.size}
-                </span>
-              )}
-            </span>
-          </GlassButton>
-        </div>
+            <button
+              type="button"
+              onClick={() => { setQuery(""); setSearchOpen(false); }}
+              aria-label={t("common.close")}
+              className="shrink-0 w-9 h-9 rounded-full glass-dark text-white flex items-center justify-center"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          /* Fix 4: a clean 5-chip strip (All · Food · Sights · Stay · Activity).
+             Saved + Search moved to the nav; Filters pill + map toggle removed. */
+          <CategoryStrip
+            tone="glass"
+            category={category}
+            searching={false}
+            activeFilterCount={0}
+            onSelect={selectCategory}
+            onOpenFilters={() => {}}
+            showFilters={false}
+            className="w-full"
+          />
+        )}
       </div>
 
       {/* Notices */}
@@ -728,6 +720,7 @@ function CategoryStrip({
   onSelect,
   onOpenFilters,
   className,
+  showFilters = true,
 }: {
   /** "glass" = glass-on-dark (mobile, over the photo stream); "glassLight" =
    *  glass-on-light (desktop, over the light page); both share the material +
@@ -739,6 +732,10 @@ function CategoryStrip({
   onSelect: (c: PlaceCategoryKey | null) => void;
   onOpenFilters: () => void;
   className?: string;
+  /** Fix 4: hide the "Filters" disclosure pill (mobile shows a clean 5-chip
+   *  strip — Saved/Search moved to the nav; the rare categories aren't worth
+   *  the clutter). */
+  showFilters?: boolean;
 }) {
   const t = useT();
   const inline: (PlaceCategoryKey | null)[] = [null, ...INLINE_CATEGORIES];
@@ -767,25 +764,27 @@ function CategoryStrip({
         );
       })}
       {/* The ONE disclosure affordance — opens the rest of the categories. */}
-      <button
-        type="button"
-        onClick={onOpenFilters}
-        aria-haspopup="dialog"
-        aria-label={activeFilterCount > 0 ? t("discover.filtersWithCount", { count: activeFilterCount }) : t("discover.filters")}
-        className={`${baseChip} inline-flex items-center gap-1.5 ${
-          activeFilterCount > 0 ? activeChip : restChip
-        }`}
-      >
-        <SlidersHorizontal className="w-3.5 h-3.5" />
-        <span>{t("discover.filters")}</span>
-        {activeFilterCount > 0 && (
-          <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-black leading-none ${
-            isGlass ? "bg-neutral-900 text-white" : "bg-background text-foreground"
-          }`}>
-            {activeFilterCount}
-          </span>
-        )}
-      </button>
+      {showFilters && (
+        <button
+          type="button"
+          onClick={onOpenFilters}
+          aria-haspopup="dialog"
+          aria-label={activeFilterCount > 0 ? t("discover.filtersWithCount", { count: activeFilterCount }) : t("discover.filters")}
+          className={`${baseChip} inline-flex items-center gap-1.5 ${
+            activeFilterCount > 0 ? activeChip : restChip
+          }`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>{t("discover.filters")}</span>
+          {activeFilterCount > 0 && (
+            <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-black leading-none ${
+              isGlass ? "bg-neutral-900 text-white" : "bg-background text-foreground"
+            }`}>
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 }

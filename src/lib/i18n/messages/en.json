@@ -181,7 +181,8 @@
     "suggestCrew": "Suggest a stop to crew",
     "now": "Now",
     "manage": "Manage",
-    "add": "Add"
+    "add": "Add",
+    "aiComingSoon": "AI planning coming soon"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",
@@ -529,7 +530,11 @@
       "outdoor": "Outdoor",
       "other": "Other"
     },
-    "progressLine": "{packed}/{total} packed · {docs} {docs, plural, one {doc} other {docs}}"
+    "progressLine": "{packed}/{total} packed · {docs} {docs, plural, one {doc} other {docs}}",
+    "addItemShort": "Add an item…",
+    "nothingHere": "Nothing here yet",
+    "sharedHint": "Add shared items your whole crew needs",
+    "mineHint": "Your personal checklist"
   },
   "notifications": {
     "title": "Notifications",

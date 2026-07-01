@@ -77,11 +77,15 @@ export function NowCockpit({
   const [shareOpen, setShareOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
 
-  // §6-E: on load, scroll the day selector so "Today" is the first visible
-  // pill (the trip's start date is often 13 pills back).
+  // §6-E / Fix 8: on load, scroll the day selector so "Today" is the first
+  // visible pill (the trip's start date is often 13 pills back). Deferred with
+  // setTimeout(0) so it runs AFTER the pills have laid out.
   const todayPillRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    todayPillRef.current?.scrollIntoView({ inline: "start", block: "nearest" });
+    const id = setTimeout(() => {
+      todayPillRef.current?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const dayItems = useMemo(

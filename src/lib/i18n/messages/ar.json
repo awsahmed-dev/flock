@@ -181,7 +181,8 @@
     "suggestCrew": "اقترح مكانًا للرفاق",
     "now": "الآن",
     "manage": "إدارة",
-    "add": "إضافة"
+    "add": "إضافة",
+    "aiComingSoon": "تخطيط الذكاء الاصطناعي قريبًا"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",
@@ -529,7 +530,11 @@
       "outdoor": "خارجي",
       "other": "أخرى"
     },
-    "progressLine": "{packed}/{total} مُحضّر · {docs} مستند"
+    "progressLine": "{packed}/{total} مُحضّر · {docs} مستند",
+    "addItemShort": "أضف عنصرًا…",
+    "nothingHere": "لا شيء هنا بعد",
+    "sharedHint": "أضف الأغراض المشتركة التي يحتاجها فريقك",
+    "mineHint": "قائمتك الشخصية"
   },
   "notifications": {
     "title": "الإشعارات",
