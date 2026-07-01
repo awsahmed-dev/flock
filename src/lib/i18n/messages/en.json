@@ -973,7 +973,10 @@
     "aiFill": "AI fill gaps",
     "spent": "Spent",
     "left": "left",
-    "setBudget": "Set a budget"
+    "setBudget": "Set a budget",
+    "budgetSheetTitle": "Set trip budget",
+    "budgetSheetHint": "The whole-trip budget everyone spends against.",
+    "saveBudget": "Save budget"
   },
   "manage": {
     "expenses": "Expenses",

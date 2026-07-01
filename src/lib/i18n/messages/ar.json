@@ -973,7 +973,10 @@
     "aiFill": "إكمال بالذكاء",
     "spent": "المصروف",
     "left": "متبقٍّ",
-    "setBudget": "حدّد ميزانية"
+    "setBudget": "حدّد ميزانية",
+    "budgetSheetTitle": "حدد ميزانية الرحلة",
+    "budgetSheetHint": "ميزانية الرحلة الكاملة التي ينفق منها الجميع.",
+    "saveBudget": "حفظ الميزانية"
   },
   "manage": {
     "expenses": "المصاريف",

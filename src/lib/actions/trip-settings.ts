@@ -39,6 +39,27 @@ export async function updateTrip(formData: FormData) {
   revalidatePath(`/trips/${tripId}/settings`);
 }
 
+/**
+ * §2-D: set the trip's total budget from the NOW cockpit. Membership-level
+ * (not owner-only) — budgeting is collaborative, unlike renaming/deleting.
+ */
+export async function setTripBudget(
+  tripId: string,
+  budgetTotal: number | null,
+  currency: string,
+) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/auth/login");
+  const member = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, user.id)),
+  });
+  if (!member) throw new Error("Not authorized");
+
+  await db.update(trips).set({ budgetTotal, currency }).where(eq(trips.id, tripId));
+  revalidatePath(`/trips/${tripId}`);
+  revalidatePath(`/trips/${tripId}/expenses`);
+}
+
 export async function deleteTrip(formData: FormData) {
   const tripId = formData.get("tripId") as string;
   await assertOwner(tripId);

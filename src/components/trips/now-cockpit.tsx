@@ -5,17 +5,13 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Plus,
-  Sparkles,
-  Wallet,
-  MessageSquare,
-  Map as MapIcon,
   ChevronRight,
   ChevronLeft,
   UserPlus,
   Trash2,
 } from "lucide-react";
 import { ShareTripSheet } from "@/components/trips/share-trip-sheet";
+import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
@@ -77,6 +73,7 @@ export function NowCockpit({
   const [expanded, setExpanded] = useState(false);
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set());
   const [shareOpen, setShareOpen] = useState(false);
+  const [budgetOpen, setBudgetOpen] = useState(false);
 
   const dayItems = useMemo(
     () => items.filter((i) => i.dayDate === selectedDay && !optimisticDeleted.has(i.id)),
@@ -176,6 +173,27 @@ export function NowCockpit({
   const remaining = budget.total != null ? Math.max(0, budget.total - budget.spent) : null;
   const money = (n: number) => `${budget.currency} ${Math.round(n).toLocaleString()}`;
 
+  const budgetBar = (
+    <>
+      <div className="flex items-center justify-between text-xs mb-1.5">
+        <span className="text-white/60">
+          {t("now.spent")} <span className="font-bold text-white tabular-nums">{money(budget.spent)}</span>
+        </span>
+        {budget.total != null ? (
+          <span className="text-white/60 tabular-nums">
+            {money(budget.total)}
+            {remaining != null && <span className="text-emerald-400"> · {money(remaining)} {t("now.left")}</span>}
+          </span>
+        ) : (
+          <span className="text-primary font-semibold">{t("now.setBudget")}</span>
+        )}
+      </div>
+      <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${budgetPct}%` }} />
+      </div>
+    </>
+  );
+
   return (
     <div className="dark fixed top-0 bottom-0 start-0 end-0 xl:start-[280px] bg-[#0a0a0a] text-[#f5f5f7] overflow-hidden">
       {/* Map — fills the viewport behind everything. */}
@@ -225,28 +243,9 @@ export function NowCockpit({
         </button>
       </div>
 
-      {/* Floating action row — over the map, above the sheet. Hidden when the
-          sheet is expanded so it never overlaps the list. */}
-      {!expanded && (
-        <div
-          className="absolute inset-x-0 z-20 flex items-center justify-center gap-2.5 px-4 transition-all duration-200"
-          style={{ bottom: "calc(45svh + 72px)" }}
-        >
-          <Link
-            href={`/trips/${tripId}/discover`}
-            className="flex items-center justify-center gap-1.5 h-11 w-[160px] rounded-full bg-primary text-primary-foreground text-sm font-bold elev-md active:scale-95 transition-transform"
-          >
-            <Plus className="w-4 h-4" /> {t("now.addToday")}
-          </Link>
-          <Link
-            href={`/trips/${tripId}/discover`}
-            className="flex items-center justify-center gap-1.5 h-11 w-[160px] rounded-full bg-white/10 text-white text-sm font-bold ring-1 ring-white/15 active:scale-95 transition-transform"
-            style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-          >
-            <Sparkles className="w-4 h-4" /> {t("now.aiFill")}
-          </Link>
-        </div>
-      )}
+      {/* §2-B: the floating "Add to today" / "AI fill gaps" pill row was removed —
+          both actions move into the dynamic bottom nav's [+] sheet (§9). The map
+          is now unobstructed between the top header and the bottom sheet. */}
 
       {/* Bottom sheet — sits above the mobile tab bar (60px); flush on desktop. */}
       <div
@@ -271,26 +270,22 @@ export function NowCockpit({
           <div className="w-9 h-1 rounded-full bg-white/20" />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-2">
-          {/* Budget bar */}
-          <Link href={`/trips/${tripId}/expenses`} className="block pt-2 pb-3">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-white/60">
-                {t("now.spent")} <span className="font-bold text-white tabular-nums">{money(budget.spent)}</span>
-              </span>
-              {budget.total != null ? (
-                <span className="text-white/60 tabular-nums">
-                  {money(budget.total)}
-                  {remaining != null && <span className="text-emerald-400"> · {money(remaining)} {t("now.left")}</span>}
-                </span>
-              ) : (
-                <span className="text-primary font-semibold">{t("now.setBudget")}</span>
-              )}
-            </div>
-            <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${budgetPct}%` }} />
-            </div>
-          </Link>
+        <div className="flex-1 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+          {/* Budget bar — §2-D: with no budget yet, tapping opens the set-budget
+              sheet; once set, tapping opens the full expenses view. */}
+          {budget.total != null ? (
+            <Link href={`/trips/${tripId}/expenses`} className="block pt-2 pb-3">
+              {budgetBar}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setBudgetOpen(true)}
+              className="block w-full text-start pt-2 pb-3"
+            >
+              {budgetBar}
+            </button>
+          )}
 
           {/* Day selector */}
           <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 py-1">
@@ -334,12 +329,8 @@ export function NowCockpit({
           )}
         </div>
 
-        {/* Quick-access row — always pinned at the sheet bottom. */}
-        <div className="shrink-0 grid grid-cols-3 gap-2 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] border-t border-white/10">
-          <QuickBtn href={`/trips/${tripId}/expenses`} icon={Wallet} label={t("now.logExpense")} />
-          <QuickBtn href={`/trips/${tripId}/chat`} icon={MessageSquare} label={t("now.chat")} />
-          <QuickBtn href={`/trips/${tripId}/itinerary`} icon={MapIcon} label={t("now.fullMap")} />
-        </div>
+        {/* §2-A: quick-access row removed — Log expense / Chat / Full map move
+            into the dynamic bottom nav ([+] sheet + Tools speed-dial, §9). */}
       </div>
 
       <ShareTripSheet
@@ -348,27 +339,14 @@ export function NowCockpit({
         tripId={tripId}
         tripName={tripName}
       />
+      <BudgetSheet
+        open={budgetOpen}
+        onClose={() => setBudgetOpen(false)}
+        tripId={tripId}
+        currency={budget.currency}
+        total={budget.total}
+      />
     </div>
-  );
-}
-
-function QuickBtn({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: typeof Wallet;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center justify-center gap-1 h-11 rounded-xl ring-1 ring-white/15 text-white/80 hover:text-white text-[11px] font-semibold active:scale-95 transition-transform"
-    >
-      <Icon className="w-4 h-4" />
-      {label}
-    </Link>
   );
 }
 
