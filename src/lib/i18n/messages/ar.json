@@ -113,7 +113,8 @@
     "moreAction": "المزيد",
     "suggestActivityAction": "اقترح نشاطًا",
     "enterToSend": "Enter للإرسال",
-    "addOption": "إضافة خيار"
+    "addOption": "إضافة خيار",
+    "suggestPlaceAction": "اقترح مكانًا"
   },
   "states": {
     "nothingYet": "لا شيء حتى الآن",

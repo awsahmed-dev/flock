@@ -233,9 +233,12 @@ export function NowCockpit({
                   key={d}
                   type="button"
                   onClick={() => setSelectedDay(d)}
-                  className={`shrink-0 h-11 min-w-[84px] px-4 rounded-full text-sm font-bold transition-colors ${
-                    active ? "bg-primary text-white" : "bg-white/8 text-white/70 hover:text-white"
-                  }`}
+                  className="shrink-0 h-11 min-w-[84px] px-4 rounded-full text-sm font-bold transition-colors"
+                  style={
+                    active
+                      ? { background: "#6B5CE7", color: "#ffffff" }
+                      : { background: "rgba(255,255,255,0.08)", color: "#AEAEB2" }
+                  }
                 >
                   {isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
                 </button>

@@ -289,7 +289,7 @@ export interface ReplyTarget {
 
 // ─── Main input ───────────────────────────────────────────────────────────────
 
-type ActiveAction = "expense" | "vote" | "itinerary" | null;
+type ActiveAction = "expense" | "itinerary" | null;
 
 interface Props {
   tripId: string;
@@ -358,13 +358,6 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
       {/* Inline action forms */}
       {activeAction === "expense" && (
         <ExpenseForm
-          tripId={tripId}
-          onSent={handleActionSent}
-          onCancel={() => setActiveAction(null)}
-        />
-      )}
-      {activeAction === "vote" && (
-        <VoteForm
           tripId={tripId}
           onSent={handleActionSent}
           onCancel={() => setActiveAction(null)}
@@ -439,42 +432,20 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
           {t("chat.expenseAction")}
         </button>
 
+        {/* Suggest place — replaces the retired Vote action (§0). Opens the
+            place-suggestion form which drops a place into the chat thread. */}
         <button
           type="button"
-          onClick={() => setActiveAction(activeAction === "vote" ? null : "vote")}
+          onClick={() => setActiveAction(activeAction === "itinerary" ? null : "itinerary")}
           className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
-            activeAction === "vote"
-              ? "bg-violet-100 border-violet-300 text-violet-700 shadow-sm dark:bg-violet-950/40 dark:border-violet-700 dark:text-violet-300"
-              : "bg-muted/40 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 text-muted-foreground border-border/60"
+            activeAction === "itinerary"
+              ? "bg-primary/15 border-primary/40 text-primary shadow-sm"
+              : "bg-muted/40 hover:bg-primary/10 hover:border-primary/30 hover:text-primary text-muted-foreground border-border/60"
           }`}
         >
-          <Vote className="w-4 h-4" />
-          {t("chat.voteAction")}
+          <MapPin className="w-4 h-4" />
+          {t("chat.suggestPlaceAction")}
         </button>
-
-        {/* More actions in dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-full border bg-muted/40 hover:bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {t("chat.moreAction")}
-              </button>
-            }
-          />
-          <DropdownMenuContent align="start" className="w-44">
-            <DropdownMenuItem
-              render={<button className="w-full text-left" />}
-              onClick={() => setActiveAction("itinerary")}
-            >
-              <MapPin className="w-3.5 h-3.5 me-2 text-blue-500" />
-              {t("chat.suggestActivityAction")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         <span className="ms-auto text-[10px] text-muted-foreground hidden sm:block">
           {t("chat.enterToSend")}

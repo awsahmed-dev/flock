@@ -113,7 +113,8 @@
     "moreAction": "More",
     "suggestActivityAction": "Suggest activity",
     "enterToSend": "Enter to send",
-    "addOption": "Add option"
+    "addOption": "Add option",
+    "suggestPlaceAction": "Suggest place"
   },
   "states": {
     "nothingYet": "Nothing yet",

@@ -328,7 +328,7 @@ export function MapboxPlanMap({
         const coordinates = cached ?? dayItems.map((i) => [i.lng, i.lat] as [number, number]);
         return {
           type: "Feature" as const,
-          properties: { day, color: colorForDay(day, dayIndex) },
+          properties: { day, color: pinColor ?? colorForDay(day, dayIndex) },
           geometry: { type: "LineString" as const, coordinates },
         };
       });

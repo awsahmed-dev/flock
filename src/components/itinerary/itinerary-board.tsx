@@ -254,6 +254,8 @@ export function ItineraryBoard({
           highlightedItemId={highlightedItemId}
           onItemClick={handleMarkerClick}
           days={days}
+          mapStyle="dark-v11"
+          pinColor="#6b5ce7"
         />
       </div>
 
