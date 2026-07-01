@@ -612,3 +612,28 @@ export const decisions = pgTable("decisions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
 });
+
+/**
+ * §3-A: per-user saved places (the Discover "heart" wishlist), scoped to a
+ * trip. Denormalizes enough of the place (name, photo ref, category, rating,
+ * coords) to render the wishlist cards and to add the place to a day without a
+ * Google call. UNIQUE(trip_id, user_id, place_id) enforced in the migration.
+ */
+export const tripWishlist = pgTable("trip_wishlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  placeId: text("place_id").notNull(),
+  placeName: text("place_name").notNull(),
+  photoRef: text("photo_ref"),
+  category: text("category"),
+  rating: real("rating"),
+  address: text("address"),
+  lat: real("lat"),
+  lng: real("lng"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

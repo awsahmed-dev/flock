@@ -476,7 +476,8 @@
     "moreCategories": "More categories",
     "savedTitle": "Saved",
     "savedEmpty": "No saved places yet — tap the heart on any place.",
-    "savedCount": "{count, plural, =0 {Nothing saved} one {# place} other {# places}}"
+    "savedCount": "{count, plural, =0 {Nothing saved} one {# place} other {# places}}",
+    "noMatches": "No places match your search"
   },
   "pack": {
     "title": "Pack",

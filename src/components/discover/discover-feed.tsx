@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check } from "lucide-react";
+import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { toggleWishlist, removeWishlist, type WishlistPlace } from "@/lib/actions/wishlist";
+import { createItineraryItemFromGooglePlace } from "@/lib/actions/itinerary";
 import type { Place, PlaceFeatures } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -65,8 +68,20 @@ const INLINE_CATEGORIES: PlaceCategoryKey[] = ["eat", "sight", "stay"];
 
 type FetchState = "idle" | "loading" | "error" | "capped" | "unconfigured";
 
+export interface SavedPlace {
+  placeId: string;
+  placeName: string;
+  photoRef: string | null;
+  category: string | null;
+  rating: number | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
 export function DiscoverFeed({
   tripId, destination, center, days, crewSize = 1, isOwner = false, initialCategory = null,
+  savedPlaces = [],
 }: {
   tripId: string;
   destination: string;
@@ -77,6 +92,9 @@ export function DiscoverFeed({
   /** §A1: deep-link entry point (e.g. Bookings' "Find on Discover →" for a
    *  hotel gap lands on the Stay category). */
   initialCategory?: PlaceCategoryKey | null;
+  /** §3-A: the user's persisted wishlist for this trip (hearts pre-fill from
+   *  these; the wishlist sheet lists them all). */
+  savedPlaces?: SavedPlace[];
 }) {
   const t = useT();
   const { vector, emit } = useTasteSession(tripId);
@@ -86,7 +104,8 @@ export function DiscoverFeed({
   const [searchOpen, setSearchOpen] = useState(false);
   const [candidates, setCandidates] = useState<Place[]>([]);
   const [state, setState] = useState<FetchState>("loading");
-  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [saved, setSaved] = useState<Set<string>>(() => new Set(savedPlaces.map((p) => p.placeId)));
+  const [savedItems, setSavedItems] = useState<SavedPlace[]>(savedPlaces);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -95,7 +114,9 @@ export function DiscoverFeed({
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const isDesktop = useIsDesktop();
 
-  const searching = query.trim().length >= 2;
+  // §3-C: search is a LOCAL filter over already-loaded cards (see `visible`),
+  // not an API round-trip — so ranking/category stay in browse mode.
+  const searching = false;
 
   // A2: a non-"All" category counts as one active filter, so the Filters pill
   // can carry a visible active-count badge (Visibility of System Status). When
@@ -131,11 +152,13 @@ export function DiscoverFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates, rankVector, searching, center]);
 
-  // Saved/wishlist list — the saved places present in the current feed.
-  const savedList = useMemo(
-    () => ranked.filter((s) => saved.has(s.place.placeId)),
-    [ranked, saved],
-  );
+  // §3-C: the toolbar search is a LOCAL filter over the already-loaded cards
+  // (name contains) — never a new API call.
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return ranked;
+    return ranked.filter((s) => s.place.name.toLowerCase().includes(q));
+  }, [ranked, query]);
 
   const featuresRef = useRef<Map<string, PlaceFeatures>>(new Map());
   featuresRef.current = useMemo(
@@ -192,15 +215,8 @@ export function DiscoverFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
-  useEffect(() => {
-    if (!searching) {
-      if (query.trim().length === 0) void fetchFeed("", category);
-      return;
-    }
-    const id = setTimeout(() => void fetchFeed(query, category), 350);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  // §3-C: no query→API effect — typing filters the loaded cards locally
+  // (see `visible`); only category changes refetch (effect above).
 
   // ── Signals ────────────────────────────────────────────────────────────────
   const onOpen = useCallback(
@@ -215,16 +231,73 @@ export function DiscoverFeed({
     },
     [emit],
   );
+  // §3-A: heart toggle now PERSISTS to trip_wishlist (optimistic + revert on
+  // failure) and keeps the full wishlist list in sync for the Saved sheet.
   const onSave = useCallback(
     (s: ScoredPlace) => {
+      const id = s.place.placeId;
+      const wasSaved = saved.has(id);
       setSaved((prev) => {
         const next = new Set(prev);
-        if (next.has(s.place.placeId)) next.delete(s.place.placeId);
-        else { next.add(s.place.placeId); emit("place_save", { placeId: s.place.placeId, features: s.features }); }
+        if (wasSaved) next.delete(id);
+        else next.add(id);
         return next;
       });
+      if (wasSaved) {
+        setSavedItems((prev) => prev.filter((p) => p.placeId !== id));
+      } else {
+        emit("place_save", { placeId: id, features: s.features });
+        setSavedItems((prev) =>
+          prev.some((p) => p.placeId === id)
+            ? prev
+            : [
+                {
+                  placeId: id,
+                  placeName: s.place.name,
+                  photoRef: s.place.photoRef ?? null,
+                  category: s.place.category,
+                  rating: s.place.rating ?? null,
+                  address: s.place.address ?? null,
+                  lat: s.place.coords[1],
+                  lng: s.place.coords[0],
+                },
+                ...prev,
+              ],
+        );
+      }
+      const payload: WishlistPlace = {
+        placeId: id,
+        placeName: s.place.name,
+        photoRef: s.place.photoRef ?? null,
+        category: s.place.category,
+        rating: s.place.rating ?? null,
+        address: s.place.address ?? null,
+        lat: s.place.coords[1],
+        lng: s.place.coords[0],
+      };
+      void toggleWishlist(tripId, payload).catch(() => {
+        setSaved((prev) => {
+          const next = new Set(prev);
+          if (wasSaved) next.add(id);
+          else next.delete(id);
+          return next;
+        });
+      });
     },
-    [emit],
+    [emit, saved, tripId],
+  );
+
+  const removeSaved = useCallback(
+    (placeId: string) => {
+      setSaved((prev) => {
+        const next = new Set(prev);
+        next.delete(placeId);
+        return next;
+      });
+      setSavedItems((prev) => prev.filter((p) => p.placeId !== placeId));
+      void removeWishlist(tripId, placeId).catch(() => {});
+    },
+    [tripId],
   );
 
   // ── Map adapter ──────────────────────────────────────────────────────────
@@ -344,7 +417,7 @@ export function DiscoverFeed({
                     keeps each card's hero photo large and dominant beside the
                     persistent map. */}
                 <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-                  {ranked.map((s) => (
+                  {visible.map((s) => (
                     <PlaceCardCompact
                       key={s.place.placeId}
                       scored={s}
@@ -355,6 +428,9 @@ export function DiscoverFeed({
                       onHover={setHighlightedId}
                     />
                   ))}
+                  {visible.length === 0 && query.trim() && (
+                    <p className="col-span-full py-10 text-center text-sm text-muted-foreground">{t("discover.noMatches")}</p>
+                  )}
                 </div>
                 {state === "loading" && (
                   <div className="flex justify-center py-4">
@@ -548,15 +624,21 @@ export function DiscoverFeed({
           ref={containerRef}
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-none"
         >
-          {ranked.map((s) => (
-            <div key={s.place.placeId} className="w-full h-full shrink-0 snap-start snap-always">
-              <PlaceCard
-                scored={s} center={center}
-                saved={saved.has(s.place.placeId)}
-                onOpen={onOpen} onSave={onSave} onHover={setHighlightedId}
-              />
+          {visible.length === 0 && query.trim() ? (
+            <div className="h-full flex items-center justify-center text-white/60 text-sm px-8 text-center">
+              {t("discover.noMatches")}
             </div>
-          ))}
+          ) : (
+            visible.map((s) => (
+              <div key={s.place.placeId} className="w-full h-full shrink-0 snap-start snap-always">
+                <PlaceCard
+                  scored={s} center={center}
+                  saved={saved.has(s.place.placeId)}
+                  onOpen={onOpen} onSave={onSave} onHover={setHighlightedId}
+                />
+              </div>
+            ))
+          )}
           {state === "loading" && (
             <div className="flex justify-center py-4">
               <Loader2 className="w-5 h-5 animate-spin text-white/60" />
@@ -588,43 +670,19 @@ export function DiscoverFeed({
         subtitle={t("discover.savedCount", { count: saved.size })}
         size="md"
       >
-        {savedList.length === 0 ? (
+        {savedItems.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground text-sm">{t("discover.savedEmpty")}</div>
         ) : (
           <ul className="space-y-2 pb-1">
-            {savedList.map((s) => {
-              const photo = s.place.photoRef
-                ? `/api/discover/photo?ref=${encodeURIComponent(s.place.photoRef)}&w=200`
-                : null;
-              return (
-                <li
-                  key={s.place.placeId}
-                  onClick={() => { setWishlistOpen(false); onOpen(s); }}
-                  className="flex items-center gap-3 rounded-2xl bg-muted/50 p-2 cursor-pointer hover:bg-muted transition-colors"
-                >
-                  <span className="w-14 h-14 rounded-xl bg-muted overflow-hidden shrink-0">
-                    {photo && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo} alt={s.place.name} className="w-full h-full object-cover" />
-                    )}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold text-sm truncate">{s.place.name}</span>
-                    {s.place.rating != null && (
-                      <span className="block text-xs text-muted-foreground tabular-nums">★ {s.place.rating.toFixed(1)}</span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onSave(s); }}
-                    aria-label={t("discover.save")}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-rose-500 shrink-0 active:scale-90 transition-transform"
-                  >
-                    <Heart className="w-5 h-5 fill-rose-500" />
-                  </button>
-                </li>
-              );
-            })}
+            {savedItems.map((p) => (
+              <WishlistCard
+                key={p.placeId}
+                place={p}
+                tripId={tripId}
+                days={days}
+                onRemove={() => removeSaved(p.placeId)}
+              />
+            ))}
           </ul>
         )}
       </BottomSheet>
@@ -764,5 +822,102 @@ function Notice({ text }: { text: string }) {
       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
       <span>{text}</span>
     </div>
+  );
+}
+
+/**
+ * §3-A: a saved-place row in the wishlist sheet — photo + name + an "Add to
+ * Day N" dropdown (creates the itinerary item) + a Remove (trash) button.
+ */
+function WishlistCard({
+  place,
+  tripId,
+  days,
+  onRemove,
+}: {
+  place: SavedPlace;
+  tripId: string;
+  days: string[];
+  onRemove: () => void;
+}) {
+  const t = useT();
+  const [adding, setAdding] = useState(false);
+  const [addedDay, setAddedDay] = useState<string | null>(null);
+  const photo = place.photoRef
+    ? `/api/discover/photo?ref=${encodeURIComponent(place.photoRef)}&w=200`
+    : null;
+
+  async function addToDay(dayDate: string) {
+    if (!dayDate || adding) return;
+    setAdding(true);
+    try {
+      await createItineraryItemFromGooglePlace({
+        tripId,
+        dayDate,
+        place: {
+          placeId: place.placeId,
+          name: place.placeName,
+          category: place.category ?? "other",
+          placeTypes: [],
+          rating: place.rating,
+          userRatingsTotal: null,
+          priceLevel: null,
+          coords: [place.lng ?? 0, place.lat ?? 0],
+          address: place.address,
+          photoRef: place.photoRef,
+          hoursSummary: null,
+          topTip: null,
+        },
+      });
+      setAddedDay(dayDate);
+      toast.success(t("discover.addedToast", { name: place.placeName, day: t("itinerary.dayN", { n: days.indexOf(dayDate) + 1 }) }));
+    } catch {
+      toast.error(t("discover.addError"));
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <li className="flex items-center gap-2.5 rounded-2xl bg-muted/50 p-2">
+      <span className="w-14 h-14 rounded-xl bg-muted overflow-hidden shrink-0">
+        {photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt={place.placeName} className="w-full h-full object-cover" />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-bold text-sm truncate">{place.placeName}</span>
+        {place.rating != null && (
+          <span className="block text-xs text-muted-foreground tabular-nums">★ {place.rating.toFixed(1)}</span>
+        )}
+      </span>
+      {addedDay ? (
+        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 px-1 shrink-0">
+          <Check className="w-4 h-4" />
+        </span>
+      ) : (
+        <select
+          disabled={adding}
+          defaultValue=""
+          onChange={(e) => addToDay(e.target.value)}
+          aria-label={t("itinerary.addToDay")}
+          className="rounded-lg bg-card ring-1 ring-border text-xs font-bold px-2 h-9 shrink-0 max-w-[96px] disabled:opacity-50"
+        >
+          <option value="" disabled>{t("itinerary.addToDay")}</option>
+          {days.map((d, i) => (
+            <option key={d} value={d}>{t("itinerary.dayN", { n: i + 1 })}</option>
+          ))}
+        </select>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={t("common.remove")}
+        className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive shrink-0 active:scale-90 transition-transform"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </li>
   );
 }

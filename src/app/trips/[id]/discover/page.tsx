@@ -7,6 +7,9 @@ import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { isOwner } from "@/lib/permissions";
 import { geocode } from "@/lib/geocode";
+import { db } from "@/lib/db";
+import { tripWishlist } from "@/lib/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { DiscoverFeed } from "@/components/discover/discover-feed";
 import type { PlaceCategoryKey } from "@/components/discover/primitives";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
@@ -45,6 +48,23 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const trip = await getTripWithMembership(id, user.id);
   if (!trip) redirect("/dashboard");
 
+  // §3-A: the user's saved places for this trip — hearts pre-fill from these
+  // and the wishlist sheet lists them all (not just those in the current feed).
+  const wishlistRows = await db.query.tripWishlist.findMany({
+    where: and(eq(tripWishlist.tripId, id), eq(tripWishlist.userId, user.id)),
+    orderBy: [desc(tripWishlist.createdAt)],
+  });
+  const savedPlaces = wishlistRows.map((w) => ({
+    placeId: w.placeId,
+    placeName: w.placeName,
+    photoRef: w.photoRef,
+    category: w.category,
+    rating: w.rating,
+    address: w.address,
+    lat: w.lat,
+    lng: w.lng,
+  }));
+
   const geo = await geocode(trip.destination).catch(() => null);
   const center: [number, number] | null = geo ? [geo.lng, geo.lat] : null;
 
@@ -78,6 +98,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         crewSize={trip.members.length}
         isOwner={isOwner(trip, user.id)}
         initialCategory={initialCategory}
+        savedPlaces={savedPlaces}
       />
     </div>
   );

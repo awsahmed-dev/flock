@@ -476,7 +476,8 @@
     "moreCategories": "فئات أخرى",
     "savedTitle": "المحفوظة",
     "savedEmpty": "لا أماكن محفوظة بعد — اضغط القلب على أي مكان.",
-    "savedCount": "{count, plural, =0 {لا شيء محفوظ} one {مكان #} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}"
+    "savedCount": "{count, plural, =0 {لا شيء محفوظ} one {مكان #} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}",
+    "noMatches": "لا توجد أماكن تطابق بحثك"
   },
   "pack": {
     "title": "أمتعة",
