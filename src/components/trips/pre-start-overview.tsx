@@ -19,6 +19,7 @@ export function PreStartOverview({
   name,
   destination,
   dates,
+  daysUntil,
   heroImageUrl,
   staticMapUrl,
   days,
@@ -31,6 +32,7 @@ export function PreStartOverview({
   name: string;
   destination: string;
   dates: string;
+  daysUntil: number;
   heroImageUrl: string | null;
   staticMapUrl: string | null;
   days: PreStartDay[];
@@ -57,10 +59,14 @@ export function PreStartOverview({
           className="absolute inset-0"
           style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.75) 100%)" }}
         />
-        <div className="absolute inset-x-0 bottom-0 p-5">
+        <div className="absolute inset-x-0 bottom-0 p-5 pe-24">
           <h1 className="type-h1 text-white font-bold">{name}</h1>
           <p className="type-body-sm text-white/80 mt-1">{destination} · {dates}</p>
         </div>
+        {/* 0-D: countdown chip. */}
+        <span className="absolute bottom-5 end-5 rounded-full bg-primary text-white text-[11px] font-bold px-3 py-1 tracking-wide">
+          {daysUntil <= 0 ? "TODAY" : `IN ${daysUntil} ${daysUntil === 1 ? "DAY" : "DAYS"}`}
+        </span>
       </div>
 
       <div className="px-4 max-w-3xl mx-auto space-y-5 mt-5">

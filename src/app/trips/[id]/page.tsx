@@ -116,6 +116,7 @@ export default async function TripPage({ params }: Props) {
         name={trip.name}
         destination={trip.destination}
         dates={dateLabel}
+        daysUntil={Math.max(0, Math.ceil((parseDateOnly(trip.startDate).getTime() - Date.now()) / 86400000))}
         heroImageUrl={trip.heroImageUrl ?? null}
         staticMapUrl={staticMapUrl}
         days={preDays}

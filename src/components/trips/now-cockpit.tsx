@@ -77,16 +77,16 @@ export function NowCockpit({
   const [shareOpen, setShareOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
 
-  // §6-E / Fix 8: on load, scroll the day selector so "Today" is the first
-  // visible pill (the trip's start date is often 13 pills back). Deferred with
-  // setTimeout(0) so it runs AFTER the pills have laid out.
+  // §0-A: scroll the day selector so the active "Today" pill is the first
+  // visible one. requestAnimationFrame ensures the pills have laid out first;
+  // "instant" avoids a visible smooth-scroll flash on load.
   const todayPillRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    const id = setTimeout(() => {
-      todayPillRef.current?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-    }, 0);
-    return () => clearTimeout(id);
-  }, []);
+    const id = requestAnimationFrame(() => {
+      todayPillRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "start", block: "nearest" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selectedDay]);
 
   const dayItems = useMemo(
     () => items.filter((i) => i.dayDate === selectedDay && !optimisticDeleted.has(i.id)),
@@ -285,7 +285,7 @@ export function NowCockpit({
 
         <div
           className="flex-1 overflow-y-auto px-4"
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
         >
           {/* Budget bar — §2-D: with no budget yet, tapping opens the set-budget
               sheet; once set, tapping opens the full expenses view. */}
