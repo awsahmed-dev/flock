@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -74,6 +74,13 @@ export function NowCockpit({
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set());
   const [shareOpen, setShareOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
+
+  // §6-E: on load, scroll the day selector so "Today" is the first visible
+  // pill (the trip's start date is often 13 pills back).
+  const todayPillRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    todayPillRef.current?.scrollIntoView({ inline: "start", block: "nearest" });
+  }, []);
 
   const dayItems = useMemo(
     () => items.filter((i) => i.dayDate === selectedDay && !optimisticDeleted.has(i.id)),
@@ -295,6 +302,7 @@ export function NowCockpit({
               return (
                 <button
                   key={d}
+                  ref={isToday ? todayPillRef : undefined}
                   type="button"
                   onClick={() => setSelectedDay(d)}
                   className="shrink-0 h-11 min-w-[84px] px-4 rounded-full text-sm font-bold transition-colors"

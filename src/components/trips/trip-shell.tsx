@@ -182,7 +182,7 @@ export function TripShell({ trip, isOwner, children }: Props) {
         {/* Screen content. Bottom padding clears the fixed tab bar on mobile;
             the desktop sidebar handles its own offset above. Discover is
             immersive — it manages its own full-height + tab-bar clearance. */}
-        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(60px+env(safe-area-inset-bottom))] xl:pb-0"}>
+        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] xl:pb-0"}>
           {children}
         </main>
 

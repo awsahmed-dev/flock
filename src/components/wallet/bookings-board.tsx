@@ -92,14 +92,11 @@ export function BookingsBoard(props: Props) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 lg:max-w-3xl">
-      {/* Header — the page's single job, stated warmly once. */}
-      <div>
-        <h1 className="text-xl font-extrabold tracking-tight lg:text-2xl">
-          {t("bookings.pageTitle")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{t("bookings.jobLine")}</p>
-      </div>
+    <div className="px-4 max-w-2xl mx-auto space-y-6 lg:max-w-3xl">
+      {/* §6-C: the "Bookings" title duplicated the active MANAGE sub-tab, so the
+          redundant page heading is dropped — the sticky tab already labels the
+          section. The one-line job statement stays as context. */}
+      <p className="text-sm text-muted-foreground pt-1">{t("bookings.jobLine")}</p>
 
       {/* Trip context breadcrumb. */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">

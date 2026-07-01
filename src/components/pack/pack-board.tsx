@@ -51,7 +51,7 @@ interface Props {
  */
 export function PackBoard({ tripId, userId, packing, members }: Props) {
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="px-4 max-w-2xl mx-auto">
       <PackingBoard tripId={tripId} userId={userId} items={packing} members={members} />
     </div>
   );
