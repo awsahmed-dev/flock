@@ -195,26 +195,33 @@ export function NowCockpit({
         />
       </div>
 
-      {/* Floating top bar — the immersive cockpit's nav: back to all trips
-          (mobile; desktop has the sidebar) on the left, invite crew on the
-          right. Buttons opt back into pointer events over the map. */}
-      <div className="absolute top-0 inset-x-0 z-20 flex items-center gap-2 px-3 pt-[max(env(safe-area-inset-top),0.75rem)] pb-8 bg-gradient-to-b from-black/55 to-transparent pointer-events-none">
+      {/* §1-A floating header — mobile only; overlays the map with a top-down
+          gradient so white text stays readable without a solid bar. Back →
+          dashboard, trip name (truncated), and the §7 share button. */}
+      <div
+        className="xl:hidden absolute top-0 inset-x-0 z-40 flex items-center gap-1.5 h-[52px] px-2 pointer-events-none"
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)",
+        }}
+      >
         <Link
           href="/dashboard"
           aria-label={t("nav.allTrips")}
-          className="xl:hidden pointer-events-auto w-11 h-11 rounded-full bg-black/35 ring-1 ring-white/15 flex items-center justify-center text-white active:scale-95 transition-transform"
-          style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+          className="pointer-events-auto shrink-0 w-11 h-11 flex items-center justify-center text-white active:opacity-70"
         >
           <ChevronLeft className="w-6 h-6 rtl:rotate-180" />
         </Link>
+        <p className="pointer-events-none flex-1 min-w-0 truncate font-bold text-white text-[15px]">
+          {tripName}
+        </p>
         <button
           type="button"
           onClick={() => setShareOpen(true)}
           aria-label={t("share.title")}
-          className="ms-auto pointer-events-auto w-11 h-11 rounded-full bg-black/35 ring-1 ring-white/15 flex items-center justify-center text-white active:scale-95 transition-transform"
-          style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+          className="pointer-events-auto shrink-0 w-11 h-11 flex items-center justify-center text-white active:opacity-70"
         >
-          <UserPlus className="w-5 h-5" />
+          <UserPlus className="w-6 h-6" />
         </button>
       </div>
 

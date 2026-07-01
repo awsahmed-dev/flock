@@ -89,11 +89,6 @@ export function TripShell({ trip, isOwner, children }: Props) {
   }
 
   const base = `/trips/${trip.id}`;
-  // Mode roots show the trip name; anything deeper shows a back affordance.
-  const isModeRoot =
-    pathname === base ||
-    pathname === `${base}/discover` ||
-    pathname === `${base}/expenses`;
   // Immersive screens have no shell top bar and fill the viewport: Discover
   // (Screen D) and the NOW cockpit (Screen C, the trip root — full-screen map
   // + its own draggable sheet). They carry their own controls.
@@ -134,24 +129,16 @@ export function TripShell({ trip, isOwner, children }: Props) {
         {!immersive && (
         <header className="h-[52px] shrink-0 flex items-center justify-between gap-3 px-4 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30">
           <div className="flex items-center gap-1.5 min-w-0">
-            {isModeRoot ? (
-              <Link
-                href="/dashboard"
-                aria-label="All trips"
-                className="xl:hidden -ms-2 flex items-center justify-center w-11 h-11 rounded-full text-foreground hover:opacity-70"
-              >
-                <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => router.back()}
-                aria-label="Back"
-                className="-ms-2 flex items-center justify-center w-11 h-11 rounded-full text-foreground hover:opacity-70"
-              >
-                <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-              </button>
-            )}
+            {/* §1-A: back always goes to the dashboard — never history.back(),
+                which dead-ends on a direct/deep-link load. Mobile-only; the
+                desktop sidebar owns "All trips". */}
+            <Link
+              href="/dashboard"
+              aria-label="All trips"
+              className="xl:hidden -ms-2 flex items-center justify-center w-11 h-11 rounded-full text-foreground hover:opacity-70"
+            >
+              <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+            </Link>
             <p className="font-bold text-[15px] truncate max-w-[60vw]">{trip.name}</p>
           </div>
 
