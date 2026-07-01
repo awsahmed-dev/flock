@@ -184,6 +184,10 @@ interface Gap {
   subtitle: string;
   /** When set, the row's text link deep-links into this Discover category. */
   discoverCategory?: string;
+  /** §5: when set (and no discoverCategory), the row shows an external search
+   *  link instead — e.g. flights aren't in Discover, so link to Google Flights. */
+  externalUrl?: string;
+  externalLabel?: string;
 }
 
 const TONE: Record<GapTone, { bg: string; text: string }> = {
@@ -247,7 +251,7 @@ function Checklist({
                   <p className="font-bold text-sm leading-snug line-clamp-1">{g.title}</p>
                   <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                     <span className="truncate">{g.subtitle}</span>
-                    {g.discoverCategory && (
+                    {g.discoverCategory ? (
                       <>
                         <span className="text-muted-foreground/40">·</span>
                         {/* Low-emphasis text link — a cross-sell, not a loud
@@ -260,7 +264,20 @@ function Checklist({
                           {t("bookings.findOnDiscover")}
                         </Link>
                       </>
-                    )}
+                    ) : g.externalUrl ? (
+                      <>
+                        <span className="text-muted-foreground/40">·</span>
+                        {/* §5: flights aren't in Discover — external search link. */}
+                        <a
+                          href={g.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 font-bold text-primary hover:underline"
+                        >
+                          {g.externalLabel ?? t("bookings.searchFlights")}
+                        </a>
+                      </>
+                    ) : null}
                   </div>
                 </div>
                 {/* The one primary per row: mark booked (the loop close). */}
@@ -325,6 +342,8 @@ function buildGaps(props: Props, t: (k: string, p?: Record<string, string | numb
     tone: "violet",
     title: t("bookings.checklistFlight"),
     subtitle: t("bookings.checklistFlightSub", { destination: cities[0] ?? props.destination }),
+    externalUrl: "https://www.google.com/flights",
+    externalLabel: t("bookings.searchFlights"),
   });
 
   for (const item of activityItems.slice(0, 3)) {

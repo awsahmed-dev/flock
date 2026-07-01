@@ -695,7 +695,8 @@
     "sampleShow": "اعرض محفظة نموذجية",
     "sampleHide": "أخفِ النموذج",
     "sampleBadge": "نموذج",
-    "sampleCaption": "تذاكر توضيحية — ليست حجوزاتك"
+    "sampleCaption": "تذاكر توضيحية — ليست حجوزاتك",
+    "searchFlights": "ابحث عن رحلات →"
   },
   "wallet": {
     "section": "المحفظة",

@@ -695,7 +695,8 @@
     "sampleShow": "Preview a sample wallet",
     "sampleHide": "Hide the sample",
     "sampleBadge": "Sample",
-    "sampleCaption": "Example passes — not your bookings"
+    "sampleCaption": "Example passes — not your bookings",
+    "searchFlights": "Search flights →"
   },
   "wallet": {
     "section": "Wallet",
