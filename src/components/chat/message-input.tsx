@@ -262,7 +262,7 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
   }
 
   return (
-    <div className="border-t bg-background px-3 py-2.5 space-y-2">
+    <div className="border-t bg-card px-3 py-2.5 space-y-2">
       {/* Inline action forms */}
       {activeAction === "expense" && (
         <ExpenseForm

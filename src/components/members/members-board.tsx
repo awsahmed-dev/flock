@@ -1,92 +1,71 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Copy, Check, Crown } from "lucide-react";
-import { toast } from "sonner";
+import { Crown, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { ShareTripSheet } from "@/components/trips/share-trip-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 
 interface Member {
   userId: string;
   displayName: string;
   role: "owner" | "member";
-  user?: { avatarUrl?: string | null } | null;
+  user?: { avatarUrl?: string | null; displayName?: string | null } | null;
+}
+
+/** §10.3: the live profile name wins over the join-time cached copy —
+ *  "Aws", never "awsahmed68". */
+function memberName(m: Member): string {
+  return m.user?.displayName || m.displayName;
 }
 
 interface Props {
   tripId: string;
+  tripName: string;
   userId: string;
   isOwner: boolean;
   members: Member[];
   inviteUrl: string | null;
 }
 
-function CopyInviteButton({ inviteUrl }: { inviteUrl: string }) {
-  const t = useT();
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      toast.success(t("crew.inviteCopiedToast"));
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error(t("crew.failedToCopyToast"));
-    }
-  }
-
-  return (
-    <Button onClick={handleCopy} variant="outline" size="sm" className="gap-1.5">
-      {copied ? (
-        <Check className="w-3.5 h-3.5 text-emerald-500" />
-      ) : (
-        <Copy className="w-3.5 h-3.5" />
-      )}
-      {copied ? t("common.copied") : t("crew.copyInviteLink")}
-    </Button>
-  );
-}
-
-/* tripId + isOwner are passed by the page but the current MVP doesn't
- * use them (no remove/role-edit yet). Keep them in the prop type so the
- * page contract stays stable when those actions land. */
+/* isOwner + inviteUrl are passed by the page but the current MVP doesn't
+ * use them (no remove/role-edit yet; the share sheet mints its own link).
+ * Keep them in the prop type so the page contract stays stable when those
+ * actions land. */
 export function MembersBoard({
-  tripId: _tripId,
+  tripId,
+  tripName,
   userId,
   isOwner: _isOwner,
   members,
-  inviteUrl,
+  inviteUrl: _inviteUrl,
 }: Props) {
   const t = useT();
   const owner = members.find((m) => m.role === "owner");
   const otherMembers = members.filter((m) => m.role !== "owner");
+  const ordered = owner ? [owner, ...otherMembers] : otherMembers;
+  const [shareOpen, setShareOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* §11: back to the trip (mobile "← trip name" affordance). */}
       <PageHeader
+        backHref={`/trips/${tripId}`}
         title={t("crew.headerTitle")}
         subtitle={t("crew.headerSubtitle", { count: members.length })}
       />
 
-      {inviteUrl && (
-        <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/5 via-violet-500/5 to-fuchsia-500/5 p-4 space-y-2.5">
-          <div>
-            <p className="text-sm font-bold">{t("crew.inviteYourCrew")}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t("crew.anyoneWithLink")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-card ps-3 pe-1 py-1">
-            <span className="text-[11px] text-muted-foreground truncate flex-1 font-mono">
-              {inviteUrl.replace(/^https?:\/\//, "")}
-            </span>
-            <CopyInviteButton inviteUrl={inviteUrl} />
-          </div>
-        </div>
-      )}
+      <ShareTripSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        tripId={tripId}
+        tripName={tripName}
+        crew={members.map((m) => ({
+          userId: m.userId,
+          displayName: memberName(m),
+          avatarUrl: m.user?.avatarUrl ?? null,
+        }))}
+      />
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
@@ -95,25 +74,27 @@ export function MembersBoard({
           </h3>
           <div className="flex-1 h-px bg-border/60" />
         </div>
-        {/* B27-r2: desktop grid of member cards (2 col on lg, 3 on xl) so
-            the page fills its width and shows multiple travelers at once.
-            Mobile stays as a single-column stack. */}
-        <div className="space-y-2 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
-          {owner && (
-            <MemberRow
-              member={owner}
-              isCurrentUser={owner.userId === userId}
-            />
-          )}
-          {otherMembers.map((m) => (
-            <MemberRow
-              key={m.userId}
-              member={m}
-              isCurrentUser={m.userId === userId}
-            />
+        {/* Single-column stack on mobile; fills width on desktop. */}
+        <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
+          {ordered.map((m) => (
+            <MemberRow key={m.userId} member={m} isCurrentUser={m.userId === userId} />
           ))}
         </div>
       </section>
+
+      {/* §11: full-width invite CTA — opens the share sheet (real /invite
+          link + native share). The shell <main> already clears the nav. */}
+      <div className="pt-1">
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl font-semibold text-white active:scale-[0.98] transition-transform"
+          style={{ height: 52, background: "#6B5CE7" }}
+        >
+          <UserPlus className="w-5 h-5" />
+          {t("crew.inviteMore")}
+        </button>
+      </div>
     </div>
   );
 }
@@ -126,30 +107,40 @@ function MemberRow({
   isCurrentUser: boolean;
 }) {
   const t = useT();
+  const avatarUrl = member.user?.avatarUrl ?? null;
+  const isOwner = member.role === "owner";
 
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 hover:border-foreground/15 transition-colors">
-      <UserAvatar
-        name={member.displayName}
-        avatarUrl={member.user?.avatarUrl ?? null}
-        seed={member.userId}
-        size="md"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-sm truncate">{member.displayName}</span>
-          {isCurrentUser && (
-            <span className="text-xs text-muted-foreground">{t("crew.you")}</span>
-          )}
-        </div>
+      {/* §11: 48px avatar — photo, or an accent-tinted initial. */}
+      <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center shrink-0 overflow-hidden">
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt={memberName(member)} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-primary font-bold text-lg">
+            {(memberName(member) || "?")[0].toUpperCase()}
+          </span>
+        )}
       </div>
-      {member.role === "owner" ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase">
+
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-foreground truncate">
+          {memberName(member)}
+          {isCurrentUser && (
+            <span className="text-muted-foreground font-normal"> {t("crew.you")}</span>
+          )}
+        </p>
+      </div>
+
+      {/* Role chip — accent purple for owner, muted for member. */}
+      {isOwner ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase shrink-0">
           <Crown className="w-3 h-3" />
           {t("crew.owner")}
         </span>
       ) : (
-        <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase">
+        <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase shrink-0">
           {t("crew.member")}
         </span>
       )}

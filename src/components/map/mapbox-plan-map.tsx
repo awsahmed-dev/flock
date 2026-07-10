@@ -249,6 +249,21 @@ export function MapboxPlanMap({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── §10.1 Theme Schism: swap the basemap when the app theme flips ──
+  // The map inits once with the initial style; when the mapStyle prop
+  // changes (dark-v11 ↔ light-v11 on theme toggle) we setStyle in place.
+  // setStyle wipes all sources/layers, so bump routeVersion on the next
+  // style.load to force the marker/line sync effect to redraw.
+  const appliedStyleRef = useRef(mapStyle);
+  useEffect(() => {
+    const map = mapRef.current;
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    if (!map || !token || appliedStyleRef.current === mapStyle) return;
+    appliedStyleRef.current = mapStyle;
+    map.setStyle(`https://api.mapbox.com/styles/v1/mapbox/${mapStyle}?access_token=${token}`);
+    map.once("style.load", () => setRouteVersion((v) => v + 1));
+  }, [mapStyle]);
+
   // ── Center on destination once we know it ─────────────────────────
   useEffect(() => {
     if (!destinationCenter || !mapRef.current || items.length > 0) return;
@@ -352,7 +367,10 @@ export function MapboxPlanMap({
           type: "Feature" as const,
           properties: {
             day,
-            color: colorForDay(day, dayIndex),
+            // §4: when a single pin colour is supplied (the Full Map passes the
+            // accent purple), the route lines match it; otherwise fall back to
+            // the per-day palette hue.
+            color: pinColor ?? colorForDay(day, dayIndex),
             focused: !focusedDay || day === focusedDay,
           },
           geometry: { type: "LineString" as const, coordinates },

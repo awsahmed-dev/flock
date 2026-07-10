@@ -86,6 +86,9 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           userRatingsTotal: null,
           placeTypes: null,
           address: null,
+          // Phase 6 additive cols — stubbed for the optimistic shape.
+          stopType: "regular",
+          completedAt: null,
         };
         onAdded(fake);
         toast.success("Item added");

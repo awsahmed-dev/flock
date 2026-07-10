@@ -2,26 +2,35 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Compass } from "lucide-react";
+import {
+  Compass,
+  MapPin,
+  Wallet,
+  Users,
+  MessageCircle,
+  Map as MapIcon,
+  Receipt,
+} from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { trips, tripMembers, profiles } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { differenceInCalendarDays, isFuture, isPast } from "date-fns";
+import { trips, tripMembers, profiles, itineraryItems, expenses } from "@/lib/db/schema";
+import { eq, inArray } from "drizzle-orm";
+import { differenceInCalendarDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
+import { getRates, convert } from "@/lib/fx";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { Logo } from "@/components/ui/logo";
-import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
+import { AccountAvatarButton } from "@/components/account/account-avatar-button";
 import { NewTripTrigger } from "@/components/trips/new-trip-trigger";
-import {
-  DashboardTripCard,
-  type TripStatusTone,
-} from "@/components/dashboard/dashboard-trip-card";
+import { ColdStartRedirect } from "@/components/dashboard/cold-start-redirect";
+import { tripPhase } from "@/lib/trip-phase";
 import type { InferSelectModel } from "drizzle-orm";
 import type { trips as tripsTable } from "@/lib/db/schema";
 
 type Trip = InferSelectModel<typeof tripsTable>;
+
+const ACCENT = "#6B5CE7";
 
 const CARD_GRADIENTS = [
   "from-blue-500 to-indigo-600",
@@ -47,11 +56,12 @@ function getTimeOfDay() {
 }
 
 /**
- * Dashboard / trip list (redesign brief Screen A). Minimal shell before a trip
- * is selected: top bar (logo + avatar), greeting, a horizontal rail of active /
- * upcoming trip cards with status chips, a Memories rail of past trips, and the
- * + New-trip FAB. No stats bar, no sidebar, no "where to next" inspiration —
- * only what Screen A specifies.
+ * Dashboard (Phase 4B §1). A hierarchy, not a flat photo album:
+ *   ZONE 1 — the ACTIVE trip as a full-bleed hero + quick actions.
+ *   ZONE 2 — COMING UP as a compact horizontal rail with countdown chips.
+ *   ZONE 3 — MEMORIES (past trips) as a 2-column grid.
+ * The header carries the greeting + the shared account avatar; the old
+ * floating "+" FAB is gone (new trip lives in the rail / a bottom CTA).
  */
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -75,119 +85,338 @@ export default async function DashboardPage() {
     .orderBy(trips.startDate);
 
   const allTrips: Trip[] = userTrips.map((r) => r.trip);
-
   const now = new Date();
+
+  // §1-F: separate the trip list into the three zones.
   const ongoing = allTrips.filter(
-    (t) => parseDateOnly(t.startDate) <= now && now <= parseDateOnly(t.endDate),
+    (t) => parseDateOnly(t.startDate) <= now && parseDateOnly(t.endDate) >= now,
   );
-  const upcoming = allTrips
-    .filter((t) => isFuture(parseDateOnly(t.startDate)))
-    .sort(
-      (a, b) =>
-        parseDateOnly(a.startDate).getTime() - parseDateOnly(b.startDate).getTime(),
-    );
-  const past = allTrips
-    .filter((t) => isPast(parseDateOnly(t.endDate)))
-    .sort(
-      (a, b) =>
-        parseDateOnly(b.endDate).getTime() - parseDateOnly(a.endDate).getTime(),
-    );
-  const activeUpcoming = [...ongoing, ...upcoming];
+  const future = allTrips
+    .filter((t) => parseDateOnly(t.startDate) > now)
+    .sort((a, b) => parseDateOnly(a.startDate).getTime() - parseDateOnly(b.startDate).getTime());
+  const pastTrips = allTrips
+    .filter((t) => parseDateOnly(t.endDate) < now)
+    .sort((a, b) => parseDateOnly(b.endDate).getTime() - parseDateOnly(a.endDate).getTime());
+
+  const activeTrip = ongoing[0] ?? null;
+  // Any extra ongoing trip (rare) rides in the Coming Up rail so it isn't lost.
+  const upcomingTrips = [...ongoing.slice(1), ...future];
+
+  // Stop counts (total + today) for the hero + rail cards (+ the freshest
+  // past trip so the §7-C Wrap prompt can show its stop count).
+  const statTripIds = [activeTrip, ...upcomingTrips, pastTrips[0]]
+    .filter(Boolean)
+    .map((t) => (t as Trip).id);
+  const todayIso = format(now, "yyyy-MM-dd");
+  const itinByTrip = new Map<string, { total: number; today: number }>();
+  if (statTripIds.length) {
+    const rows = await db
+      .select({ tripId: itineraryItems.tripId, dayDate: itineraryItems.dayDate })
+      .from(itineraryItems)
+      .where(inArray(itineraryItems.tripId, statTripIds));
+    for (const r of rows) {
+      const e = itinByTrip.get(r.tripId) ?? { total: 0, today: 0 };
+      e.total++;
+      if (r.dayDate === todayIso) e.today++;
+      itinByTrip.set(r.tripId, e);
+    }
+  }
+
+  // Active-trip live stats: crew, spend, day-of-trip.
+  let activeStats: {
+    memberCount: number;
+    spent: number;
+    currency: string;
+    totalDays: number;
+    currentDayIndex: number;
+    todayStops: number;
+  } | null = null;
+  if (activeTrip) {
+    const tripCurrency = activeTrip.currency ?? "USD";
+    const [memberRows, expRows] = await Promise.all([
+      db.select({ userId: tripMembers.userId }).from(tripMembers).where(eq(tripMembers.tripId, activeTrip.id)),
+      db.select({ amount: expenses.amount, currency: expenses.currency }).from(expenses).where(eq(expenses.tripId, activeTrip.id)),
+    ]);
+    let spent = 0;
+    if (expRows.length) {
+      const rates = await getRates(tripCurrency).catch(() => null);
+      for (const e of expRows) {
+        const amt = Number(e.amount) || 0;
+        spent += e.currency !== tripCurrency ? convert(amt, e.currency, tripCurrency, rates) ?? amt : amt;
+      }
+    }
+    const start = parseDateOnly(activeTrip.startDate);
+    const end = parseDateOnly(activeTrip.endDate);
+    const totalDays = differenceInCalendarDays(end, start) + 1;
+    const currentDayIndex = Math.max(0, Math.min(totalDays - 1, differenceInCalendarDays(now, start)));
+    activeStats = {
+      memberCount: memberRows.length,
+      spent,
+      currency: tripCurrency,
+      totalDays,
+      currentDayIndex,
+      todayStops: itinByTrip.get(activeTrip.id)?.today ?? 0,
+    };
+  }
 
   const locale = await getLocale();
   const dict = getDictionary(locale);
-  const t = (k: string, p?: Record<string, string | number>) =>
-    tFromDict(dict, k, p, locale);
+  const t = (k: string, p?: Record<string, string | number>) => tFromDict(dict, k, p, locale);
   const timeOfDay = getTimeOfDay();
 
-  function statusFor(trip: Trip): { label: string; tone: TripStatusTone } {
-    const start = parseDateOnly(trip.startDate);
-    const end = parseDateOnly(trip.endDate);
-    if (start <= now && now <= end) return { label: t("dashboard.statusNow"), tone: "now" };
-    const d = differenceInCalendarDays(start, now);
-    if (d <= 30) return { label: t("dashboard.statusInDays", { count: d }), tone: "soon" };
-    return { label: t("dashboard.statusUpcoming"), tone: "upcoming" };
-  }
   function datesLabel(trip: Trip): string {
     return `${format(parseDateOnly(trip.startDate), "d MMM")} – ${format(parseDateOnly(trip.endDate), "d MMM")}`;
+  }
+  function money(amount: number, currency: string): string {
+    return `${currency} ${Math.round(amount).toLocaleString()}`;
   }
 
   const empty = allTrips.length === 0;
 
+  // Phase 6 §2.2: cold-start — a LIVE trip owns the app open.
+  const liveTrip = allTrips.find((t) => tripPhase(t) === "LIVE") ?? null;
+
   return (
-    <div className="min-h-svh bg-background text-foreground flex flex-col">
-      {/* Top bar — logo left, avatar right (brief Screen A). */}
-      <header className="h-[52px] shrink-0 flex items-center justify-between px-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-30">
-        <Link href="/dashboard" aria-label="Paxawa" className="text-foreground">
-          <Logo variant="full" size="sm" />
-        </Link>
-        <DashboardAccountMenu
-          displayName={profileRow?.displayName ?? firstName}
-          avatarUrl={profileRow?.avatarUrl ?? null}
-          userId={user.id}
-        />
+    <div className="min-h-svh bg-background text-foreground">
+      <ColdStartRedirect liveTripId={liveTrip?.id ?? null} />
+      {/* HEADER — date + greeting + account avatar. */}
+      <header className="flex items-start justify-between px-4 pt-6 pb-4">
+        <div className="min-w-0">
+          <Link href="/dashboard" aria-label="Paxawa" className="inline-block text-foreground">
+            <Logo variant="full" size="sm" />
+          </Link>
+          <p className="type-caption text-tertiary mt-3 uppercase tracking-wider">
+            {format(now, "EEEE, d MMMM")}
+          </p>
+          <h1 className="text-[26px] font-bold leading-tight mt-0.5 truncate">
+            {t(`greeting.${timeOfDay}`, { name: firstName })}
+          </h1>
+        </div>
+        <div className="pt-1 shrink-0">
+          <AccountAvatarButton size={40} />
+        </div>
       </header>
 
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 pb-[calc(96px+env(safe-area-inset-bottom))] space-y-8">
-        {/* Greeting */}
-        <div>
-          <p className="type-caption text-tertiary">{format(now, "EEEE, d MMMM")}</p>
-          <h1 className="type-display mt-1">{t(`greeting.${timeOfDay}`, { name: firstName })}</h1>
-        </div>
-
-        {empty ? (
+      {empty ? (
+        <div className="px-4">
           <div className="rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center">
             <Compass className="w-8 h-8 mx-auto text-tertiary" />
             <p className="mt-3 type-body-lg font-semibold">{t("dashboard.noTripsYet")}</p>
-            <div className="mt-4">
+            <div className="mt-4 flex justify-center">
               <NewTripTrigger variant="inline" label={t("dashboard.newTrip")} />
             </div>
           </div>
-        ) : (
-          <>
-            {activeUpcoming.length > 0 && (
+        </div>
+      ) : (
+        <div
+          className="flex flex-col gap-7"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 32px)" }}
+        >
+          {/* Phase 6 §7-C: fresh Wrap prompt — a trip that ended < 14 days ago
+              owns the top of the dashboard when nothing is live. */}
+          {!activeTrip &&
+            pastTrips[0] &&
+            differenceInCalendarDays(now, parseDateOnly(pastTrips[0].endDate)) <= 14 && (
               <section>
-                <h2 className="type-caption text-tertiary mb-3">{t("dashboard.yourTrips")}</h2>
-                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-1">
-                  {activeUpcoming.map((trip) => (
-                    <DashboardTripCard
-                      key={trip.id}
-                      href={`/trips/${trip.id}`}
-                      name={trip.name}
-                      dates={datesLabel(trip)}
-                      photo={trip.heroImageUrl ?? null}
-                      gradient={getGradient(trip.id)}
-                      status={statusFor(trip)}
-                    />
-                  ))}
+                <div className="relative mx-4 rounded-3xl overflow-hidden" style={{ height: 180 }}>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(pastTrips[0].id)}`} />
+                  {pastTrips[0].heroImageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={pastTrips[0].heroImageUrl} alt={pastTrips[0].name} className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.88) 100%)" }} />
+                  <Link href={`/trips/${pastTrips[0].id}`} prefetch aria-label={pastTrips[0].name} className="absolute inset-0 z-10" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 z-20 pointer-events-none">
+                    <h2 className="text-[22px] font-bold text-white leading-tight">
+                      {pastTrips[0].name} — wrapped 🎬
+                    </h2>
+                    <p className="text-[13px] text-white/70 mt-0.5">
+                      {(itinByTrip.get(pastTrips[0].id)?.total ?? 0) > 0
+                        ? `${itinByTrip.get(pastTrips[0].id)?.total} stops — `
+                        : ""}
+                      See your Wrap →
+                    </p>
+                  </div>
                 </div>
               </section>
             )}
 
-            {past.length > 0 && (
-              <section>
-                <h2 className="type-caption text-tertiary mb-3">{t("dashboard.memories")}</h2>
-                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-1">
-                  {past.map((trip) => (
-                    <DashboardTripCard
+          {/* ZONE 1 — ACTIVE TRIP HERO. §4-B: the quick actions live INSIDE the
+              card so they clearly belong to the active trip. A full-card tap
+              zone (z-10) sits under everything except the action pills. */}
+          {activeTrip && activeStats && (
+            <section>
+              <SectionLabel label={t("dashboard.now")} />
+              <div className="relative mx-4 rounded-3xl overflow-hidden" style={{ height: 260 }}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(activeTrip.id)}`} />
+                {activeTrip.heroImageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={activeTrip.heroImageUrl} alt={activeTrip.name} className="absolute inset-0 w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.88) 100%)" }} />
+
+                {/* Full-card tap zone → trip NOW page. */}
+                <Link href={`/trips/${activeTrip.id}`} prefetch aria-label={activeTrip.name} className="absolute inset-0 z-10" />
+
+                {/* LIVE badge */}
+                <div className="absolute top-3 end-3 z-20 rounded-full px-3 py-1 flex items-center gap-1.5" style={{ background: "#34C759" }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  <span className="text-[11px] font-bold text-white">{t("dashboard.live")}</span>
+                </div>
+
+                {/* Bottom content — non-interactive except the action pills, so
+                    taps elsewhere fall through to the tap zone. */}
+                <div className="absolute inset-x-0 bottom-0 p-4 z-20 pointer-events-none">
+                  <h2 className="text-[22px] font-bold text-white leading-tight line-clamp-2">{activeTrip.name}</h2>
+                  <p className="text-[13px] text-white/70 mt-0.5">
+                    {activeTrip.destination} · {t("dashboard.dayOf", { current: activeStats.currentDayIndex + 1, total: activeStats.totalDays })}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <StatChip icon={MapPin} value={t("dashboard.stopsToday", { count: activeStats.todayStops })} />
+                    <StatChip icon={Wallet} value={money(activeStats.spent, activeStats.currency)} />
+                    <StatChip icon={Users} value={t("dashboard.crewCount", { count: activeStats.memberCount })} />
+                  </div>
+                  <div className="flex gap-2 mt-3 pointer-events-auto">
+                    <QuickActionPill href={`/trips/${activeTrip.id}/chat`} icon={MessageCircle} label={t("nav.chat")} />
+                    <QuickActionPill href={`/trips/${activeTrip.id}/itinerary`} icon={MapIcon} label={t("nav.map")} />
+                    <QuickActionPill href={`/trips/${activeTrip.id}/expenses`} icon={Receipt} label={t("nav.expenses")} />
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ZONE 2 — COMING UP. */}
+          {upcomingTrips.length > 0 && (
+            <section>
+              <SectionLabel label={t("dashboard.comingUp")} />
+              <div className="flex gap-3 overflow-x-auto scrollbar-none px-4 pb-1">
+                {upcomingTrips.map((trip) => {
+                  const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(trip.startDate), now));
+                  const stops = itinByTrip.get(trip.id)?.total ?? 0;
+                  const totalDays = differenceInCalendarDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
+                  const progress = Math.min(100, (stops / Math.max(1, totalDays * 3)) * 100);
+                  return (
+                    <Link
                       key={trip.id}
                       href={`/trips/${trip.id}`}
-                      name={trip.name}
-                      dates={datesLabel(trip)}
-                      photo={trip.heroImageUrl ?? null}
-                      gradient={getGradient(trip.id)}
-                      variant="memory"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        )}
-      </main>
+                      prefetch
+                      className="relative rounded-2xl overflow-hidden shrink-0 active:scale-[0.98] transition-transform"
+                      style={{ width: 160, height: 200 }}
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(trip.id)}`} />
+                      {trip.heroImageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={trip.heroImageUrl} alt={trip.name} className="absolute inset-0 w-full h-full object-cover" />
+                      )}
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.80) 100%)" }} />
+                      <div className="absolute top-3 start-3 rounded-full px-2.5 py-1" style={{ background: ACCENT }}>
+                        <span className="text-[10px] font-bold text-white">
+                          {daysUntil === 0 ? t("dashboard.today") : t("dashboard.daysShort", { count: daysUntil })}
+                        </span>
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 p-3">
+                        <p className="text-[14px] font-bold text-white leading-tight line-clamp-2">{trip.name}</p>
+                        <p className="text-[11px] text-white/65 mt-0.5">{datesLabel(trip)}</p>
+                        <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.20)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${progress}%`, background: ACCENT, minWidth: stops > 0 ? 6 : 0 }} />
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+                {/* Dashed "New trip" card. */}
+                <NewTripTrigger variant="card" label={t("dashboard.newTrip")} />
+              </div>
+            </section>
+          )}
 
-      {/* + New trip — fixed FAB opening the 3-step create sheet (Screen A/B). */}
-      {!empty && <NewTripTrigger variant="fab" label={t("dashboard.newTrip")} />}
+          {/* ZONE 3 — MEMORIES. */}
+          {pastTrips.length > 0 && (
+            <section>
+              <SectionLabel label={t("dashboard.memories")} />
+              {/* §4-C / §10.10: compact square tiles — the past takes a quarter
+                  of the pixels; 2-up on mobile, 4-up on md+, capped ~180px.
+                  Coverless trips get a calm surface tile with the destination
+                  initial — not a giant raw purple gradient. */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 px-4">
+                {pastTrips.map((trip) => (
+                  <Link
+                    key={trip.id}
+                    href={`/trips/${trip.id}`}
+                    prefetch
+                    className="relative rounded-2xl overflow-hidden active:scale-[0.98] transition-transform mx-auto w-full"
+                    style={{ aspectRatio: "1 / 1", maxWidth: 180, maxHeight: 180 }}
+                  >
+                    {trip.heroImageUrl ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={trip.heroImageUrl} alt={trip.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.80) 100%)" }} />
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 bg-card border border-border rounded-2xl flex items-center justify-center">
+                        <span
+                          className="font-extrabold"
+                          style={{ fontSize: 40, fontWeight: 800, color: "rgba(107,92,231,0.45)" }}
+                        >
+                          {(trip.destination || trip.name || "?").charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 p-2.5">
+                      <p className={`text-[13px] font-bold leading-tight line-clamp-1 ${trip.heroImageUrl ? "text-white" : "text-foreground"}`}>{trip.name}</p>
+                      <p className={`text-[10px] mt-0.5 ${trip.heroImageUrl ? "text-white/60" : "text-muted-foreground"}`}>{datesLabel(trip)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* §1-G: full-width new-trip CTA when there's nothing coming up. */}
+          {upcomingTrips.length === 0 && (
+            <div className="px-4">
+              <NewTripTrigger variant="block" label={t("dashboard.planNewTrip")} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/* ── Small presentational helpers ──────────────────────────────────────── */
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <p className="mb-3 px-4 text-[11px] font-semibold tracking-wider uppercase text-tertiary">
+      {label}
+    </p>
+  );
+}
+
+function StatChip({ icon: Icon, value }: { icon: typeof MapPin; value: string }) {
+  return (
+    <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: "rgba(255,255,255,0.15)" }}>
+      <Icon size={12} className="text-white" />
+      <span className="text-[11px] font-medium text-white">{value}</span>
+    </span>
+  );
+}
+
+function QuickActionPill({ href, icon: Icon, label }: { href: string; icon: typeof MapPin; label: string }) {
+  // §4-B: glass pill overlaid on the hero card. backdropFilter MUST be inline —
+  // the bundler strips it from stylesheets.
+  return (
+    <Link
+      href={href}
+      prefetch
+      className="relative z-20 flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 active:scale-[0.97] transition-transform"
+      style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
+    >
+      <Icon size={14} className="text-white" />
+      <span className="text-[12px] font-semibold text-white">{label}</span>
+    </Link>
   );
 }

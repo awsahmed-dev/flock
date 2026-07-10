@@ -456,6 +456,42 @@ export async function updateItemStatus(
   revalidatePath(`/trips/${tripId}/itinerary`);
 }
 
+/**
+ * Phase 6 §3-C/§3-E: mark a stop done (LIVE check-off) or un-done (the
+ * retro-mark editor — RECAP's one sanctioned edit). Writes completed_at
+ * and mirrors an audit line into the Pulse.
+ */
+export async function setStopCompleted(itemId: string, tripId: string, done: boolean) {
+  const user = await getAuthenticatedUser();
+  const trip = await getTripWithMembership(tripId, user.id);
+  if (!trip) throw new Error("Access denied");
+
+  const [row] = await db
+    .update(itineraryItems)
+    .set({ completedAt: done ? new Date() : null, updatedAt: new Date() })
+    .where(and(eq(itineraryItems.id, itemId), eq(itineraryItems.tripId, tripId)))
+    .returning({ id: itineraryItems.id, title: itineraryItems.title, dayDate: itineraryItems.dayDate });
+
+  if (row && done) {
+    // §4-B: stop check-offs feed the Pulse (best-effort, never blocks).
+    const { activities } = await import("@/lib/db/schema");
+    await db
+      .insert(activities)
+      .values({
+        tripId,
+        actorId: user.id,
+        eventType: "stop_done",
+        stopId: row.id,
+        placeName: row.title,
+        metadata: { dayDate: row.dayDate },
+      })
+      .catch(() => {});
+  }
+
+  revalidatePath(`/trips/${tripId}`);
+  revalidatePath(`/trips/${tripId}/itinerary`);
+}
+
 export async function deleteItineraryItem(itemId: string, tripId: string) {
   const user = await getAuthenticatedUser();
   const trip = await getTripWithMembership(tripId, user.id);

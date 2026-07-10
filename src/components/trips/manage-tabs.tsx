@@ -16,9 +16,10 @@ export function ManageTabs({
   active: "expenses" | "bookings" | "pack";
 }) {
   const t = useT();
+  // Phase 6 §6-C: the Bookings tab is gone — bookings are BookingAnchor stops
+  // in the itinerary; /wallet redirects to /money.
   const tabs = [
-    { key: "expenses" as const, label: t("manage.expenses"), href: `/trips/${tripId}/expenses` },
-    { key: "bookings" as const, label: t("manage.bookings"), href: `/trips/${tripId}/wallet` },
+    { key: "expenses" as const, label: t("manage.expenses"), href: `/trips/${tripId}/money` },
     { key: "pack" as const, label: t("manage.pack"), href: `/trips/${tripId}/pack` },
   ];
   return (

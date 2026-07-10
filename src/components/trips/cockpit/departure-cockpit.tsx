@@ -1,0 +1,264 @@
+import Link from "next/link";
+import { differenceInCalendarDays } from "date-fns";
+import { format as dfFormat } from "@/lib/i18n/date-fns";
+import { parseDateOnly } from "@/lib/date-only";
+import { Plane, BedDouble, TrainFront, Luggage, Users, FileText } from "lucide-react";
+import { TripPrepChecklist } from "@/components/trips/trip-prep-checklist";
+import { MetricGrid } from "./metric-grid";
+import { CrewPulse } from "./crew-pulse";
+import type { CockpitShared, CockpitAnchor } from "./types";
+
+/**
+ * Phase 6 §3-D — NOW in DEPARTURE phase (start − 7d → start). Slim hero
+ * with a pulsing countdown, the Departure Board (weather · flights ·
+ * hotel · packing · crew readiness), a read-only Day 1 preview, the
+ * collapsed prep row, and the metric grid.
+ */
+export async function DepartureCockpit(props: CockpitShared) {
+  const {
+    tripId, name, destination, startDate, endDate, heroImageUrl, currency,
+    budgetTotal, days, items, crew, packing, readiness, ticker,
+  } = props;
+  const base = `/trips/${tripId}`;
+  const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
+  const dateLabel = dfFormat(parseDateOnly(startDate), "EEE d MMM");
+
+  // Weather for the start date — open-meteo, no API key. Row hidden on any
+  // failure (§3-D: no placeholder).
+  const coords = items.find((i) => i.lat != null && i.lng != null);
+  let weather: { tempMax: number; description: string } | null = null;
+  if (coords) {
+    try {
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&daily=weather_code,temperature_2m_max&start_date=${startDate}&end_date=${startDate}&timezone=auto`,
+        { next: { revalidate: 10800 } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const code = data?.daily?.weather_code?.[0];
+        const tempMax = data?.daily?.temperature_2m_max?.[0];
+        if (typeof tempMax === "number" && typeof code === "number") {
+          weather = { tempMax: Math.round(tempMax), description: wmoDescription(code) };
+        }
+      }
+    } catch {
+      /* row hidden */
+    }
+  }
+
+  // Day 0/1 anchors for the board.
+  const day1 = days[0];
+  const boardAnchors = props.anchors.filter((a) => a.dayDate === day1 || a.dayDate === days[1]);
+  const flights = boardAnchors.filter((a) => a.stopType === "booking_flight");
+  const stays = boardAnchors.filter((a) => a.stopType === "booking_stay");
+
+  const day1Stops = items
+    .filter((i) => i.dayDate === day1)
+    .sort((a, b) => {
+      // Anchors on top, then by time (§6-B pinned behavior).
+      const aAnchor = a.stopType !== "regular" ? 0 : 1;
+      const bAnchor = b.stopType !== "regular" ? 0 : 1;
+      if (aAnchor !== bAnchor) return aAnchor - bAnchor;
+      return (a.startTime ?? "99").localeCompare(b.startTime ?? "99");
+    });
+
+  const packLeft = packing.total - packing.packed;
+  const packUrgent = packing.total > 0 && packing.packed / packing.total < 0.5 && daysUntil <= 1;
+
+  return (
+    <main className="bg-background text-foreground min-h-svh">
+      {/* 1. SLIM HERO (180px) with pulsing countdown. */}
+      <div className="relative w-full overflow-hidden" style={{ height: 180 }}>
+        {heroImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={heroImageUrl} alt={destination} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-violet-900/50" />
+        )}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 20%, rgba(0,0,0,0.88))" }} />
+        <div className="absolute bottom-0 inset-x-0 px-4 pb-3 flex items-end justify-between gap-3">
+          <h1 className="text-white" style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.4 }}>
+            {name}
+          </h1>
+          <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 bg-primary text-white shrink-0" style={{ fontSize: 11, fontWeight: 700 }}>
+            {daysUntil <= 0 ? "TODAY ✈" : `IN ${daysUntil} ${daysUntil === 1 ? "DAY" : "DAYS"}`}
+            {daysUntil > 0 && (
+              <span className="w-1.5 h-1.5 rounded-full bg-white" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+            )}
+          </span>
+        </div>
+      </div>
+
+      <div
+        className="flex flex-col gap-4 px-4 pt-4 max-w-2xl mx-auto"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
+      >
+        <CrewPulse tripId={tripId} crew={crew} readiness={readiness} ticker={ticker} />
+
+        {/* 2. DEPARTURE BOARD. */}
+        <section className="rounded-3xl bg-card border border-border overflow-hidden" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <div className="px-4 pt-3 pb-2">
+            <p className="text-[11px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">Departure</p>
+            <p className="text-[15px] font-bold text-foreground mt-0.5">
+              {destination} · {dateLabel}
+            </p>
+          </div>
+
+          {weather && (
+            <BoardRow>
+              ⛅ {weather.tempMax}° {weather.description} {dfFormat(parseDateOnly(startDate), "EEEE")}
+              {weather.description.includes("rain") || weather.description.includes("thunder")
+                ? " — pack a rain layer"
+                : ""}
+            </BoardRow>
+          )}
+
+          {flights.length > 0 || stays.length > 0 ? (
+            <>
+              {flights.map((a) => (
+                <AnchorRow key={a.id} anchor={a} icon={Plane} />
+              ))}
+              {stays.map((a) => (
+                <AnchorRow key={a.id} anchor={a} icon={BedDouble} />
+              ))}
+            </>
+          ) : (
+            <BoardRow>
+              <span className="flex items-center justify-between w-full">
+                <span className="text-muted-foreground">✈️ Add flights &amp; hotels for the board</span>
+                <Link href={`${base}/itinerary`} className="text-primary font-bold">
+                  [+]
+                </Link>
+              </span>
+            </BoardRow>
+          )}
+
+          <BoardRow>
+            <span className="flex items-center justify-between w-full">
+              <span className={packUrgent ? "text-warning font-semibold" : ""}>
+                <Luggage size={14} className="inline me-1.5 -mt-0.5" />
+                Packing {packing.packed}/{packing.total}
+                {packLeft > 0 ? ` — ${packLeft} left` : " ✓"}
+              </span>
+              <Link href={`${base}/pack`} className="text-primary font-bold text-[13px]">
+                Pack now
+              </Link>
+            </span>
+          </BoardRow>
+
+          {crew.length > 1 && (
+            <BoardRow>
+              <span className="text-muted-foreground text-[13px]">
+                <Users size={14} className="inline me-1.5 -mt-0.5" />
+                {crew
+                  .slice(0, 3)
+                  .map((m) => `${m.displayName.split(" ")[0]}: joined ✓`)
+                  .join(" · ")}
+              </span>
+            </BoardRow>
+          )}
+        </section>
+
+        {/* 3. DAY 1 PREVIEW — read-only compact timeline. */}
+        {day1Stops.length > 0 && (
+          <section>
+            <p className="text-[15px] font-bold text-foreground mb-2">First day, at a glance</p>
+            <div className="rounded-2xl bg-card border border-border divide-y divide-border/60">
+              {day1Stops.slice(0, 6).map((s, i) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-3 px-4 h-12"
+                  style={
+                    s.stopType !== "regular"
+                      ? { borderInlineStart: "3px solid #6B5CE7", background: "var(--accent-glow)" }
+                      : undefined
+                  }
+                >
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 min-w-0 text-[14px] font-semibold truncate">{s.title}</span>
+                  {s.startTime && (
+                    <span className="text-[12px] text-muted-foreground tabular-nums">{s.startTime.slice(0, 5)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 4. COLLAPSED PREP ROW. */}
+        <TripPrepChecklist
+          base={base}
+          hasDates={!!startDate}
+          crewCount={crew.length}
+          stopsCount={items.length}
+          hasBudget={budgetTotal != null && budgetTotal > 0}
+          packedCount={packing.packed}
+          packTotal={packing.total}
+          collapsedOnly
+        />
+
+        {/* 5. METRIC ROW. */}
+        <MetricGrid
+          tripId={tripId}
+          placesCount={items.length}
+          budgetTotal={budgetTotal}
+          currency={currency}
+          crewCount={crew.length}
+          packing={packing}
+        />
+      </div>
+    </main>
+  );
+}
+
+function BoardRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center min-h-11 px-4 py-2 border-t border-border/60 text-[14px] text-foreground">
+      {children}
+    </div>
+  );
+}
+
+function AnchorRow({ anchor, icon: Icon }: { anchor: CockpitAnchor; icon: typeof Plane }) {
+  return (
+    <div className="flex items-center gap-2 min-h-11 px-4 py-2 border-t border-border/60 text-[14px]">
+      <Icon size={16} className="text-primary shrink-0" />
+      <span className="flex-1 min-w-0 truncate font-semibold">
+        {anchor.title}
+        {anchor.startTime && <span className="text-muted-foreground font-normal"> · {anchor.startTime.slice(0, 5)}</span>}
+      </span>
+      {anchor.confirmationNumber && (
+        <span className="text-[12px] text-muted-foreground tabular-nums">#{anchor.confirmationNumber}</span>
+      )}
+      {anchor.pdfUrl && (
+        <a
+          href={anchor.pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-0.5 text-[11px] font-bold text-foreground"
+        >
+          <FileText size={12} /> PDF
+        </a>
+      )}
+    </div>
+  );
+}
+
+/** WMO weather code → short human description (open-meteo codes). */
+function wmoDescription(code: number): string {
+  if (code === 0) return "clear";
+  if (code <= 3) return "partly cloudy";
+  if (code <= 48) return "foggy";
+  if (code <= 57) return "drizzle";
+  if (code <= 67) return "rain";
+  if (code <= 77) return "snow";
+  if (code <= 82) return "rain showers";
+  if (code <= 86) return "snow showers";
+  return "thunderstorms";
+}
+
+// TrainFront is used for booking_other anchors elsewhere; keep the import
+// referenced so the icon set stays consistent when other-type anchors land.
+void TrainFront;

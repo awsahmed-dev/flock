@@ -15,7 +15,7 @@
 interface Props {
   name: string;
   avatarUrl?: string | null;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
   /** Pass a stable ID (userId, member id) to drive the deterministic
    *  fallback color. Defaults to using the display name. */
   seed?: string;
@@ -32,6 +32,7 @@ const SIZE_MAP = {
   md: { box: "w-8 h-8", text: "text-xs" },
   lg: { box: "w-10 h-10", text: "text-sm" },
   xl: { box: "w-14 h-14", text: "text-base" },
+  "2xl": { box: "w-16 h-16", text: "text-lg" }, // 64px — crew rows (§6)
 } as const;
 
 const PALETTE = [

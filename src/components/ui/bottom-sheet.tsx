@@ -79,7 +79,7 @@ export function BottomSheet({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-[2px]"
           />
           {/* Sheet */}
           <motion.div
@@ -92,7 +92,7 @@ export function BottomSheet({
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={handleDragEnd}
             className={cn(
-              "fixed left-0 right-0 bottom-0 z-50 mx-auto bg-card border-t border-border rounded-t-2xl shadow-2xl shadow-black/40",
+              "fixed left-0 right-0 bottom-0 z-[60] mx-auto bg-card border-t border-border rounded-t-2xl shadow-2xl shadow-black/40",
               "sm:left-1/2 sm:right-auto sm:bottom-auto sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:w-full",
               SIZE[size],
               "max-h-[88vh] flex flex-col",

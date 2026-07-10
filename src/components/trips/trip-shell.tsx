@@ -11,13 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  ChevronLeft,
   LayoutDashboard,
   UserCircle,
   Settings,
   Sun,
   Moon,
   LogOut,
+  ChevronLeft,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -25,7 +25,10 @@ import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
 import { eachDayOfInterval, format as isoFmt } from "date-fns";
 import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
+import { AddBookingSheet } from "@/components/bookings/add-booking-sheet";
 import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
+import { AccountAvatarButton } from "@/components/account/account-avatar-button";
+import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
 
 interface Trip {
   id: string;
@@ -42,6 +45,8 @@ interface Props {
   trip: Trip;
   userId: string;
   isOwner: boolean;
+  /** Phase 7 §4: crew for the header avatar stack + Crew sheet. */
+  crew?: CrewMember[];
   children: React.ReactNode;
 }
 
@@ -56,16 +61,23 @@ interface Props {
  * right = avatar → account menu. Titles are left-aligned; no centered titles,
  * no hamburger, no drawer.
  */
-export function TripShell({ trip, isOwner, children }: Props) {
+export function TripShell({ trip, isOwner, crew = [], children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null }>({
+  // Phase 7 §4: Crew sheet — header stack + the nav's left circle both open it.
+  const [crewOpen, setCrewOpen] = useState(false);
+  useEffect(() => {
+    const open = () => setCrewOpen(true);
+    window.addEventListener("paxawa:openCrewSheet", open);
+    return () => window.removeEventListener("paxawa:openCrewSheet", open);
+  }, []);
+  const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null; email: string | null }>({
     name: "",
     avatarUrl: null,
+    email: null,
   });
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -78,8 +90,11 @@ export function TripShell({ trip, isOwner, children }: Props) {
         .maybeSingle();
       if (cancelled) return;
       setProfile({
-        name: data?.display_name ?? user.email ?? "",
+        // §0-A: displayName first, then the email local-part — never the raw
+        // email, never a username slug.
+        name: data?.display_name ?? user.email?.split("@")[0] ?? "",
         avatarUrl: data?.avatar_url ?? null,
+        email: user.email ?? null,
       });
     })();
     return () => { cancelled = true; };
@@ -103,57 +118,66 @@ export function TripShell({ trip, isOwner, children }: Props) {
   }).map((d) => isoFmt(d, "yyyy-MM-dd"));
   const isDiscover = pathname.startsWith(`${base}/discover`);
   const immersive = pathname === base || isDiscover;
-  // Dark-chrome routes render the WHOLE shell dark (header + body + tab bar).
-  // Discover and the Full Map are always dark; the trip root and Chat go dark
-  // only while the trip is ACTIVE (started). An upcoming trip's root shows the
-  // LIGHT pre-start overview and its Chat stays light — so we must NOT blanket-
-  // dark every immersive route (that was darkening the pre-start briefing).
-  const darkChrome =
-    isDiscover ||
-    pathname === `${base}/itinerary` ||
-    (started && pathname === base) ||
-    (started && pathname === `${base}/chat`);
-
-  // 0-B / 0-C: the `dark` class on our root flips descendant tokens, but the
-  // <body> element is our ANCESTOR — its own background stays light, so
-  // `getComputedStyle(document.body)` reads white on dark pages. Set it
-  // explicitly on dark-chrome routes and restore it when leaving.
-  useEffect(() => {
-    if (!darkChrome) return;
-    const prev = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = "#0a0a0a";
-    return () => {
-      document.body.style.backgroundColor = prev;
-    };
-  }, [darkChrome]);
+  // Phase 6 §0 rule 13: per-route `dark` forcing (the old darkChrome flag) is
+  // DELETED. The whole app is dark-first via next-themes on <html>
+  // (storageKey "paxawa-theme"); every route follows the global tokens and
+  // the light toggle flips everything, body background included.
 
   return (
-    <div className={`min-h-svh flex flex-col bg-background text-foreground ${darkChrome ? "dark" : ""}`}>
+    <div className="min-h-svh flex flex-col bg-background text-foreground">
       <DesktopModeNav tripId={trip.id} tripName={trip.name} />
 
       <div className="flex flex-col min-h-svh xl:ps-[280px]">
-        {/* Top bar — 52px, left-aligned, avatar right (brief §2.2). Hidden on
-            the immersive Discover screen. */}
-        {!immersive && (
-        <header className="h-[52px] shrink-0 flex items-center justify-between gap-3 px-4 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30">
-          <div className="flex items-center gap-1.5 min-w-0">
-            {/* §1-A: back always goes to the dashboard — never history.back(),
-                which dead-ends on a direct/deep-link load. Mobile-only; the
-                desktop sidebar owns "All trips". */}
-            <Link
-              href="/dashboard"
-              aria-label="All trips"
-              className="xl:hidden -ms-2 flex items-center justify-center w-11 h-11 rounded-full text-foreground hover:opacity-70"
+        {/* Phase 7 §4: THE standard trip header — every trip route, no
+            exceptions. 56px sticky, blur inline (§0 rule 1).
+            Phase 7 §1: "← All trips" is a DIRECT jump to /dashboard — never
+            history back, never useSmartBack. */}
+        <header
+          className="shrink-0 flex items-center gap-2 px-2 border-b border-border sticky top-0 z-50"
+          style={{
+            height: "calc(56px + env(safe-area-inset-top))",
+            paddingTop: "env(safe-area-inset-top)",
+            background: "var(--sheet-bg)",
+            backdropFilter: "blur(16px) saturate(180%)",
+            WebkitBackdropFilter: "blur(16px) saturate(180%)",
+          }}
+        >
+          <Link
+            href="/dashboard"
+            className="xl:hidden shrink-0 flex items-center h-11 ps-1 pe-2 text-foreground active:opacity-70"
+            aria-label="All trips"
+          >
+            <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+            <span className="text-[13px] font-semibold hidden min-[380px]:inline">All trips</span>
+          </Link>
+          <p className="flex-1 min-w-0 text-center font-bold text-[15px] truncate">{trip.name}</p>
+
+          {/* Crew avatar stack (3 max) → Crew sheet. */}
+          {crew.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setCrewOpen(true)}
+              aria-label="Crew"
+              className="shrink-0 flex -space-x-2 rtl:space-x-reverse items-center h-11 px-1"
             >
-              <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-            </Link>
-            <p className="font-bold text-[15px] truncate max-w-[60vw]">{trip.name}</p>
+              {crew.slice(0, 3).map((m) => (
+                <span key={m.userId} className="rounded-full ring-2 ring-background">
+                  <UserAvatar name={m.displayName} avatarUrl={m.avatarUrl} seed={m.userId} size="xs" />
+                </span>
+              ))}
+            </button>
+          )}
+
+          {/* User avatar → Account sheet. */}
+          <div className="xl:hidden shrink-0">
+            <AccountAvatarButton size={36} borderColor="#6B5CE7" />
           </div>
 
+          {/* Desktop: avatar → dropdown menu. */}
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <button className="rounded-full shrink-0 tap-target flex items-center justify-center" title={profile.name || "Account"}>
+                <button className="hidden xl:flex rounded-full shrink-0 tap-target items-center justify-center" title={profile.name || "Account"}>
                   <UserAvatar name={profile.name || "Me"} avatarUrl={profile.avatarUrl} size="md" />
                 </button>
               }
@@ -185,23 +209,36 @@ export function TripShell({ trip, isOwner, children }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        )}
 
         {/* Screen content. Bottom padding clears the fixed tab bar on mobile;
-            the desktop sidebar handles its own offset above. Discover is
-            immersive — it manages its own full-height + tab-bar clearance. */}
-        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] xl:pb-0"}>
+            the desktop sidebar handles its own offset above. Immersive routes
+            (cockpit map, Discover stream) manage their own clearance. */}
+        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(80px+env(safe-area-inset-bottom))] xl:pb-0"}>
           {children}
         </main>
+
+        {/* Phase 7 §4: the Crew sheet behind the header avatar stack (also
+            opened by the nav's left circle via paxawa:openCrewSheet). */}
+        <ShareTripSheet
+          open={crewOpen}
+          onClose={() => setCrewOpen(false)}
+          tripId={trip.id}
+          tripName={trip.name}
+          crew={crew}
+        />
 
         <DynamicBottomNav
           tripId={trip.id}
           destination={trip.destination}
           days={navDays}
-          upcoming={!started}
+          startDate={trip.startDate}
+          endDate={trip.endDate}
           currency={trip.currency}
           budgetTotal={trip.budgetTotal}
         />
+        {/* Phase 6 §6-C: Add-a-booking sheet — reachable from the [+] Add
+            sheet on every trip route via the paxawa:addBooking event. */}
+        <AddBookingSheet tripId={trip.id} days={navDays} />
       </div>
     </div>
   );

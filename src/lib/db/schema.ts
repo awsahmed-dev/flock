@@ -10,6 +10,10 @@ import {
   date,
   time,
   jsonb,
+  numeric,
+  char,
+  unique,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -179,6 +183,11 @@ export const itineraryItems = pgTable("itinerary_items", {
   address: text("address"),
   status: itineraryItemStatusEnum("status").default("proposed").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
+  // Phase 6 §6: booking anchors — flights/hotels are pinned, undeletable,
+  // unvotable stops. Regular stops keep 'regular'.
+  stopType: text("stop_type").default("regular").notNull(),
+  // Phase 6 §3-C: LIVE-phase "Done ✓" check-off; also feeds Wrap stats.
+  completedAt: timestamp("completed_at", { withTimezone: true }),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => profiles.id),
@@ -415,6 +424,9 @@ export const packingItems = pgTable("packing_items", {
   category: text("category").default("general").notNull(),
   packed: boolean("packed").default(false).notNull(),
   notes: text("notes"),
+  // Phase 6 §12 M008: shared-gear assignment ("who brings the first-aid kit").
+  assigneeId: uuid("assignee_id").references(() => profiles.id),
+  isShared: boolean("is_shared").default(false),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => profiles.id),
@@ -637,3 +649,194 @@ export const tripWishlist = pgTable("trip_wishlist", {
   lng: real("lng"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// §1-E (Phase 5): a like/heart on a discover place, scoped per trip so counts
+// reflect the crew. One row per (place, trip, user).
+export const placeLikes = pgTable("place_likes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  placeId: text("place_id").notNull(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ═══ Phase 6 (paxawa_phase6_brief.md §12) ═════════════════════════════════════
+
+/** §6: booking details attached to a booking-anchor itinerary item. */
+export const bookings = pgTable("bookings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  stopId: uuid("stop_id").references(() => itineraryItems.id, { onDelete: "cascade" }),
+  bookingType: text("booking_type").notNull(), // 'flight' | 'stay' | 'other'
+  providerName: text("provider_name"),
+  confirmationNumber: text("confirmation_number"),
+  checkinTime: timestamp("checkin_time", { withTimezone: true }),
+  checkoutTime: timestamp("checkout_time", { withTimezone: true }),
+  nights: integer("nights"),
+  pdfUrl: text("pdf_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  createdBy: uuid("created_by").references(() => profiles.id),
+});
+
+/** §4-A: Huddle decision deck cards (suggestion / poll / budget / pack / rally). */
+export const huddleDecisions = pgTable("huddle_decisions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // suggestion | poll | budget_approval | pack_assignment | rally
+  status: text("status").default("open").notNull(), // open | resolved | expired
+  placeId: text("place_id"),
+  placeName: text("place_name"),
+  placePhotoUrl: text("place_photo_url"),
+  placeRating: numeric("place_rating", { precision: 3, scale: 1 }),
+  placeCategory: text("place_category"),
+  placeNeighborhood: text("place_neighborhood"),
+  createdBy: uuid("created_by").references(() => profiles.id),
+  suggestedDay: date("suggested_day"),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  outcome: text("outcome"),
+  pollQuestion: text("poll_question"),
+  pollOptions: jsonb("poll_options"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+});
+
+export const decisionReactions = pgTable(
+  "decision_reactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    decisionId: uuid("decision_id").references(() => huddleDecisions.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => profiles.id),
+    reaction: text("reaction").notNull(), // add_it | love | discuss | approve | claim
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [unique().on(t.decisionId, t.userId, t.reaction)],
+);
+
+/** §4-B: Pulse activity log — every crew action writes a row; realtime-enabled. */
+export const activities = pgTable(
+  "activities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => profiles.id),
+    eventType: text("event_type").notNull(),
+    placeId: text("place_id"),
+    placeName: text("place_name"),
+    placePhotoUrl: text("place_photo_url"),
+    stopId: uuid("stop_id").references(() => itineraryItems.id, { onDelete: "set null" }),
+    expenseId: uuid("expense_id"),
+    amount: numeric("amount", { precision: 12, scale: 2 }),
+    amountBase: numeric("amount_base", { precision: 12, scale: 2 }),
+    currency: char("currency", { length: 3 }),
+    metadata: jsonb("metadata"),
+    isSystem: boolean("is_system").default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [index("activities_trip_created").on(t.tripId, t.createdAt)],
+);
+
+/** §4-C: contextual threads anchored to a place/stop/expense/day/poll. */
+export const threads = pgTable(
+  "threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id").references(() => trips.id, { onDelete: "cascade" }),
+    entityType: text("entity_type").notNull(), // place | stop | expense | day | poll
+    entityId: text("entity_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [unique().on(t.tripId, t.entityType, t.entityId)],
+);
+
+export const threadComments = pgTable(
+  "thread_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    threadId: uuid("thread_id").references(() => threads.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => profiles.id),
+    content: text("content").notNull(),
+    tapbacks: jsonb("tapbacks").default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [index("thread_comments_thread").on(t.threadId, t.createdAt)],
+);
+
+/** §5: taste engine — 0–100 on the five sanctioned dimensions. */
+export const placeTasteTags = pgTable("place_taste_tags", {
+  placeId: text("place_id").primaryKey(),
+  budget: integer("budget").default(50).notNull(),
+  discovery: integer("discovery").default(50).notNull(),
+  energy: integer("energy").default(50).notNull(),
+  vibe: integer("vibe").default(50).notNull(),
+  depth: integer("depth").default(50).notNull(),
+  taggedAt: timestamp("tagged_at", { withTimezone: true }).defaultNow(),
+});
+
+export const userTasteVectors = pgTable("user_taste_vectors", {
+  userId: uuid("user_id").primaryKey().references(() => profiles.id, { onDelete: "cascade" }),
+  budget: numeric("budget", { precision: 5, scale: 2 }).default("50"),
+  discovery: numeric("discovery", { precision: 5, scale: 2 }).default("50"),
+  energy: numeric("energy", { precision: 5, scale: 2 }).default("50"),
+  vibe: numeric("vibe", { precision: 5, scale: 2 }).default("50"),
+  depth: numeric("depth", { precision: 5, scale: 2 }).default("50"),
+  interactionCount: integer("interaction_count").default(0),
+  onboarded: boolean("onboarded").default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const placeInteractions = pgTable(
+  "place_interactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => profiles.id, { onDelete: "cascade" }),
+    placeId: text("place_id").notNull(),
+    tripId: uuid("trip_id").references(() => trips.id, { onDelete: "set null" }),
+    signal: text("signal").notNull(),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [index("place_interactions_user").on(t.userId, t.createdAt)],
+);
+
+/** §8-A: settled debt pairs. */
+export const settlements = pgTable("settlements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id").references(() => trips.id, { onDelete: "cascade" }),
+  creditorId: uuid("creditor_id").references(() => profiles.id),
+  debtorId: uuid("debtor_id").references(() => profiles.id),
+  amount: numeric("amount", { precision: 12, scale: 2 }),
+  currency: char("currency", { length: 3 }),
+  settledAt: timestamp("settled_at", { withTimezone: true }).defaultNow(),
+  createdBy: uuid("created_by").references(() => profiles.id),
+});
+
+// Phase 6 relations
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  stop: one(itineraryItems, { fields: [bookings.stopId], references: [itineraryItems.id] }),
+}));
+
+export const huddleDecisionsRelations = relations(huddleDecisions, ({ one, many }) => ({
+  author: one(profiles, { fields: [huddleDecisions.createdBy], references: [profiles.id] }),
+  reactions: many(decisionReactions),
+}));
+
+export const decisionReactionsRelations = relations(decisionReactions, ({ one }) => ({
+  decision: one(huddleDecisions, { fields: [decisionReactions.decisionId], references: [huddleDecisions.id] }),
+  user: one(profiles, { fields: [decisionReactions.userId], references: [profiles.id] }),
+}));
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  actor: one(profiles, { fields: [activities.actorId], references: [profiles.id] }),
+}));
+
+export const threadsRelations = relations(threads, ({ many }) => ({
+  comments: many(threadComments),
+}));
+
+export const threadCommentsRelations = relations(threadComments, ({ one }) => ({
+  thread: one(threads, { fields: [threadComments.threadId], references: [threads.id] }),
+  user: one(profiles, { fields: [threadComments.userId], references: [profiles.id] }),
+}));

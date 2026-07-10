@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, Star, MapPin } from "lucide-react";
+import { useRef, useState } from "react";
+import { Heart, Bookmark, PlusCircle, Star, MapPin } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -8,10 +9,9 @@ import { useT } from "@/components/i18n/locale-provider";
 /**
  * Paxawa v2 — the immersive place card (cinematic / TikTok-Reels language).
  *
- * The photo IS the card: full-bleed, with a bottom scrim carrying a big bold
- * name and glass meta pills, a TikTok-style right action rail (save / add), and
- * floating tags. Built to fill the viewport in a vertical snap-scroll stream
- * (the next card peeks below). `data-place-id` is read by the dwell tracker.
+ * The photo IS the card: full-bleed, bottom scrim with a big bold name + glass
+ * meta pills, and a §1-C TikTok-style right-side action stack (like / save /
+ * add). `data-place-id` is read by the dwell tracker.
  */
 const CAT_KEY: Record<string, string> = {
   eat: "discover.catEat",
@@ -24,23 +24,60 @@ const CAT_KEY: Record<string, string> = {
   other: "discover.catOther",
 };
 
+const LIKE_COLOR = "#FF375F";
+const ACCENT = "#6B5CE7";
+
 export function PlaceCard({
   scored,
   center,
   saved,
+  liked,
+  likeCount,
+  added = false,
+  reason,
   onOpen,
   onSave,
+  onLike,
   onHover,
+  onLongPress,
 }: {
   scored: ScoredPlace;
   center: [number, number] | null;
   saved: boolean;
+  liked: boolean;
+  likeCount: number;
+  /** §10.7: this place is already in the itinerary this session. */
+  added?: boolean;
+  /** Phase 6 §5-G: the reason chip — never blank when provided. */
+  reason?: string;
   onOpen: (s: ScoredPlace) => void;
   onSave: (s: ScoredPlace) => void;
+  onLike: (s: ScoredPlace) => void;
   onHover?: (placeId: string | null) => void;
+  /** Phase 6 §5-G: long-press → "Not interested" context sheet. */
+  onLongPress?: (s: ScoredPlace) => void;
 }) {
   const t = useT();
   const p = scored.place;
+  // §10.6: shimmer skeleton until the photo lands, then a 250ms fade-in —
+  // cards were rendering as blank dark rectangles for seconds.
+  const [imgLoaded, setImgLoaded] = useState(false);
+  // §5-G long-press detection — a held press opens the context sheet and
+  // swallows the tap so the full-screen view doesn't also open.
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longFired = useRef(false);
+  function pressDown() {
+    if (!onLongPress) return;
+    longFired.current = false;
+    pressTimer.current = setTimeout(() => {
+      longFired.current = true;
+      if (navigator.vibrate) navigator.vibrate(10);
+      onLongPress(scored);
+    }, 450);
+  }
+  function pressClear() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+  }
   const photo = p.photoRef
     ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=1000`
     : null;
@@ -50,56 +87,114 @@ export function PlaceCard({
   return (
     <article
       data-place-id={p.placeId}
-      onClick={() => onOpen(scored)}
+      onClick={() => {
+        if (longFired.current) return;
+        onOpen(scored);
+      }}
+      onPointerDown={pressDown}
+      onPointerUp={pressClear}
+      onPointerLeave={pressClear}
+      onPointerCancel={pressClear}
+      onContextMenu={(e) => {
+        if (onLongPress) {
+          e.preventDefault();
+          onLongPress(scored);
+        }
+      }}
       onMouseEnter={() => onHover?.(p.placeId)}
       onMouseLeave={() => onHover?.(null)}
       className="group relative w-full h-full overflow-hidden cursor-pointer bg-neutral-900 select-none"
     >
       {photo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={photo}
-          alt={p.name}
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-        />
+        <>
+          {!imgLoaded && (
+            <div className="absolute inset-0 animate-pulse" style={{ background: "var(--muted)" }} />
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photo}
+            alt={p.name}
+            loading="lazy"
+            onLoad={() => setImgLoaded(true)}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+            style={{ opacity: imgLoaded ? 1 : 0, transition: "opacity 250ms ease" }}
+          />
+        </>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-violet-700/40 flex items-center justify-center text-7xl font-bold text-white/30">
           {p.name.charAt(0)}
         </div>
       )}
 
-      {/* Cinematic scrim — strong at bottom, faint at top for tag legibility */}
+      {/* Cinematic scrim — strong at bottom, faint at top. */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/35 pointer-events-none" />
+      {/* §1-C: left-fading gradient so the right action stack stays readable. */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(to left, rgba(0,0,0,0.45) 0%, transparent 45%)" }}
+      />
 
-      {/* Fix 2 (pass 2): the editorial "AI pick" / "Hidden gem" badges were
-          removed — at top-4 start-4 they collided with the filter chip bar and
-          leaked garbled text through the gaps. The category is already shown in
-          the bottom meta row, so no editorial label is needed. `scored.tags`
-          still drives ranking; we just don't render the visual badge. */}
+      {/* §1-C: right-side action stack (like / save / add). */}
+      <div className="absolute end-3 bottom-8 z-20 flex flex-col items-center gap-4">
+        <ActionIcon
+          icon={Heart}
+          count={likeCount}
+          active={liked}
+          activeColor={LIKE_COLOR}
+          label={t("discover.like")}
+          onClick={(e) => { e.stopPropagation(); onLike(scored); }}
+        />
+        <ActionIcon
+          icon={Bookmark}
+          count={null}
+          active={saved}
+          activeColor={ACCENT}
+          label={t("discover.save")}
+          onClick={(e) => { e.stopPropagation(); onSave(scored); }}
+        />
+        <ActionIcon
+          icon={PlusCircle}
+          count={null}
+          active={false}
+          activeColor={ACCENT}
+          label={t("discover.addToDay")}
+          onClick={(e) => { e.stopPropagation(); onOpen(scored); }}
+        />
+      </div>
 
-      {/* Save — the only on-card action (the side rail was removed so nothing
-          blocks the photo). Add-to-day / Suggest-to-crew live in the detail
-          sheet, opened by tapping the card. 44×44 tap target, white icon. */}
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onSave(scored); }}
-        aria-label={t("discover.save")}
-        className="absolute top-4 end-4 z-10 w-11 h-11 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center ring-1 ring-white/15 active:scale-90 transition-transform"
-      >
-        <Heart className={`w-6 h-6 ${saved ? "fill-rose-500 text-rose-500" : "text-white"}`} />
-      </button>
+      {/* §10.7: "In plan" chip — the add is traceable without leaving the feed. */}
+      {added && (
+        <span
+          className="absolute top-3 start-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold pointer-events-none"
+          style={{ background: "rgba(52,199,89,0.90)", color: "#fff" }}
+        >
+          ✓ {t("discover.inPlan")}
+        </span>
+      )}
 
-      {/* Powered-by-Google attribution — inside the card overlay, bottom-end. */}
-      <span className="absolute bottom-1.5 end-3 z-10 text-[10px] text-white/45 pointer-events-none">
+      {/* Powered-by-Google attribution. */}
+      <span className="absolute bottom-1.5 start-3 z-10 text-[10px] text-white/45 pointer-events-none">
         {t("discover.poweredBy")} <span className="font-semibold">Google</span>
       </span>
 
-      {/* Bottom content */}
-      <div className="absolute inset-x-0 bottom-0 ps-5 pe-5 pt-5 pb-7">
+      {/* Bottom content — pe-16 leaves room for the action stack on the end. */}
+      <div className="absolute inset-x-0 bottom-0 ps-5 pe-16 pt-5 pb-7">
         <h3 className="text-white font-bold text-2xl sm:text-[1.7rem] leading-[1.1] tracking-[-0.02em] drop-shadow-sm line-clamp-2">
           {p.name}
         </h3>
+        {/* §5-G reason chip — why this card, in one phrase. */}
+        {reason && (
+          <span
+            className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+            style={
+              reason.startsWith("Wild card")
+                ? { border: "1px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.7)" }
+                : { background: "rgba(107,92,231,0.35)", color: "#fff" }
+            }
+          >
+            {reason}
+          </span>
+        )}
         <div className="mt-2.5 flex items-center gap-2 flex-wrap">
           {p.rating != null && (
             <Pill>
@@ -126,6 +221,41 @@ export function PlaceCard({
         )}
       </div>
     </article>
+  );
+}
+
+function ActionIcon({
+  icon: Icon,
+  count,
+  active,
+  activeColor,
+  label,
+  onClick,
+}: {
+  icon: typeof Heart;
+  count: number | null;
+  active: boolean;
+  activeColor: string;
+  label: string;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+    >
+      <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.40)" }}>
+        <Icon size={20} color={active ? activeColor : "white"} fill={active ? activeColor : "none"} strokeWidth={1.75} />
+      </span>
+      {count != null && (
+        <span className="text-[11px] font-semibold text-white leading-none">
+          {count > 0 ? compact(count) : ""}
+        </span>
+      )}
+    </button>
   );
 }
 

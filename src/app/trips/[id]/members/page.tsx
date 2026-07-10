@@ -31,6 +31,7 @@ export default async function MembersPage({ params }: Props) {
   return (
     <MembersBoard
       tripId={id}
+      tripName={trip.name}
       userId={user.id}
       isOwner={isOwner}
       members={trip.members}

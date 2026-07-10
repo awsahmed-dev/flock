@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash2 } from "lucide-react";
+import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { toggleWishlist, removeWishlist, type WishlistPlace } from "@/lib/actions/wishlist";
+import { togglePlaceLike } from "@/lib/actions/place-likes";
 import { createItineraryItemFromGooglePlace } from "@/lib/actions/itinerary";
 import type { Place, PlaceFeatures } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
@@ -19,6 +21,13 @@ import { PlaceCard } from "./place-card";
 import { PlaceCardCompact } from "./place-card-compact";
 import { PlaceDetailPanel } from "./place-detail-panel";
 import { PLACE_CATEGORIES, type PlaceCategoryKey } from "./primitives";
+import { shortLocality } from "@/lib/places/short-locality";
+import { useTheme } from "next-themes";
+// Phase 6 §5 — the Taste Engine layer.
+import { recordInteraction, getTasteContext, getPlaceTags } from "@/lib/actions/taste";
+import { reasonChip, championFor, crewScore, type FiveDimVector } from "@/lib/taste-engine";
+import { TasteOnboarding } from "./taste-onboarding";
+import { PlaceFullScreen } from "./place-full-screen";
 
 /** lg+ desktop detection (SSR-safe: mobile until mounted). Drives the two
  *  native Discover layouts — immersive stream on mobile, grid+map on desktop. */
@@ -80,10 +89,12 @@ export interface SavedPlace {
 }
 
 export function DiscoverFeed({
-  tripId, destination, center, days, crewSize = 1, isOwner = false, initialCategory = null,
-  savedPlaces = [],
+  tripId, tripName = "", destination, center, days, crewSize = 1, isOwner = false, initialCategory = null,
+  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false,
 }: {
   tripId: string;
+  /** §2: shown in the floating back-to-dashboard header on the mobile feed. */
+  tripName?: string;
   destination: string;
   center: [number, number] | null;
   days: string[];
@@ -95,9 +106,19 @@ export function DiscoverFeed({
   /** §3-A: the user's persisted wishlist for this trip (hearts pre-fill from
    *  these; the wishlist sheet lists them all). */
   savedPlaces?: SavedPlace[];
+  /** §1-E: place ids the current user has liked in this trip + crew like counts. */
+  likedPlaceIds?: string[];
+  likeCounts?: Record<string, number>;
+  /** Phase 7 §3-B: LIVE "Nearby" opens in map view — on the ground you need
+   *  the map, not a list. */
+  defaultMapView?: boolean;
 }) {
   const t = useT();
   const { vector, emit } = useTasteSession(tripId);
+  // §10.1: basemap matches the app theme — no more beige streets-v12 flash
+  // against the dark feed (design vision §1.3).
+  const { resolvedTheme } = useTheme();
+  const themedMapStyle = resolvedTheme === "light" ? "light-v11" : "dark-v11";
 
   const [category, setCategory] = useState<PlaceCategoryKey | null>(initialCategory);
   const [query, setQuery] = useState("");
@@ -107,12 +128,70 @@ export function DiscoverFeed({
   const [saved, setSaved] = useState<Set<string>>(() => new Set(savedPlaces.map((p) => p.placeId)));
   const [savedItems, setSavedItems] = useState<SavedPlace[]>(savedPlaces);
   const [added, setAdded] = useState<Set<string>>(new Set());
+  // §1-E: like state (optimistic).
+  const [liked, setLiked] = useState<Set<string>>(() => new Set(likedPlaceIds));
+  const [likeCountMap, setLikeCountMap] = useState<Record<string, number>>(likeCounts);
   const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [view, setView] = useState<"stream" | "map">("stream");
+  const [view, setView] = useState<"stream" | "map">(defaultMapView ? "map" : "stream");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const isDesktop = useIsDesktop();
+
+  // ── Phase 6 §5: taste state ───────────────────────────────────────────────
+  const [tasteCtx, setTasteCtx] = useState<Awaited<ReturnType<typeof getTasteContext>> | null>(null);
+  const [placeTags, setPlaceTags] = useState<Record<string, FiveDimVector>>({});
+  const [onboardDismissed, setOnboardDismissed] = useState(false);
+  const [fullScreenIdx, setFullScreenIdx] = useState<number | null>(null);
+  const [whySheetFor, setWhySheetFor] = useState<ScoredPlace | null>(null);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [specialFilter, setSpecialFilter] = useState<"crew" | "saved" | null>(null);
+  const smarterToastFired = useRef(false);
+
+  useEffect(() => {
+    getTasteContext(tripId).then(setTasteCtx).catch(() => {});
+  }, [tripId]);
+
+  // Batch-load 5-dim tags for the loaded candidates; fire-and-forget tagging
+  // for the top untagged ones (§5-C ingest).
+  useEffect(() => {
+    if (!candidates.length) return;
+    const ids = candidates.map((p) => p.placeId);
+    getPlaceTags(ids)
+      .then((tags) => {
+        setPlaceTags((prev) => ({ ...prev, ...tags }));
+        const untagged = candidates.filter((p) => !tags[p.placeId]).slice(0, 12);
+        for (const p of untagged) {
+          void fetch("/api/taste/tag-place", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              place_id: p.placeId,
+              name: p.name,
+              types: p.placeTypes ?? [],
+              price_level: p.priceLevel ?? null,
+              editorial_summary: p.topTip ?? null,
+            }),
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, [candidates]);
+
+  // §5-D: durable signal recorder + the "smarter" toast at interaction 10.
+  const record = useCallback(
+    (placeId: string, signal: "heart" | "add_to_plan" | "bookmark" | "dwell_4s" | "skip" | "not_interested", reason?: "too_pricey" | "too_touristy" | "not_my_thing") => {
+      recordInteraction({ tripId, placeId, signal, reason })
+        .then(({ interactionCount }) => {
+          if (interactionCount === 10 && !smarterToastFired.current) {
+            smarterToastFired.current = true;
+            toast("Your Discover feed just got smarter ✨");
+          }
+        })
+        .catch(() => {});
+    },
+    [tripId],
+  );
 
   // §3-C: search is a LOCAL filter over already-loaded cards (see `visible`),
   // not an API round-trip — so ranking/category stay in browse mode.
@@ -152,13 +231,66 @@ export function DiscoverFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates, rankVector, searching, center]);
 
+  // Phase 6 §5-E: blend the crew's 5-dim taste over the session ranking —
+  // champion picks surface every ~8 cards, 15% ride as wild cards.
+  const { crewRanked, reasonChips } = useMemo(() => {
+    const chips: Record<string, string> = {};
+    const members = tasteCtx?.crewVectors ?? [];
+    const withMe = tasteCtx?.userVector
+      ? [...members.map((m) => m.vector), tasteCtx.userVector]
+      : members.map((m) => m.vector);
+
+    const scored = ranked.map((s, i) => {
+      const tags = placeTags[s.place.placeId] ?? null;
+      const champ = tags ? championFor(tags, members) : null;
+      // Stable pseudo-random 15% exploration set.
+      const isExploration = hashPct(s.place.placeId) < 15 && i > 3;
+      chips[s.place.placeId] = reasonChip({
+        placeTags: tags,
+        userVector: tasteCtx?.userVector ?? null,
+        championName: champ?.name ?? null,
+        crewHeartsOnSimilar: tasteCtx?.crewHeartCount ?? 0,
+        isExploration,
+      });
+      const crew = tags && withMe.length ? crewScore(tags, withMe) : 0.5;
+      return { s, crew, champ, isExploration };
+    });
+
+    // Champion injection: pull the top champion pick to every ~8th slot.
+    const base = [...scored].sort((a, b) => {
+      // keep the session order dominant; crew score is a tiebreak nudge
+      const ai = scored.indexOf(a);
+      const bi = scored.indexOf(b);
+      return ai - bi || b.crew - a.crew;
+    });
+    const champs = scored.filter((x) => x.champ).slice(0, 3);
+    for (let n = 0; n < champs.length; n++) {
+      const target = 7 + n * 8;
+      const from = base.indexOf(champs[n]);
+      if (from > target && target < base.length) {
+        base.splice(from, 1);
+        base.splice(target, 0, champs[n]);
+      }
+    }
+    return { crewRanked: base.map((x) => x.s), reasonChips: chips };
+  }, [ranked, placeTags, tasteCtx]);
+
   // §3-C: the toolbar search is a LOCAL filter over the already-loaded cards
-  // (name contains) — never a new API call.
+  // (name contains) — never a new API call. §5-G: "not interested" hides;
+  // §5-H: Crew picks / Saved special chips filter here.
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return ranked;
-    return ranked.filter((s) => s.place.name.toLowerCase().includes(q));
-  }, [ranked, query]);
+    let list = crewRanked.filter((s) => !hidden.has(s.place.placeId));
+    if (specialFilter === "crew") {
+      list = list
+        .filter((s) => (likeCountMap[s.place.placeId] ?? 0) > 0)
+        .sort((a, b) => (likeCountMap[b.place.placeId] ?? 0) - (likeCountMap[a.place.placeId] ?? 0));
+    } else if (specialFilter === "saved") {
+      list = list.filter((s) => saved.has(s.place.placeId));
+    }
+    if (!q) return list;
+    return list.filter((s) => s.place.name.toLowerCase().includes(q));
+  }, [crewRanked, query, hidden, specialFilter, likeCountMap, saved]);
 
   const featuresRef = useRef<Map<string, PlaceFeatures>>(new Map());
   featuresRef.current = useMemo(
@@ -171,8 +303,11 @@ export function DiscoverFeed({
       seenRef.current.add(placeId);
       const f = featuresRef.current.get(placeId);
       if (f) emit("card_dwell", { placeId, features: f, payload: { dwellMs } });
+      // §5-D/G durable signals: ≥4s attention = +1, a 0.5–4s pass = skip (−1).
+      if (dwellMs >= 4000) record(placeId, "dwell_4s");
+      else if (dwellMs >= 500) record(placeId, "skip");
     },
-    [emit],
+    [emit, record],
   );
   const { containerRef } = useDwellTracker(handleDwell);
 
@@ -250,9 +385,18 @@ export function DiscoverFeed({
       setAdded((prev) => new Set(prev).add(placeId));
       const f = featuresRef.current.get(placeId);
       if (f) emit("place_add", { placeId, features: f });
+      record(placeId, "add_to_plan");
     },
-    [emit],
+    [emit, record],
   );
+  // §10.7: toast Undo reverts the card's "In plan" state.
+  const onUndone = useCallback((placeId: string) => {
+    setAdded((prev) => {
+      const next = new Set(prev);
+      next.delete(placeId);
+      return next;
+    });
+  }, []);
   // §3-A: heart toggle now PERSISTS to trip_wishlist (optimistic + revert on
   // failure) and keeps the full wishlist list in sync for the Saved sheet.
   const onSave = useCallback(
@@ -269,6 +413,7 @@ export function DiscoverFeed({
         setSavedItems((prev) => prev.filter((p) => p.placeId !== id));
       } else {
         emit("place_save", { placeId: id, features: s.features });
+        record(id, "bookmark");
         setSavedItems((prev) =>
           prev.some((p) => p.placeId === id)
             ? prev
@@ -306,7 +451,41 @@ export function DiscoverFeed({
         });
       });
     },
-    [emit, saved, tripId],
+    [emit, saved, tripId, record],
+  );
+
+  // §1-E: optimistic like toggle (heart) — persists to place_likes.
+  // Phase 6 §5-D: a fresh heart is also a +3 taste signal.
+  const onLike = useCallback(
+    (s: ScoredPlace) => {
+      const id = s.place.placeId;
+      const wasLiked = liked.has(id);
+      if (!wasLiked) record(id, "heart");
+      setLiked((prev) => {
+        const next = new Set(prev);
+        if (wasLiked) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+      setLikeCountMap((prev) => ({
+        ...prev,
+        [id]: Math.max(0, (prev[id] ?? 0) + (wasLiked ? -1 : 1)),
+      }));
+      void togglePlaceLike(tripId, id).catch(() => {
+        // revert on failure
+        setLiked((prev) => {
+          const next = new Set(prev);
+          if (wasLiked) next.add(id);
+          else next.delete(id);
+          return next;
+        });
+        setLikeCountMap((prev) => ({
+          ...prev,
+          [id]: Math.max(0, (prev[id] ?? 0) + (wasLiked ? 1 : -1)),
+        }));
+      });
+    },
+    [liked, tripId, record],
   );
 
   const removeSaved = useCallback(
@@ -382,6 +561,8 @@ export function DiscoverFeed({
                   filters. Solid tone here (desktop is a light content surface,
                   not a photo backdrop). */}
               <CategoryStrip
+                specialFilter={specialFilter}
+                onSpecialFilter={setSpecialFilter}
                 tone="glassLight"
                 category={category}
                 searching={searching}
@@ -478,6 +659,7 @@ export function DiscoverFeed({
               showRoutes={false}
               pinColor="#f97316"
               numbered={false}
+              mapStyle={themedMapStyle}
             />
           </div>
         </div>
@@ -495,15 +677,21 @@ export function DiscoverFeed({
           saved={openPlace ? saved.has(openPlace.place.placeId) : false}
           crewSize={crewSize} isOwner={isOwner}
           onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
+          onUndone={onUndone}
         />
       </>
     );
   }
 
   return (
-    <div className="relative h-[calc(100dvh-60px-env(safe-area-inset-bottom))] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
+    <div className="relative h-[calc(100dvh-56px-60px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
+      {/* §4-A: floating gradient top header, overlaid on the feed (not in the
+          content flow). Fixed to the viewport, hidden only on desktop (xl),
+          pointer-events none except the back link. */}
       {/* Floating controls — the glass control layer (Paxawa Control Language,
-          §4). Glass-on-dark chips + buttons float over the cinematic photo. */}
+          §4). Glass-on-dark chips + buttons float over the cinematic photo.
+          §4: pushed below the 52px floating header so it doesn't overlap the
+          back link. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
         {searchOpen ? (
           /* Fix 4 / §9-E: the search bar slides in when tapped from the nav's
@@ -535,24 +723,33 @@ export function DiscoverFeed({
             </button>
           </div>
         ) : (
-          /* Fix 4: a clean 5-chip strip (All · Food · Sights · Stay · Activity).
-             Saved + Search moved to the nav; Filters pill + map toggle removed. */
-          <CategoryStrip
-            tone="glass"
-            category={category}
-            searching={false}
-            activeFilterCount={0}
-            onSelect={selectCategory}
-            onOpenFilters={() => {}}
-            showFilters={false}
-            className="w-full"
-          />
+          /* Phase 7 §3-B: chips + a Map/List toggle. */
+          <div className="flex items-center gap-2">
+            <CategoryStrip
+              tone="glass"
+              category={category}
+              searching={false}
+              activeFilterCount={0}
+              onSelect={selectCategory}
+              onOpenFilters={() => {}}
+              showFilters={false}
+              className="flex-1 min-w-0 overflow-x-auto scrollbar-none"
+            />
+            <button
+              type="button"
+              onClick={() => setView((v) => (v === "map" ? "stream" : "map"))}
+              aria-label={view === "map" ? "List view" : "Map view"}
+              className="shrink-0 w-9 h-9 rounded-full glass-dark text-white flex items-center justify-center"
+            >
+              <MapIcon className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
 
       {/* Notices */}
       {state !== "idle" && state !== "loading" && (
-        <div className="absolute inset-x-0 top-16 z-20 px-4">
+        <div className="absolute inset-x-0 top-[116px] z-20 px-4">
           <Notice text={t(state === "unconfigured" ? "discover.unconfigured" : state === "capped" ? "discover.capped" : "discover.error")} />
         </div>
       )}
@@ -563,7 +760,7 @@ export function DiscoverFeed({
           <MapboxPlanMap
             items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
             highlightedItemId={highlightedId} onItemClick={focusCarousel} days={[DISCOVER_DAY]}
-            showRoutes={false} pinColor="#f97316" numbered={false}
+            showRoutes={false} pinColor="#f97316" numbered={false} mapStyle={themedMapStyle}
           />
           {ranked.length > 0 && (
             <div
@@ -607,7 +804,12 @@ export function DiscoverFeed({
                       <p className="font-bold text-white text-[15px] line-clamp-1">{s.place.name}</p>
                       <p className="text-white/60 text-xs mt-1 inline-flex items-center gap-1 max-w-full">
                         <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="line-clamp-1">{s.place.address ?? t(CAT_KEY[s.place.category] ?? CAT_KEY.eat)}</span>
+                        {/* §10.6: derived locality, never the raw address. */}
+                        <span className="line-clamp-1">
+                          {[shortLocality(s.place.address), t(CAT_KEY[s.place.category] ?? CAT_KEY.eat)]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
                       </p>
                     </div>
                   </button>
@@ -638,17 +840,34 @@ export function DiscoverFeed({
           ref={containerRef}
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-none"
         >
+          {/* §5-F: vibe onboarding lives inside the feed for cold users. */}
+          {tasteCtx && !tasteCtx.onboarded && tasteCtx.interactionCount < 3 && !onboardDismissed && (
+            <div className="snap-start px-4 pt-[calc(env(safe-area-inset-top)+96px)]">
+              <TasteOnboarding
+                onDone={() => {
+                  setOnboardDismissed(true);
+                  getTasteContext(tripId).then(setTasteCtx).catch(() => {});
+                }}
+              />
+            </div>
+          )}
           {visible.length === 0 && query.trim() ? (
             <div className="h-full flex items-center justify-center text-white/60 text-sm px-8 text-center">
               {t("discover.noMatches")}
             </div>
           ) : (
-            visible.map((s) => (
+            visible.map((s, i) => (
               <div key={s.place.placeId} className="w-full h-full shrink-0 snap-start snap-always">
                 <PlaceCard
                   scored={s} center={center}
                   saved={saved.has(s.place.placeId)}
-                  onOpen={onOpen} onSave={onSave} onHover={setHighlightedId}
+                  liked={liked.has(s.place.placeId)}
+                  likeCount={likeCountMap[s.place.placeId] ?? 0}
+                  added={added.has(s.place.placeId)}
+                  reason={reasonChips[s.place.placeId]}
+                  onOpen={() => setFullScreenIdx(i)}
+                  onSave={onSave} onLike={onLike} onHover={setHighlightedId}
+                  onLongPress={(sp) => setWhySheetFor(sp)}
                 />
               </div>
             ))
@@ -674,7 +893,59 @@ export function DiscoverFeed({
         saved={openPlace ? saved.has(openPlace.place.placeId) : false}
         crewSize={crewSize} isOwner={isOwner}
         onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
+        onUndone={onUndone}
       />
+
+      {/* §5-G: tap-to-full-screen immersive view; swipe walks the feed. */}
+      {fullScreenIdx != null && visible[fullScreenIdx] && (
+        <PlaceFullScreen
+          places={visible}
+          index={fullScreenIdx}
+          liked={liked}
+          likeCounts={likeCountMap}
+          onLike={onLike}
+          onAdd={(s) => { setFullScreenIdx(null); onOpen(s); }}
+          onCrew={(s) => { setFullScreenIdx(null); onOpen(s); }}
+          onThread={(s) => { setFullScreenIdx(null); onOpen(s); }}
+          onMore={(s) => setWhySheetFor(s)}
+          onNavigate={setFullScreenIdx}
+          onClose={() => setFullScreenIdx(null)}
+        />
+      )}
+
+      {/* §5-G: "Not interested" why sheet — the answer becomes a −5 signal. */}
+      <BottomSheet
+        open={whySheetFor !== null}
+        onClose={() => setWhySheetFor(null)}
+        title={whySheetFor?.place.name ?? ""}
+        size="sm"
+      >
+        <div className="divide-y divide-border/60 pb-1">
+          {(
+            [
+              { key: "too_pricey", label: "Too pricey" },
+              { key: "too_touristy", label: "Too touristy" },
+              { key: "not_my_thing", label: "Not my thing" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => {
+                const s = whySheetFor;
+                setWhySheetFor(null);
+                if (!s) return;
+                setHidden((prev) => new Set(prev).add(s.place.placeId));
+                record(s.place.placeId, "not_interested", opt.key);
+                toast("Got it — fewer of these");
+              }}
+              className="w-full h-13 py-3.5 text-start text-[15px] font-semibold"
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
 
       {/* Wishlist — saved places in a bottom sheet (heart badge in the top bar). */}
       <BottomSheet
@@ -721,6 +992,8 @@ function CategoryStrip({
   onOpenFilters,
   className,
   showFilters = true,
+  specialFilter = null,
+  onSpecialFilter,
 }: {
   /** "glass" = glass-on-dark (mobile, over the photo stream); "glassLight" =
    *  glass-on-light (desktop, over the light page); both share the material +
@@ -736,6 +1009,9 @@ function CategoryStrip({
    *  strip — Saved/Search moved to the nav; the rare categories aren't worth
    *  the clutter). */
   showFilters?: boolean;
+  /** Phase 6 §5-H: Crew picks / Saved special chips. */
+  specialFilter?: "crew" | "saved" | null;
+  onSpecialFilter?: (f: "crew" | "saved" | null) => void;
 }) {
   const t = useT();
   const inline: (PlaceCategoryKey | null)[] = [null, ...INLINE_CATEGORIES];
@@ -749,6 +1025,21 @@ function CategoryStrip({
 
   return (
     <div className={`flex items-center gap-1.5 ${className ?? ""}`}>
+      {onSpecialFilter &&
+        (["crew", "saved"] as const).map((f) => {
+          const active = specialFilter === f;
+          return (
+            <button
+              key={f}
+              type="button"
+              onClick={() => onSpecialFilter(active ? null : f)}
+              aria-pressed={active}
+              className={`${baseChip} ${active ? activeChip : restChip}`}
+            >
+              {f === "crew" ? t("discover.crewPicks") : t("discover.savedTitle")}
+            </button>
+          );
+        })}
       {inline.map((c) => {
         const active = category === c && !searching;
         return (
@@ -941,4 +1232,11 @@ function WishlistCard({
       </button>
     </li>
   );
+}
+
+/** Phase 6 §5-E: stable 0–99 hash for the 15% wild-card exploration mix. */
+function hashPct(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h % 100;
 }

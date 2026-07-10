@@ -35,13 +35,25 @@ export function parseExpenseArgs(args: string): {
   amount: number;
   category: string;
   description: string;
+  /** §10.8: optional explicit 3-letter code ("45 MYR lunch" / "MYR45 lunch").
+   *  Absent → the caller falls back to the trip currency, never "$". */
+  currency?: string;
 } {
   const CATEGORIES = ["accommodation", "transport", "food", "activity", "shopping"];
   const parts = args.trim().split(/\s+/);
-  const amount = parseFloat(parts[0].replace("$", "")) || 0;
-  const rest = parts.slice(1);
+  // "MYR45" / "45MYR" / plain "45" (a bare "$" prefix is tolerated but ignored).
+  const first = parts[0].replace("$", "");
+  const inlineCur = first.match(/^([A-Za-z]{3})?(\d+(?:[.,]\d+)?)([A-Za-z]{3})?$/);
+  const amount = inlineCur ? parseFloat(inlineCur[2].replace(",", ".")) || 0 : parseFloat(first) || 0;
+  let currency = (inlineCur?.[1] || inlineCur?.[3])?.toUpperCase();
+  let rest = parts.slice(1);
+  // Standalone code as the next token: "/expense 45 MYR lunch".
+  if (!currency && rest[0] && /^[A-Za-z]{3}$/.test(rest[0]) && !CATEGORIES.includes(rest[0].toLowerCase())) {
+    currency = rest[0].toUpperCase();
+    rest = rest.slice(1);
+  }
   const categoryMatch = rest.find((p) => CATEGORIES.includes(p.toLowerCase()));
   const category = categoryMatch || "other";
   const description = rest.filter((p) => p.toLowerCase() !== category).join(" ").trim() || args;
-  return { amount, category, description };
+  return { amount, category, description, ...(currency ? { currency } : {}) };
 }

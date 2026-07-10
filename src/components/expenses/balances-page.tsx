@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Loader2, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -53,6 +53,26 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
   const t = useT();
   const [settling, setSettling] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  // §7-C: nudge someone who owes you — shares (WhatsApp etc. on mobile) or
+  // copies a friendly "please settle up" message.
+  async function remind(fromName: string, amount: number) {
+    const msg = `Hey ${fromName}, could you settle ${currency} ${fmt(amount)} for our trip? 🙏`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text: msg });
+        return;
+      } catch {
+        /* dismissed — fall through to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(msg);
+      toast.success(t("balances.reminderCopied"));
+    } catch {
+      /* clipboard blocked */
+    }
+  }
 
   function markPaid(from: string, to: string) {
     const key = `${from}->${to}`;
@@ -201,7 +221,15 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                     {/* B22: Each row is a full sentence so the relationship
                         is unambiguous when scanning. Wraps the amount and
                         currency directly into the verb phrase. */}
-                    <p className="text-[11px] text-muted-foreground">
+                    <p
+                      className={`text-[11px] font-medium ${
+                        b.net > 0.005
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : b.net < -0.005
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-muted-foreground"
+                      }`}
+                    >
                       {b.net > 0.005
                         ? `${isMe ? "You're" : "They're"} owed ${currency} ${fmt(b.net)}`
                         : b.net < -0.005
@@ -215,7 +243,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                         b.net > 0.005
                           ? "text-emerald-600 dark:text-emerald-400"
                           : b.net < -0.005
-                            ? "text-orange-600 dark:text-orange-400"
+                            ? "text-red-600 dark:text-red-400"
                             : "text-muted-foreground"
                       }`}
                     >
@@ -265,19 +293,32 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                     involved in the transfer. Bulk-settles every split
                     that represents money from→to in this trip. */}
                 {involvesMe && (
-                  <button
-                    type="button"
-                    onClick={() => markPaid(tr.from, tr.to)}
-                    disabled={isSettling}
-                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold py-1.5 transition-colors disabled:opacity-50"
-                  >
-                    {isSettling ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Check className="w-3 h-3" />
+                  <div className="flex items-center gap-2">
+                    {/* §7-C: money owed to you → nudge the payer (WhatsApp/copy). */}
+                    {toIsMe && (
+                      <button
+                        type="button"
+                        onClick={() => remind(tr.fromName, tr.amount)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold py-1.5 transition-colors"
+                      >
+                        <Bell className="w-3 h-3" />
+                        {t("balances.remind")}
+                      </button>
                     )}
-                    {isSettling ? t("balances.settling") : t("balances.markPaid")}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => markPaid(tr.from, tr.to)}
+                      disabled={isSettling}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold py-1.5 transition-colors disabled:opacity-50"
+                    >
+                      {isSettling ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Check className="w-3 h-3" />
+                      )}
+                      {isSettling ? t("balances.settling") : t("balances.markPaid")}
+                    </button>
+                  </div>
                 )}
               </li>
             );

@@ -6,6 +6,7 @@ import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
 import { Pin } from "lucide-react";
 import { useT } from "@/components/i18n/locale-provider";
+import type { RateBundle } from "@/lib/fx";
 
 interface Reaction {
   id: string;
@@ -40,9 +41,12 @@ interface Props {
   userId: string;
   isOwner: boolean;
   messages: Message[];
+  /** §10.8: trip base currency + rates for the expense card's ≈ line. */
+  tripCurrency?: string;
+  fxRates?: RateBundle | null;
 }
 
-export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
+export function ChatPanel({ tripId, userId, isOwner, messages, tripCurrency, fxRates }: Props) {
   const t = useT();
   const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -78,7 +82,7 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
   let lastDateLabel = "";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-130px)]">
+    <div className="flex flex-col h-[calc(100vh-130px)] bg-background">
       {/* Pinned messages bar */}
       {pinnedMessages.length > 0 && (
         <div className="border-b bg-amber-50 dark:bg-amber-950/20 px-4 py-2 space-y-1">
@@ -126,6 +130,8 @@ export function ChatPanel({ tripId, userId, isOwner, messages }: Props) {
                 userId={userId}
                 isOwner={isOwner}
                 onReply={setReplyTo}
+                tripCurrency={tripCurrency}
+                fxRates={fxRates}
               />
             </div>
           );

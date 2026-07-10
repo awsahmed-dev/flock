@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { documents, packingItems } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { PackBoard } from "@/components/pack/pack-board";
-import { ManageTabs } from "@/components/trips/manage-tabs";
+import { BackButton } from "@/components/navigation/back-button";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -44,7 +44,14 @@ export default async function PackRoute({ params, searchParams }: Props) {
 
   return (
     <>
-      <ManageTabs tripId={id} active="pack" />
+      {/* Phase 7 §7-C: smart back — pops to wherever the user came from
+          (usually the Huddle prep row); cold-load fallback is the trip root. */}
+      <div className="px-2 pt-2">
+        <BackButton
+          fallback={`/trips/${id}`}
+          className="flex items-center gap-1 h-11 px-2 text-[13px] font-semibold text-muted-foreground"
+        />
+      </div>
       <PackBoard
       tripId={id}
       userId={user.id}
@@ -75,7 +82,8 @@ export default async function PackRoute({ params, searchParams }: Props) {
       }))}
       members={trip.members.map((m) => ({
         userId: m.userId,
-        displayName: m.displayName,
+        // §10.3: live profile name over the join-time cached copy.
+        displayName: m.user?.displayName || m.displayName,
         avatarUrl: m.user?.avatarUrl ?? null,
       }))}
     />

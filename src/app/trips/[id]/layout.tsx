@@ -40,8 +40,15 @@ export default async function TripLayout({ children, params }: Props) {
     budgetTotal: trip.budgetTotal != null ? Number(trip.budgetTotal) : null,
   };
 
+  // Phase 7 §4: crew for the standard header's avatar stack + Crew sheet.
+  const crew = trip.members.map((m) => ({
+    userId: m.userId,
+    displayName: m.user?.displayName || m.displayName,
+    avatarUrl: m.user?.avatarUrl ?? null,
+  }));
+
   return (
-    <TripShell trip={tripForShell} userId={user.id} isOwner={checkOwner(trip, user.id)}>
+    <TripShell trip={tripForShell} userId={user.id} isOwner={checkOwner(trip, user.id)} crew={crew}>
       {children}
     </TripShell>
   );

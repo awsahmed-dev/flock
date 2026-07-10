@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
 import { useT } from "@/components/i18n/locale-provider";
+import { getPocketDayStatus } from "@/components/pwa/pocket-day";
 
 /**
  * P6 — app-wide offline indicator. When the connection drops, a slim banner
@@ -29,13 +30,22 @@ export function OfflineBanner() {
 
   if (!offline) return null;
 
+  // Phase 6 §10-C: tell the traveler what Pocket Day has for them.
+  const status = getPocketDayStatus();
+  const stale =
+    status && Date.now() - new Date(status.updatedAt).getTime() > 36 * 3600 * 1000;
+
   return (
     <div
       role="status"
       className="fixed top-0 inset-x-0 z-[100] flex items-center justify-center gap-2 bg-amber-500 text-amber-950 px-4 py-1.5 text-xs font-bold shadow-md"
     >
       <WifiOff className="w-3.5 h-3.5" />
-      {t("offline.banner")}
+      {status
+        ? stale
+          ? `${t("offline.banner")} — showing an older plan, some details may have changed`
+          : `${t("offline.banner")} · Pocket Day loaded for ${status.date}`
+        : t("offline.banner")}
     </div>
   );
 }

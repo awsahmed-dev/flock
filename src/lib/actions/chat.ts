@@ -38,6 +38,8 @@ export type ExpenseCardMeta = {
   amount: number;
   category: string;
   description: string;
+  /** §10.8: currency as logged (defaults to the trip currency, never "$"). */
+  currency?: string;
   confirmedExpenseId?: string;
 };
 
@@ -114,8 +116,10 @@ export async function sendMessage(formData: FormData) {
   const slash = parseSlashCommand(body);
 
   if (slash.type === "expense") {
-    // Post expense card (unconfirmed)
-    const meta = parseExpenseArgs(slash.args);
+    // Post expense card (unconfirmed). §10.8: stamp the currency at creation —
+    // an explicit code in the message wins, otherwise the trip currency.
+    const parsed = parseExpenseArgs(slash.args);
+    const meta: ExpenseCardMeta = { ...parsed, currency: parsed.currency ?? trip.currency };
     await db.insert(chatMessages).values({
       tripId,
       userId: user.id,
@@ -303,7 +307,9 @@ export async function confirmExpenseCard(formData: FormData) {
       tripId,
       title: meta.description || "Expense from chat",
       amount: meta.amount,
-      currency: "USD",
+      // §10.8: honor the card's logged currency; legacy cards without one
+      // fall back to the trip currency — never a hardcoded USD.
+      currency: meta.currency ?? trip.currency,
       paidBy: user.id,
       category: meta.category as any,
       expenseDate: today,
@@ -342,7 +348,7 @@ export async function confirmExpenseCard(formData: FormData) {
   notifyNewExpense(
     expMemberIds, user.id,
     meta.description || "Expense",
-    meta.amount, "USD",
+    meta.amount, meta.currency ?? trip.currency,
     tripId, trip.name
   ).catch(() => {});
 }

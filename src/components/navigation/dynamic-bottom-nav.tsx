@@ -2,67 +2,71 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format as isoFmt } from "date-fns";
 import { toast } from "sonner";
 import {
-  Home, Compass, LayoutGrid, Wrench, Plus, Heart, Search,
-  Map as MapIcon, MessageSquare, Wallet, Sparkles, MapPin, ChevronRight,
-  Users, CalendarDays,
+  Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
+  Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
+  Luggage, Camera, Map as MapIcon, Bookmark, Clock, Search,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
+import { tripPhase, type TripPhase } from "@/lib/trip-phase";
+import { createClient } from "@/lib/supabase/client";
 
 /**
- * §9 (Fix Pass 1) — the Shopify-style dynamic bottom nav, rendered as a floating
- * frosted-glass PILL (not a full-width bar). The three centre tabs never change;
- * the left/right slots MORPH by mode:
- *   NOW      → 🔧 Tools speed-dial (floating pills) · + action sheet
- *   DISCOVER → ❤ Saved (count badge) · 🔍 Search
- *   MANAGE   → slots collapse; each surface owns its own add UI.
+ * Phase 6 §3-A — the phase-aware NavPill.
  *
- * Discover's Saved/Search drive the feed via window CustomEvents. Backdrop-filter
- * is INLINE everywhere — the bundler strips it from stylesheets.
+ * ASSEMBLY: [44px Huddle circle] [8px] [pill min(250px, calc(100vw-140px))]
+ *           [8px] [44px accent + circle], wrapper fixed bottom, justify-center,
+ *           safe-area padding inline. All backdropFilter INLINE (§0 rule 1) —
+ *           the bundler strips it from stylesheets.
+ *
+ * Tabs, [+] default, and labels all come from tripPhase() — the single
+ * source of truth (§2). The pill is NEVER hard 250px (§0 rule 8): it
+ * shrinks on 360px viewports via min().
  */
-const PILL_GLASS = {
-  // Fix 5 (pass 2): border-radius is INLINE so the pill is always rounded — on
-  // light MANAGE pages it stayed a flat full-width dark bar when the radius came
-  // only from a class. The dark glass is intentional on light pages (contrast).
-  borderRadius: "20px",
-  background: "rgba(10,10,10,0.82)",
+const CIRCLE_GLASS = {
+  background: "var(--sheet-bg)",
   backdropFilter: "blur(24px) saturate(180%)",
   WebkitBackdropFilter: "blur(24px) saturate(180%)",
-  border: "1px solid rgba(255,255,255,0.10)",
+  border: "1px solid var(--border)",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+  pointerEvents: "auto" as const,
+};
+const PILL_GLASS = {
+  width: "min(250px, calc(100vw - 140px))",
+  borderRadius: "9999px",
+  background: "var(--sheet-bg)",
+  backdropFilter: "saturate(180%) blur(16px)",
+  WebkitBackdropFilter: "saturate(180%) blur(16px)",
+  border: "1px solid var(--border)",
   boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+  pointerEvents: "auto" as const,
   transform: "translateZ(0)",
-} as const;
+  overflow: "hidden" as const,
+};
 
-interface Tab {
-  key: string;
-  label: string;
-  icon: LucideIcon;
-  href: string;
-  isActive: (p: string, b: string) => boolean;
-}
+interface Tab { key: string; label: string; icon: LucideIcon; href: string }
 
 export function DynamicBottomNav({
   tripId,
   destination = "",
   days = [],
-  upcoming = false,
+  startDate,
+  endDate,
   currency = "USD",
   budgetTotal = null,
 }: {
   tripId: string;
   destination?: string;
   days?: string[];
-  /** Fix 4-B/6: an upcoming (not-yet-started) trip has no NOW cockpit — the
-   *  root shows the pre-start overview, so hide Tools and swap the [+] sheet. */
-  upcoming?: boolean;
+  startDate: string;
+  endDate: string;
   currency?: string;
   budgetTotal?: number | null;
 }) {
@@ -70,171 +74,294 @@ export function DynamicBottomNav({
   const router = useRouter();
   const t = useT();
   const base = `/trips/${tripId}`;
+  const phase: TripPhase = tripPhase({ startDate, endDate });
 
-  const isNow = pathname === base;
-  const isDiscover = pathname.startsWith(`${base}/discover`);
-  const mode: "now" | "discover" | "manage" | "other" = isNow
-    ? "now"
-    : isDiscover
-      ? "discover"
-      : /^\/trips\/[^/]+\/(manage|expenses|wallet|pack|members|settings)/.test(pathname)
-        ? "manage"
-        : "other";
-
-  const [speedDial, setSpeedDial] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
-  const [getReadyOpen, setGetReadyOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
+  const [huddleBadge, setHuddleBadge] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
-
   useEffect(() => {
-    setSpeedDial(false);
-    setPlusOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    function onCount(e: Event) {
-      setSavedCount((e as CustomEvent<number>).detail ?? 0);
-    }
+    const onCount = (e: Event) => setSavedCount((e as CustomEvent<number>).detail ?? 0);
     window.addEventListener("discover:savedCount", onCount as EventListener);
     window.dispatchEvent(new CustomEvent("discover:requestCount"));
     return () => window.removeEventListener("discover:savedCount", onCount as EventListener);
   }, [pathname]);
 
-  const tabs: Tab[] = [
-    { key: "now", label: t("nav.now"), icon: Home, href: "", isActive: (p, b) => p === b },
-    { key: "discover", label: t("nav.discover"), icon: Compass, href: "/discover", isActive: (p, b) => p.startsWith(`${b}/discover`) },
-    { key: "manage", label: t("nav.manage"), icon: LayoutGrid, href: "/expenses", isActive: () => mode === "manage" },
-  ];
+  // §3-A tab config per phase. Money always → /money (the /expenses era
+  // routes 301 there).
+  const tabs: Tab[] =
+    phase === "RECAP"
+      ? [
+          { key: "recap", label: t("nav.recap"), icon: Sparkles, href: base },
+          { key: "photos", label: t("nav.photos"), icon: ImageIcon, href: `${base}/recap/photos` },
+          { key: "settle", label: t("nav.settle"), icon: HandCoins, href: `${base}/money` },
+        ]
+      : [
+          {
+            key: "plan",
+            label: phase === "LIVE" ? t("nav.today") : t("nav.plan"),
+            icon: phase === "LIVE" ? Navigation : phase === "DEPARTURE" ? PlaneTakeoff : MapPin,
+            href: base,
+          },
+          {
+            key: "discover",
+            label: phase === "LIVE" ? t("nav.nearby") : t("nav.discover"),
+            icon: Compass,
+            href: `${base}/discover`,
+          },
+          { key: "money", label: t("nav.money"), icon: Wallet, href: `${base}/money` },
+        ];
 
-  const dispatch = (name: string) => window.dispatchEvent(new CustomEvent(name));
+  const activeIndex = (() => {
+    if (pathname.startsWith(`${base}/discover`)) return phase === "RECAP" ? 0 : 1;
+    if (pathname.startsWith(`${base}/recap/photos`)) return 1;
+    if (/^\/trips\/[^/]+\/(money|expenses|wallet|manage|pack|members|settings)/.test(pathname)) return 2;
+    return 0; // trip root (cockpit) and everything else
+  })();
 
-  // Fix 3: exactly two Tools — Chat (bottom, appears first) then Full map (top).
-  const speedItems = [
-    { icon: MessageSquare, label: t("now.chat"), go: `${base}/chat` },
-    { icon: MapIcon, label: t("now.fullMap"), go: `${base}/itinerary` },
-  ];
+  // Huddle badge: open decisions the user hasn't reacted to + unread thread
+  // replies. Client-side count via RLS-protected supabase — cheap, cached
+  // per route change.
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data: open } = await supabase
+          .from("huddle_decisions")
+          .select("id")
+          .eq("trip_id", tripId)
+          .eq("status", "open");
+        if (!open || cancelled) return;
+        if (open.length === 0) { setHuddleBadge(0); return; }
+        const { data: mine } = await supabase
+          .from("decision_reactions")
+          .select("decision_id")
+          .eq("user_id", user.id)
+          .in("decision_id", open.map((d) => d.id));
+        if (cancelled) return;
+        const reacted = new Set((mine ?? []).map((r) => r.decision_id));
+        setHuddleBadge(open.filter((d) => !reacted.has(d.id)).length);
+      } catch {
+        /* badge is decoration — never break nav over it */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tripId, pathname]);
 
   const todayIso = isoFmt(new Date(), "yyyy-MM-dd");
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? "";
 
+  // [+] behavior: single tap = phase default; long-press 400ms = full sheet.
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
+
+  function plusDefault() {
+    switch (phase) {
+      case "LIVE":
+        router.push(`${base}/money/expense-camera`);
+        break;
+      case "RECAP":
+        window.dispatchEvent(new CustomEvent("paxawa:shareWrap"));
+        break;
+      default:
+        setPlusOpen(true); // PLANNING + DEPARTURE: the Add sheet
+    }
+  }
+  function onPlusDown() {
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      if (navigator.vibrate) navigator.vibrate(10);
+      setPlusOpen(true);
+    }, 400);
+  }
+  function onPlusUp() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    if (!longPressed.current) plusDefault();
+  }
+  function onPlusCancel() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+  }
+
+  const dispatch = (name: string) => window.dispatchEvent(new CustomEvent(name));
+
+  // ── Phase 7 §2: contextual satellites — icons/actions follow the tab. ──
+  const isDiscoverTab = activeIndex === 1 && phase !== "RECAP";
+  const isMoneyTab = activeIndex === 2;
+  const isTodayTab = activeIndex === 0 && phase === "LIVE";
+
+  const left: { icon: LucideIcon; label: string; action: () => void; badge: number } = isTodayTab
+    ? { icon: MapIcon, label: t("nav.map"), action: () => dispatch("paxawa:toggleMapView"), badge: 0 }
+    : isDiscoverTab
+      ? { icon: Bookmark, label: t("discover.savedTitle"), action: () => dispatch("discover:openWishlist"), badge: savedCount }
+      : isMoneyTab
+        ? { icon: Clock, label: t("expenses.activity"), action: () => dispatch("money:scrollActivity"), badge: 0 }
+        : { icon: Users, label: t("nav.huddle"), action: () => dispatch("paxawa:openCrewSheet"), badge: 0 };
+
+  const right: { icon: LucideIcon; accent: boolean; label: string; action: () => void } = isDiscoverTab
+    ? { icon: Search, accent: false, label: t("nav.search"), action: () => dispatch("discover:toggleSearch") }
+    : isMoneyTab
+      ? {
+          icon: phase === "LIVE" ? Camera : Plus,
+          accent: true,
+          label: t("nav.add"),
+          action: () =>
+            phase === "LIVE" ? router.push(`${base}/money/expense-camera`) : dispatch("paxawa:logExpense"),
+        }
+      : phase === "RECAP"
+        ? { icon: Share2, accent: true, label: t("nav.shareTrip"), action: () => dispatch("paxawa:shareWrap") }
+        : phase === "LIVE"
+          ? { icon: Camera, accent: true, label: t("nav.add"), action: () => router.push(`${base}/money/expense-camera`) }
+          : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };
+
+  // Left long-press (400ms) → Huddle, when decisions are pending.
+  const leftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leftLong = useRef(false);
+  function onLeftDown() {
+    leftLong.current = false;
+    leftTimer.current = setTimeout(() => {
+      leftLong.current = true;
+      if (navigator.vibrate) navigator.vibrate(10);
+      router.push(`${base}/huddle`);
+    }, 400);
+  }
+  function onLeftUp() {
+    if (leftTimer.current) clearTimeout(leftTimer.current);
+    if (!leftLong.current) left.action();
+  }
+  function onLeftCancel() {
+    if (leftTimer.current) clearTimeout(leftTimer.current);
+  }
+
   return (
     <div className="xl:hidden">
-      {/* Transparent scrim — closes the speed-dial on an outside tap; the map
-          stays fully visible (no dark overlay). */}
-      {speedDial && (
-        <button type="button" aria-hidden onClick={() => setSpeedDial(false)} className="fixed inset-0 z-40" />
-      )}
-
-      {/* Fixed pill wrapper — px-3 floats the pill 12px off each edge; the
-          padding row itself is non-interactive so the map shows through. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+8px)] pointer-events-none">
-        <div className="relative mx-auto max-w-lg pointer-events-auto">
-          {/* Fix 2: Tools speed-dial — floating content-width pills stacked above
-              the left slot (flex-col-reverse → item[0] closest to the button).
-              Fix 6: only on the active NOW cockpit — not on an upcoming trip. */}
-          {mode === "now" && !upcoming && (
-            <div className={cn("absolute bottom-full start-1 mb-3 flex flex-col-reverse gap-2", !speedDial && "pointer-events-none")}>
-              {speedItems.map((it, i) => {
-                const Icon = it.icon;
-                return (
-                  <button
-                    key={it.label}
-                    type="button"
-                    onClick={() => { setSpeedDial(false); router.push(it.go); }}
-                    className="flex items-center gap-2 rounded-full px-4 active:scale-95 self-start"
-                    style={{
-                      height: 40,
-                      background: "rgba(15,15,15,0.92)",
-                      backdropFilter: "blur(20px)",
-                      WebkitBackdropFilter: "blur(20px)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-                      opacity: speedDial ? 1 : 0,
-                      transform: speedDial ? "translateY(0) scale(1)" : "translateY(12px) scale(0.92)",
-                      transition: `opacity 180ms ease ${i * 50}ms, transform 180ms ease ${i * 50}ms`,
-                    }}
-                  >
-                    <Icon size={16} className="text-primary" />
-                    <span className="text-sm font-medium text-white whitespace-nowrap">{it.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+      {/* §3-A cluster: [Huddle 44] [8] [pill] [8] [+ 44]. */}
+      <div
+        className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-center gap-2 px-3"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)", pointerEvents: "none" }}
+      >
+        {/* LEFT — contextual satellite (§2). Icon changes per tab; the
+            huddle needs-you dot persists on EVERY icon; long-press → Huddle. */}
+        <button
+          type="button"
+          onPointerDown={onLeftDown}
+          onPointerUp={onLeftUp}
+          onPointerCancel={onLeftCancel}
+          onPointerLeave={onLeftCancel}
+          onContextMenu={(e) => e.preventDefault()}
+          aria-label={left.label}
+          className="w-11 h-11 rounded-full flex items-center justify-center relative active:scale-95 shrink-0"
+          style={CIRCLE_GLASS}
+        >
+          <span key={`left-${left.label}`} style={{ animation: "fadeIn 200ms ease" }}>
+            <left.icon size={20} className="text-foreground" />
+          </span>
+          {left.badge > 0 && (
+            <span
+              className="absolute -top-0.5 -end-0.5 min-w-4 h-4 px-0.5 rounded-full bg-primary text-white flex items-center justify-center"
+              style={{ fontSize: 10, fontWeight: 700 }}
+            >
+              {left.badge > 9 ? "9+" : left.badge}
+            </span>
           )}
+          {huddleBadge > 0 && (
+            <span
+              className="absolute -bottom-0.5 -end-0.5 w-3 h-3 rounded-full ring-2 ring-background"
+              style={{ background: "#FF453A" }}
+              aria-label={`${huddleBadge} decisions need you`}
+            />
+          )}
+        </button>
 
-          {/* Fix 1: the floating pill itself. Height 56px; always dark glass. */}
-          <nav
-            aria-label="Trip sections"
-            className="flex items-center h-14 rounded-2xl overflow-hidden"
-            style={PILL_GLASS}
-          >
-            {/* LEFT slot — Fix 6: Tools only on the active NOW cockpit; hidden on
-                upcoming trips and (already) on Manage. */}
-            <Slot show={(mode === "now" && !upcoming) || mode === "discover"}>
-              {mode === "now" && !upcoming && (
-                <SlotButton onClick={() => setSpeedDial((v) => !v)} icon={Wrench} label={t("nav.tools")} rotated={speedDial} />
-              )}
-              {mode === "discover" && (
-                <SlotButton onClick={() => dispatch("discover:openWishlist")} icon={Heart} label={t("discover.savedTitle")} badge={savedCount} />
-              )}
-            </Slot>
-
-            {/* CENTRE — the three modes. */}
-            {tabs.map((tab) => {
-              const active = tab.isActive(pathname, base);
-              const Icon = tab.icon;
-              return (
-                <Link
-                  key={tab.key}
-                  href={`${base}${tab.href}`}
-                  prefetch
-                  aria-current={active ? "page" : undefined}
-                  className="flex-1 flex items-center justify-center h-full min-w-[44px]"
+        {/* CENTER pill — phase tabs with a sliding --surface-3 thumb. */}
+        <nav aria-label="Trip sections" className="relative shrink flex items-center h-14" style={PILL_GLASS}>
+          {/* Sliding thumb behind the active tab (200ms spring-ish). */}
+          <span
+            aria-hidden
+            className="absolute top-1.5 bottom-1.5 rounded-full"
+            style={{
+              width: "calc(33.333% - 6px)",
+              insetInlineStart: `calc(${activeIndex * 33.333}% + 3px)`,
+              background: "var(--muted)",
+              transition: "inset-inline-start 200ms cubic-bezier(0.34,1.3,0.64,1)",
+            }}
+          />
+          {tabs.map((tab, i) => {
+            const Icon = tab.icon;
+            const active = i === activeIndex;
+            return (
+              <Link
+                key={tab.key}
+                href={tab.href}
+                prefetch
+                aria-current={active ? "page" : undefined}
+                className="relative flex-1 flex flex-col items-center justify-center gap-0.5 h-full min-w-0"
+              >
+                {/* Icon morph at phase boundary: keyed crossfade. */}
+                <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
+                  <Icon
+                    size={20}
+                    className={active ? "text-foreground" : "text-muted-foreground"}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </span>
+                <span
+                  className={`truncate max-w-full px-1 ${active ? "text-foreground" : "text-muted-foreground"}`}
+                  style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 600 }}
                 >
-                  <span
-                    className={cn(
-                      "flex flex-col items-center gap-0.5 px-3 py-1 rounded-full transition-colors duration-200",
-                      active ? "text-primary" : "text-white/55 hover:bg-white/10 active:bg-white/10",
-                    )}
-                    style={active ? { background: "rgba(107, 92, 231, 0.20)" } : undefined}
-                  >
-                    <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2.5 : 2} />
-                    <span className="text-[10px] font-semibold tracking-wide">{tab.label}</span>
-                  </span>
-                </Link>
-              );
-            })}
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
 
-            {/* RIGHT slot — [+] shows on NOW (active OR upcoming); the sheet it
-                opens differs (4-B). */}
-            <Slot show={mode === "now" || mode === "discover"}>
-              {mode === "now" && (
-                <SlotButton onClick={() => (upcoming ? setGetReadyOpen(true) : setPlusOpen(true))} icon={Plus} label={t("nav.add")} accent />
-              )}
-              {mode === "discover" && (
-                <SlotButton onClick={() => dispatch("discover:toggleSearch")} icon={Search} label={t("nav.search")} />
-              )}
-            </Slot>
-          </nav>
-        </div>
+        {/* RIGHT — [+] circle. Tap = phase default; long-press = full sheet. */}
+        <button
+          type="button"
+          onPointerDown={onPlusDown}
+          onPointerUp={onPlusUp}
+          onPointerCancel={onPlusCancel}
+          onPointerLeave={onPlusCancel}
+          onContextMenu={(e) => e.preventDefault()}
+          aria-label={right.label}
+          className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 active:scale-95"
+          style={
+            right.accent
+              ? { background: "#6B5CE7", boxShadow: "0 4px 20px rgba(107,92,231,0.5)", pointerEvents: "auto" }
+              : { ...CIRCLE_GLASS }
+          }
+        >
+          <span key={`right-${right.label}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
+            <right.icon size={20} className={right.accent ? "text-white" : "text-foreground"} />
+          </span>
+        </button>
       </div>
 
-      {/* NOW [+] action sheet (§9-D). */}
+      {/* Full Add sheet — the long-press target; also the PLANNING/DEPARTURE
+          tap default. DEPARTURE puts the pack row first (§3-A table). */}
       <BottomSheet open={plusOpen} onClose={() => setPlusOpen(false)} title={t("nav.addTitle")} size="sm">
         <div className="divide-y divide-border/60">
-          {/* Fix 5: opens the inline place-search sub-sheet — never navigates. */}
+          {phase === "DEPARTURE" && (
+            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); router.push(`${base}/pack`); }} />
+          )}
           <ActionRow icon={MapPin} label={t("nav.addPlace")} onClick={() => { setPlusOpen(false); setAddPlaceOpen(true); }} />
-          {/* Fix 6: toast, never navigate. */}
+          <ActionRow icon={PlaneTakeoff} label={t("nav.addBooking")} onClick={() => { setPlusOpen(false); dispatch("paxawa:addBooking"); }} />
+          <ActionRow icon={Wallet} label={t("now.logExpense")} onClick={() => { setPlusOpen(false); router.push(`${base}/money/expense-camera`); }} />
+          {phase !== "DEPARTURE" && (
+            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); router.push(`${base}/pack`); }} />
+          )}
           <ActionRow icon={Sparkles} label={t("nav.aiFillDay")} onClick={() => { setPlusOpen(false); toast(`${t("nav.aiComingSoon")} ✦`); }} />
-          <ActionRow icon={MessageSquare} label={t("nav.suggestCrew")} onClick={() => { setPlusOpen(false); router.push(`${base}/discover`); }} />
-          <ActionRow icon={Wallet} label={t("now.logExpense")} onClick={() => { setPlusOpen(false); router.push(`${base}/expenses`); }} />
+          <ActionRow icon={Users} label={t("nav.askCrew")} onClick={() => { setPlusOpen(false); dispatch("paxawa:openPollComposer"); }} />
+          <ActionRow icon={Share2} label={t("nav.shareTrip")} onClick={() => { setPlusOpen(false); dispatch("paxawa:shareTrip"); }} />
+          <ActionRow icon={CalendarDays} label={t("nav.setBudget")} onClick={() => { setPlusOpen(false); setBudgetOpen(true); }} />
         </div>
       </BottomSheet>
 
-      {/* Fix 5: the inline place-search sub-sheet — the same component the Plan
-          page uses. Adds to today by default; stays on the NOW screen. */}
       <AddPlaceSearch
         open={addPlaceOpen}
         onClose={() => setAddPlaceOpen(false)}
@@ -244,72 +371,8 @@ export function DynamicBottomNav({
         days={days}
         defaultDay={defaultDay}
       />
-
-      {/* Fix 4-B: the upcoming-trip [+] sheet — get-ready actions, not the
-          active-trip "add to today" set. */}
-      <BottomSheet open={getReadyOpen} onClose={() => setGetReadyOpen(false)} title={t("nav.getReadyTitle")} size="sm">
-        <div className="divide-y divide-border/60">
-          <ActionRow icon={Users} label={t("nav.inviteCrew")} onClick={() => { setGetReadyOpen(false); router.push(`${base}/members`); }} />
-          <ActionRow icon={CalendarDays} label={t("nav.planDay")} onClick={() => { setGetReadyOpen(false); router.push(`${base}/itinerary`); }} />
-          <ActionRow icon={Wallet} label={t("nav.setBudget")} onClick={() => { setGetReadyOpen(false); setBudgetOpen(true); }} />
-        </div>
-      </BottomSheet>
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={currency} total={budgetTotal} />
     </div>
-  );
-}
-
-/** A side slot that collapses (width 0) when its mode has no slot content. */
-function Slot({ show, children }: { show: boolean; children: React.ReactNode }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-center overflow-hidden transition-[width,opacity] duration-200 ease-out",
-        show ? "w-14 opacity-100" : "w-0 opacity-0",
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function SlotButton({
-  onClick,
-  icon: Icon,
-  label,
-  badge,
-  rotated,
-  accent,
-}: {
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  badge?: number;
-  rotated?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="relative w-11 h-11 rounded-full flex items-center justify-center active:scale-95 transition-transform"
-    >
-      <span
-        className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200",
-          accent ? "bg-primary text-primary-foreground" : "text-white",
-          rotated && "rotate-45",
-        )}
-      >
-        <Icon className="w-5 h-5" />
-      </span>
-      {badge != null && badge > 0 && (
-        <span className="absolute top-0 end-0 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center leading-none">
-          {badge}
-        </span>
-      )}
-    </button>
   );
 }
 

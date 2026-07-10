@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import { ExpenseSheet } from "./expense-sheet";
 import {
   Receipt, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Eye, EyeOff,
   Plane, Utensils, Bed, ShoppingBag, Ticket, MoreHorizontal, ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -15,6 +16,8 @@ import type { RateBundle } from "@/lib/fx";
 import { convert } from "@/lib/fx";
 import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { simplifySettlements } from "@/lib/settle";
+import { BalancesBlock } from "@/components/money/balances-block";
 
 /* ─── Static configs ─────────────────────────────────────────────────── */
 
@@ -72,7 +75,7 @@ interface Expense {
   expenseDate: string;
   notes: string | null;
   createdAt: Date;
-  payer?: { displayName: string } | null;
+  payer?: { displayName: string; avatarUrl?: string | null } | null;
   splits: Split[];
 }
 
@@ -87,6 +90,8 @@ interface Props {
   fxRates: RateBundle | null;
   startDate: string;
   endDate: string;
+  /** Phase 6 §8-A: recorded settlements (reduce live balances). */
+  settlements?: { creditorId: string | null; debtorId: string | null; amount: number }[];
 }
 
 /**
@@ -111,10 +116,18 @@ export function ExpensesBoard({
   fxRates,
   startDate,
   endDate,
+  settlements = [],
 }: Props) {
   const t = useT();
   const isOwner = members.some((m) => m.userId === userId);
   const [openId, setOpenId] = useState<string | null>(null);
+  // Phase 7 §2: the nav's left circle (clock icon) jumps to Activity.
+  useEffect(() => {
+    const scroll = () =>
+      document.getElementById("money-activity")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.addEventListener("money:scrollActivity", scroll);
+    return () => window.removeEventListener("money:scrollActivity", scroll);
+  }, []);
   const [showAmounts, setShowAmounts] = useState(true);
   const selected = openId ? expenseList.find((e) => e.id === openId) ?? null : null;
 
@@ -195,11 +208,25 @@ export function ExpensesBoard({
     };
   }, [expenseList, members, currency, fxRates, userId]);
 
+  // Phase 6 §8-A: minimal settle-up pairs = nets − recorded settlements.
+  const settlePairs = useMemo(() => {
+    const nets = new Map(derived.balances.map((b) => [b.userId, b.net]));
+    for (const st of settlements) {
+      if (st.creditorId) nets.set(st.creditorId, (nets.get(st.creditorId) ?? 0) - st.amount);
+      if (st.debtorId) nets.set(st.debtorId, (nets.get(st.debtorId) ?? 0) + st.amount);
+    }
+    return simplifySettlements([...nets.entries()].map(([userId, net]) => ({ userId, net })));
+  }, [derived.balances, settlements]);
+
   const baseAmountFor = (e: Expense) =>
     e.currency === currency ? null : convert(e.amount, e.currency, currency, fxRates);
 
+  // Phase 7 §6-B: activity filter chips (All · Yours). "Bookings" waits on
+  // an expense↔booking link in the schema.
+  const [activityFilter, setActivityFilter] = useState<"all" | "yours">("all");
   const recentExpenses = expenseList
     .slice()
+    .filter((e) => (activityFilter === "yours" ? e.paidBy === userId : true))
     .sort((a, b) => new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime())
     .slice(0, 5);
 
@@ -288,26 +315,7 @@ export function ExpensesBoard({
                 <span>
                   {t("expenses.percentUsed", { percent: Math.round((derived.totalSharedBase / tripBudget) * 100) })}
                 </span>
-                {/* Personal budget mini-stat OR a "set your budget" hint —
-                    no longer its own giant card. */}
-                <Link
-                  href={`/trips/${tripId}/settings`}
-                  className="hover:text-white inline-flex items-center gap-1"
-                >
-                  {personalBudget && personalBudget > 0 ? (
-                    <>
-                      {t("expenses.personalCap", {
-                        currency,
-                        amount: fmt(personalBudget),
-                        percent: Math.round(
-                          (derived.personalSpentBase / personalBudget) * 100,
-                        ),
-                      })}
-                    </>
-                  ) : (
-                    <>{t("expenses.setPersonalCap")}</>
-                  )}
-                </Link>
+
               </div>
             </div>
           )}
@@ -331,6 +339,35 @@ export function ExpensesBoard({
         />
       </div>
 
+      {/* Phase 6 §8-C: Personal cap as a real 52px row — no more 11px
+          fine print buried in the hero corner. */}
+      <Link
+        href={`/trips/${tripId}/settings`}
+        className="flex items-center gap-3 h-[52px] px-4 rounded-2xl bg-card border border-border"
+      >
+        <SlidersHorizontal size={18} className="text-primary shrink-0" />
+        <span className="flex-1 text-[15px] font-medium text-foreground">Personal cap</span>
+        <span className="text-[13px] text-muted-foreground tabular-nums">
+          {personalBudget && personalBudget > 0
+            ? `${currency} ${fmt(personalBudget)} · ${Math.round((derived.personalSpentBase / personalBudget) * 100)}% used`
+            : t("expenses.setPersonalCap")}
+        </span>
+        <ChevronRight size={16} className="text-tertiary shrink-0 rtl:rotate-180" />
+      </Link>
+
+      {/* Phase 6 §8-A: Balances above Activity. Hidden solo / no expenses. */}
+      {members.length > 1 && expenseList.length > 0 && (
+        <BalancesBlock
+          tripId={tripId}
+          pairs={settlePairs}
+          crew={members.map((m) => ({ userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl ?? null }))}
+          currency={currency}
+          currentUserId={userId}
+        />
+      )}
+
+      <div aria-hidden className="h-px bg-border" />
+
       {/* B28: only render the 2-col grid when the right rail will
           actually have content. With <3 expenses neither Breakdown nor
           Balances render, so the rail would be empty and the activity
@@ -338,7 +375,7 @@ export function ExpensesBoard({
           space beside it — exactly the screenshot the user flagged.
           When the rail is empty we collapse back to a single column. */}
       <div className={`${expenseList.length >= 3 ? "lg:grid lg:grid-cols-[1fr_360px] lg:gap-5 lg:items-start" : ""}`}>
-      <div className="space-y-5 min-w-0">
+      <div className="space-y-5 min-w-0" id="money-activity">
       <SectionCard
         title={`${t("expenses.activity")}${expenseList.length > 0 ? ` · ${expenseList.length}` : ""}`}
         subtitle={t("expenses.mostRecent")}
@@ -346,6 +383,28 @@ export function ExpensesBoard({
         empty={expenseList.length === 0}
         emptyLabel={t("expenses.activity")}
       >
+        {/* §6-B: 32px pill chips, clearly tappable. */}
+        <div className="flex gap-2 mb-2">
+          {(["all", "yours"] as const).map((f) => {
+            const active = activityFilter === f;
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setActivityFilter(f)}
+                aria-pressed={active}
+                className="rounded-full h-8 px-3 text-[13px] font-semibold transition-colors"
+                style={
+                  active
+                    ? { background: "var(--accent-glow)", color: "#6B5CE7" }
+                    : { background: "var(--muted)", color: "var(--muted-foreground)" }
+                }
+              >
+                {f === "all" ? "All" : "Yours"}
+              </button>
+            );
+          })}
+        </div>
         <ul className="divide-y divide-border/60">
           {recentExpenses.map((exp) => (
             <SlimExpenseRow
@@ -574,6 +633,10 @@ function SlimExpenseRow({
             </p>
           )}
         </div>
+        {/* §8-C: payer avatar on every activity row. */}
+        <span className="shrink-0" title={payerName}>
+          <UserAvatar name={expense.payer?.displayName ?? "?"} avatarUrl={expense.payer?.avatarUrl ?? null} size="xs" />
+        </span>
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
       </button>
     </li>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { Camera, Loader2, Check, User as UserIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Camera, Loader2, Check, User as UserIcon, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/lib/actions/profile";
@@ -32,6 +33,7 @@ export function ProfileForm({
   email,
 }: Props) {
   const t = useT();
+  const router = useRouter();
   const [name, setName] = useState(initialName);
   const [bio, setBio] = useState(initialBio);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
@@ -101,7 +103,15 @@ export function ProfileForm({
 
   const showSavedTick = savedAt && Date.now() - savedAt < 3000;
 
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3">
@@ -111,7 +121,7 @@ export function ProfileForm({
           disabled={uploading}
           className="relative group"
         >
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/15 to-violet-500/15 border-2 border-border flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/15 to-violet-500/15 border-2 border-border flex items-center justify-center overflow-hidden">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
@@ -213,5 +223,19 @@ export function ProfileForm({
         </button>
       </div>
     </form>
+
+    {/* §8: Sign out lives on the account page itself (the redesign removed
+        the header dropdown from most surfaces). */}
+    <div className="mt-8 pt-6 border-t border-border">
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-bold text-destructive hover:bg-destructive/5 active:scale-[0.98] transition-all"
+      >
+        <LogOut className="w-4 h-4" />
+        {t("nav.signOut")}
+      </button>
+    </div>
+    </>
   );
 }

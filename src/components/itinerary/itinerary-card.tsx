@@ -45,10 +45,12 @@ const TYPE_CONFIG = {
   other:         { icon: HelpCircle,bg: "bg-muted/60",                         text: "text-muted-foreground",               label: "Other"    },
 } as const;
 
+// §10.2: legible status language ahead of the real vote system. Colors per
+// design vision §3.2 — Suggested gold, Locked purple, Skipped muted.
 const STATUS_CONFIG = {
-  proposed:  { dot: "bg-amber-400",   ring: "ring-amber-400/30",  label: "Proposed"  },
-  confirmed: { dot: "bg-emerald-500", ring: "ring-emerald-500/30",label: "Confirmed" },
-  rejected:  { dot: "bg-red-400",     ring: "ring-red-400/30",    label: "Rejected"  },
+  proposed:  { dot: "bg-[#FFD60A]",   ring: "ring-[#FFD60A]/30",  label: "Suggested · tap to vote" },
+  confirmed: { dot: "bg-[#6B5CE7]",   ring: "ring-[#6B5CE7]/30",  label: "Locked in" },
+  rejected:  { dot: "bg-foreground/35", ring: "ring-foreground/20", label: "Skipped" },
 };
 
 export function ItineraryCard({
@@ -140,8 +142,8 @@ export function ItineraryCard({
                       : item.status === "confirmed" ? "rejected" : "proposed";
                     handleStatusChange(next);
                   }}
-                  title={`${statusCfg.label} — click to cycle`}
-                  aria-label={`${statusCfg.label} — tap to cycle status`}
+                  title={statusCfg.label}
+                  aria-label={statusCfg.label}
                   className="-m-2 p-2 shrink-0 focus:outline-none"
                 >
                   <span
@@ -215,13 +217,13 @@ export function ItineraryCard({
               />
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem onClick={() => handleStatusChange("confirmed")} className="gap-2">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Confirm
+                  <CheckCircle className="w-3.5 h-3.5 text-[#6B5CE7]" /> Lock in
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange("proposed")} className="gap-2">
-                  <Circle className="w-3.5 h-3.5 text-amber-500" /> Mark proposed
+                  <Circle className="w-3.5 h-3.5 text-[#FFD60A]" /> Mark suggested
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange("rejected")} className="gap-2">
-                  <XCircle className="w-3.5 h-3.5 text-red-500" /> Reject
+                  <XCircle className="w-3.5 h-3.5 text-muted-foreground" /> Skip
                 </DropdownMenuItem>
                 {canManage && (
                   <>

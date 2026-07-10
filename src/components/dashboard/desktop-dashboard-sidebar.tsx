@@ -9,7 +9,6 @@ import {
   Bell,
   Sun,
   Moon,
-  Monitor,
   LogOut,
   Sparkles,
 } from "lucide-react";
@@ -175,14 +174,6 @@ export function DesktopDashboardSidebar({
                 <Moon className="w-4 h-4" />
               )}
               {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setTheme("system")}
-              className="gap-2"
-              disabled={theme === "system"}
-            >
-              <Monitor className="w-4 h-4" />
-              {t("nav.matchSystem")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

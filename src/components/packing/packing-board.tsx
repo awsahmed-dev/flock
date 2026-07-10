@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Backpack,
@@ -86,6 +86,20 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
   const [isPending, startTransition] = useTransition();
   const [newLabel, setNewLabel] = useState("");
   const [newCategory, setNewCategory] = useState("general");
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  // §1-G: the "+" FAB is gone — the bottom-nav right circle owns "add item"
+  // now. It dispatches this event; we leave the read-only Crew tab and focus
+  // the add-item input so the keyboard opens straight away.
+  useEffect(() => {
+    const focusAdd = () => {
+      setTab((cur) => (cur === "crew" ? "shared" : cur));
+      // wait a frame so the input is mounted if we just switched tabs.
+      requestAnimationFrame(() => addInputRef.current?.focus());
+    };
+    window.addEventListener("pack:focusAdd", focusAdd);
+    return () => window.removeEventListener("pack:focusAdd", focusAdd);
+  }, []);
 
   const shared = useMemo(() => items.filter((i) => i.userId === null), [items]);
   const mine = useMemo(
@@ -174,7 +188,10 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-full pb-24">
+    <div
+      className="flex flex-col gap-6 max-w-full"
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 140px)" }}
+    >
       {/* B8/B6: PageHeader is hidden when embedded inside PackBoard (which
           owns the shared title). The "Start with suggestions" CTA stays
           visible in both modes — surfaced on its own row when embedded. */}
@@ -278,9 +295,10 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
       {/* §4: fixed add-item bar — never inside the scroll; sits above the tab
           bar with safe-area inset. Hidden on the read-only Crew tab. */}
       {tab !== "crew" && (
-        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+80px)] xl:bottom-0 xl:start-[280px] z-30 bg-card border-t border-border">
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] xl:bottom-0 xl:start-[280px] z-30 bg-card border-t border-border">
           <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-stretch gap-2">
             <input
+              ref={addInputRef}
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}

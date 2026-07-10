@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { expenses } from "@/lib/db/schema";
+import { expenses, settlements } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getRates } from "@/lib/fx";
 
@@ -19,7 +19,7 @@ export async function loadMoneyPageData(tripId: string) {
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) redirect("/dashboard");
 
-  const [expenseList, fxRates] = await Promise.all([
+  const [expenseList, fxRates, settlementRows] = await Promise.all([
     db.query.expenses.findMany({
       where: eq(expenses.tripId, tripId),
       with: {
@@ -29,11 +29,14 @@ export async function loadMoneyPageData(tripId: string) {
       orderBy: [desc(expenses.expenseDate)],
     }),
     getRates(trip.currency),
+    // Phase 6 §8-A: recorded settlements reduce the live balances.
+    db.select().from(settlements).where(eq(settlements.tripId, tripId)),
   ]);
 
   const members = trip.members.map((m) => ({
     userId: m.userId,
-    displayName: m.displayName,
+    // §10.3: live profile name over the join-time cached copy.
+    displayName: m.user?.displayName || m.displayName,
     // B19: thread the joined profile's avatar so expense balance rows +
     // money page chips show the real photo.
     avatarUrl: m.user?.avatarUrl ?? null,
@@ -49,5 +52,10 @@ export async function loadMoneyPageData(tripId: string) {
     fxRates,
     members,
     personalBudget,
+    settlements: settlementRows.map((s) => ({
+      creditorId: s.creditorId,
+      debtorId: s.debtorId,
+      amount: s.amount != null ? Number(s.amount) : 0,
+    })),
   };
 }

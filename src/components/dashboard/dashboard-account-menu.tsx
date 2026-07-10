@@ -9,9 +9,9 @@ import {
   Globe,
   Sun,
   Moon,
-  Monitor,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { AccountSheet } from "@/components/account/account-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -27,15 +27,19 @@ interface Props {
   displayName: string;
   avatarUrl: string | null;
   userId: string;
+  email?: string | null;
 }
 
-export function DashboardAccountMenu({ displayName, avatarUrl, userId }: Props) {
+export function DashboardAccountMenu({ displayName, avatarUrl, userId, email = null }: Props) {
   void userId;
   const t = useT();
   const router = useRouter();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  // §2-C: on mobile the avatar opens the Account bottom sheet instead of the
+  // desktop dropdown.
+  const [sheetOpen, setSheetOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,10 +68,21 @@ export function DashboardAccountMenu({ displayName, avatarUrl, userId }: Props) 
 
   return (
     <div ref={ref} className="relative">
+      {/* Mobile: avatar → Account bottom sheet (§2-C). */}
+      <button
+        type="button"
+        onClick={() => setSheetOpen(true)}
+        className="xl:hidden rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all"
+        aria-label={displayName}
+      >
+        <UserAvatar name={displayName} avatarUrl={avatarUrl} size="md" />
+      </button>
+
+      {/* Desktop: avatar → dropdown menu. */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all"
+        className="hidden xl:block rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all"
         aria-label={displayName}
       >
         <UserAvatar
@@ -76,6 +91,14 @@ export function DashboardAccountMenu({ displayName, avatarUrl, userId }: Props) 
           size="md"
         />
       </button>
+
+      <AccountSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        email={email}
+      />
       {open && (
         <div className="absolute end-0 top-full mt-2 w-60 rounded-2xl bg-card border border-border shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="px-3 py-2 border-b border-border/60 mb-1">
@@ -114,13 +137,6 @@ export function DashboardAccountMenu({ displayName, avatarUrl, userId }: Props) 
               className={`p-1 rounded ${theme === "dark" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Moon className="w-3 h-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setTheme("system")}
-              className={`p-1 rounded ${theme === "system" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <Monitor className="w-3 h-3" />
             </button>
           </div>
           <button

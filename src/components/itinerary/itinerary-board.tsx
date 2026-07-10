@@ -29,6 +29,7 @@ import { PlanModeSwitch } from "./plan-mode-switch";
 import { BookMode } from "./book-mode";
 import { convert, type RateBundle } from "@/lib/fx";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 import type { InferSelectModel } from "drizzle-orm";
 import type { itineraryItems } from "@/lib/db/schema";
 
@@ -50,6 +51,10 @@ interface Props {
   userId: string;
   isOwner: boolean;
   crewSize?: number;
+  /** §5: deep-link from the pre-start day circles (?day=<ISO>) focuses that day. */
+  initialDay?: string | null;
+  /** Phase 6 §6-B: booking meta keyed by anchor stop id. */
+  bookingsByStop?: Record<string, { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null }>;
 }
 
 const DAY_PALETTE = [
@@ -100,9 +105,13 @@ export function ItineraryBoard({
   userId,
   isOwner,
   crewSize = 1,
+  initialDay = null,
+  bookingsByStop = {},
 }: Props) {
   const t = useT();
   const { locale } = useLocale();
+  // §10.1: basemap follows the app theme (dark-first; light on opt-in).
+  const { resolvedTheme } = useTheme();
   const [items, setItems] = useState(initialItems);
   // Keep local state in sync with server revalidations: adding a place (or AI
   // Plan) calls a server action that revalidates this route, re-rendering us
@@ -122,7 +131,9 @@ export function ItineraryBoard({
   const [planDayOpen, setPlanDayOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [focusedDay, setFocusedDay] = useState<string | null>(days[0] ?? null);
+  const [focusedDay, setFocusedDay] = useState<string | null>(
+    initialDay && days.includes(initialDay) ? initialDay : days[0] ?? null,
+  );
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   // B7c: start collapsed so the map dominates the surface (was opening
   // to ~55vh by default which made the map feel like a sub-feature).
@@ -138,9 +149,38 @@ export function ItineraryBoard({
   );
 
   function getItemsForDay(day: string) {
-    return items
+    // §6-B: booking anchors ALWAYS pin to the top of their day, sorted by
+    // time; regular stops keep their manual sort order below them.
+    // Multi-night stays repeat as read-only rows on each covered day
+    // ("Night N of N"); only the check-in day carries the time.
+    const nightRepeats = items.flatMap((i) => {
+      const meta = bookingsByStop[i.id];
+      if ((i.stopType ?? "regular") !== "booking_stay" || !meta?.nights || meta.nights < 2) return [];
+      const out: typeof items = [];
+      for (let n = 1; n < meta.nights; n++) {
+        const d = new Date(`${i.dayDate}T00:00:00`);
+        d.setDate(d.getDate() + n);
+        const iso = d.toISOString().slice(0, 10);
+        if (iso !== day) continue;
+        out.push({
+          ...i,
+          id: `${i.id}#night${n + 1}`,
+          dayDate: iso,
+          startTime: null,
+          notes: `Night ${n + 1} of ${meta.nights}`,
+        });
+      }
+      return out;
+    });
+    return [...items, ...nightRepeats]
       .filter((i) => i.dayDate === day)
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => {
+        const aa = (a.stopType ?? "regular") !== "regular" ? 0 : 1;
+        const bb = (b.stopType ?? "regular") !== "regular" ? 0 : 1;
+        if (aa !== bb) return aa - bb;
+        if (aa === 0) return (a.startTime ?? "99").localeCompare(b.startTime ?? "99");
+        return a.sortOrder - b.sortOrder;
+      });
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -222,13 +262,19 @@ export function ItineraryBoard({
   // 100dvh handles iOS soft keyboard correctly. Bottom-nav is ~5.5rem
   // including its safe-area padding. Negative margins pull the canvas
   // edge-to-edge inside the trip page's padded main content.
-  // Fix 2: the Full Map is reached from the dark NOW cockpit, so the whole
-  // surface is forced dark (the `dark` class flips every card/border/text token
-  // to its dark value) instead of a dark map under a light day-list + sheet.
+  // §10.1 Theme Schism fix: per-page `dark` forcing removed. The app is
+  // dark-first via next-themes on <html>; this surface follows the global
+  // tokens so the light toggle flips it with every other route (basemap
+  // included — see mapStyle below).
+  // §10.9: the old -mx-4/-mx-6 negative margins compensated a padded <main>
+  // that no longer exists — they were pulling the whole canvas (and the
+  // desktop side panel with it) 24px under the sidebar rail, clipping
+  // "Day 1" and the day chips at the left edge. TripShell's <main> is
+  // unpadded now, so the board sits flush without any negative margin.
   const containerCls =
-    "dark relative -mx-4 sm:-mx-6 lg:-mx-6 -mt-4 sm:-mt-6 " +
+    "relative " +
     "h-[calc(100dvh-3.5rem-5.5rem)] sm:h-[calc(100dvh-3.5rem)] " +
-    "overflow-hidden bg-[#0a0a0a] text-[#f5f5f7]";
+    "overflow-hidden bg-background text-foreground";
 
   return (
     <div className={containerCls}>
@@ -257,7 +303,7 @@ export function ItineraryBoard({
           highlightedItemId={highlightedItemId}
           onItemClick={handleMarkerClick}
           days={days}
-          mapStyle="dark-v11"
+          mapStyle={resolvedTheme === "light" ? "light-v11" : "dark-v11"}
           pinColor="#6b5ce7"
         />
       </div>
@@ -354,7 +400,8 @@ export function ItineraryBoard({
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
-                    D{idx + 1}
+                    {/* §6-A: real calendar date, not "D1" — "Thu 18". */}
+                    {format(parseISO(day), "EEE d")}
                     {count > 0 && (
                       <span className="opacity-70 tabular-nums">·{count}</span>
                     )}
@@ -430,6 +477,7 @@ export function ItineraryBoard({
                         <SortableItemRow
                           key={item.id}
                           item={item}
+                          bookingMeta={bookingsByStop[String(item.id).split("#")[0]] ?? null}
                           number={idx + 1}
                           paletteDot={palette.dot}
                           currency={currency}
@@ -632,7 +680,8 @@ export function ItineraryBoard({
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
-                    D{idx + 1}
+                    {/* §6-A: real calendar date, not "D1" — "Thu 18". */}
+                    {format(parseISO(day), "EEE d")}
                     {count > 0 && (
                       <span className="opacity-70 tabular-nums">·{count}</span>
                     )}
@@ -739,6 +788,7 @@ export function ItineraryBoard({
                           <SortableItemRow
                             key={item.id}
                             item={item}
+                            bookingMeta={bookingsByStop[String(item.id).split("#")[0]] ?? null}
                             number={idx + 1}
                             paletteDot={palette.dot}
                             currency={currency}
@@ -885,6 +935,7 @@ function SortableItemRow({
   onEdit,
   onDelete,
   onStatusCycle,
+  bookingMeta = null,
 }: {
   item: Item;
   number: number;
@@ -899,8 +950,11 @@ function SortableItemRow({
   onEdit: () => void;
   onDelete: () => void;
   onStatusCycle: () => void;
+  bookingMeta?: { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null } | null;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  // §6-B: booking anchors are pinned, undeletable, unvotable, undraggable.
+  const isAnchor = ((item as { stopType?: string }).stopType ?? "regular") !== "regular";
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled: isAnchor });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const TypeCfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;
   const TypeIcon = TypeCfg.icon;
@@ -957,8 +1011,8 @@ function SortableItemRow({
       id={`item-${item.id}`}
       className={`relative overflow-hidden rounded-2xl ${isDragging ? "opacity-40" : ""}`}
     >
-      {/* Delete zone revealed under the row on swipe-left. */}
-      {canManage && (
+      {/* Delete zone revealed under the row on swipe-left — never on anchors. */}
+      {canManage && !isAnchor && (
         <button
           type="button"
           onClick={onDelete}
@@ -971,10 +1025,10 @@ function SortableItemRow({
       <div
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        onPointerDown={canManage ? onSwipeDown : undefined}
-        onPointerMove={canManage ? onSwipeMove : undefined}
-        onPointerUp={canManage ? onSwipeUp : undefined}
-        onPointerCancel={canManage ? onSwipeUp : undefined}
+        onPointerDown={canManage && !isAnchor ? onSwipeDown : undefined}
+        onPointerMove={canManage && !isAnchor ? onSwipeMove : undefined}
+        onPointerUp={canManage && !isAnchor ? onSwipeUp : undefined}
+        onPointerCancel={canManage && !isAnchor ? onSwipeUp : undefined}
         style={{
           transform: `translateX(${dx}px)`,
           transition: swipeStartX.current == null ? "transform 150ms ease" : "none",
@@ -983,36 +1037,58 @@ function SortableItemRow({
           highlighted ? "ring-primary/60 shadow-md shadow-primary/20" : "ring-border/60 hover:ring-border"
         }`}
       >
+      {isAnchor && (
+        <span aria-hidden className="absolute inset-y-0 start-0 w-[3px] bg-primary" />
+      )}
       <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-3 border-e border-border/40 shrink-0">
         <div
           className={`w-7 h-7 ${paletteDot} text-white rounded-full flex items-center justify-center text-xs font-extrabold`}
         >
           {number}
         </div>
-        <button
-          {...attributes}
-          {...listeners}
-          className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5"
-          aria-label="Drag to reorder"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
+        {!isAnchor && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5"
+            aria-label="Drag to reorder"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 min-w-0 p-3.5 flex flex-col gap-2">
         <div className="flex items-start gap-2">
+          {isAnchor ? (
+            <span aria-hidden className="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 bg-primary" />
+          ) : (
           <button
             type="button"
             onClick={onStatusCycle}
-            title={`${item.status} — tap to cycle`}
+            title={
+              item.status === "confirmed"
+                ? "Locked in"
+                : item.status === "rejected"
+                  ? "Skipped"
+                  : "Suggested · tap to vote"
+            }
+            aria-label={
+              item.status === "confirmed"
+                ? "Locked in"
+                : item.status === "rejected"
+                  ? "Skipped"
+                  : "Suggested · tap to vote"
+            }
             className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
               item.status === "confirmed"
-                ? "bg-emerald-500"
+                ? "bg-[#6B5CE7]"
                 : item.status === "rejected"
-                  ? "bg-red-400"
-                  : "bg-amber-400"
+                  ? "bg-foreground/35"
+                  : "bg-[#FFD60A]"
             }`}
           />
+          )}
           <p
             className={`flex-1 min-w-0 font-bold text-sm leading-snug ${
               item.status === "rejected" ? "line-through text-muted-foreground" : ""
@@ -1028,12 +1104,40 @@ function SortableItemRow({
           </span>
         </div>
 
-        {(item.startTime || item.rating != null || item.costEstimate != null || item.locationName) && (
+        {(item.startTime || item.rating != null || item.costEstimate != null || item.locationName || bookingMeta) && (
           <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground">
             {item.startTime && (
               <span className="inline-flex items-center gap-1 tabular-nums">
                 <Clock className="w-4 h-4" /> {item.startTime.slice(0, 5)}
               </span>
+            )}
+            {/* §6-B: confirmation # (tap-hold to copy) + [PDF] chip. */}
+            {bookingMeta?.confirmationNumber && (
+              <button
+                type="button"
+                className="tabular-nums font-semibold"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  navigator.clipboard?.writeText(bookingMeta.confirmationNumber!);
+                  toast("Confirmation copied");
+                }}
+              >
+                #{bookingMeta.confirmationNumber}
+              </button>
+            )}
+            {isAnchor && item.notes?.startsWith("Night ") && (
+              <span className="font-semibold">{item.notes}</span>
+            )}
+            {bookingMeta?.pdfUrl && (
+              <a
+                href={bookingMeta.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-0.5 text-[11px] font-bold text-foreground"
+              >
+                PDF
+              </a>
             )}
             {item.rating != null && (
               <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
@@ -1046,11 +1150,13 @@ function SortableItemRow({
               </span>
             )}
             {item.costEstimate != null && (
+              /* §11-E: <bdi> isolates Arabic currency marks (ر.س) so digits
+                 and symbol never render scrambled in an LTR context. */
               <span className="inline-flex items-center gap-1 tabular-nums font-bold text-foreground">
-                {currencySymbol(currency)}{fmtAmount(item.costEstimate)}
+                <bdi>{currencySymbol(currency)}</bdi>{fmtAmount(item.costEstimate)}
                 {localPrice != null && (
                   <span className="opacity-60 font-normal">
-                    · {currencySymbol(localCurrency!)}{fmtAmount(localPrice)}
+                    · <bdi>{currencySymbol(localCurrency!)}</bdi>{fmtAmount(localPrice)}
                   </span>
                 )}
               </span>
@@ -1082,7 +1188,7 @@ function SortableItemRow({
           {/* Edit stays hover-only on desktop. Delete is swipe-left (the red
               zone revealed behind the row) — no always-visible trash icon, so
               it works on touch without a permanent destructive control. */}
-          {canManage && (
+          {canManage && !isAnchor && (
             <button
               type="button"
               onClick={onEdit}

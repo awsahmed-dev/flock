@@ -4,23 +4,36 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { itineraryItems, expenses, packingItems, tripMembers } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
-import { eachDayOfInterval, format as isoFormat } from "date-fns";
+import {
+  itineraryItems, expenses, packingItems, bookings as bookingsTable,
+  placeLikes, cachedPlaces, activities, expenseSplits, settlements,
+  huddleDecisions,
+} from "@/lib/db/schema";
+import { simplifySettlements } from "@/lib/settle";
+import { eq, asc, desc, inArray, and, sql } from "drizzle-orm";
+import { eachDayOfInterval, format as isoFormat, differenceInCalendarDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { getRates, convert } from "@/lib/fx";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
+import { tripPhase } from "@/lib/trip-phase";
 import { NowCockpit, type NowItem } from "@/components/trips/now-cockpit";
-import { PreStartOverview, type PreStartDay } from "@/components/trips/pre-start-overview";
+import { PlanningCockpit } from "@/components/trips/cockpit/planning-cockpit";
+import { DepartureCockpit } from "@/components/trips/cockpit/departure-cockpit";
+import { RecapCockpit } from "@/components/trips/cockpit/recap-cockpit";
+import { PocketDay } from "@/components/pwa/pocket-day";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 /**
- * NOW screen (redesign brief Screen C). Fetches the trip itinerary + spend and
- * renders the dark cockpit (full-screen map + draggable sheet). The light
- * pre-start overview for upcoming trips (Screen H) lands in a later step.
+ * Phase 6 §3: NOW is the time-aware front page of the trip. One route,
+ * four renders, all driven by tripPhase() — the single source of truth.
+ *
+ *   PLANNING   hero + crew pulse + prep checklist + metrics + teaser
+ *   DEPARTURE  slim hero + Departure Board + day-1 preview
+ *   LIVE       map cockpit + UpNext sheet
+ *   RECAP      The Wrap — memories, stats, settle; zero editing UI
  */
 export default async function TripPage({ params }: Props) {
   const { id } = await params;
@@ -30,7 +43,9 @@ export default async function TripPage({ params }: Props) {
   const trip = await getTripWithMembership(id, user.id);
   if (!trip) redirect("/dashboard");
 
-  // Keep the hero photo warm for the dashboard / pre-start screens.
+  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate });
+
+  // Keep the hero photo warm for every phase's hero.
   ensureTripHeroImage({
     tripId: trip.id,
     destination: trip.destination,
@@ -55,22 +70,25 @@ export default async function TripPage({ params }: Props) {
     lat: r.locationLat,
     lng: r.locationLng,
     status: r.status,
+    stopType: r.stopType,
+    completedAt: r.completedAt ? r.completedAt.toISOString() : null,
+    photoUrl: r.photoUrl,
   }));
 
   const tripCurrency = trip.currency ?? "USD";
   const expRows = await db
-    .select({ amount: expenses.amount, currency: expenses.currency })
+    .select({ amount: expenses.amount, currency: expenses.currency, expenseDate: expenses.expenseDate, paidBy: expenses.paidBy })
     .from(expenses)
     .where(eq(expenses.tripId, id));
+  const rates = expRows.length ? await getRates(tripCurrency).catch(() => null) : null;
   let spent = 0;
-  if (expRows.length) {
-    const rates = await getRates(tripCurrency).catch(() => null);
-    for (const e of expRows) {
-      const amt = Number(e.amount) || 0;
-      const converted =
-        e.currency !== tripCurrency ? convert(amt, e.currency, tripCurrency, rates) : amt;
-      spent += converted ?? amt;
-    }
+  const spentByUser = new Map<string, number>();
+  for (const e of expRows) {
+    const amt = Number(e.amount) || 0;
+    const converted =
+      e.currency !== tripCurrency ? convert(amt, e.currency, tripCurrency, rates) ?? amt : amt;
+    spent += converted;
+    spentByUser.set(e.paidBy, (spentByUser.get(e.paidBy) ?? 0) + converted);
   }
 
   const days = eachDayOfInterval({
@@ -83,62 +101,199 @@ export default async function TripPage({ params }: Props) {
     ? [withCoords.lng as number, withCoords.lat as number]
     : null;
 
-  // Upcoming trips (not yet started) get the light pre-start overview (Screen
-  // H); started trips get the dark NOW cockpit (Screen C).
-  const started = parseDateOnly(trip.startDate) <= new Date();
-  if (!started) {
-    const memberRows = await db
-      .select({ userId: tripMembers.userId })
-      .from(tripMembers)
-      .where(eq(tripMembers.tripId, id));
-    const packRows = await db
-      .select({ packed: packingItems.packed })
-      .from(packingItems)
-      .where(eq(packingItems.tripId, id));
-    const packed = packRows.filter((p) => p.packed).length;
-    const itemDays = new Set(items.map((i) => i.dayDate));
-    const todayIso = isoFormat(new Date(), "yyyy-MM-dd");
-    const preDays: PreStartDay[] = days.map((d, i) => ({
-      key: d,
-      label: String(i + 1),
-      hasItems: itemDays.has(d),
-      isToday: d === todayIso,
-    }));
-    const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    const staticMapUrl =
-      withCoords && mapToken
-        ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-l+6b5ce7(${withCoords.lng},${withCoords.lat})/${withCoords.lng},${withCoords.lat},9,0/640x360@2x?access_token=${mapToken}`
-        : null;
-    const dateLabel = `${isoFormat(parseDateOnly(trip.startDate), "d MMM")} – ${isoFormat(parseDateOnly(trip.endDate), "d MMM yyyy")}`;
+  // §10.3: live profile name over the join-time cached copy.
+  const crew = trip.members.map((m) => ({
+    userId: m.userId,
+    displayName: m.user?.displayName || m.displayName,
+    avatarUrl: m.user?.avatarUrl ?? null,
+  }));
+
+  const packRows = await db
+    .select({ packed: packingItems.packed })
+    .from(packingItems)
+    .where(eq(packingItems.tripId, id));
+  const packing = { packed: packRows.filter((p) => p.packed).length, total: packRows.length };
+
+  // Booking anchors for the Departure Board + LIVE travel-day mode.
+  const anchorIds = rows.filter((r) => r.stopType !== "regular").map((r) => r.id);
+  const bookingRows = anchorIds.length
+    ? await db.select().from(bookingsTable).where(inArray(bookingsTable.stopId, anchorIds))
+    : [];
+  const anchors = rows
+    .filter((r) => r.stopType !== "regular")
+    .map((r) => {
+      const b = bookingRows.find((x) => x.stopId === r.id);
+      return {
+        id: r.id,
+        dayDate: r.dayDate,
+        title: r.title,
+        stopType: r.stopType,
+        startTime: r.startTime,
+        confirmationNumber: b?.confirmationNumber ?? null,
+        providerName: b?.providerName ?? null,
+        pdfUrl: b?.pdfUrl ?? null,
+        nights: b?.nights ?? null,
+      };
+    });
+
+  // Crew-hearted places (Discover teaser / free-day ideas): place_likes joined
+  // with the cached place snapshot for name + photo.
+  const likeRows = await db
+    .select({ placeId: placeLikes.placeId, userId: placeLikes.userId })
+    .from(placeLikes)
+    .where(eq(placeLikes.tripId, id));
+  const likeCounts = new Map<string, number>();
+  for (const l of likeRows) likeCounts.set(l.placeId, (likeCounts.get(l.placeId) ?? 0) + 1);
+  const topLiked = [...likeCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  let teaser: { placeId: string; name: string; photoRef: string | null; rating: number | null; hearts: number }[] = [];
+  if (topLiked.length) {
+    const snaps = await db
+      .select({ placeId: cachedPlaces.placeId, snapshot: cachedPlaces.snapshot })
+      .from(cachedPlaces)
+      .where(inArray(cachedPlaces.placeId, topLiked.map(([p]) => p)));
+    teaser = topLiked
+      .map(([placeId, hearts]) => {
+        const snap = snaps.find((s) => s.placeId === placeId)?.snapshot as
+          | { name?: string; photoRef?: string | null; rating?: number | null }
+          | undefined;
+        return snap?.name
+          ? { placeId, name: snap.name, photoRef: snap.photoRef ?? null, rating: snap.rating ?? null, hearts }
+          : null;
+      })
+      .filter(Boolean)
+      .slice(0, 3) as typeof teaser;
+  }
+
+  // Crew Pulse ticker: last activity row (§6.5 — one line, never a feed).
+  const lastActivity = await db.query.activities.findFirst({
+    where: eq(activities.tripId, id),
+    orderBy: [desc(activities.createdAt)],
+    with: { actor: true },
+  });
+  const ticker = lastActivity
+    ? {
+        text: `${lastActivity.actor?.displayName ?? "Someone"} ${describeEvent(lastActivity.eventType, lastActivity.placeName)}`,
+        eventType: lastActivity.eventType,
+      }
+    : null;
+
+  // §6.5 readiness: locked-days 40% · budget 10% · packing 20% · crew 10% · bookings 20%.
+  const daysWithLocked = new Set(rows.filter((r) => r.status === "confirmed").map((r) => r.dayDate)).size;
+  const readiness = Math.round(
+    (days.length ? (daysWithLocked / days.length) * 40 : 0) +
+      (trip.budgetTotal != null && trip.budgetTotal > 0 ? 10 : 0) +
+      (packing.total > 0 ? Math.min(1, packing.packed / Math.max(1, packing.total)) * 20 : 0) +
+      (crew.length >= 2 ? 10 : 0) +
+      (anchors.length > 0 ? 20 : 0),
+  );
+
+  // Phase 7 §5: open decisions drive the ONE primary action card.
+  const [{ count: huddleOpen }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(huddleDecisions)
+    .where(and(eq(huddleDecisions.tripId, id), eq(huddleDecisions.status, "open")));
+
+  const shared = {
+    tripId: id,
+    name: trip.name,
+    destination: trip.destination,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    heroImageUrl: trip.heroImageUrl ?? trip.coverImage ?? null,
+    currency: tripCurrency,
+    budgetTotal: trip.budgetTotal != null ? Number(trip.budgetTotal) : null,
+    days,
+    items,
+    crew,
+    packing,
+    spent,
+    readiness,
+    ticker,
+    teaser,
+    anchors,
+    huddleOpen,
+  };
+
+  if (phase === "PLANNING") {
+    return <PlanningCockpit {...shared} />;
+  }
+
+  if (phase === "DEPARTURE") {
     return (
-      <PreStartOverview
-        tripId={id}
-        name={trip.name}
-        destination={trip.destination}
-        dates={dateLabel}
-        daysUntil={Math.max(0, Math.ceil((parseDateOnly(trip.startDate).getTime() - Date.now()) / 86400000))}
-        heroImageUrl={trip.heroImageUrl ?? null}
-        staticMapUrl={staticMapUrl}
-        days={preDays}
-        placesCount={items.length}
-        crewCount={memberRows.length}
-        packing={{ packed, total: packRows.length }}
-        budget={{
-          total: trip.budgetTotal != null ? Number(trip.budgetTotal) : null,
-          currency: tripCurrency,
-        }}
+      <>
+        <PocketDay
+          tripId={id}
+          startDate={trip.startDate}
+          endDate={trip.endDate}
+          days={days}
+          stops={items.map((i) => ({ dayDate: i.dayDate, photoUrl: i.photoUrl ?? null }))}
+        />
+        <DepartureCockpit {...shared} />
+      </>
+    );
+  }
+
+  if (phase === "RECAP") {
+    // Hearts per user (crew awards).
+    const heartsByUser: Record<string, number> = {};
+    for (const l of likeRows) heartsByUser[l.userId] = (heartsByUser[l.userId] ?? 0) + 1;
+
+    // Balances: unsettled splits net per member, minus recorded settlements,
+    // then simplified into minimal pairs (§8-A).
+    const splitRows = await db
+      .select({
+        debtorId: expenseSplits.userId,
+        amountOwed: expenseSplits.amountOwed,
+        settled: expenseSplits.settled,
+        payerId: expenses.paidBy,
+        currency: expenses.currency,
+      })
+      .from(expenseSplits)
+      .innerJoin(expenses, eq(expenses.id, expenseSplits.expenseId))
+      .where(eq(expenses.tripId, id));
+    const nets = new Map<string, number>();
+    for (const s of splitRows) {
+      if (s.settled || s.debtorId === s.payerId) continue;
+      const amt = Number(s.amountOwed) || 0;
+      const converted =
+        s.currency !== tripCurrency ? convert(amt, s.currency, tripCurrency, rates) ?? amt : amt;
+      nets.set(s.payerId, (nets.get(s.payerId) ?? 0) + converted);
+      nets.set(s.debtorId, (nets.get(s.debtorId) ?? 0) - converted);
+    }
+    const settledRows = await db
+      .select()
+      .from(settlements)
+      .where(eq(settlements.tripId, id));
+    for (const st of settledRows) {
+      const amt = Number(st.amount) || 0;
+      if (st.creditorId) nets.set(st.creditorId, (nets.get(st.creditorId) ?? 0) - amt);
+      if (st.debtorId) nets.set(st.debtorId, (nets.get(st.debtorId) ?? 0) + amt);
+    }
+    const settlePairs = simplifySettlements(
+      [...nets.entries()].map(([userId, net]) => ({ userId, net })),
+    );
+
+    return (
+      <RecapCockpit
+        {...shared}
+        spentByUser={Object.fromEntries(spentByUser)}
+        heartsByUser={heartsByUser}
+        settlePairs={settlePairs}
+        currentUserId={user.id}
       />
     );
   }
 
-  // §7: crew for the share sheet's "N people in this trip" section.
-  const crew = trip.members.map((m) => ({
-    userId: m.userId,
-    displayName: m.displayName,
-    avatarUrl: m.user?.avatarUrl ?? null,
-  }));
-
+  // LIVE — the map cockpit.
   return (
+    <>
+    <PocketDay
+      tripId={id}
+      startDate={trip.startDate}
+      endDate={trip.endDate}
+      days={days}
+      stops={items.map((i) => ({ dayDate: i.dayDate, photoUrl: i.photoUrl ?? null }))}
+    />
     <NowCockpit
       tripId={id}
       tripName={trip.name}
@@ -151,6 +306,22 @@ export default async function TripPage({ params }: Props) {
         currency: tripCurrency,
       }}
       crew={crew}
+      endDate={trip.endDate}
+      teaser={teaser}
+      anchors={anchors}
     />
+    </>
   );
+}
+
+function describeEvent(eventType: string, placeName: string | null): string {
+  switch (eventType) {
+    case "place_hearted": return `hearted ${placeName ?? "a place"}`;
+    case "stop_added": return `added ${placeName ?? "a stop"}`;
+    case "stop_locked": return `locked in ${placeName ?? "a stop"}`;
+    case "expense_logged": return "logged an expense";
+    case "pack_item_claimed": return "claimed a pack item";
+    case "poll_closed": return "closed a poll";
+    default: return "made a move";
+  }
 }

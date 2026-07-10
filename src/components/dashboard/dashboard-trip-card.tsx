@@ -31,8 +31,10 @@ export function DashboardTripCard({
 }) {
   const [imgOk, setImgOk] = useState(true);
 
+  // §2-B: NOW = green bg + white text; IN X DAYS = accent (#6B5CE7) + white;
+  // UPCOMING = muted.
   const chipTone: Record<TripStatusTone, string> = {
-    now: "bg-success text-black",
+    now: "bg-success text-white",
     soon: "bg-primary text-white",
     upcoming: "bg-white/20 text-white",
     past: "bg-white/15 text-white/70",

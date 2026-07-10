@@ -10,8 +10,9 @@ import { format } from "@/lib/i18n/date-fns";
 import { toast } from "sonner";
 import type { Place } from "@/lib/places/types";
 import type { ScoredPlace } from "@/lib/discovery/score";
-import { createItineraryItemFromGooglePlace } from "@/lib/actions/itinerary";
+import { createItineraryItemFromGooglePlace, deleteItineraryItem } from "@/lib/actions/itinerary";
 import { createDecision } from "@/lib/actions/decisions";
+import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { PoweredByGoogle } from "./primitives";
 
@@ -30,7 +31,7 @@ const CAT_KEY: Record<string, string> = {
 };
 
 export function PlaceDetailPanel({
-  scored, open, tripId, days, center, saved, crewSize = 1, isOwner = false, onClose, onSave, onAdded,
+  scored, open, tripId, days, center, saved, crewSize = 1, isOwner = false, onClose, onSave, onAdded, onUndone,
 }: {
   scored: ScoredPlace | null;
   open: boolean;
@@ -43,8 +44,11 @@ export function PlaceDetailPanel({
   onClose: () => void;
   onSave: () => void;
   onAdded: (placeId: string) => void;
+  /** §10.7: reverts the card's "In plan" state after a toast Undo. */
+  onUndone?: (placeId: string) => void;
 }) {
   const t = useT();
+  const router = useRouter();
   const base = scored?.place ?? null;
   const [enriched, setEnriched] = useState<Place | null>(null);
   const [selectedDay, setSelectedDay] = useState<string>(days[0] ?? "");
@@ -120,20 +124,44 @@ export function PlaceDetailPanel({
 
   function handleAdd() {
     if (!p || !effectiveDay) return;
+    const placeId = p.placeId;
+    const place = p;
+    const day = effectiveDay;
     startTransition(async () => {
       try {
-        await createItineraryItemFromGooglePlace({
-          tripId, dayDate: effectiveDay,
+        const created = await createItineraryItemFromGooglePlace({
+          tripId, dayDate: day,
           place: {
-            placeId: p.placeId, name: p.name, category: p.category, placeTypes: p.placeTypes,
-            rating: p.rating, userRatingsTotal: p.userRatingsTotal, priceLevel: p.priceLevel,
-            coords: p.coords, address: p.address, photoRef: p.photoRef,
-            hoursSummary: p.hoursSummary, topTip: p.topTip,
+            placeId: place.placeId, name: place.name, category: place.category, placeTypes: place.placeTypes,
+            rating: place.rating, userRatingsTotal: place.userRatingsTotal, priceLevel: place.priceLevel,
+            coords: place.coords, address: place.address, photoRef: place.photoRef,
+            hoursSummary: place.hoursSummary, topTip: place.topTip,
           },
         });
-        setAddedInfo({ placeId: p.placeId, day: effectiveDay });
-        onAdded(p.placeId);
-        toast.success(t("discover.addedToast", { name: p.name, day: t("itinerary.dayN", { n: days.indexOf(effectiveDay) + 1 }) }));
+        setAddedInfo({ placeId, day });
+        onAdded(placeId);
+        // §10.7: every add is confirmed, reversible, and traceable — Undo
+        // deletes the created item; View day jumps to that itinerary day.
+        toast.success(
+          t("discover.addedToast", { name: place.name, day: t("itinerary.dayN", { n: days.indexOf(day) + 1 }) }),
+          {
+            duration: 5000,
+            action: {
+              label: t("common.undo"),
+              onClick: () => {
+                setAddedInfo((cur) => (cur?.placeId === placeId ? null : cur));
+                onUndone?.(placeId);
+                deleteItineraryItem(created.id, tripId).catch(() =>
+                  toast.error(t("discover.addError")),
+                );
+              },
+            },
+            cancel: {
+              label: t("discover.viewDay"),
+              onClick: () => router.push(`/trips/${tripId}/itinerary?day=${day}`),
+            },
+          },
+        );
       } catch {
         toast.error(t("discover.addError"));
       }

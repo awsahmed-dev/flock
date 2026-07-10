@@ -128,7 +128,8 @@ export async function getMemberStats(
 
   return {
     userId: memberUserId,
-    displayName: member.displayName,
+    // §10.3: live profile name over the join-time cached copy.
+    displayName: member.user?.displayName || member.displayName,
     role: member.role as "owner" | "member",
     joinedAt: memberRow?.joinedAt?.toISOString() ?? trip.startDate as string,
     itemsAdded: itemsAddedRow[0]?.count ?? 0,

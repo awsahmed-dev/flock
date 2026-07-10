@@ -5,6 +5,7 @@ import { Heart, Star, MapPin, Check } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
+import { shortLocality } from "@/lib/places/short-locality";
 
 const CAT_KEY: Record<string, string> = {
   eat: "discover.catEat", coffee: "discover.catCoffee", sight: "discover.catSight",
@@ -95,7 +96,13 @@ export function PlaceCardCompact({
           {price && <span className="text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">{price}</span>}
           <span className="inline-flex items-center gap-1 min-w-0">
             <MapPin className="w-3 h-3 shrink-0" />
-            <span className="line-clamp-1">{p.address ?? t(CAT_KEY[p.category] ?? CAT_KEY.eat)}</span>
+            {/* §10.6: derived "{locality} · {type}" — never the raw Google
+                address string. Full address lives in the detail drawer. */}
+            <span className="line-clamp-1">
+              {[shortLocality(p.address), t(CAT_KEY[p.category] ?? CAT_KEY.eat)]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
           </span>
         </div>
       </div>

@@ -14,6 +14,7 @@ import {
   type ExpenseCardMeta,
   type VoteCardMeta,
 } from "@/lib/actions/chat";
+import { convert, type RateBundle } from "@/lib/fx";
 import { toast } from "sonner";
 import {
   MoreHorizontal,
@@ -31,6 +32,7 @@ import {
   ReceiptText,
   Vote,
   Calendar,
+  Sparkles,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -303,15 +305,27 @@ function ExpenseCard({
   meta,
   messageId,
   tripId,
+  tripCurrency,
+  fxRates,
   onActionDone,
 }: {
   meta: ExpenseCardMeta;
   messageId: string;
   tripId: string;
+  tripCurrency?: string;
+  fxRates?: RateBundle | null;
   onActionDone?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const isConfirmed = !!meta.confirmedExpenseId;
+  // §10.8: primary = the currency as logged (legacy cards without one fall
+  // back to the trip currency); secondary = ≈ trip-currency conversion when
+  // they differ, same formatter family as the Expenses page. Never "$".
+  const cardCurrency = meta.currency ?? tripCurrency ?? "";
+  const converted =
+    tripCurrency && cardCurrency && cardCurrency !== tripCurrency
+      ? convert(meta.amount, cardCurrency, tripCurrency, fxRates ?? null)
+      : null;
 
   function handleConfirm() {
     const fd = new FormData();
@@ -340,7 +354,14 @@ function ExpenseCard({
       <div className="px-4 py-4 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-xl tabular-nums">${meta.amount.toFixed(2)}</p>
+            <p className="font-semibold text-xl tabular-nums">
+              {cardCurrency ? `${cardCurrency} ` : ""}{meta.amount.toFixed(2)}
+            </p>
+            {converted != null && tripCurrency && (
+              <p className="text-xs text-muted-foreground tabular-nums">
+                ≈ {tripCurrency} {converted.toFixed(2)}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground mt-0.5">{meta.description}</p>
           </div>
           <span className="text-xs bg-muted rounded-full px-3 py-1 capitalize">
@@ -488,6 +509,9 @@ interface Props {
   onActionDone?: () => void;
   /** Map of userId → last_read_chat_at ISO. Used to render ✓/✓✓ on outgoing. */
   readReceipts?: Record<string, string | null>;
+  /** §10.8: trip base currency + live rates for the expense card's ≈ line. */
+  tripCurrency?: string;
+  fxRates?: RateBundle | null;
 }
 
 const CARD_TYPES = ["link_card", "expense_card", "vote_card", "itinerary_card", "decision_card"];
@@ -514,10 +538,22 @@ export function MessageBubble({
   onReply,
   onActionDone,
   readReceipts,
+  tripCurrency,
+  fxRates,
 }: Props) {
   const [isPending, startTransition] = useTransition();
-  const isMine = message.userId === userId;
   const isCard = CARD_TYPES.includes(message.type);
+  // §10: Paxawa's automated nudges are written as plain-text rows authored by
+  // the trip owner but prefixed with 🤖 (and tagged metadata.kind). Render them
+  // as the "Paxawa" assistant — not as a crew member — so reminders aren't
+  // mistaken for something Raheem actually typed. Crucially they render as an
+  // incoming message even for the owner (who is nominally the author).
+  const isBot =
+    (!!message.body && message.body.startsWith("🤖")) ||
+    message.metadata?.kind === "pre_trip_nudge" ||
+    message.metadata?.kind === "budget_alert";
+  const isMine = message.userId === userId && !isBot;
+  const botBody = isBot && message.body ? message.body.replace(/^🤖\s*/, "") : message.body;
 
   // Read-receipt: ✓✓ if any *other* member's last_read_chat_at is at or
   // after this message's createdAt. ✓ otherwise (sent but not yet read).
@@ -567,16 +603,22 @@ export function MessageBubble({
 
   return (
     <div className={`flex gap-2 group ${isMine ? "flex-row-reverse" : "flex-row"}`}>
-      {/* Avatar */}
-      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(message.userId)} flex items-center justify-center text-xs font-bold text-white shrink-0 mt-1 shadow-sm`}>
-        {(message.author?.displayName ?? "?")[0].toUpperCase()}
-      </div>
+      {/* Avatar — Paxawa bot avatar for automated nudges (§10). */}
+      {isBot ? (
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-sm">
+          <Sparkles className="w-4 h-4 text-white" />
+        </div>
+      ) : (
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(message.userId)} flex items-center justify-center text-xs font-bold text-white shrink-0 mt-1 shadow-sm`}>
+          {(message.author?.displayName ?? "?")[0].toUpperCase()}
+        </div>
+      )}
 
       <div className={`space-y-1 ${isCard ? "flex-1 min-w-0" : "max-w-[75%]"} ${isMine ? "items-end" : "items-start"} flex flex-col`}>
         {/* Author + time */}
         <div className={`flex items-center gap-2 text-xs text-muted-foreground ${isMine ? "flex-row-reverse" : ""}`}>
           <span className="font-medium text-foreground">
-            {isMine ? "You" : message.author?.displayName ?? "Unknown"}
+            {isBot ? "Paxawa" : isMine ? "You" : message.author?.displayName ?? "Unknown"}
           </span>
           <span>{formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}</span>
           {message.pinned && (
@@ -610,11 +652,13 @@ export function MessageBubble({
             <div
               className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                 isMine
-                  ? "bg-gradient-to-br from-primary to-violet-600 text-white rounded-tr-sm shadow-sm shadow-primary/20"
-                  : "bg-muted rounded-tl-sm"
+                  ? "bg-primary/20 text-foreground rounded-tr-sm"
+                  : isBot
+                    ? "bg-primary/5 text-foreground rounded-tl-sm ring-1 ring-primary/25"
+                    : "bg-card text-foreground rounded-tl-sm"
               }`}
             >
-              {message.body}
+              {botBody}
             </div>
             {/* AI smart-action chips: only on the user's own freshly-sent
                 messages — Claude Haiku detects intent and offers 1-tap
@@ -645,6 +689,8 @@ export function MessageBubble({
             meta={message.metadata as ExpenseCardMeta}
             messageId={message.id}
             tripId={message.tripId}
+            tripCurrency={tripCurrency}
+            fxRates={fxRates}
             onActionDone={onActionDone}
           />
         )}

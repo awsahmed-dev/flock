@@ -343,3 +343,75 @@ export async function settleSplit(formData: FormData) {
 
   revalidatePath(`/trips/${tripId}/expenses`);
 }
+
+/**
+ * Phase 6 §8-B: expense from the Point-and-Split camera flow — selectable
+ * crew + per-member shares, dual-currency, and a Pulse expense_logged line.
+ */
+export async function createCameraExpense(input: {
+  tripId: string;
+  title: string;
+  amount: number;
+  currency: string;
+  category: string;
+  shares: { userId: string; amount: number }[]; // includes the payer's own share
+}) {
+  const user = await getAuthenticatedUser();
+  const trip = await getTripWithMembership(input.tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
+  if (!input.title.trim() || !(input.amount > 0)) throw new Error("Missing amount or description");
+
+  const currency = /^[A-Z]{3}$/.test(input.currency) ? input.currency : trip.currency;
+  const today = new Date().toISOString().split("T")[0];
+
+  const [expense] = await db
+    .insert(expenses)
+    .values({
+      tripId: input.tripId,
+      title: input.title.trim(),
+      amount: input.amount,
+      currency,
+      paidBy: user.id,
+      category: input.category as any,
+      scope: "shared",
+      expenseDate: today,
+    })
+    .returning();
+
+  if (input.shares.length > 0) {
+    await db.insert(expenseSplits).values(
+      input.shares.map((s) => ({
+        expenseId: expense.id,
+        userId: s.userId,
+        amountOwed: s.amount,
+        settled: s.userId === user.id,
+      })),
+    );
+  }
+
+  // Pulse line (§4-B) — best-effort.
+  const { activities } = await import("@/lib/db/schema");
+  const { getRates, convert } = await import("@/lib/fx");
+  let amountBase: number | null = null;
+  if (currency !== trip.currency) {
+    const rates = await getRates(trip.currency).catch(() => null);
+    amountBase = convert(input.amount, currency, trip.currency, rates);
+  }
+  await db
+    .insert(activities)
+    .values({
+      tripId: input.tripId,
+      actorId: user.id,
+      eventType: "expense_logged",
+      expenseId: expense.id,
+      amount: String(input.amount),
+      amountBase: amountBase != null ? String(Math.round(amountBase * 100) / 100) : null,
+      currency,
+      metadata: { title: input.title, splitCount: input.shares.length },
+    })
+    .catch(() => {});
+
+  revalidatePath(`/trips/${input.tripId}/money`);
+  revalidatePath(`/trips/${input.tripId}`);
+  return { id: expense.id };
+}

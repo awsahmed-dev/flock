@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { itineraryItems } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { itineraryItems, bookings } from "@/lib/db/schema";
+import { eq, asc, inArray } from "drizzle-orm";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -16,10 +16,12 @@ import { getRates } from "@/lib/fx";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ day?: string }>;
 }
 
-export default async function ItineraryPage({ params }: Props) {
+export default async function ItineraryPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { day: initialDay } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
@@ -88,6 +90,26 @@ export default async function ItineraryPage({ params }: Props) {
     ? [destinationGeo.lng, destinationGeo.lat]
     : null;
 
+  // Phase 6 §6-B: booking meta for anchor rows (PDF chip, confirmation #,
+  // multi-night repetition).
+  const anchorIds = items.filter((i) => i.stopType !== "regular").map((i) => i.id);
+  const bookingRows = anchorIds.length
+    ? await db.select().from(bookings).where(inArray(bookings.stopId, anchorIds))
+    : [];
+  const bookingsByStop = Object.fromEntries(
+    bookingRows
+      .filter((b) => b.stopId)
+      .map((b) => [
+        b.stopId as string,
+        {
+          bookingType: b.bookingType,
+          confirmationNumber: b.confirmationNumber,
+          pdfUrl: b.pdfUrl,
+          nights: b.nights,
+        },
+      ]),
+  );
+
   return (
     <ItineraryBoard
       tripId={id}
@@ -100,6 +122,8 @@ export default async function ItineraryPage({ params }: Props) {
       userId={user.id}
       isOwner={checkOwner(trip, user.id)}
       crewSize={trip.members.length}
+      initialDay={initialDay ?? null}
+      bookingsByStop={bookingsByStop}
     />
   );
 }

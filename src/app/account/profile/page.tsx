@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { BackButton } from "@/components/navigation/back-button";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -37,13 +36,11 @@ export default async function ProfilePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/95 backdrop-blur sticky top-0 z-30">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
-          <Link
-            href="/dashboard"
+          <BackButton
+            iconOnly
             className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center"
-            aria-label={t("profile.back")}
-          >
-            <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
-          </Link>
+            iconClassName="w-4 h-4 rtl:rotate-180"
+          />
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
               {t("profile.section")}

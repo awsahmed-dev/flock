@@ -163,19 +163,18 @@ export function TransactionsPage({
     return m;
   }, [filtered]);
 
-  // When searching, only render days that actually have matching txs (no
-  // sense showing an empty Day 4 progress bar while the user is searching
-  // for "hotel"). Without a query, show every day in the trip span so the
-  // rhythm is visible.
+  // §7-A: only render days that actually have expenses. The previous version
+  // showed every day in the trip span, so a 15-day trip with 2 spend days
+  // buried the real rows under 13 "No spend logged" noise rows.
   const isSearching = query.trim().length > 0;
-  const daysToRender = isSearching
-    ? derived.dailyBreakdown.filter((d) => (txByDay.get(d.dateKey) ?? []).length > 0)
-    : derived.dailyBreakdown;
+  const daysToRender = derived.dailyBreakdown.filter(
+    (d) => (txByDay.get(d.dateKey) ?? []).length > 0,
+  );
 
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref={`/trips/${tripId}/expenses`}
+        backHref={`/trips/${tripId}/money`}
         title="Activity"
         subtitle={
           dailyTarget
@@ -213,20 +212,22 @@ export function TransactionsPage({
           bar lives as the section header for that day's transactions.
           Days with no transactions still render (when not searching) so
           the user sees the trip's pace at a glance. */}
-      {expenseList.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
-            <Receipt className="w-6 h-6 text-muted-foreground/50" />
-          </div>
-          <p className="text-sm font-semibold mb-1">No transactions yet</p>
-          <p className="text-xs text-muted-foreground">
-            Log your first expense to see it here.
+      {daysToRender.length === 0 ? (
+        isSearching ? (
+          <p className="text-xs text-muted-foreground text-center py-10">
+            No matches for "{query}".
           </p>
-        </div>
-      ) : daysToRender.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-10">
-          No matches for "{query}".
-        </p>
+        ) : (
+          <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
+              <Receipt className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-semibold mb-1">No expenses logged yet</p>
+            <p className="text-xs text-muted-foreground">
+              Log your first expense to see it here.
+            </p>
+          </div>
+        )
       ) : (
         <div className="space-y-2.5">
           {daysToRender.map((d) => {

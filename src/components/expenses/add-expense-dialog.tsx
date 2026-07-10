@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -76,6 +76,15 @@ export function AddExpenseDialog({
   );
   const t = useT();
   const [open, setOpen] = useState(false);
+
+  // §1-G: the mobile FAB is gone (the bottom-nav right circle owns "log
+  // expense" now). It dispatches this event to open the sheet.
+  useEffect(() => {
+    const openSheet = () => setOpen(true);
+    window.addEventListener("paxawa:logExpense", openSheet);
+    return () => window.removeEventListener("paxawa:logExpense", openSheet);
+  }, []);
+
   const [isPending, startTransition] = useTransition();
   // B2 Budget v2 — Shared splits across the crew; Personal is your own
   // pocket money (no splits, just counts toward your personal budget).
@@ -170,13 +179,14 @@ export function AddExpenseDialog({
 
   return (
     <>
-      {/* Fixed FAB (redesign brief §E): 56px accent circle, bottom-right, above
-          the mobile tab bar (60px) + safe area; tucks to the corner on desktop. */}
+      {/* §1-G: desktop-only FAB. On mobile the bottom-nav right circle opens the
+          sheet (via the paxawa:logExpense event), so no floating FAB overlaps
+          the pill; on desktop (no bottom nav) the corner FAB stays. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t("expenses.logExpense")}
-        className="fixed end-4 xl:end-6 bottom-[calc(env(safe-area-inset-bottom)+80px)] xl:bottom-6 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
+        className="hidden xl:flex fixed end-6 bottom-6 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
       >
         <Plus className="w-6 h-6" />
       </button>

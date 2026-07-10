@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft, Bell, Mail, Smartphone, Calendar } from "lucide-react";
+import { Bell, Mail, Smartphone, Calendar } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { BackButton } from "@/components/navigation/back-button";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -77,12 +77,10 @@ export default async function NotificationPrefsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <Link
-        href="/dashboard"
+      <BackButton
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" /> {t("nav.backToTrips")}
-      </Link>
+        iconClassName="w-3.5 h-3.5 rtl:rotate-180"
+      />
 
       <h1 className="text-2xl font-bold mb-1">{t("notifications.prefsHeading")}</h1>
       <p className="text-sm text-muted-foreground mb-6">

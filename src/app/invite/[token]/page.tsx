@@ -40,10 +40,21 @@ export default async function InvitePage({ params }: Props) {
   const days =
     differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
 
-  const members = await db
-    .select({ displayName: tripMembers.displayName, role: tripMembers.role })
+  // §10.3: join profiles so the live display name wins over the join-time
+  // cached copy on trip_members.
+  const memberRows = await db
+    .select({
+      cachedName: tripMembers.displayName,
+      profileName: profiles.displayName,
+      role: tripMembers.role,
+    })
     .from(tripMembers)
+    .leftJoin(profiles, eq(profiles.id, tripMembers.userId))
     .where(eq(tripMembers.tripId, invite.tripId));
+  const members = memberRows.map((m) => ({
+    displayName: m.profileName || m.cachedName,
+    role: m.role,
+  }));
 
   const inviter = await db.query.profiles.findFirst({
     where: eq(profiles.id, invite.createdBy),

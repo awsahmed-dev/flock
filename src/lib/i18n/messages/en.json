@@ -24,7 +24,7 @@
     "submitting": "Submitting…",
     "error": "Something went wrong",
     "retry": "Retry",
-    "failed": "Something failed",
+    "failed": "That didn't save — try again",
     "removed": "Removed",
     "linkCopied": "Link copied!",
     "noResults": "No results",
@@ -37,7 +37,8 @@
     "notes": "Notes",
     "manage": "Manage",
     "clear": "Clear",
-    "remove": "Remove"
+    "remove": "Remove",
+    "undo": "Undo"
   },
   "form": {
     "pickFileFirst": "Pick a file first",
@@ -132,6 +133,7 @@
     "keyboardShortcuts": "Keyboard shortcuts"
   },
   "crew": {
+    "inviteMore": "Invite more",
     "inviteYourCrew": "Invite your crew",
     "anyoneWithLink": "Anyone with this link can join — no account needed.",
     "manageCrew": "Manage crew",
@@ -173,12 +175,14 @@
     "blogLink": "Blog & guides",
     "discover": "Discover",
     "chat": "Chat",
+    "map": "Map",
     "tools": "Tools",
     "search": "Search",
     "addTitle": "What do you want to add?",
     "addPlace": "Add place to today",
     "aiFillDay": "AI fill my day",
     "suggestCrew": "Suggest a stop to crew",
+    "shareTrip": "Share trip",
     "now": "Now",
     "manage": "Manage",
     "add": "Add",
@@ -186,7 +190,18 @@
     "getReadyTitle": "Get ready for your trip",
     "inviteCrew": "Invite crew",
     "planDay": "Plan a day",
-    "setBudget": "Set trip budget"
+    "setBudget": "Set trip budget",
+    "plan": "Plan",
+    "today": "Today",
+    "nearby": "Nearby",
+    "money": "Money",
+    "recap": "Recap",
+    "photos": "Photos",
+    "settle": "Settle",
+    "huddle": "Huddle",
+    "addPackItem": "Add a pack item",
+    "addBooking": "Add a booking",
+    "askCrew": "Ask the crew"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",
@@ -213,7 +228,16 @@
     "statusInDays": "IN {count} {count, plural, one {DAY} other {DAYS}}",
     "memories": "Memories",
     "yourTrips": "Your trips",
-    "noTripsYet": "No trips yet — start your first one."
+    "noTripsYet": "No trips yet — start your first one.",
+    "now": "Now",
+    "live": "Live",
+    "comingUp": "Coming up",
+    "today": "Today",
+    "planNewTrip": "Plan a new trip",
+    "daysShort": "{count}d",
+    "dayOf": "Day {current} of {total}",
+    "crewCount": "{count} crew",
+    "stopsToday": "{count, plural, =0 {No stops today} one {# stop today} other {# stops today}}"
   },
   "actionHub": {
     "chatLabel": "Chat",
@@ -456,6 +480,8 @@
     "tagHiddenGem": "Hidden gem",
     "tagCrewFav": "Crew favorite",
     "save": "Save",
+    "like": "Like",
+    "addToDay": "Add to day",
     "emptyTitle": "Nothing here yet",
     "emptySub": "Try a search or a different category.",
     "unconfigured": "Place search isn't switched on yet. Enable \"Places API (New)\" on the Google project to go live.",
@@ -490,7 +516,10 @@
     "savedTitle": "Saved",
     "savedEmpty": "No saved places yet — tap the heart on any place.",
     "savedCount": "{count, plural, =0 {Nothing saved} one {# place} other {# places}}",
-    "noMatches": "No places match your search"
+    "noMatches": "No places match your search",
+    "viewDay": "View day",
+    "inPlan": "In plan",
+    "crewPicks": "Crew picks"
   },
   "pack": {
     "title": "Pack",
@@ -888,14 +917,17 @@
     "settling": "Settling…",
     "settledCount": "Settled {count} splits",
     "nothingToSettle": "Nothing was owed",
-    "settleFailed": "Couldn't settle — try again"
+    "settleFailed": "Couldn't settle — try again",
+    "remind": "Remind",
+    "reminderCopied": "Reminder copied"
   },
   "offline": {
     "title": "You're offline",
     "body": "No connection right now. Trips you've already opened are saved and still work — head back to one of them.",
     "retry": "Try again",
     "backToTrips": "Back to my trips",
-    "banner": "You're offline — showing your saved data"
+    "banner": "You're offline — showing your saved data",
+    "queued": "Saved — will sync when you're back online"
   },
   "overview": {
     "daysPlanned": "Days planned",
@@ -995,7 +1027,25 @@
     "setBudget": "Set a budget",
     "budgetSheetTitle": "Set trip budget",
     "budgetSheetHint": "The whole-trip budget everyone spends against.",
-    "saveBudget": "Save budget"
+    "saveBudget": "Save budget",
+    "tripComplete": "Trip complete 🎉",
+    "tripCompleteStats": "{days, plural, one {# day} other {# days}} · {stops, plural, =0 {no stops} one {# stop} other {# stops}} · {spent} spent",
+    "upNext": "UP NEXT",
+    "navigate": "Navigate",
+    "done": "Done",
+    "markDone": "Mark done",
+    "freeDay": "Free day.",
+    "freeDayIdeas": "Nearby and loved by the crew:",
+    "openNearby": "Open Nearby",
+    "planDone": "That's the plan, done — evening's yours",
+    "nearbyIdeas": "Nearby ideas",
+    "finalDay": "Final day",
+    "dayDone": "Day {n}, done.",
+    "dayDoneStats": "{done} of {total} stops · {spent} spent",
+    "dayProgress": "{done} of {total} stops done",
+    "ofBudget": "of budget",
+    "gettingThere": "GETTING THERE",
+    "stopRemoved": "Stop removed"
   },
   "manage": {
     "expenses": "Expenses",

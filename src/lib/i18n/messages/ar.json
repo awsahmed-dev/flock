@@ -24,7 +24,7 @@
     "submitting": "جاري الإرسال…",
     "error": "حدث خطأ",
     "retry": "حاول مرة أخرى",
-    "failed": "تعذّرت العملية",
+    "failed": "لم يُحفظ — حاول مجددًا",
     "removed": "تم الحذف",
     "linkCopied": "تم نسخ الرابط!",
     "noResults": "لا توجد نتائج",
@@ -37,7 +37,8 @@
     "notes": "ملاحظات",
     "manage": "إدارة",
     "clear": "مسح",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "undo": "تراجع"
   },
   "form": {
     "pickFileFirst": "اختر ملفًا أولًا",
@@ -132,6 +133,7 @@
     "keyboardShortcuts": "اختصارات لوحة المفاتيح"
   },
   "crew": {
+    "inviteMore": "ادعُ المزيد",
     "inviteYourCrew": "ادعُ الفريق",
     "anyoneWithLink": "يمكن لأي شخص لديه الرابط الانضمام — بدون حساب.",
     "manageCrew": "إدارة الفريق",
@@ -173,12 +175,14 @@
     "blogLink": "المدوّنة والأدلّة",
     "discover": "اكتشف",
     "chat": "الدردشة",
+    "map": "الخريطة",
     "tools": "أدوات",
     "search": "بحث",
     "addTitle": "ماذا تريد أن تضيف؟",
     "addPlace": "أضف مكانًا لليوم",
     "aiFillDay": "دع الذكاء يخطط يومي",
     "suggestCrew": "اقترح مكانًا للرفاق",
+    "shareTrip": "شارك الرحلة",
     "now": "الآن",
     "manage": "إدارة",
     "add": "إضافة",
@@ -186,7 +190,18 @@
     "getReadyTitle": "استعد لرحلتك",
     "inviteCrew": "ادعُ الرفاق",
     "planDay": "خطّط ليوم",
-    "setBudget": "حدد ميزانية الرحلة"
+    "setBudget": "حدد ميزانية الرحلة",
+    "plan": "الخطة",
+    "today": "اليوم",
+    "nearby": "قريب منك",
+    "money": "المال",
+    "recap": "الملخص",
+    "photos": "الصور",
+    "settle": "التسوية",
+    "huddle": "الفريق",
+    "addPackItem": "أضف غرض تعبئة",
+    "addBooking": "أضف حجزًا",
+    "askCrew": "اسأل الفريق"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",
@@ -213,7 +228,16 @@
     "statusInDays": "بعد {count} {count, plural, one {يوم} two {يومين} few {أيام} many {يومًا} other {يوم}}",
     "memories": "ذكريات",
     "yourTrips": "رحلاتك",
-    "noTripsYet": "لا رحلات بعد — ابدأ أول رحلة."
+    "noTripsYet": "لا رحلات بعد — ابدأ أول رحلة.",
+    "now": "الآن",
+    "live": "مباشر",
+    "comingUp": "القادم",
+    "today": "اليوم",
+    "planNewTrip": "خطّط لرحلة جديدة",
+    "daysShort": "{count} ي",
+    "dayOf": "اليوم {current} من {total}",
+    "crewCount": "{count} أفراد",
+    "stopsToday": "{count, plural, =0 {لا محطات اليوم} other {# محطات اليوم}}"
   },
   "actionHub": {
     "chatLabel": "الدردشة",
@@ -456,6 +480,8 @@
     "tagHiddenGem": "جوهرة مخفية",
     "tagCrewFav": "مفضّل الفريق",
     "save": "حفظ",
+    "like": "إعجاب",
+    "addToDay": "أضف إلى اليوم",
     "emptyTitle": "لا شيء هنا بعد",
     "emptySub": "جرّب بحثًا أو فئة أخرى.",
     "unconfigured": "بحث الأماكن غير مُفعّل بعد. فعّل \"Places API (New)\" في مشروع Google للانطلاق.",
@@ -490,7 +516,10 @@
     "savedTitle": "المحفوظة",
     "savedEmpty": "لا أماكن محفوظة بعد — اضغط القلب على أي مكان.",
     "savedCount": "{count, plural, =0 {لا شيء محفوظ} one {مكان #} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}",
-    "noMatches": "لا توجد أماكن تطابق بحثك"
+    "noMatches": "لا توجد أماكن تطابق بحثك",
+    "viewDay": "عرض اليوم",
+    "inPlan": "في الخطة",
+    "crewPicks": "اختيارات الفريق"
   },
   "pack": {
     "title": "أمتعة",
@@ -888,14 +917,17 @@
     "settling": "جارٍ التسوية…",
     "settledCount": "سُوّيت {count} مصاريف",
     "nothingToSettle": "لا شيء مستحق",
-    "settleFailed": "تعذّرت التسوية — حاول مرة أخرى"
+    "settleFailed": "تعذّرت التسوية — حاول مرة أخرى",
+    "remind": "ذكِّر",
+    "reminderCopied": "تم نسخ التذكير"
   },
   "offline": {
     "title": "أنت دون اتصال",
     "body": "لا يوجد اتصال الآن. الرحلات التي فتحتها سابقًا محفوظة وتعمل — ارجع إلى إحداها.",
     "retry": "حاول مجددًا",
     "backToTrips": "العودة إلى رحلاتي",
-    "banner": "أنت دون اتصال — نعرض بياناتك المحفوظة"
+    "banner": "أنت دون اتصال — نعرض بياناتك المحفوظة",
+    "queued": "حُفظ — سيُزامن عند عودة الاتصال"
   },
   "overview": {
     "daysPlanned": "أيام مُخطّطة",
@@ -995,7 +1027,25 @@
     "setBudget": "حدّد ميزانية",
     "budgetSheetTitle": "حدد ميزانية الرحلة",
     "budgetSheetHint": "ميزانية الرحلة الكاملة التي ينفق منها الجميع.",
-    "saveBudget": "حفظ الميزانية"
+    "saveBudget": "حفظ الميزانية",
+    "tripComplete": "اكتملت الرحلة 🎉",
+    "tripCompleteStats": "{days, plural, one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}} · {stops, plural, =0 {لا محطات} one {محطة واحدة} two {محطتان} few {# محطات} many {# محطة} other {# محطة}} · أُنفق {spent}",
+    "upNext": "التالي",
+    "navigate": "الاتجاهات",
+    "done": "تم",
+    "markDone": "علّم كمنجز",
+    "freeDay": "يوم حر.",
+    "freeDayIdeas": "أماكن قريبة أحبها الفريق:",
+    "openNearby": "افتح القريب",
+    "planDone": "اكتملت الخطة — المساء لك",
+    "nearbyIdeas": "أفكار قريبة",
+    "finalDay": "اليوم الأخير",
+    "dayDone": "اليوم {n}، انتهى.",
+    "dayDoneStats": "{done} من {total} محطات · أُنفق {spent}",
+    "dayProgress": "أُنجزت {done} من {total} محطات",
+    "ofBudget": "من الميزانية",
+    "gettingThere": "في الطريق",
+    "stopRemoved": "أُزيلت المحطة"
   },
   "manage": {
     "expenses": "المصاريف",

@@ -11,6 +11,7 @@ import {
   Hotel,
   Plane,
   Ticket,
+  ClipboardList,
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -216,11 +217,18 @@ function Checklist({
 
   return (
     <section className="space-y-3">
-      <div className="px-0.5">
-        <p className="text-[11px] font-extrabold tracking-widest uppercase text-muted-foreground">
-          {t("bookings.checklistTitle")}
-        </p>
-        <p className="text-[11px] text-muted-foreground mt-0.5">{t("bookings.checklistSub")}</p>
+      {/* §8: the "Still to sort" heading gets an accent icon chip + a stronger
+          title colour so it reads as a real section header, not grey label. */}
+      <div className="px-0.5 flex items-center gap-2.5">
+        <span className="w-7 h-7 rounded-xl bg-primary/12 text-primary flex items-center justify-center shrink-0">
+          <ClipboardList className="w-4 h-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[11px] font-extrabold tracking-widest uppercase text-foreground">
+            {t("bookings.checklistTitle")}
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{t("bookings.checklistSub")}</p>
+        </div>
       </div>
 
       {gaps.length === 0 ? (

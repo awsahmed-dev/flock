@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { RegisterSW } from "@/components/pwa/register-sw";
@@ -163,11 +164,18 @@ export default async function RootLayout({
         <LocaleProvider locale={locale} dict={dict}>
           <Providers>
             {children}
+            <NavigationTracker />
             <PushNotificationInit />
             <OfflineBanner />
             <RegisterSW />
           </Providers>
-          <Toaster richColors position="top-right" />
+          {/* §11-F: one toast queue, bottom-centered above the nav pill. */}
+          <Toaster
+            richColors
+            position="bottom-center"
+            offset={{ bottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+            mobileOffset={{ bottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+          />
         </LocaleProvider>
       </body>
     </html>

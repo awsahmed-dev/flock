@@ -1,0 +1,341 @@
+"use client";
+
+import { useState, useTransition, useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { LogOut, Loader2, Check, Moon, Sun, Camera, Bell, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { updateProfile } from "@/lib/actions/profile";
+import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/components/i18n/locale-provider";
+import { getPocketDayStatus, pocketDayEnabled, type PocketDayStatus } from "@/components/pwa/pocket-day";
+
+const ACCENT = "#6B5CE7";
+const APP_VERSION = "0.1.0";
+
+/**
+ * §2 (Phase 4B): the Account bottom sheet, rebuilt to a strict top-to-bottom
+ * order so "Sign out" is always LAST: avatar + name + email → editable display
+ * name + Save → theme toggle → Sign out. Opened from the header avatar on every
+ * page. Editing the name hits a server action that revalidates the dashboard
+ * (drives the greeting).
+ */
+export function AccountSheet({
+  open,
+  onClose,
+  displayName,
+  avatarUrl,
+  email,
+}: {
+  open: boolean;
+  onClose: () => void;
+  displayName: string;
+  avatarUrl: string | null;
+  email: string | null;
+}) {
+  const t = useT();
+  const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const [name, setName] = useState(displayName);
+  const [isPending, startTransition] = useTransition();
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const username = email ? email.split("@")[0] : null;
+  const showSaved = savedAt != null && Date.now() - savedAt < 3000;
+  // §6-B: profile photo upload.
+  const [photoUrl, setPhotoUrl] = useState<string | null>(avatarUrl);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("profile.avatarMustBeImage"));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("profile.avatarTooBig"));
+      return;
+    }
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("no user");
+      // Path scheme: <userId>/avatar.<ext> — the storage RLS requires the first
+      // folder to match auth.uid(). Overwrite in place so the bucket stays tidy.
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${user.id}/avatar.${ext}`;
+      const { error } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      const fresh = `${data.publicUrl}?t=${Date.now()}`;
+      setPhotoUrl(fresh);
+      const fd = new FormData();
+      fd.set("displayName", (name || username || "Traveler").trim());
+      fd.set("avatarUrl", fresh);
+      await updateProfile(fd);
+      toast.success(t("profile.avatarUploaded"));
+      router.refresh();
+    } catch {
+      toast.error(t("profile.avatarUploadFailed"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function save() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const fd = new FormData();
+    fd.set("displayName", trimmed);
+    startTransition(async () => {
+      try {
+        await updateProfile(fd);
+        setSavedAt(Date.now());
+        toast.success(t("profile.saved"));
+        router.refresh();
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : t("profile.saveFailed"));
+      }
+    });
+  }
+
+  async function signOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
+  return (
+    <BottomSheet open={open} onClose={onClose} size="sm">
+      <div
+        className="-mx-5"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+      >
+        {/* 1. Avatar (§6-B: tap to change photo) + name + @username + email. */}
+        <div className="flex items-center gap-4 px-6 py-4">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            aria-label={t("profile.avatarHint")}
+            className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+            style={{ border: `2px solid ${ACCENT}` }}
+          >
+            {photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoUrl} alt={name || "Me"} className="w-full h-full object-cover" />
+            ) : (
+              <span style={{ background: ACCENT }} className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">
+                {(name || username || "?")[0]?.toUpperCase()}
+              </span>
+            )}
+            <span className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.35)" }}>
+              {uploading ? <Loader2 size={18} className="text-white animate-spin" /> : <Camera size={18} className="text-white" />}
+            </span>
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
+          <div className="min-w-0">
+            {(name || username) && (
+              <p className="text-lg font-bold text-foreground truncate">{name || username}</p>
+            )}
+            {username && <p className="text-[13px] text-muted-foreground truncate">@{username}</p>}
+            {email && <p className="text-xs text-tertiary truncate mt-0.5">{email}</p>}
+          </div>
+        </div>
+
+        {/* 2. Display name edit + Save. */}
+        <div className="px-6 pb-4">
+          <label className="text-xs font-semibold tracking-wider uppercase text-tertiary">
+            {t("profile.nameLabel")}
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={60}
+            placeholder={t("profile.namePlaceholder")}
+            className="w-full mt-2 px-4 rounded-xl outline-none bg-secondary border border-border text-foreground text-[15px]"
+            style={{ height: 48 }}
+          />
+          <button
+            type="button"
+            onClick={save}
+            disabled={isPending || !name.trim()}
+            className="w-full mt-3 rounded-xl font-semibold text-white inline-flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
+            style={{ height: 48, background: ACCENT, fontSize: 15 }}
+          >
+            {isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : showSaved ? (
+              <Check className="w-4 h-4" />
+            ) : null}
+            {t("profile.save")}
+          </button>
+        </div>
+
+        <div className="h-px bg-border mx-6" />
+
+        {/* §6-B: Notifications — opens the full per-channel settings. */}
+        <Link
+          href="/account/notifications"
+          onClick={onClose}
+          className="flex items-center justify-between px-6 py-4 active:bg-muted/40 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Bell size={20} className="text-muted-foreground" />
+            <span className="text-[15px] text-foreground">{t("nav.notificationSettings")}</span>
+          </div>
+          <ChevronRight size={18} className="text-tertiary rtl:rotate-180" />
+        </Link>
+
+        <div className="h-px bg-border mx-6" />
+
+        {/* 3. Theme toggle. */}
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            {isDark ? (
+              <Moon size={20} style={{ color: ACCENT }} />
+            ) : (
+              <Sun size={20} style={{ color: ACCENT }} />
+            )}
+            <span className="text-[15px] font-medium text-foreground">
+              {isDark ? t("nav.darkMode") : t("nav.lightMode")}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            aria-label={isDark ? t("nav.lightMode") : t("nav.darkMode")}
+            className="relative w-12 h-7 rounded-full transition-colors"
+            style={{ background: isDark ? ACCENT : "var(--border)" }}
+          >
+            <span
+              className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all"
+              style={{ left: isDark ? "calc(100% - 24px)" : 4 }}
+            />
+          </button>
+        </div>
+
+        <div className="h-px bg-border mx-6" />
+
+        {/* Phase 6 §10-D: Pocket Day status row. */}
+        <PocketDayRow />
+
+        <div className="h-px bg-border mx-6" />
+
+        {/* 4. Sign out — LAST. */}
+        <div className="px-6 py-4">
+          <button
+            type="button"
+            onClick={signOut}
+            className="w-full flex items-center justify-center gap-2 rounded-xl font-medium active:scale-[0.98] transition-transform"
+            style={{ height: 48, background: "rgba(255,59,48,0.10)", color: "#FF3B30", fontSize: 15 }}
+          >
+            <LogOut size={18} />
+            {t("nav.signOut")}
+          </button>
+        </div>
+
+        {/* §6-B: app version (passive). */}
+        <p className="px-6 pb-2 text-center text-xs text-tertiary">Paxawa · v{APP_VERSION}</p>
+      </div>
+    </BottomSheet>
+  );
+}
+
+/**
+ * Phase 6 §10-D — the Pocket Day row + inline expansion: cache status,
+ * nightly toggle, refresh, and clear. Hidden when nothing has ever cached
+ * and the toggle is untouched (no active trips to serve).
+ */
+function PocketDayRow() {
+  const [expanded, setExpanded] = useState(false);
+  const [status, setStatus] = useState<PocketDayStatus | null>(null);
+  const [enabled, setEnabled] = useState(true);
+  const [clearing, setClearing] = useState(false);
+
+  // Read on mount (localStorage isn't available at SSR).
+  useState(() => {
+    if (typeof window !== "undefined") {
+      setStatus(getPocketDayStatus());
+      setEnabled(pocketDayEnabled());
+    }
+    return null;
+  });
+
+  function toggle() {
+    const next = !enabled;
+    setEnabled(next);
+    try {
+      localStorage.setItem("paxawa-pocket-day-enabled", next ? "on" : "off");
+    } catch {}
+  }
+
+  async function clearCache() {
+    setClearing(true);
+    try {
+      const names = await caches.keys();
+      await Promise.all(names.filter((n) => n.startsWith("pax-")).map((n) => caches.delete(n)));
+      localStorage.removeItem("paxawa-pocket-day");
+      setStatus(null);
+      toast.success("Cached data cleared");
+    } catch {
+      toast.error("Couldn't clear the cache");
+    } finally {
+      setClearing(false);
+    }
+  }
+
+  return (
+    <div className="px-6 py-4">
+      <button type="button" onClick={() => setExpanded((v) => !v)} className="w-full flex items-center justify-between">
+        <span className="text-[15px] font-medium text-foreground">
+          Pocket Day · {enabled ? "On" : "Off"}
+          {status && <span className="text-muted-foreground font-normal"> · {status.stops} stops cached</span>}
+        </span>
+        <ChevronRight size={18} className={`text-tertiary transition-transform ${expanded ? "rotate-90" : "rtl:rotate-180"}`} />
+      </button>
+      {expanded && (
+        <div className="mt-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] text-foreground">Cache tomorrow&rsquo;s plan nightly</span>
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label="Toggle Pocket Day"
+              className="relative w-12 h-7 rounded-full transition-colors"
+              style={{ background: enabled ? ACCENT : "var(--border)" }}
+            >
+              <span className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all" style={{ left: enabled ? "calc(100% - 24px)" : 4 }} />
+            </button>
+          </div>
+          <p className="text-[12px] text-tertiary">
+            {status
+              ? `Cached: ${status.date} · ${status.stops} stops · updated ${new Date(status.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              : "Nothing cached yet — runs nightly during a trip."}
+          </p>
+          <p className="text-[12px] text-tertiary">
+            Includes maps, addresses, booking files, and photos for tomorrow.
+          </p>
+          <button
+            type="button"
+            onClick={clearCache}
+            disabled={clearing}
+            className="text-start text-[13px] font-semibold disabled:opacity-50"
+            style={{ color: "#FF3B30" }}
+          >
+            {clearing ? "Clearing…" : "Clear cached data"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
