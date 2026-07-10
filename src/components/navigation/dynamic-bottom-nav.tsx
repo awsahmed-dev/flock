@@ -8,10 +8,16 @@ import { toast } from "sonner";
 import {
   Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
   Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
-  Luggage, Camera, Map as MapIcon, Bookmark, Clock, Search,
+  Luggage, Camera, Map as MapIcon, Bookmark, Clock, Search, MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import {
+  Tabs,
+  TabsList,
+  TabsHighlight,
+  TabsHighlightItem,
+} from "@/components/animate-ui/primitives/animate/tabs";
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
@@ -159,18 +165,6 @@ export function DynamicBottomNav({
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
 
-  function plusDefault() {
-    switch (phase) {
-      case "LIVE":
-        router.push(`${base}/money/expense-camera`);
-        break;
-      case "RECAP":
-        window.dispatchEvent(new CustomEvent("paxawa:shareWrap"));
-        break;
-      default:
-        setPlusOpen(true); // PLANNING + DEPARTURE: the Add sheet
-    }
-  }
   function onPlusDown() {
     longPressed.current = false;
     pressTimer.current = setTimeout(() => {
@@ -181,7 +175,12 @@ export function DynamicBottomNav({
   }
   function onPlusUp() {
     if (pressTimer.current) clearTimeout(pressTimer.current);
-    if (!longPressed.current) plusDefault();
+  }
+  function onPlusClick() {
+    // FIX 1: click is the tap path — synthesized reliably on mobile even
+    // with slight finger movement (pointerup is not). The contextual
+    // right-circle action (`right.action`) covers every tab + phase.
+    if (!longPressed.current) right.action();
   }
   function onPlusCancel() {
     if (pressTimer.current) clearTimeout(pressTimer.current);
@@ -200,7 +199,7 @@ export function DynamicBottomNav({
       ? { icon: Bookmark, label: t("discover.savedTitle"), action: () => dispatch("discover:openWishlist"), badge: savedCount }
       : isMoneyTab
         ? { icon: Clock, label: t("expenses.activity"), action: () => dispatch("money:scrollActivity"), badge: 0 }
-        : { icon: Users, label: t("nav.huddle"), action: () => dispatch("paxawa:openCrewSheet"), badge: 0 };
+        : { icon: MessageCircle, label: t("nav.huddle"), action: () => router.push(`${base}/huddle`), badge: 0 };
 
   const right: { icon: LucideIcon; accent: boolean; label: string; action: () => void } = isDiscoverTab
     ? { icon: Search, accent: false, label: t("nav.search"), action: () => dispatch("discover:toggleSearch") }
@@ -231,6 +230,10 @@ export function DynamicBottomNav({
   }
   function onLeftUp() {
     if (leftTimer.current) clearTimeout(leftTimer.current);
+  }
+  function onLeftClick() {
+    // FIX 1: click is the tap path — synthesized reliably on mobile even
+    // with slight finger movement (pointerup is not).
     if (!leftLong.current) left.action();
   }
   function onLeftCancel() {
@@ -248,6 +251,7 @@ export function DynamicBottomNav({
             huddle needs-you dot persists on EVERY icon; long-press → Huddle. */}
         <button
           type="button"
+          onClick={onLeftClick}
           onPointerDown={onLeftDown}
           onPointerUp={onLeftUp}
           onPointerCancel={onLeftCancel}
@@ -277,52 +281,67 @@ export function DynamicBottomNav({
           )}
         </button>
 
-        {/* CENTER pill — phase tabs with a sliding --surface-3 thumb. */}
-        <nav aria-label="Trip sections" className="relative shrink flex items-center h-14" style={PILL_GLASS}>
-          {/* Sliding thumb behind the active tab (200ms spring-ish). */}
-          <span
-            aria-hidden
-            className="absolute top-1.5 bottom-1.5 rounded-full"
+        {/* CENTER pill — phase tabs. Brief A: the thumb is Animate UI's
+            layoutId spring highlight (mode "children"), styled per FIX 6:
+            elevation not color — white pill w/ shadow, inline so Lightning
+            CSS can't strip the layered shadow. Links stay Links (prefetch,
+            real navigation); the route controls the Tabs value. */}
+        <Tabs
+          value={tabs[activeIndex].key}
+          aria-label="Trip sections"
+          className="relative shrink flex items-center h-14"
+          style={PILL_GLASS}
+        >
+          <TabsHighlight
+            className="rounded-full"
+            transition={{ type: "spring", stiffness: 250, damping: 27 }}
             style={{
-              width: "calc(33.333% - 6px)",
-              insetInlineStart: `calc(${activeIndex * 33.333}% + 3px)`,
-              background: "var(--clr-brand)",
-              transition: "inset-inline-start 200ms cubic-bezier(0.34,1.3,0.64,1)",
+              top: 6,
+              bottom: 6,
+              insetInlineStart: 3,
+              insetInlineEnd: 3,
+              background: "var(--tab-thumb-bg)",
+              boxShadow: "var(--tab-thumb-shadow)",
             }}
-          />
-          {tabs.map((tab, i) => {
-            const Icon = tab.icon;
-            const active = i === activeIndex;
-            return (
-              <Link
-                key={tab.key}
-                href={tab.href}
-                prefetch
-                aria-current={active ? "page" : undefined}
-                className="relative flex-1 flex flex-col items-center justify-center gap-0.5 h-full min-w-0"
-              >
-                {/* Icon morph at phase boundary: keyed crossfade. */}
-                <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
-                  <Icon
-                    size={20}
-                    className={active ? "text-white" : "text-muted-foreground"}
-                    strokeWidth={active ? 2.5 : 2}
-                  />
-                </span>
-                <span
-                  className={`truncate max-w-full px-1 ${active ? "text-white" : "text-muted-foreground"}`}
-                  style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 600 }}
-                >
-                  {tab.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
+          >
+            <TabsList className="flex items-center w-full h-full">
+              {tabs.map((tab, i) => {
+                const Icon = tab.icon;
+                const active = i === activeIndex;
+                return (
+                  <TabsHighlightItem key={tab.key} value={tab.key} className="flex-1 h-full min-w-0">
+                    <Link
+                      href={tab.href}
+                      prefetch
+                      aria-current={active ? "page" : undefined}
+                      className="flex flex-col items-center justify-center gap-0.5 h-full w-full min-w-0"
+                    >
+                      {/* Icon morph at phase boundary: keyed crossfade. */}
+                      <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
+                        <Icon
+                          size={20}
+                          className={active ? "text-foreground" : "text-tertiary"}
+                          strokeWidth={active ? 2.5 : 2}
+                        />
+                      </span>
+                      <span
+                        className={`truncate max-w-full px-1 ${active ? "text-foreground" : "text-tertiary"}`}
+                        style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 600 }}
+                      >
+                        {tab.label}
+                      </span>
+                    </Link>
+                  </TabsHighlightItem>
+                );
+              })}
+            </TabsList>
+          </TabsHighlight>
+        </Tabs>
 
         {/* RIGHT — [+] circle. Tap = phase default; long-press = full sheet. */}
         <button
           type="button"
+          onClick={onPlusClick}
           onPointerDown={onPlusDown}
           onPointerUp={onPlusUp}
           onPointerCancel={onPlusCancel}

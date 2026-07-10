@@ -29,6 +29,7 @@ import { AddBookingSheet } from "@/components/bookings/add-booking-sheet";
 import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
 import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
+import { AvatarGroup, AvatarGroupTooltip } from "@/components/animate-ui/components/animate/avatar-group";
 
 interface Trip {
   id: string;
@@ -152,20 +153,27 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
           </Link>
           <p className="flex-1 min-w-0 text-center font-bold text-[15px] truncate">{trip.name}</p>
 
-          {/* Crew avatar stack (3 max) → Crew sheet. */}
+          {/* Crew avatar stack (3 max) → Crew sheet. Brief F: Animate UI
+              AvatarGroup — avatars spring forward on hover/tap, tooltip names.
+              (div+role, not <button>: the group renders divs inside.) */}
           {crew.length > 1 && (
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => setCrewOpen(true)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setCrewOpen(true); }}
               aria-label="Crew"
-              className="shrink-0 flex -space-x-2 rtl:space-x-reverse items-center h-11 px-1"
+              className="shrink-0 flex items-center h-11 px-1 cursor-pointer"
             >
-              {crew.slice(0, 3).map((m) => (
-                <span key={m.userId} className="rounded-full ring-2 ring-background">
-                  <UserAvatar name={m.displayName} avatarUrl={m.avatarUrl} seed={m.userId} size="xs" />
-                </span>
-              ))}
-            </button>
+              <AvatarGroup className="h-11 -space-x-2 rtl:space-x-reverse" translate="-30%" side="bottom">
+                {crew.slice(0, 3).map((m) => (
+                  <span key={m.userId} className="inline-flex rounded-full ring-2 ring-background">
+                    <UserAvatar name={m.displayName} avatarUrl={m.avatarUrl} seed={m.userId} size="xs" />
+                    <AvatarGroupTooltip>{m.displayName}</AvatarGroupTooltip>
+                  </span>
+                ))}
+              </AvatarGroup>
+            </div>
           )}
 
           {/* User avatar → Account sheet. */}

@@ -1030,7 +1030,7 @@ function CategoryStrip({
     : "glass-light text-muted-foreground hover:text-foreground";
 
   return (
-    <div className={`flex items-center gap-1.5 ${className ?? ""}`}>
+    <div className={`flex items-center gap-1.5 overflow-x-auto scrollbar-none ${className ?? ""}`}>
       {onSpecialFilter &&
         (["crew", "saved"] as const).map((f) => {
           const active = specialFilter === f;

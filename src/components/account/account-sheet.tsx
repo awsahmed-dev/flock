@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { LogOut, Loader2, Check, Moon, Sun, Camera, Bell, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/animate-ui/components/radix/sheet";
+import { Switch } from "@/components/animate-ui/components/radix/switch";
 import { updateProfile } from "@/lib/actions/profile";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/components/i18n/locale-provider";
@@ -115,9 +116,18 @@ export function AccountSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} size="sm">
+    // Brief B: the Radix-managed animated Sheet replaces the custom bottom
+    // sheet — spring entry/exit per the brief's config, library-owned state.
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent
+        side="bottom"
+        transition={{ type: "spring", stiffness: 150, damping: 22 }}
+        className="z-[60] h-auto max-h-[88vh] overflow-y-auto gap-0 rounded-t-2xl border-t border-border bg-card sm:mx-auto sm:max-w-md sm:rounded-t-2xl"
+      >
+        <SheetHeader className="sr-only">
+          <SheetTitle>Account</SheetTitle>
+        </SheetHeader>
       <div
-        className="-mx-5"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
       >
         {/* 1. Avatar (§6-B: tap to change photo) + name + @username + email. */}
@@ -210,18 +220,15 @@ export function AccountSheet({
               {isDark ? t("nav.darkMode") : t("nav.lightMode")}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+          {/* Brief G: spring-thumb animated Switch. */}
+          <Switch
+            checked={isDark}
+            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
             aria-label={isDark ? t("nav.lightMode") : t("nav.darkMode")}
-            className="relative w-12 h-7 rounded-full transition-colors"
-            style={{ background: isDark ? ACCENT : "var(--border)" }}
-          >
-            <span
-              className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all"
-              style={{ left: isDark ? "calc(100% - 24px)" : 4 }}
-            />
-          </button>
+            className="h-7 w-12 px-1"
+            thumbClassName="size-5"
+            pressedWidth={24}
+          />
         </div>
 
         <div className="h-px bg-border mx-6" />
@@ -247,7 +254,8 @@ export function AccountSheet({
         {/* §6-B: app version (passive). */}
         <p className="px-6 pb-2 text-center text-xs text-tertiary">Paxawa · v{APP_VERSION}</p>
       </div>
-    </BottomSheet>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -307,15 +315,15 @@ function PocketDayRow() {
         <div className="mt-3 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-foreground">Cache tomorrow&rsquo;s plan nightly</span>
-            <button
-              type="button"
-              onClick={toggle}
+            {/* Brief G: spring-thumb animated Switch. */}
+            <Switch
+              checked={enabled}
+              onCheckedChange={toggle}
               aria-label="Toggle Pocket Day"
-              className="relative w-12 h-7 rounded-full transition-colors"
-              style={{ background: enabled ? ACCENT : "var(--border)" }}
-            >
-              <span className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all" style={{ left: enabled ? "calc(100% - 24px)" : 4 }} />
-            </button>
+              className="h-7 w-12 px-1"
+              thumbClassName="size-5"
+              pressedWidth={24}
+            />
           </div>
           <p className="text-[12px] text-tertiary">
             {status

@@ -72,22 +72,12 @@ interface Props {
   showNav?: boolean;
 }
 
-// Roamy uses ROY G BIV-ish palette per day. We replicate with 8 hues so
-// most realistic trips don't repeat colors.
-const DAY_PALETTE = [
-  "#3b82f6", // blue   — day 1
-  "#f97316", // orange — day 2
-  "#eab308", // amber  — day 3 (Roamy day 3 sample)
-  "#22c55e", // green
-  "#a855f7", // violet
-  "#ef4444", // red
-  "#06b6d4", // cyan
-  "#ec4899", // pink
-];
+// Visual-fix FIX 5: the shared 10-color day palette (lib/day-colors) so
+// route lines, pins and day-rail chips all agree on each day's color.
+import { getDayColor } from "@/lib/day-colors";
 
 function colorForDay(day: string, dayIndex: Map<string, number>): string {
-  const idx = dayIndex.get(day) ?? 0;
-  return DAY_PALETTE[idx % DAY_PALETTE.length];
+  return getDayColor(dayIndex.get(day) ?? 0);
 }
 
 export function MapboxPlanMap({
@@ -394,7 +384,7 @@ export function MapboxPlanMap({
       paint: {
         "line-color": ["get", "color"],
         "line-width": ["case", ["get", "focused"], 4, 2],
-        "line-opacity": ["case", ["get", "focused"], 0.95, 0.3],
+        "line-opacity": ["case", ["get", "focused"], 1.0, 0.3],
       },
     });
 

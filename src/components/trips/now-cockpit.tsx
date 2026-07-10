@@ -20,6 +20,8 @@ import { useT } from "@/components/i18n/locale-provider";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { CockpitAnchor, TeaserPlace } from "@/components/trips/cockpit/types";
+import { getDayColor } from "@/lib/day-colors";
+import { Progress } from "@/components/animate-ui/components/radix/progress";
 
 const MapboxPlanMap = dynamic(
   () => import("@/components/map/mapbox-plan-map").then((m) => m.MapboxPlanMap),
@@ -332,7 +334,6 @@ export function NowCockpit({
           days={days}
           showRoutes
           numbered
-          pinColor="#3EC5B7"
           mapStyle={resolvedTheme === "light" ? "light-v11" : "dark-v11"}
           fitPadding={fitPadding}
           showNav={false}
@@ -504,9 +505,12 @@ export function NowCockpit({
                   <span className="text-primary font-semibold">{t("now.setBudget")}</span>
                 )}
               </div>
-              <div className="h-1 rounded-full bg-foreground/10 overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${budgetPct}%`, background: "var(--clr-moss)" }} />
-              </div>
+              {/* Brief E: spring-animated fill on value change. */}
+              <Progress
+                value={budgetPct}
+                className="h-1 bg-foreground/10"
+                style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
+              />
             </button>
 
             {selectedDay === todayIso && regularToday.length > 0 && (
@@ -529,7 +533,11 @@ export function NowCockpit({
                     className={`shrink-0 h-11 min-w-[84px] px-4 rounded-full text-sm font-bold transition-colors ${
                       active ? "text-white" : "bg-foreground/10 text-muted-foreground"
                     }`}
-                    style={active ? { background: "var(--clr-wayfind)" } : undefined}
+                    style={{
+                      // FIX 5: each chip carries its day's map color.
+                      borderBottom: `3px solid ${getDayColor(days.indexOf(d))}`,
+                      ...(active ? { background: "var(--clr-wayfind)" } : {}),
+                    }}
                   >
                     {isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
                   </button>

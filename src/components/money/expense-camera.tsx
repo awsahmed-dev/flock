@@ -8,6 +8,7 @@ import { createCameraExpense } from "@/lib/actions/expenses";
 import { convert, type RateBundle } from "@/lib/fx";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
+import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 
 const CATEGORIES = ["food", "transport", "accommodation", "activity", "shopping", "other"] as const;
 
@@ -305,14 +306,17 @@ export function ExpenseCamera({
             )}
           </p>
 
-          <button
+          {/* Brief C: tactile ripple on the primary CTA. */}
+          <RippleButton
             type="button"
             onClick={submit}
             disabled={pending || selected.size === 0 || !(amt > 0)}
+            tapScale={0.95} hoverScale={1.02}
             className="h-13 rounded-2xl bg-primary text-white font-bold text-[15px] py-3.5 disabled:opacity-50"
           >
             {pending ? "Logging…" : "Split it"}
-          </button>
+            <RippleButtonRipples color="rgba(255,255,255,0.3)" />
+          </RippleButton>
         </div>
       )}
     </div>

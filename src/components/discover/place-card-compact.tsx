@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart, Star, MapPin, Check } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -31,6 +31,11 @@ export function PlaceCardCompact({
 }) {
   const t = useT();
   const [imgLoaded, setImgLoaded] = useState(false);
+  // Cached images complete before React attaches onLoad — check on mount.
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) setImgLoaded(true);
+  }, []);
   const p = scored.place;
   const photo = p.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=500` : null;
   const price = p.priceLevel != null && p.priceLevel > 0 ? "$".repeat(p.priceLevel) : null;
@@ -53,6 +58,7 @@ export function PlaceCardCompact({
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              ref={imgRef}
               src={photo}
               alt={p.name}
               loading="lazy"

@@ -179,16 +179,17 @@ export function AddExpenseDialog({
 
   return (
     <>
-      {/* §1-G: desktop-only FAB. On mobile the bottom-nav right circle opens the
-          sheet (via the paxawa:logExpense event), so no floating FAB overlaps
-          the pill; on desktop (no bottom nav) the corner FAB stays. */}
+      {/* Visual-fix brief: no floating FAB anywhere (Money page rule). The
+          trigger is a plain inline button on desktop; on mobile the nav's
+          right circle opens the sheet via paxawa:logExpense. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t("expenses.logExpense")}
-        className="hidden xl:flex fixed end-6 bottom-6 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
+        className="hidden xl:inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-4 h-10 text-sm font-bold hover:opacity-90 active:scale-95 transition-transform"
       >
-        <Plus className="w-6 h-6" />
+        <Plus className="w-4 h-4" />
+        {t("expenses.logExpense")}
       </button>
       <BottomSheet
         open={open}

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
+import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 
 export function LoginForm() {
   const t = useT();
@@ -143,14 +144,17 @@ export function LoginForm() {
               </button>
             </div>
           </div>
-          <Button
+          {/* Brief C: tactile ripple on the primary CTA. */}
+          <RippleButton
             type="submit"
-            className="w-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
+            tapScale={0.95} hoverScale={1.02}
+            className="w-full inline-flex items-center justify-center rounded-md h-9 px-4 py-2 text-sm font-medium text-primary-foreground bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
             disabled={loading}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             {t("auth.signIn")}
-          </Button>
+            <RippleButtonRipples color="rgba(255,255,255,0.3)" />
+          </RippleButton>
         </form>
       </CardContent>
     </Card>

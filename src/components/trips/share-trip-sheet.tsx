@@ -6,6 +6,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createTripInvite } from "@/lib/actions/invite";
 import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 
 export interface CrewMember {
   userId: string;
@@ -99,13 +100,16 @@ export function ShareTripSheet({
               {copied ? t("share.copied") : t("share.copy")}
             </button>
           </div>
-          <button
+          {/* Brief C: tactile ripple on the primary CTA. */}
+          <RippleButton
             type="button"
             onClick={nativeShare}
-            className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground font-bold active:scale-[0.98] transition-transform"
+            tapScale={0.95} hoverScale={1.02}
+            className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground font-bold"
           >
             <Share2 className="w-5 h-5" /> {t("share.share")}
-          </button>
+            <RippleButtonRipples color="rgba(255,255,255,0.3)" />
+          </RippleButton>
 
           {/* §7: current crew — avatars + first names + a count. */}
           {crew.length > 0 && (

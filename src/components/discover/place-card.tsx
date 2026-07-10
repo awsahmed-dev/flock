@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart, Bookmark, PlusCircle, Star, MapPin } from "lucide-react";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
@@ -62,6 +62,11 @@ export function PlaceCard({
   // §10.6: shimmer skeleton until the photo lands, then a 250ms fade-in —
   // cards were rendering as blank dark rectangles for seconds.
   const [imgLoaded, setImgLoaded] = useState(false);
+  // Cached images complete before React attaches onLoad — check on mount.
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) setImgLoaded(true);
+  }, []);
   // §5-G long-press detection — a held press opens the context sheet and
   // swallows the tap so the full-screen view doesn't also open.
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,6 +117,7 @@ export function PlaceCard({
           )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            ref={imgRef}
             src={photo}
             alt={p.name}
             loading="lazy"

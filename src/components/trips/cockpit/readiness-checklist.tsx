@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Users, MapPin, Wallet, Package, CalendarDays, Check, ChevronRight, ChevronDown } from "lucide-react";
+import { Users, MapPin, Wallet, Package, CalendarDays, Check, ChevronRight } from "lucide-react";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/animate-ui/components/radix/accordion";
+import { Progress } from "@/components/animate-ui/components/radix/progress";
 
 /**
  * Phase 7 §5 — the readiness bar. One 52px line above the fold: a thin
- * progress bar + "Trip N% ready". Tap → the checklist slides open (250ms),
- * showing ONLY incomplete steps; completed ones collapse to a single
- * "N done ✓" line. The full 5-row checklist never renders by default.
+ * progress bar + "Trip N% ready". Tap → the checklist springs open
+ * (Animate UI Accordion, visual-fix brief H), showing ONLY incomplete
+ * steps; completed ones collapse to a single "N done ✓" line. The full
+ * 5-row checklist never renders by default.
  */
 export function ReadinessChecklist({
   base,
@@ -29,7 +36,6 @@ export function ReadinessChecklist({
   packedCount: number;
   packTotal: number;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const packingPercent = packTotal > 0 ? Math.round((packedCount / packTotal) * 100) : 0;
   const steps = [
     { id: "dates", label: "Set your dates", done: hasDates, href: `${base}/settings`, icon: CalendarDays },
@@ -43,35 +49,24 @@ export function ReadinessChecklist({
 
   return (
     <section className="rounded-2xl bg-card border border-border overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        className="w-full h-[52px] flex items-center gap-3 px-4 text-start"
-      >
-        <div className="flex-1 min-w-0 flex items-center gap-3">
-          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full transition-[width] duration-700"
-              style={{ width: `${Math.min(100, Math.max(0, readiness))}%`, background: "var(--clr-moss)" }}
-            />
-          </div>
-          <span className="text-[13px] font-semibold text-foreground whitespace-nowrap tabular-nums">
-            Trip {readiness}% ready
-          </span>
-        </div>
-        <ChevronDown
-          size={16}
-          className="text-muted-foreground shrink-0 transition-transform"
-          style={{ transform: expanded ? "rotate(180deg)" : "none" }}
-        />
-      </button>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="checklist" className="border-b-0">
+          <AccordionTrigger className="h-[52px] items-center gap-3 px-4 py-0 text-start hover:no-underline rounded-none">
+            <div className="flex-1 min-w-0 flex items-center gap-3">
+              {/* Brief E: spring-animated fill, moss like every progress bar. */}
+              <Progress
+                value={Math.min(100, Math.max(0, readiness))}
+                className="flex-1 h-1.5 bg-muted"
+                style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
+              />
+              <span className="text-[13px] font-semibold text-foreground whitespace-nowrap tabular-nums">
+                Trip {readiness}% ready
+              </span>
+            </div>
+          </AccordionTrigger>
 
-      <div
-        className="overflow-hidden"
-        style={{ maxHeight: expanded ? 420 : 0, transition: "max-height 250ms ease" }}
-      >
-        <div className="flex flex-col gap-2 px-3 pb-3">
+          <AccordionContent className="pb-0">
+            <div className="flex flex-col gap-2 px-3 pb-3">
           {doneCount > 0 && (
             <p className="text-[13px] text-muted-foreground px-1">
               {doneCount} done ✓
@@ -101,13 +96,15 @@ export function ReadinessChecklist({
               </Link>
             );
           })}
-          {incomplete.length === 0 && (
-            <p className="flex items-center gap-2 text-[14px] font-semibold text-foreground px-1 py-2">
-              <Check size={16} className="text-success" /> All set 🎉
-            </p>
-          )}
-        </div>
-      </div>
+              {incomplete.length === 0 && (
+                <p className="flex items-center gap-2 text-[14px] font-semibold text-foreground px-1 py-2">
+                  <Check size={16} className="text-success" /> All set 🎉
+                </p>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </section>
   );
 }

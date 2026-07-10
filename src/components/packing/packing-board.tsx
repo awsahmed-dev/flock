@@ -24,6 +24,7 @@ import {
   seedSuggestedPacking,
 } from "@/lib/actions/packing";
 import { PageHeader } from "@/components/ui/page-header";
+import { Progress } from "@/components/animate-ui/components/radix/progress";
 import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -387,12 +388,12 @@ function ProgressBar({ packed, total }: { packed: number; total: number }) {
         </span>
         <span className="font-bold text-foreground tabular-nums">{pct}%</span>
       </div>
-      <div className="h-1 rounded-full bg-muted overflow-hidden">
-        <div
-          className="h-full bg-primary transition-all duration-300"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      {/* Brief E: spring-animated fill, moss like every progress bar. */}
+      <Progress
+        value={pct}
+        className="h-1 bg-muted"
+        style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
+      />
     </div>
   );
 }

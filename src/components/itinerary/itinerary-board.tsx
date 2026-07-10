@@ -308,7 +308,6 @@ export function ItineraryBoard({
           onItemClick={handleMarkerClick}
           days={days}
           mapStyle={resolvedTheme === "light" ? "light-v11" : "dark-v11"}
-          pinColor="#3EC5B7"
         />
       </div>
 

@@ -310,7 +310,7 @@ export default async function DashboardPage() {
                         <img src={trip.heroImageUrl} alt={trip.name} className="absolute inset-0 w-full h-full object-cover" />
                       )}
                       <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.80) 100%)" }} />
-                      <div className="absolute top-3 start-3 rounded-full px-2.5 py-1" style={{ background: ACCENT }}>
+                      <div className="absolute top-3 start-3 rounded-full px-2.5 py-1" style={{ background: "var(--clr-horizon)" }}>
                         <span className="text-[10px] font-bold text-white">
                           {daysUntil === 0 ? t("dashboard.today") : t("dashboard.daysShort", { count: daysUntil })}
                         </span>
@@ -319,7 +319,7 @@ export default async function DashboardPage() {
                         <p className="text-[14px] font-bold text-white leading-tight line-clamp-2">{trip.name}</p>
                         <p className="text-[11px] text-white/65 mt-0.5">{datesLabel(trip)}</p>
                         <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.20)" }}>
-                          <div className="h-full rounded-full" style={{ width: `${progress}%`, background: ACCENT, minWidth: stops > 0 ? 6 : 0 }} />
+                          <div className="h-full rounded-full" style={{ width: `${progress}%`, background: "var(--clr-dune)", minWidth: stops > 0 ? 6 : 0 }} />
                         </div>
                       </div>
                     </Link>

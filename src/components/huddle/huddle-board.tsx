@@ -12,6 +12,8 @@ import { reactToDecision, createPoll, votePoll } from "@/lib/actions/huddle";
 import { createClient } from "@/lib/supabase/client";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
+import { motion } from "motion/react";
+import useEmblaCarousel from "embla-carousel-react";
 
 /**
  * Phase 6 §4 — the Huddle surface. Zone 1: Decision Deck (scroll-snap,
@@ -278,40 +280,63 @@ function DecisionDeck({
   crewSize: number;
   onDiscuss: (d: HuddleDecision) => void;
 }) {
+  // Visual-fix brief D: the deck rides Embla + motion (Animate UI
+  // MotionCarousel pattern) — active card scales up, inactive settle back,
+  // animated pill pagination below. DecisionCard itself is untouched.
   const [active, setActive] = useState(0);
-  const deckRef = useRef<HTMLDivElement>(null);
   const shown = decisions.slice(0, 5);
-
-  function onScroll() {
-    const el = deckRef.current;
-    if (!el || el.clientWidth === 0) return;
-    setActive(Math.round(Math.abs(el.scrollLeft) / el.clientWidth));
-  }
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "center",
+    containScroll: "trimSnaps",
+    direction: typeof document !== "undefined" && document.dir === "rtl" ? "rtl" : "ltr",
+  });
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => setActive(emblaApi.selectedScrollSnap());
+    onSelect();
+    emblaApi.on("select", onSelect).on("reInit", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect).off("reInit", onSelect);
+    };
+  }, [emblaApi]);
+  const deckSpring = { type: "spring", stiffness: 240, damping: 24 } as const;
 
   return (
     <div>
-      <div
-        ref={deckRef}
-        onScroll={onScroll}
-        className="flex overflow-x-auto scrollbar-none -mx-4 px-4 gap-3"
-        style={{ scrollSnapType: "x mandatory" }}
-      >
-        {shown.map((d) => (
-          <div key={d.id} className="shrink-0 w-[calc(100%-32px)]" style={{ scrollSnapAlign: "center" }}>
-            <DecisionCard
-              tripId={tripId}
-              decision={d}
-              currentUserId={currentUserId}
-              crewSize={crewSize}
-              onDiscuss={() => onDiscuss(d)}
-            />
-          </div>
-        ))}
+      <div className="overflow-hidden -mx-4 px-4" ref={emblaRef}>
+        <div className="flex touch-pan-y gap-3">
+          {shown.map((d, i) => (
+            <motion.div
+              key={d.id}
+              className="min-w-0 flex-none basis-[calc(100%-32px)]"
+              initial={false}
+              animate={{ scale: i === active ? 1 : 0.94 }}
+              transition={deckSpring}
+            >
+              <DecisionCard
+                tripId={tripId}
+                decision={d}
+                currentUserId={currentUserId}
+                crewSize={crewSize}
+                onDiscuss={() => onDiscuss(d)}
+              />
+            </motion.div>
+          ))}
+        </div>
       </div>
       {shown.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-2">
+        <div className="flex justify-center items-center gap-1.5 mt-2">
           {shown.map((_, i) => (
-            <span key={i} className={`w-2 h-2 rounded-full ${i === active ? "bg-primary" : "bg-muted"}`} />
+            <motion.button
+              key={i}
+              type="button"
+              aria-label={`Decision ${i + 1}`}
+              onClick={() => emblaApi?.scrollTo(i)}
+              className={`rounded-full ${i === active ? "bg-primary" : "bg-muted"}`}
+              initial={false}
+              animate={{ width: i === active ? 20 : 8, height: 8 }}
+              transition={deckSpring}
+            />
           ))}
         </div>
       )}

@@ -15,6 +15,7 @@ import { createDecision } from "@/lib/actions/decisions";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { PoweredByGoogle } from "./primitives";
+import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 
 /**
  * Paxawa v2 — the place detail, Airbnb-style.
@@ -362,13 +363,16 @@ export function PlaceDetailPanel({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button
+                {/* Brief C: tactile ripple on the primary CTA. */}
+                <RippleButton
                   type="button" onClick={handleAdd} disabled={isPending || !effectiveDay}
+                  tapScale={0.95} hoverScale={1.02}
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-bold py-3.5 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
                 >
                   {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                   {t("discover.addToPlan")}
-                </button>
+                  <RippleButtonRipples color="rgba(255,255,255,0.3)" />
+                </RippleButton>
                 {crewSize >= 2 && (
                   <button
                     type="button" onClick={handleSuggest} disabled={isPending}
