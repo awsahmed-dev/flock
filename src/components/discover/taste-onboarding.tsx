@@ -27,7 +27,7 @@ export function TasteOnboarding({ onDone }: { onDone: () => void }) {
     startTransition(() => {
       applyTasteOnboarding([...picked])
         .then(() => {
-          toast.success("Your feed just got personal ✨");
+          toast.success("Your feed just got personal ✨", { duration: 3000 });
           onDone();
         })
         .catch(() => toast.error("That didn't save — try again"));

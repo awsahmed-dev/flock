@@ -10,6 +10,7 @@ import {
   huddleDecisions,
 } from "@/lib/db/schema";
 import { simplifySettlements } from "@/lib/settle";
+import { effectiveTripBudget } from "@/lib/budget";
 import { eq, asc, desc, inArray, and, sql } from "drizzle-orm";
 import { eachDayOfInterval, format as isoFormat, differenceInCalendarDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
@@ -301,7 +302,8 @@ export default async function TripPage({ params }: Props) {
       days={days}
       items={items}
       budget={{
-        total: trip.budgetTotal != null ? Number(trip.budgetTotal) : null,
+        // QA BUG-11: per-person budgets multiply by crew size.
+        total: effectiveTripBudget(trip.budgetTotal, trip.budgetType, crew.length),
         spent,
         currency: tripCurrency,
       }}

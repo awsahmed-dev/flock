@@ -9,6 +9,8 @@ import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
 import { getLocale } from "@/lib/i18n";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
+import { sendEmail } from "@/lib/email/send";
+import { getBaseUrl } from "@/lib/base-url";
 
 function titleCase(s: string): string {
   if (!s) return s;
@@ -46,7 +48,22 @@ export async function createTrip(formData: FormData) {
   const budgetTotal = formData.get("budgetTotal")
     ? parseFloat(formData.get("budgetTotal") as string)
     : null;
+  // QA BUG-11: keep the per-person intent instead of flattening it.
+  const budgetType = formData.get("budgetType") === "per_person" ? "per_person" : "flat";
   const currency = (formData.get("currency") as string) || "USD";
+  // QA BUG-2: the wizard's "Who is coming?" emails — previously discarded.
+  let inviteEmails: string[] = [];
+  try {
+    const raw = formData.get("inviteEmails");
+    if (typeof raw === "string" && raw) {
+      inviteEmails = (JSON.parse(raw) as string[])
+        .map((e) => String(e).trim().toLowerCase())
+        .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+        .slice(0, 20);
+    }
+  } catch {
+    inviteEmails = [];
+  }
 
   if (!name || !destination || !startDate || !endDate) {
     throw new Error("Missing required fields");
@@ -71,6 +88,7 @@ export async function createTrip(formData: FormData) {
       startDate,
       endDate,
       budgetTotal,
+      budgetType,
       currency,
       createdBy: user.id,
     })
@@ -100,6 +118,36 @@ export async function createTrip(formData: FormData) {
     token,
     createdBy: user.id,
   });
+
+  // QA BUG-2: persist each wizard invitee as an email-targeted invite row
+  // (visible as "pending" on Crew) and send them the join link right away.
+  // Best-effort — a failed email must never sink trip creation.
+  if (inviteEmails.length > 0) {
+    const inviteUrl = `${getBaseUrl()}/invite/${token}`;
+    const hostName =
+      user.user_metadata?.display_name || user.email?.split("@")[0] || "A friend";
+    await db
+      .insert(tripInvites)
+      .values(
+        inviteEmails.map((email) => ({
+          tripId: trip.id,
+          token: randomBytes(16).toString("hex"),
+          invitedEmail: email,
+          createdBy: user.id,
+        })),
+      )
+      .catch((e) => console.error("[createTrip/invites] insert failed:", e));
+    for (const email of inviteEmails) {
+      sendEmail({
+        to: email,
+        subject: `${hostName} invited you to "${name}" on Paxawa ✈️`,
+        html: `<p>${hostName} is planning <strong>${name}</strong> (${destination}) and wants you on the crew.</p><p><a href="${inviteUrl}">Join the trip →</a></p><p style="color:#888;font-size:12px">If the button doesn't work, open: ${inviteUrl}</p>`,
+        text: `${hostName} is planning "${name}" (${destination}) and wants you on the crew. Join: ${inviteUrl}`,
+        kind: "trip_invite",
+        idempotencyKey: `trip-invite:${trip.id}:${email}`,
+      }).catch((e) => console.error("[createTrip/invites] email failed:", e));
+    }
+  }
 
   // B12: auto-seed packing list with destination-aware suggestions so
   // the user lands on a populated checklist instead of an empty state.

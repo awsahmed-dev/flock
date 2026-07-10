@@ -172,6 +172,7 @@ export default async function RootLayout({
           {/* §11-F: one toast queue, bottom-centered above the nav pill. */}
           <Toaster
             richColors
+            duration={4000}
             position="bottom-center"
             offset={{ bottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
             mobileOffset={{ bottom: "calc(env(safe-area-inset-bottom) + 88px)" }}

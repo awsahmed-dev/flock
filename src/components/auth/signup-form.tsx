@@ -12,6 +12,15 @@ import { Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics/events";
 import { useT } from "@/components/i18n/locale-provider";
 
+function friendlyAuthError(message: string): string {
+  // QA BUG-13: Supabase's raw "email rate limit exceeded" is meaningless to
+  // a person mid-signup — translate throttling into something actionable.
+  if (/rate limit|too many/i.test(message)) {
+    return "Too many sign-in attempts — try again in a few minutes.";
+  }
+  return message;
+}
+
 export function SignupForm() {
   const t = useT();
   const [email, setEmail] = useState("");
@@ -35,7 +44,7 @@ export function SignupForm() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyAuthError(error.message));
     } else {
       track.signup("email");
       setSent(true);

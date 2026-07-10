@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -41,12 +41,23 @@ export function AccountSheet({
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [name, setName] = useState(displayName);
+  const [nameDirty, setNameDirty] = useState(false);
+  // QA BUG-9: the sheet mounts before the async profile fetch resolves, so
+  // useState(displayName) captured "" and the field stayed empty forever
+  // (and the header fell back to the email local-part). Sync the loaded
+  // profile name in until the user actually edits the field.
+  useEffect(() => {
+    if (!nameDirty) setName(displayName);
+  }, [displayName, nameDirty]);
   const [isPending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const username = email ? email.split("@")[0] : null;
   const showSaved = savedAt != null && Date.now() - savedAt < 3000;
   // §6-B: profile photo upload.
   const [photoUrl, setPhotoUrl] = useState<string | null>(avatarUrl);
+  useEffect(() => {
+    setPhotoUrl((cur) => cur ?? avatarUrl);
+  }, [avatarUrl]);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -169,7 +180,7 @@ export function AccountSheet({
           </label>
           <input
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setNameDirty(true); }}
             maxLength={60}
             placeholder={t("profile.namePlaceholder")}
             className="w-full mt-2 px-4 rounded-xl outline-none bg-secondary border border-border text-foreground text-[15px]"

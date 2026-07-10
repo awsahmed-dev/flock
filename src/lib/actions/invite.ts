@@ -43,77 +43,132 @@ export async function createTripInvite(tripId: string): Promise<string> {
   return `${getBaseUrl()}/invite/${token}`;
 }
 
-export async function joinTripAsGuest(formData: FormData) {
+/** QA BUG-1/13: recognize Supabase's email rate-limit in any wording. */
+function isRateLimit(message: string | undefined | null): boolean {
+  return /rate limit|too many/i.test(message ?? "");
+}
+
+/**
+ * QA BUG-1 — guest join, rebuilt. The old flow depended on `signInWithOtp`
+ * (email send → project rate limit → dead end) and `signInAnonymously`
+ * (disabled on the project → dead end), and every failure THREW — which
+ * production Next.js masks into the opaque "Server Components render" error.
+ * Now: a lightweight account is created server-side via the admin API with
+ * `email_confirm: true` (no email is ever sent), signed in with a generated
+ * password, and added to the trip immediately. Failures RETURN `{ error }`
+ * so the form can show an actionable message.
+ */
+export async function joinTripAsGuest(
+  formData: FormData,
+): Promise<{ error: string } | void> {
   const token = formData.get("token") as string;
   const tripId = formData.get("tripId") as string;
-  const displayName = (formData.get("displayName") as string).trim();
+  const displayName = ((formData.get("displayName") as string) ?? "").trim();
   const email = (formData.get("email") as string | null)?.trim() || null;
 
-  if (!displayName) throw new Error("Name is required");
+  if (!displayName) return { error: "Name is required" };
 
   const invite = await db.query.tripInvites.findFirst({
     where: eq(tripInvites.token, token),
   });
 
-  if (!invite || invite.tripId !== tripId) throw new Error("Invalid invite");
-  if (invite.expiresAt && new Date() > invite.expiresAt) throw new Error("Invite expired");
+  if (!invite || invite.tripId !== tripId) return { error: "This invite link is invalid." };
+  if (invite.expiresAt && new Date() > invite.expiresAt)
+    return { error: "This invite link has expired — ask for a fresh one." };
 
-  if (email) {
-    // Create a magic-link session for the guest so they can return later
-    const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/trips/${tripId}`,
-        data: { display_name: displayName },
-      },
-    });
-    if (error) throw new Error(error.message);
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+  const supabase = await createClient();
 
-    // We'll add them to the trip after they click the email link (handled in callback)
-    // For now, redirect to a "check email" screen
-    redirect(`/invite/${token}/check-email`);
-  } else {
-    // Guest without email — create an anonymous session via Supabase
-    const supabase = await createClient();
-    const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
-    if (anonError || !anonData.user) throw new Error("Failed to create guest session");
+  // The account email: the guest's real one, or a synthetic guest address
+  // for the name-only path (never mailed — confirmed at creation).
+  const accountEmail =
+    email ?? `guest-${randomBytes(8).toString("hex")}@guests.paxawa.com`;
+  const password = randomBytes(24).toString("base64url");
 
-    const userId = anonData.user.id;
+  let userId: string | null = null;
 
-    // Ensure profile
-    await db
-      .insert(profiles)
-      .values({ id: userId, displayName })
-      .onConflictDoNothing();
-
-    // Check not already a member
-    const existing = await db.query.tripMembers.findFirst({
-      where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, userId)),
+  if (admin) {
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email: accountEmail,
+      password,
+      email_confirm: true,
+      user_metadata: { display_name: displayName, guest: email == null },
     });
 
-    if (!existing) {
-      const [newMember] = await db
-        .insert(tripMembers)
-        .values({
-          tripId,
-          userId,
-          displayName,
-          role: "member",
-        })
-        .returning();
-
-      // Notify the rest of the crew that a new member just joined.
-      notifyInviteAccepted({
-        tripId,
-        memberId: newMember.id,
-        joinerName: displayName,
-        joinerUserId: userId,
-      }).catch((e) => console.error("[invite/notify] failed:", e));
+    if (created?.user) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: accountEmail,
+        password,
+      });
+      if (signInError) return { error: "Couldn't start your session — please try again." };
+      userId = created.user.id;
+    } else if (email && /already|exists|registered/i.test(createError?.message ?? "")) {
+      // Existing account for that email — we can't sign them in without their
+      // password, so fall back to a magic link (and translate the rate limit).
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/trips/${tripId}`,
+          data: { display_name: displayName },
+          shouldCreateUser: false,
+        },
+      });
+      if (otpError) {
+        return {
+          error: isRateLimit(otpError.message)
+            ? "Too many sign-in attempts — try again in a few minutes, or use the Google button."
+            : `That email already has an account — sign in to join. (${otpError.message})`,
+        };
+      }
+      redirect(`/invite/${token}/check-email`);
+    } else {
+      return { error: "Couldn't create your guest account — please try again." };
     }
-
-    redirect(`/trips/${tripId}`);
+  } else {
+    // No service key configured (e.g. local dev) — try anonymous auth as a
+    // last resort and report honestly if the project has it disabled.
+    const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+    if (anonError || !anonData.user) {
+      return { error: "Guest join isn't available right now — use the Google button, or ask the host to add you." };
+    }
+    userId = anonData.user.id;
   }
+
+  if (!userId) return { error: "Couldn't create your guest session — please try again." };
+
+  // Ensure profile
+  await db
+    .insert(profiles)
+    .values({ id: userId, displayName, email })
+    .onConflictDoNothing();
+
+  // Check not already a member
+  const existing = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, userId)),
+  });
+
+  if (!existing) {
+    const [newMember] = await db
+      .insert(tripMembers)
+      .values({
+        tripId,
+        userId,
+        displayName,
+        role: "member",
+      })
+      .returning();
+
+    // Notify the rest of the crew that a new member just joined.
+    notifyInviteAccepted({
+      tripId,
+      memberId: newMember.id,
+      joinerName: displayName,
+      joinerUserId: userId,
+    }).catch((e) => console.error("[invite/notify] failed:", e));
+  }
+
+  redirect(`/trips/${tripId}`);
 }
 
 async function notifyInviteAccepted(args: {

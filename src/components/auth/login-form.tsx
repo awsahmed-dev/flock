@@ -13,6 +13,15 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 
+function friendlyAuthError(message: string): string {
+  // QA BUG-13: Supabase's raw "email rate limit exceeded" is meaningless to
+  // a person mid-signup — translate throttling into something actionable.
+  if (/rate limit|too many/i.test(message)) {
+    return "Too many sign-in attempts — try again in a few minutes.";
+  }
+  return message;
+}
+
 export function LoginForm() {
   const t = useT();
   const [email, setEmail] = useState("");
@@ -36,7 +45,7 @@ export function LoginForm() {
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
     setResetLoading(false);
-    if (error) toast.error(error.message);
+    if (error) toast.error(friendlyAuthError(error.message));
     else
       toast.success("Magic link sent — check your email to sign back in", {
         duration: 6000,

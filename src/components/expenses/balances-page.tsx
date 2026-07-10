@@ -115,13 +115,17 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
         net: 0,
       });
     }
+    // QA BUG-3: symmetric per-split netting (see expenses-board.tsx) — the
+    // payer's self-split is settled at creation, so crediting the payer the
+    // full amount while skipping settled splits over-credited every payer.
     for (const e of shared) {
-      const p = map.get(e.paidBy);
-      if (p) p.net += toBase(e.amount, e.currency);
       for (const sp of e.splits) {
-        if (sp.settled) continue;
+        if (sp.settled || sp.userId === e.paidBy) continue;
+        const owed = toBase(sp.amountOwed, e.currency);
+        const p = map.get(e.paidBy);
+        if (p) p.net += owed;
         const d = map.get(sp.userId);
-        if (d) d.net -= toBase(sp.amountOwed, e.currency);
+        if (d) d.net -= owed;
       }
     }
     const nets = [...map.values()];

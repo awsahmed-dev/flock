@@ -184,7 +184,7 @@ export function DiscoverFeed({
         .then(({ interactionCount }) => {
           if (interactionCount === 10 && !smarterToastFired.current) {
             smarterToastFired.current = true;
-            toast("Your Discover feed just got smarter ✨");
+            toast("Your Discover feed just got smarter ✨", { duration: 3000 });
           }
         })
         .catch(() => {});

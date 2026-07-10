@@ -40,7 +40,10 @@ export function JoinTripForm({ token, tripId }: Props) {
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       try {
-        await joinTripAsGuest(formData);
+        // QA BUG-1: the action RETURNS errors (prod masks thrown ones into
+        // the useless "Server Components render" toast).
+        const res = await joinTripAsGuest(formData);
+        if (res?.error) toast.error(res.error);
       } catch (err) {
         if (err instanceof Error && !err.message.includes("NEXT_REDIRECT")) {
           toast.error(err.message);

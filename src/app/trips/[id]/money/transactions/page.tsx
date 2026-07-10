@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { TransactionsPage } from "@/components/expenses/transactions-page";
 import { loadMoneyPageData } from "@/lib/actions/money-page-data";
+import { effectiveTripBudget } from "@/lib/budget";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -17,7 +18,7 @@ export default async function MoneyTransactionsRoute({ params }: Props) {
       tripId={id}
       userId={user.id}
       currency={trip.currency}
-      tripBudget={trip.budgetTotal ?? null}
+      tripBudget={effectiveTripBudget(trip.budgetTotal, (trip as { budgetType?: string }).budgetType, members.length)}
       personalBudget={personalBudget}
       expenses={expenseList as any}
       members={members}

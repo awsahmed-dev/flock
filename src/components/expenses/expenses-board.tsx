@@ -169,13 +169,20 @@ export function ExpensesBoard({
     for (const m of members) {
       balanceMap.set(m.userId, { userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl ?? null, net: 0 });
     }
+    // QA BUG-3: symmetric per-split netting. The payer's own split is stored
+    // settled at creation, so the old "credit the payer the FULL amount, skip
+    // settled splits" formula never deducted the payer's own share — every
+    // payer was over-credited and multi-payer settle-up routed everything to
+    // the largest creditor. Credit the payer per unsettled non-self split
+    // instead: nets always sum to zero and settled splits cancel both sides.
     for (const e of sharedExpenses) {
-      const p = balanceMap.get(e.paidBy);
-      if (p) p.net += toBase(e.amount, e.currency);
       for (const sp of e.splits) {
-        if (sp.settled) continue;
+        if (sp.settled || sp.userId === e.paidBy) continue;
+        const owed = toBase(sp.amountOwed, e.currency);
+        const p = balanceMap.get(e.paidBy);
+        if (p) p.net += owed;
         const d = balanceMap.get(sp.userId);
-        if (d) d.net -= toBase(sp.amountOwed, e.currency);
+        if (d) d.net -= owed;
       }
     }
     const balances = [...balanceMap.values()];

@@ -105,7 +105,9 @@ export async function reactToDecision(
         .select({ userId: tripMembers.userId })
         .from(tripMembers)
         .where(eq(tripMembers.tripId, tripId));
-      const majority = Math.ceil(crew.length / 2);
+      // QA BUG-4: a true majority is floor(n/2)+1 — ceil(n/2) let a single
+      // vote resolve 2-person (and tie 4-person) decisions.
+      const majority = Math.floor(crew.length / 2) + 1;
 
       if (addVotes >= majority) {
         // Slot the place onto its suggested day (or the trip's first day).
@@ -163,8 +165,18 @@ export async function createPoll(tripId: string, question: string, options: stri
   if (!user) throw new Error("Not signed in");
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Access denied");
-  const clean = options.map((o) => o.trim()).filter(Boolean).slice(0, 4);
-  if (!question.trim() || clean.length < 2) throw new Error("A poll needs a question and 2–4 options");
+  // QA BUG-12/14: server-side guardrails — non-empty unique options (twin
+  // "🦖" options posted fine before) and a 200-char question cap.
+  const clean = options.map((o) => o.trim()).filter((o) => o.length >= 1).slice(0, 4);
+  const seen = new Set<string>();
+  for (const o of clean) {
+    const key = o.toLowerCase();
+    if (seen.has(key)) throw new Error("Poll options must be unique");
+    seen.add(key);
+  }
+  const q = question.trim();
+  if (!q || clean.length < 2) throw new Error("A poll needs a question and 2–4 options");
+  if (q.length > 200) throw new Error("Keep the question under 200 characters");
 
   await db.insert(huddleDecisions).values({
     tripId,
@@ -197,7 +209,8 @@ export async function votePoll(decisionId: string, tripId: string, optionId: str
   if (!target) return;
   target.voterIds.push(user.id);
 
-  const majority = Math.ceil(trip.members.length / 2);
+  // QA BUG-4: floor(n/2)+1 — one Marco vote must not decide for Rania.
+  const majority = Math.floor(trip.members.length / 2) + 1;
   const winner = options.find((o) => o.voterIds.length >= majority);
 
   await db

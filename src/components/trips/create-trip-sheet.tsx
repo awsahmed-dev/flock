@@ -67,6 +67,9 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
   const [end, setEnd] = useState<Date | null>(null);
   const [durationKey, setDurationKey] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  // QA BUG-7: presets anchor to the month the user navigated to, so the
+  // calendar's viewed month lives up here.
+  const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
   const [name, setName] = useState("");
   const [nameDirty, setNameDirty] = useState(false);
 
@@ -103,10 +106,23 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
   ];
 
   function pickDuration(key: string, days: number) {
-    const s = new Date();
-    s.setHours(0, 0, 0, 0);
-    setStart(s);
-    setEnd(addDays(s, days));
+    // QA BUG-7: anchor to (in order) the chosen start date, the month the
+    // user navigated the calendar to, or today — NOT always today. Tapping
+    // "2 Weeks" while viewing August must produce an August range.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let anchor: Date;
+    if (start) {
+      anchor = start;
+    } else if (isSameMonth(viewMonth, today)) {
+      anchor = today;
+    } else if (isBefore(viewMonth, today)) {
+      anchor = today;
+    } else {
+      anchor = startOfMonth(viewMonth);
+    }
+    setStart(anchor);
+    setEnd(addDays(anchor, days));
     setDurationKey(key);
     setShowCalendar(false);
   }
@@ -127,7 +143,11 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
     fd.set("startDate", ISO(start));
     fd.set("endDate", ISO(end));
     if (amount.trim()) fd.set("budgetTotal", amount.trim());
+    // QA BUG-11: keep the per-person intent.
+    fd.set("budgetType", perPerson ? "per_person" : "flat");
     fd.set("currency", currency);
+    // QA BUG-2: the "Who is coming?" entries were silently discarded.
+    if (crew.length > 0) fd.set("inviteEmails", JSON.stringify(crew));
     startTransition(async () => {
       try {
         // createTrip redirects to the new trip's NOW screen on success.
@@ -202,6 +222,8 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
               start={start}
               end={end}
               setRange={(s, e) => { setStart(s); setEnd(e); setDurationKey("custom"); }}
+              month={viewMonth}
+              setMonth={setViewMonth}
               datesLabel={datesLabel}
               name={name}
               setName={(v) => { setName(v); setNameDirty(true); }}
@@ -319,6 +341,8 @@ function Step1({
   datesLabel,
   name,
   setName,
+  month,
+  setMonth,
 }: {
   t: (k: string, p?: Record<string, string | number>) => string;
   destination: string;
@@ -330,10 +354,12 @@ function Step1({
   setShowCalendar: (v: boolean) => void;
   start: Date | null;
   end: Date | null;
-  setRange: (s: Date, e: Date) => void;
+  setRange: (s: Date, e: Date | null) => void;
   datesLabel: string | null;
   name: string;
   setName: (v: string) => void;
+  month: Date;
+  setMonth: (d: Date) => void;
 }) {
   return (
     <div className="space-y-5">
@@ -375,7 +401,7 @@ function Step1({
       )}
 
       {showCalendar && (
-        <RangeCalendar start={start} end={end} onChange={setRange} />
+        <RangeCalendar start={start} end={end} onChange={setRange} month={month} setMonth={setMonth} />
       )}
 
       {/* Trip name */}
@@ -479,12 +505,16 @@ function RangeCalendar({
   start,
   end,
   onChange,
+  month,
+  setMonth,
 }: {
   start: Date | null;
   end: Date | null;
-  onChange: (s: Date, e: Date) => void;
+  /** QA BUG-6: end is null while awaiting the second tap. */
+  onChange: (s: Date, e: Date | null) => void;
+  month: Date;
+  setMonth: (d: Date) => void;
 }) {
-  const [month, setMonth] = useState(startOfMonth(start ?? new Date()));
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -499,10 +529,14 @@ function RangeCalendar({
 
   function tap(d: Date) {
     if (isBefore(d, today)) return;
-    if (!start || (start && end)) {
-      onChange(d, d);
+    // QA BUG-6: the first tap used to set start = end = d, so the "awaiting
+    // the end date" state never existed and every tap moved a single day.
+    // Now: tap 1 sets the start (end pending), tap 2 completes the range;
+    // tapping before the start restarts the selection.
+    if (!start || end) {
+      onChange(d, null);
     } else if (isBefore(d, start)) {
-      onChange(d, d);
+      onChange(d, null);
     } else {
       onChange(start, d);
     }

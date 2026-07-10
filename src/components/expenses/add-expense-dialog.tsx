@@ -76,6 +76,8 @@ export function AddExpenseDialog({
   );
   const t = useT();
   const [open, setOpen] = useState(false);
+  // QA BUG-16: surfaced instead of the silent native re-focus.
+  const [dateError, setDateError] = useState(false);
 
   // §1-G: the mobile FAB is gone (the bottom-nav right circle owns "log
   // expense" now). It dispatches this event to open the sheet.
@@ -334,8 +336,22 @@ export function AddExpenseDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.date")}</Label>
-              <Input id="expenseDate" name="expenseDate" type="date" required className="h-9" />
+              <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                {t("expenses.date")} <span aria-hidden className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="expenseDate"
+                name="expenseDate"
+                type="date"
+                required
+                aria-required="true"
+                onInvalid={(e) => { e.preventDefault(); setDateError(true); e.currentTarget.focus(); }}
+                onChange={() => setDateError(false)}
+                className={`h-9 ${dateError ? "border-destructive ring-1 ring-destructive" : ""}`}
+              />
+              {dateError && (
+                <p className="text-[11px] font-semibold text-destructive">{t("expenses.dateRequired")}</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label htmlFor="notes" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.notes")}</Label>
@@ -599,6 +615,8 @@ function CategoryPicker({
   onChange: (v: ExpenseCategory) => void;
 }) {
   const [open, setOpen] = useState(false);
+  // QA BUG-16: surfaced instead of the silent native re-focus.
+  const [dateError, setDateError] = useState(false);
   const meta = categoryMeta(value);
   const Icon = meta.icon;
   const isInferred = value === inferred;

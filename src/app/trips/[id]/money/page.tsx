@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ExpensesBoard } from "@/components/expenses/expenses-board";
 import { loadMoneyPageData } from "@/lib/actions/money-page-data";
+import { effectiveTripBudget } from "@/lib/budget";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,7 +24,8 @@ export default async function MoneyPage({ params }: Props) {
         tripId={id}
         userId={user.id}
         currency={trip.currency}
-        tripBudget={trip.budgetTotal ?? null}
+        // QA BUG-11: per-person budgets multiply by crew size.
+        tripBudget={effectiveTripBudget(trip.budgetTotal, (trip as { budgetType?: string }).budgetType, members.length)}
         personalBudget={personalBudget}
         expenses={expenseList as any}
         members={members}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Star, Plus, Users, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
@@ -254,7 +255,18 @@ export function HuddleBoard({
         </section>
       </div>
 
-      <PollComposer tripId={tripId} open={pollOpen} onClose={() => setPollOpen(false)} />
+      <PollComposer
+        tripId={tripId}
+        open={pollOpen}
+        onClose={() => {
+          setPollOpen(false);
+          // QA BUG-10: drop ?compose=poll so a post-revalidate remount can't
+          // re-initialize the sheet open.
+          if (typeof window !== "undefined" && window.location.search.includes("compose=poll")) {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+        }}
+      />
       {thread && (
         <ThreadSheet
           tripId={tripId}
@@ -433,7 +445,7 @@ function DecisionCard({
               <span>{b.label}</span>
               {voters.length > 0 && b.key !== "discuss" && (
                 <span className="text-[10px] text-muted-foreground">
-                  {voters.length}{crewSize > 1 && b.key === "add_it" ? `/${Math.ceil(crewSize / 2)}` : ""}
+                  {voters.length}{crewSize > 1 && b.key === "add_it" ? `/${Math.floor(crewSize / 2) + 1}` : ""}
                 </span>
               )}
             </button>
@@ -474,7 +486,7 @@ function PollCard({
     <article className="rounded-3xl bg-card border border-border p-4" style={{ boxShadow: "var(--shadow-md)" }}>
       <p className="text-[15px] font-bold">{decision.pollQuestion}</p>
       <p className="text-[12px] text-muted-foreground mt-0.5 mb-3">
-        Asked by {decision.createdByName.split(" ")[0]} · closes at majority ({Math.ceil(crewSize / 2)})
+        Asked by {decision.createdByName.split(" ")[0]} · closes at majority ({Math.floor(crewSize / 2) + 1})
       </p>
       <div className="flex flex-col gap-2">
         {options.map((o) => {
@@ -611,14 +623,22 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
   const [options, setOptions] = useState(["", ""]);
   const [pending, startTransition] = useTransition();
 
+  // QA BUG-12: duplicate options can't be told apart on the ballot.
+  const trimmed = options.map((o) => o.trim()).filter((o) => o.length >= 1);
+  const hasDuplicates = new Set(trimmed.map((o) => o.toLowerCase())).size !== trimmed.length;
+
   function submit() {
     startTransition(() => {
       createPoll(tripId, question, options)
         .then(() => {
           toast.success("Poll posted to the crew");
-          setQuestion("");
-          setOptions(["", ""]);
-          onClose();
+          // QA BUG-10: flushSync commits the close + reset BEFORE the
+          // revalidatePath Suspense refresh repaints (B13a pattern).
+          flushSync(() => {
+            setQuestion("");
+            setOptions(["", ""]);
+            onClose();
+          });
         })
         .catch((e) => toast.error(e?.message ?? "Couldn't create the poll"));
     });
@@ -627,12 +647,20 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
   return (
     <BottomSheet open={open} onClose={onClose} title="Ask the crew" size="sm">
       <div className="flex flex-col gap-3 pb-2">
-        <input
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Beach day or city day?"
-          className="h-12 rounded-2xl border border-border bg-background px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-        />
+        <div>
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value.slice(0, 200))}
+            maxLength={200}
+            placeholder="Beach day or city day?"
+            className="w-full h-12 rounded-2xl border border-border bg-background px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          />
+          {/* QA BUG-14: live counter — cap at 200 so a pasted wall of text
+              can't spam the deck. */}
+          <p className={`mt-1 text-end text-[11px] tabular-nums ${question.length >= 200 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+            {question.length}/200
+          </p>
+        </div>
         {options.map((o, i) => (
           <input
             key={i}
@@ -647,10 +675,13 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
             + Add option
           </button>
         )}
+        {hasDuplicates && (
+          <p className="text-[12px] font-semibold text-destructive px-1">Options must be different from each other.</p>
+        )}
         <button
           type="button"
           onClick={submit}
-          disabled={pending || !question.trim() || options.filter((o) => o.trim()).length < 2}
+          disabled={pending || !question.trim() || trimmed.length < 2 || hasDuplicates}
           className="h-12 rounded-2xl bg-primary text-white font-bold text-[15px] disabled:opacity-50"
         >
           Post to the crew

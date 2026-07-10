@@ -24,6 +24,7 @@ const REPLY_TO = process.env.RESEND_REPLY_TO ?? undefined;
 
 export type EmailKind =
   | "welcome"
+  | "trip_invite"
   | "invite_accepted"
   | "vote_opened"
   | "vote_resolved"

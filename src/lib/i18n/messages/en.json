@@ -397,6 +397,7 @@
     "sharedSplitEqually": "Shared · split equally",
     "personalJustYou": "Personal · just you",
     "date": "Date",
+    "dateRequired": "Pick a date for this expense",
     "notes": "Notes",
     "notesOptional": "optional",
     "receipt": "Receipt",

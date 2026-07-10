@@ -208,7 +208,17 @@ export function MapboxPlanMap({
       }
     });
 
-    map.on("load", () => setReady(true));
+    // QA BUG-5: gate EVERY addSource/addLayer on style.load, not load.
+    // "load" waits for tiles and can fire around an in-flight setStyle
+    // (theme resolution swaps the basemap right after mount) — layers added
+    // in that window throw "Style is not done loading" and the whole
+    // marker/line sync dies, leaving a blank basemap. style.load fires for
+    // the initial style AND every setStyle, and bumping routeVersion here
+    // re-runs the sync effect after each one.
+    map.on("style.load", () => {
+      setReady(true);
+      setRouteVersion((v) => v + 1);
+    });
     map.on("error", (e) => {
       // Mapbox emits an error event for token issues, tile failures, etc.
       // Surface it so we stop guessing why the canvas is blank.
@@ -251,7 +261,7 @@ export function MapboxPlanMap({
     if (!map || !token || appliedStyleRef.current === mapStyle) return;
     appliedStyleRef.current = mapStyle;
     map.setStyle(`https://api.mapbox.com/styles/v1/mapbox/${mapStyle}?access_token=${token}`);
-    map.once("style.load", () => setRouteVersion((v) => v + 1));
+    // Redraw is triggered by the persistent style.load handler (QA BUG-5).
   }, [mapStyle]);
 
   // ── Center on destination once we know it ─────────────────────────
@@ -371,22 +381,34 @@ export function MapboxPlanMap({
 
     const collection = { type: "FeatureCollection" as const, features };
 
+    // QA BUG-5: layer surgery only on a fully-loaded style; if a setStyle is
+    // in flight, defer to the next style.load (routeVersion bump re-runs this
+    // effect) and never let a layer throw kill the DOM markers below.
     const SRC = "plan-day-lines";
     const LAYER = "plan-day-lines-layer";
-    if (map.getLayer(LAYER)) map.removeLayer(LAYER);
-    if (map.getSource(SRC)) map.removeSource(SRC);
-    map.addSource(SRC, { type: "geojson", data: collection });
-    map.addLayer({
-      id: LAYER,
-      type: "line",
-      source: SRC,
-      layout: { "line-join": "round", "line-cap": "round" },
-      paint: {
-        "line-color": ["get", "color"],
-        "line-width": ["case", ["get", "focused"], 4, 2],
-        "line-opacity": ["case", ["get", "focused"], 1.0, 0.3],
-      },
-    });
+    if (map.isStyleLoaded()) {
+      try {
+        if (map.getLayer(LAYER)) map.removeLayer(LAYER);
+        if (map.getSource(SRC)) map.removeSource(SRC);
+        map.addSource(SRC, { type: "geojson", data: collection });
+        map.addLayer({
+          id: LAYER,
+          type: "line",
+          source: SRC,
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": ["case", ["get", "focused"], 4, 2],
+            "line-opacity": ["case", ["get", "focused"], 1.0, 0.3],
+          },
+        });
+      } catch (err) {
+        console.warn("[mapbox] route layer deferred:", err);
+        map.once("style.load", () => setRouteVersion((v) => v + 1));
+      }
+    } else {
+      map.once("style.load", () => setRouteVersion((v) => v + 1));
+    }
 
     // ── Markers ───────────────────────────────────────────────────
     for (const [day, dayItems] of byDay) {

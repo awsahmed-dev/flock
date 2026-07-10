@@ -94,6 +94,8 @@ export const trips = pgTable("trips", {
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   budgetTotal: real("budget_total"),
+  /** QA BUG-11: 'flat' = the number IS the trip budget; 'per_person' = multiply by crew size. */
+  budgetType: text("budget_type").notNull().default("flat"),
   currency: text("currency").default("USD").notNull(),
   coverImage: text("cover_image"),
   // B19: Unsplash hero image cached at trip-view time. credit fields
@@ -140,6 +142,8 @@ export const tripInvites = pgTable("trip_invites", {
     .notNull()
     .references(() => trips.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
+  /** QA BUG-2: wizard "Who is coming?" emails persist as targeted invites. */
+  invitedEmail: text("invited_email"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => profiles.id),
