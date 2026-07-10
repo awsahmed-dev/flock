@@ -59,6 +59,9 @@ interface Props {
   /** B11: live FX rates so the dialog can show "≈ EUR 12" under the
    *  amount while the user types in a non-base currency. */
   fxRates?: RateBundle | null;
+  /** Sprint 3 FIX-3/4: the crew, for the payer picker + custom splits. */
+  members?: { userId: string; displayName: string; avatarUrl?: string | null }[];
+  currentUserId?: string;
 }
 
 export function AddExpenseDialog({
@@ -70,6 +73,8 @@ export function AddExpenseDialog({
   personalSpent,
   memberCount,
   fxRates = null,
+  members = [],
+  currentUserId = "",
 }: Props) {
   const currencyOptions = Array.from(
     new Set([baseCurrency, ...COMMON_CURRENCIES]),
@@ -91,6 +96,12 @@ export function AddExpenseDialog({
   // B2 Budget v2 — Shared splits across the crew; Personal is your own
   // pocket money (no splits, just counts toward your personal budget).
   const [scope, setScope] = useState<"shared" | "personal">("shared");
+  // Sprint 3 FIX-3: "someone else paid" — defaults to you.
+  const [paidBy, setPaidBy] = useState(currentUserId);
+  const [payerOpen, setPayerOpen] = useState(false);
+  // Sprint 3 FIX-4: equal | custom (custom = per-member amounts).
+  const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal");
+  const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
   // Local mirror of the amount input so the live-projection pill can
   // recompute on every keystroke without dragging in a controlled form.
   const [amountInput, setAmountInput] = useState("");
@@ -144,13 +155,46 @@ export function AddExpenseDialog({
     }
   }
 
+  const payer = members.find((m) => m.userId === (paidBy || currentUserId));
+  const parsedAmount = parseFloat(normalizeDigits(amountInput).replace(/,/g, "")) || 0;
+  const equalShare = memberCount > 0 ? parsedAmount / memberCount : 0;
+  // Sprint 3 FIX-4: allocation math for the custom editor.
+  const allocated = members.reduce(
+    (sum, m) => sum + (parseFloat(normalizeDigits(customAmounts[m.userId] ?? "")) || 0),
+    0,
+  );
+  const allocationOk = scope !== "shared" || splitMode !== "custom" || Math.abs(allocated - parsedAmount) < 0.01;
+
+  function resetCustomToEqual() {
+    const share = memberCount > 0 ? (parsedAmount / memberCount).toFixed(2) : "0";
+    setCustomAmounts(Object.fromEntries(members.map((m) => [m.userId, share])));
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!allocationOk) {
+      toast.error(t("expenses.allocationMismatch"));
+      return;
+    }
     const formData = new FormData(e.currentTarget);
     // Normalize Eastern Arabic / Persian numerals (٠١٢٣ / ۰۱۲۳) to ASCII so
     // type=number coercion on the server works regardless of locale.
     const rawAmount = (formData.get("amount") as string | null) ?? "";
     formData.set("amount", normalizeDigits(rawAmount));
+    // Sprint 3 FIX-3/4: payer + split payload.
+    formData.set("paidBy", paidBy || currentUserId);
+    formData.set("splitType", scope === "shared" ? splitMode : "equal");
+    if (scope === "shared" && splitMode === "custom") {
+      formData.set(
+        "customSplits",
+        JSON.stringify(
+          members.map((m) => ({
+            userId: m.userId,
+            amount: parseFloat(normalizeDigits(customAmounts[m.userId] ?? "")) || 0,
+          })),
+        ),
+      );
+    }
     startTransition(async () => {
       try {
         await createExpense(formData);
@@ -169,6 +213,12 @@ export function AddExpenseDialog({
           setOpen(false);
         });
         (e.target as HTMLFormElement).reset();
+        // Fresh defaults for the next open.
+        setPaidBy(currentUserId);
+        setSplitMode("equal");
+        setCustomAmounts({});
+        setAmountInput("");
+        setDescription("");
       } catch (err) {
         toast.error((err as Error).message || "Failed to log expense");
       }
@@ -211,7 +261,7 @@ export function AddExpenseDialog({
             <Button
               type="button"
               className="flex-1"
-              disabled={isPending}
+              disabled={isPending || !allocationOk}
               onClick={() => formRef.current?.requestSubmit()}
             >
               {isPending ? t("expenses.loggingToast") : t("expenses.logExpense")}
@@ -221,7 +271,6 @@ export function AddExpenseDialog({
       >
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
           <input type="hidden" name="tripId" value={tripId} />
-          <input type="hidden" name="splitType" value="equal" />
           <input type="hidden" name="scope" value={scope} />
           {/* Smart-category submission — the dropdown can override, otherwise
               this carries the inferred value. */}
@@ -307,32 +356,120 @@ export function AddExpenseDialog({
             personalSpent={personalSpent}
           />
 
-          {/* B4: scope as a two-button row, full width — easier to thumb
-              on mobile than the floating pill. Caption sits below. */}
-          <div className="grid grid-cols-2 gap-1.5">
+          {/* Sprint 3 FIX-3: PAID BY — someone else can be the payer. */}
+          {members.length > 1 && (
+            <div className="rounded-2xl border border-border bg-background">
+              <button
+                type="button"
+                onClick={() => setPayerOpen((v) => !v)}
+                aria-expanded={payerOpen}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-start"
+              >
+                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.paidBy")}</span>
+                <span className="flex-1 inline-flex items-center gap-1.5 justify-end text-sm font-bold">
+                  <PayerAvatar name={payer?.displayName ?? "You"} avatarUrl={payer?.avatarUrl ?? null} />
+                  {payer?.userId === currentUserId || !payer ? t("expenses.you") : payer.displayName}
+                  <span aria-hidden className="text-muted-foreground">▾</span>
+                </span>
+              </button>
+              {payerOpen && (
+                <div className="border-t border-border p-2 flex flex-wrap gap-1.5">
+                  {members.map((m) => {
+                    const active = m.userId === (paidBy || currentUserId);
+                    return (
+                      <button
+                        key={m.userId}
+                        type="button"
+                        onClick={() => { setPaidBy(m.userId); setPayerOpen(false); }}
+                        aria-pressed={active}
+                        className={`inline-flex items-center gap-1.5 rounded-full ps-1 pe-3 py-1 text-xs font-bold transition-all ${
+                          active
+                            ? "bg-primary/10 border border-primary/30 text-primary"
+                            : "border border-border bg-card text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <PayerAvatar name={m.displayName} avatarUrl={m.avatarUrl ?? null} />
+                        {m.userId === currentUserId ? t("expenses.you") : m.displayName.split(" ")[0]}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sprint 3 FIX-4: three-way split — Equal / Custom / Just me. */}
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
-              onClick={() => setScope("shared")}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
-                scope === "shared"
+              onClick={() => { setScope("shared"); setSplitMode("equal"); }}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold transition-all ${
+                scope === "shared" && splitMode === "equal"
                   ? "bg-primary/10 border border-primary/30 text-primary"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Users className="w-3.5 h-3.5" /> {t("expenses.sharedSplitEqually")}
+              <Users className="w-3.5 h-3.5" /> {t("expenses.splitEqual")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setScope("shared");
+                setSplitMode("custom");
+                if (Object.keys(customAmounts).length === 0) resetCustomToEqual();
+              }}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold transition-all ${
+                scope === "shared" && splitMode === "custom"
+                  ? "bg-primary/10 border border-primary/30 text-primary"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <SlidersIcon /> {t("expenses.splitCustom")}
             </button>
             <button
               type="button"
               onClick={() => setScope("personal")}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold transition-all ${
                 scope === "personal"
                   ? "bg-primary/10 border border-primary/30 text-primary"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <User className="w-3.5 h-3.5" /> {t("expenses.personalJustYou")}
+              <User className="w-3.5 h-3.5" /> {t("expenses.justMe")}
             </button>
           </div>
+
+          {/* Sprint 3 FIX-4: per-member amount editor with a running total. */}
+          {scope === "shared" && splitMode === "custom" && (
+            <div className="rounded-2xl border border-border bg-background p-3 space-y-2">
+              {members.map((m) => (
+                <div key={m.userId} className="flex items-center gap-2.5">
+                  <PayerAvatar name={m.displayName} avatarUrl={m.avatarUrl ?? null} />
+                  <span className="flex-1 min-w-0 text-sm font-medium truncate">
+                    {m.userId === currentUserId ? t("expenses.you") : m.displayName.split(" ")[0]}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={customAmounts[m.userId] ?? ""}
+                    onChange={(e) =>
+                      setCustomAmounts((prev) => ({ ...prev, [m.userId]: e.target.value.replace(/[^0-9٠-٩۰-۹.,]/g, "") }))
+                    }
+                    aria-label={m.displayName}
+                    className="w-24 h-9 rounded-lg border border-border bg-card px-2 text-sm font-bold tabular-nums text-end focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                <button type="button" onClick={resetCustomToEqual} className="text-[12px] font-bold text-primary">
+                  {t("expenses.resetEqual")}
+                </button>
+                <span className={`text-[12px] font-bold tabular-nums ${allocationOk ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                  {t("expenses.allocated", { allocated: fmtAmount(allocated), total: fmtAmount(parsedAmount) })}
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
@@ -692,5 +829,26 @@ function LiveFxHint({
       ≈ {baseCurrency} {fmtAmount(converted)}{" "}
       <span className="opacity-60">· live FX</span>
     </p>
+  );
+}
+
+/** Sprint 3 FIX-3/4: tiny avatar chip for the payer picker + split editor. */
+function PayerAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+  return avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+  ) : (
+    <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center shrink-0 uppercase">
+      {name.charAt(0)}
+    </span>
+  );
+}
+
+function SlidersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <line x1="4" y1="8" x2="20" y2="8" /><circle cx="9" cy="8" r="2" fill="currentColor" stroke="none" />
+      <line x1="4" y1="16" x2="20" y2="16" /><circle cx="15" cy="16" r="2" fill="currentColor" stroke="none" />
+    </svg>
   );
 }

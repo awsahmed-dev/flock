@@ -139,6 +139,9 @@ export function PlaceDetailPanel({
           t("discover.addedToast", { name: place.name, day: t("itinerary.dayN", { n: days.indexOf(day) + 1 }) }),
           {
             duration: 5000,
+            // Sprint 3 FIX-2: bottom-center toasts sat exactly on the detail
+            // sheet's day chips; the undo toast rides on top instead.
+            position: "top-center",
             action: {
               label: t("common.undo"),
               onClick: () => {

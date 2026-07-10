@@ -429,7 +429,15 @@
     "noBalancesYet": "لا أرصدة بعد",
     "noBalancesSub": "سجّل المصروفات المشتركة لرؤية من يدين لمن.",
     "netPerPerson": "صافي كل شخص",
-    "settleUp": "سدّدوا الحسابات"
+    "settleUp": "سدّدوا الحسابات",
+    "paidBy": "دفعها",
+    "you": "أنت",
+    "splitEqual": "بالتساوي",
+    "splitCustom": "مخصص",
+    "justMe": "أنا فقط",
+    "resetEqual": "قسّم بالتساوي",
+    "allocated": "{allocated} من {total} موزّعة",
+    "allocationMismatch": "التقسيم المخصص لا يساوي المجموع"
   },
   "itinerary": {
     "add": "إضافة",

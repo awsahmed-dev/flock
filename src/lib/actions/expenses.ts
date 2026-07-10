@@ -53,6 +53,20 @@ export async function createExpense(formData: FormData) {
     throw new Error("Missing required fields");
   }
 
+  // Sprint 3 FIX-4: custom per-member splits — [{ userId, amount }].
+  let customSplits: { userId: string; amount: number }[] | null = null;
+  if (splitType === "custom") {
+    try {
+      const raw = JSON.parse((formData.get("customSplits") as string) ?? "[]") as
+        { userId: string; amount: number }[];
+      customSplits = raw
+        .map((r) => ({ userId: String(r.userId), amount: Number(r.amount) }))
+        .filter((r) => Number.isFinite(r.amount) && r.amount >= 0);
+    } catch {
+      throw new Error("Invalid custom split");
+    }
+  }
+
   // Currency picker is optional — fall back to trip.currency. We trust the
   // input only if it's a 3-letter alpha code (ISO 4217 format); anything
   // else silently falls back to the trip base.
@@ -70,6 +84,28 @@ export async function createExpense(formData: FormData) {
   const receiptUrlRaw = (formData.get("receiptUrl") as string | null)?.trim();
   const receiptUrl = receiptUrlRaw && /^https?:\/\//.test(receiptUrlRaw) ? receiptUrlRaw : null;
 
+  // Sprint 3 FIX-3: "someone else paid" — the payer can be any trip member.
+  // Validate against the member list; anything else falls back to the logger.
+  const allMembers = await db
+    .select()
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, tripId));
+  const requestedPayer = (formData.get("paidBy") as string | null)?.trim();
+  const payerId =
+    requestedPayer && allMembers.some((m) => m.userId === requestedPayer)
+      ? requestedPayer
+      : user.id;
+
+  // Custom splits must cover the whole amount and only name real members.
+  if (customSplits) {
+    const memberIds = new Set(allMembers.map((m) => m.userId));
+    customSplits = customSplits.filter((r) => memberIds.has(r.userId));
+    const allocated = customSplits.reduce((sum, r) => sum + r.amount, 0);
+    if (Math.abs(allocated - amount) > 0.05) {
+      throw new Error("Custom split doesn't add up to the total");
+    }
+  }
+
   const [expense] = await db
     .insert(expenses)
     .values({
@@ -77,7 +113,7 @@ export async function createExpense(formData: FormData) {
       title,
       amount,
       currency,
-      paidBy: user.id,
+      paidBy: payerId,
       category: category as any,
       scope,
       expenseDate,
@@ -86,11 +122,7 @@ export async function createExpense(formData: FormData) {
     })
     .returning();
 
-  // Get all trip members for splitting (only relevant for shared expenses)
-  const members = await db
-    .select()
-    .from(tripMembers)
-    .where(eq(tripMembers.tripId, tripId));
+  const members = allMembers;
 
   if (scope === "shared" && splitType === "equal" && members.length > 0) {
     const perPerson = amount / members.length;
@@ -99,11 +131,24 @@ export async function createExpense(formData: FormData) {
         expenseId: expense.id,
         userId: m.userId,
         amountOwed: perPerson,
-        settled: m.userId === user.id, // Payer is pre-settled
+        settled: m.userId === payerId, // Payer is pre-settled (Sprint 3 FIX-3)
       }))
     );
+  } else if (scope === "shared" && customSplits && customSplits.length > 0) {
+    // Sprint 3 FIX-4: per-member amounts as entered. Zero-amount members get
+    // no row (they owe nothing); the payer's own share is pre-settled.
+    const rows = customSplits.filter((r) => r.amount > 0);
+    if (rows.length > 0) {
+      await db.insert(expenseSplits).values(
+        rows.map((r) => ({
+          expenseId: expense.id,
+          userId: r.userId,
+          amountOwed: r.amount,
+          settled: r.userId === payerId,
+        }))
+      );
+    }
   }
-  // Custom splits are handled separately via updateExpenseSplits.
   // Personal expenses: no splits, no balance shifts — just the payer.
 
   // Auto-post the expense to chat (mirrors mobile app)
@@ -115,7 +160,7 @@ export async function createExpense(formData: FormData) {
     metadata: {
       expenseId: expense.id,
       amount, currency, category, title,
-      paidBy: user.id, splitCount: members.length,
+      paidBy: payerId, splitCount: members.length,
     },
   }).catch(() => {});
 
@@ -126,15 +171,17 @@ export async function createExpense(formData: FormData) {
   // recipient so retried inserts (we use no-op upsert above) only ever
   // dispatch one email per (expense, recipient) within Resend's 24h window.
   const payerDisplayName =
-    (user as any).user_metadata?.display_name ||
-    (user as any).email?.split("@")[0] ||
-    "Someone";
+    payerId !== user.id
+      ? members.find((m) => m.userId === payerId)?.displayName || "Someone"
+      : (user as any).user_metadata?.display_name ||
+        (user as any).email?.split("@")[0] ||
+        "Someone";
 
   notifyExpenseLogged({
     tripId,
     tripName: trip.name,
     expenseId: expense.id,
-    payerId: user.id,
+    payerId: payerId,
     payerName: payerDisplayName,
     title,
     amount,

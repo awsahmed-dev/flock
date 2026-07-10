@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, AnimatePresence, type PanInfo } from "motion/react";
+import { motion, type PanInfo } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,15 +68,22 @@ export function BottomSheet({
     if (info.offset.y > 100 || info.velocity.y > 500) onClose();
   }
 
+  // Sprint 3 FIX-1 (BUG-10, survived two QA rounds): close = INSTANT unmount.
+  // The old AnimatePresence exit kept the sheet mounted until its slide-down
+  // animation completed — but exit animations run on requestAnimationFrame,
+  // which browsers pause for hidden/backgrounded windows and throttle on
+  // busy mobile pages. Result: `setOpen(false)` committed, yet the sheet
+  // stayed visible AND interactive indefinitely — a second tap on the
+  // still-rendered Submit created the duplicate polls/expenses QA logged.
+  // Entrance animation stays; correctness no longer depends on exit frames.
   return (
-    <AnimatePresence>
+    <>
       {open && (
         <>
           {/* Scrim */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             onClick={onClose}
             className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-[2px]"
@@ -85,7 +92,6 @@ export function BottomSheet({
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 32, stiffness: 320 }}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
@@ -141,6 +147,6 @@ export function BottomSheet({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }

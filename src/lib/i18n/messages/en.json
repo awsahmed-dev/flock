@@ -429,7 +429,15 @@
     "noBalancesYet": "Nothing to balance yet",
     "noBalancesSub": "Log shared expenses to see who owes who.",
     "netPerPerson": "Net per person",
-    "settleUp": "Settle up"
+    "settleUp": "Settle up",
+    "paidBy": "Paid by",
+    "you": "You",
+    "splitEqual": "Equal",
+    "splitCustom": "Custom",
+    "justMe": "Just me",
+    "resetEqual": "Split equally",
+    "allocated": "{allocated} of {total} allocated",
+    "allocationMismatch": "Custom split doesn't add up to the total"
   },
   "itinerary": {
     "add": "Add",
