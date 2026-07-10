@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { itineraryItems, bookings } from "@/lib/db/schema";
+import { itineraryItems, documents } from "@/lib/db/schema";
 import { eq, asc, inArray } from "drizzle-orm";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO } from "date-fns";
@@ -93,28 +93,25 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
   // Phase 6 §6-B: booking meta for anchor rows (PDF chip, confirmation #,
   // multi-night repetition).
   const anchorIds = items.filter((i) => i.stopType !== "regular").map((i) => i.id);
-  const bookingRows = anchorIds.length
-    ? await db.select().from(bookings).where(inArray(bookings.stopId, anchorIds))
-    : [];
-  const bookingsByStop = Object.fromEntries(
-    bookingRows
-      .filter((b) => b.stopId)
-      .map((b) => [
-        b.stopId as string,
-        {
-          bookingType: b.bookingType,
-          confirmationNumber: b.confirmationNumber,
-          pdfUrl: b.pdfUrl,
-          nights: b.nights,
-        },
-      ]),
-  );
+
+  // Sprint 5 §3c: day-pinned documents render under each day's stops.
+  const dayDocs = await db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      type: documents.type,
+      url: documents.url,
+      dayDate: documents.dayDate,
+    })
+    .from(documents)
+    .where(eq(documents.tripId, id));
 
   return (
     <ItineraryBoard
       tripId={id}
       days={days}
       items={serializedItems as any}
+      documents={dayDocs.filter((d) => d.dayDate != null)}
       currency={trip.currency}
       destination={trip.destination}
       destinationCenter={destinationCenter}
@@ -123,7 +120,6 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       isOwner={checkOwner(trip, user.id)}
       crewSize={trip.members.length}
       initialDay={initialDay ?? null}
-      bookingsByStop={bookingsByStop}
     />
   );
 }

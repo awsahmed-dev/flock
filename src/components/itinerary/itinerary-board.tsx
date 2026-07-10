@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { AddPlaceSearch } from "./add-place-search";
 import { EditItemDialog } from "./edit-item-dialog";
+import { DocumentCard } from "@/components/documents/document-card";
 import { PlanDaySheet } from "./plan-day-sheet";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
@@ -53,8 +54,11 @@ interface Props {
   crewSize?: number;
   /** §5: deep-link from the pre-start day circles (?day=<ISO>) focuses that day. */
   initialDay?: string | null;
-  /** Phase 6 §6-B: booking meta keyed by anchor stop id. */
+  /** Phase 6 §6-B: booking meta keyed by anchor stop id. Sprint 5: legacy —
+   *  anchors are retired; kept optional so old callers type-check. */
   bookingsByStop?: Record<string, { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null }>;
+  /** Sprint 5 §3c: day-pinned documents render under each day's stops. */
+  documents?: { id: string; title: string; type: string | null; url: string; dayDate: string | null }[];
 }
 
 const DAY_PALETTE = [
@@ -107,6 +111,7 @@ export function ItineraryBoard({
   crewSize = 1,
   initialDay = null,
   bookingsByStop = {},
+  documents = [],
 }: Props) {
   const t = useT();
   const { locale } = useLocale();
@@ -153,38 +158,11 @@ export function ItineraryBoard({
   );
 
   function getItemsForDay(day: string) {
-    // §6-B: booking anchors ALWAYS pin to the top of their day, sorted by
-    // time; regular stops keep their manual sort order below them.
-    // Multi-night stays repeat as read-only rows on each covered day
-    // ("Night N of N"); only the check-in day carries the time.
-    const nightRepeats = items.flatMap((i) => {
-      const meta = bookingsByStop[i.id];
-      if ((i.stopType ?? "regular") !== "booking_stay" || !meta?.nights || meta.nights < 2) return [];
-      const out: typeof items = [];
-      for (let n = 1; n < meta.nights; n++) {
-        const d = new Date(`${i.dayDate}T00:00:00`);
-        d.setDate(d.getDate() + n);
-        const iso = d.toISOString().slice(0, 10);
-        if (iso !== day) continue;
-        out.push({
-          ...i,
-          id: `${i.id}#night${n + 1}`,
-          dayDate: iso,
-          startTime: null,
-          notes: `Night ${n + 1} of ${meta.nights}`,
-        });
-      }
-      return out;
-    });
-    return [...items, ...nightRepeats]
+    // Sprint 5: booking anchors retired — every stop is a regular stop in
+    // manual sort order. (Legacy stop_type values render as regular rows.)
+    return items
       .filter((i) => i.dayDate === day)
-      .sort((a, b) => {
-        const aa = (a.stopType ?? "regular") !== "regular" ? 0 : 1;
-        const bb = (b.stopType ?? "regular") !== "regular" ? 0 : 1;
-        if (aa !== bb) return aa - bb;
-        if (aa === 0) return (a.startTime ?? "99").localeCompare(b.startTime ?? "99");
-        return a.sortOrder - b.sortOrder;
-      });
+      .sort((a, b) => a.sortOrder - b.sortOrder);
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -527,6 +505,18 @@ export function ItineraryBoard({
                     </ul>
                   </SortableContext>
 
+                  {/* Sprint 5 §3c: the day's pinned confirmations, right
+                      under its stops — see the plan AND the booking. */}
+                  {documents.filter((d) => d.dayDate === day).length > 0 && (
+                    <div className="ms-2 mt-2 space-y-1.5">
+                      {documents
+                        .filter((d) => d.dayDate === day)
+                        .map((d) => (
+                          <DocumentCard key={d.id} doc={d} dayLabel={null} />
+                        ))}
+                    </div>
+                  )}
+
                   {dayItems.length === 0 && (
                     <button
                       type="button"
@@ -837,6 +827,18 @@ export function ItineraryBoard({
                       </ul>
                     </SortableContext>
 
+                  {/* Sprint 5 §3c: the day's pinned confirmations, right
+                      under its stops — see the plan AND the booking. */}
+                  {documents.filter((d) => d.dayDate === day).length > 0 && (
+                    <div className="ms-2 mt-2 space-y-1.5">
+                      {documents
+                        .filter((d) => d.dayDate === day)
+                        .map((d) => (
+                          <DocumentCard key={d.id} doc={d} dayLabel={null} />
+                        ))}
+                    </div>
+                  )}
+
                     {dayItems.length === 0 && (
                       <button
                         type="button"
@@ -955,8 +957,9 @@ function SortableItemRow({
   onStatusCycle: () => void;
   bookingMeta?: { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null } | null;
 }) {
-  // §6-B: booking anchors are pinned, undeletable, unvotable, undraggable.
-  const isAnchor = ((item as { stopType?: string }).stopType ?? "regular") !== "regular";
+  // Sprint 5: booking anchors retired — legacy anchor rows behave like
+  // regular stops (draggable, deletable).
+  const isAnchor = false;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled: isAnchor });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const TypeCfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;

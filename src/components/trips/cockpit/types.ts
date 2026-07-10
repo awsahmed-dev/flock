@@ -48,7 +48,8 @@ export interface CockpitShared {
   readiness: number;
   ticker: { text: string; eventType: string } | null;
   teaser: TeaserPlace[];
-  anchors: CockpitAnchor[];
+  /** Sprint 5: documents replaced booking anchors on every cockpit. */
+  documents: { id: string; title: string; type: string | null; url: string; dayDate: string | null }[];
   /** Phase 7 §5: open Huddle decisions — drives the ONE primary action. */
   huddleOpen: number;
 }

@@ -130,7 +130,8 @@ export function NowCockpit({
   }, []);
 
   const isDone = (i: NowItem) => optimisticDone.get(i.id) ?? i.completedAt != null;
-  const isAnchor = (i: NowItem) => (i.stopType ?? "regular") !== "regular";
+  // Sprint 5: booking anchors retired — every stop is a regular stop.
+  const isAnchor = (_i: NowItem) => false;
 
   const dayItems = useMemo(
     () =>

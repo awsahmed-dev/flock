@@ -382,7 +382,6 @@ export function DynamicBottomNav({
             <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); setPackOpen(true); }} />
           )}
           <ActionRow icon={MapPin} label={t("nav.addPlace")} onClick={() => { setPlusOpen(false); setAddPlaceOpen(true); }} />
-          <ActionRow icon={PlaneTakeoff} label={t("nav.addBooking")} onClick={() => { setPlusOpen(false); dispatch("paxawa:addBooking"); }} />
           <ActionRow
             icon={Wallet}
             label={t("now.logExpense")}

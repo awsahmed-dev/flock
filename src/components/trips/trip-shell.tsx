@@ -25,7 +25,6 @@ import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
 import { eachDayOfInterval, format as isoFmt } from "date-fns";
 import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
-import { AddBookingSheet } from "@/components/bookings/add-booking-sheet";
 import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
 import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
@@ -244,9 +243,6 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
           currency={trip.currency}
           budgetTotal={trip.budgetTotal}
         />
-        {/* Phase 6 §6-C: Add-a-booking sheet — reachable from the [+] Add
-            sheet on every trip route via the paxawa:addBooking event. */}
-        <AddBookingSheet tripId={trip.id} days={navDays} />
       </div>
     </div>
   );

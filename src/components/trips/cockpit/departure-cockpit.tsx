@@ -2,11 +2,12 @@ import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { Plane, BedDouble, TrainFront, Luggage, Users, FileText } from "lucide-react";
+import { Luggage, Users } from "lucide-react";
 import { TripPrepChecklist } from "@/components/trips/trip-prep-checklist";
 import { MetricGrid } from "./metric-grid";
 import { CrewPulse } from "./crew-pulse";
-import type { CockpitShared, CockpitAnchor } from "./types";
+import type { CockpitShared } from "./types";
+import { docKindIcon } from "@/lib/document-kind";
 
 /**
  * Phase 6 §3-D — NOW in DEPARTURE phase (start − 7d → start). Slim hero
@@ -46,21 +47,14 @@ export async function DepartureCockpit(props: CockpitShared) {
     }
   }
 
-  // Day 0/1 anchors for the board.
+  // Sprint 5: booking anchors are gone — the board shows the documents
+  // pinned to departure day / day 2 (boarding passes, hotel confirmations).
   const day1 = days[0];
-  const boardAnchors = props.anchors.filter((a) => a.dayDate === day1 || a.dayDate === days[1]);
-  const flights = boardAnchors.filter((a) => a.stopType === "booking_flight");
-  const stays = boardAnchors.filter((a) => a.stopType === "booking_stay");
+  const boardDocs = props.documents.filter((d) => d.dayDate === day1 || d.dayDate === days[1]);
 
   const day1Stops = items
     .filter((i) => i.dayDate === day1)
-    .sort((a, b) => {
-      // Anchors on top, then by time (§6-B pinned behavior).
-      const aAnchor = a.stopType !== "regular" ? 0 : 1;
-      const bAnchor = b.stopType !== "regular" ? 0 : 1;
-      if (aAnchor !== bAnchor) return aAnchor - bAnchor;
-      return (a.startTime ?? "99").localeCompare(b.startTime ?? "99");
-    });
+    .sort((a, b) => (a.startTime ?? "99").localeCompare(b.startTime ?? "99"));
 
   const packLeft = packing.total - packing.packed;
   const packUrgent = packing.total > 0 && packing.packed / packing.total < 0.5 && daysUntil <= 1;
@@ -113,20 +107,23 @@ export async function DepartureCockpit(props: CockpitShared) {
             </BoardRow>
           )}
 
-          {flights.length > 0 || stays.length > 0 ? (
-            <>
-              {flights.map((a) => (
-                <AnchorRow key={a.id} anchor={a} icon={Plane} />
-              ))}
-              {stays.map((a) => (
-                <AnchorRow key={a.id} anchor={a} icon={BedDouble} />
-              ))}
-            </>
+          {boardDocs.length > 0 ? (
+            boardDocs.map((d) => (
+              <BoardRow key={d.id}>
+                <a href={d.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between w-full">
+                  <span className="truncate">
+                    <span aria-hidden className="me-1.5">{docKindIcon(d.type)}</span>
+                    {d.title}
+                  </span>
+                  <span className="text-primary font-bold shrink-0 ms-2">Open ↗</span>
+                </a>
+              </BoardRow>
+            ))
           ) : (
             <BoardRow>
               <span className="flex items-center justify-between w-full">
-                <span className="text-muted-foreground">✈️ Add flights &amp; hotels for the board</span>
-                <Link href={`${base}/itinerary`} className="text-primary font-bold">
+                <span className="text-muted-foreground">🎫 Add your confirmations for the board</span>
+                <Link href={`${base}/pack?view=docs`} className="text-primary font-bold">
                   [+]
                 </Link>
               </span>
@@ -221,30 +218,6 @@ function BoardRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AnchorRow({ anchor, icon: Icon }: { anchor: CockpitAnchor; icon: typeof Plane }) {
-  return (
-    <div className="flex items-center gap-2 min-h-11 px-4 py-2 border-t border-border/60 text-[14px]">
-      <Icon size={16} className="text-primary shrink-0" />
-      <span className="flex-1 min-w-0 truncate font-semibold">
-        {anchor.title}
-        {anchor.startTime && <span className="text-muted-foreground font-normal"> · {anchor.startTime.slice(0, 5)}</span>}
-      </span>
-      {anchor.confirmationNumber && (
-        <span className="text-[12px] text-muted-foreground tabular-nums">#{anchor.confirmationNumber}</span>
-      )}
-      {anchor.pdfUrl && (
-        <a
-          href={anchor.pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-0.5 text-[11px] font-bold text-foreground"
-        >
-          <FileText size={12} /> PDF
-        </a>
-      )}
-    </div>
-  );
-}
 
 /** WMO weather code → short human description (open-meteo codes). */
 function wmoDescription(code: number): string {
@@ -259,6 +232,3 @@ function wmoDescription(code: number): string {
   return "thunderstorms";
 }
 
-// TrainFront is used for booking_other anchors elsewhere; keep the import
-// referenced so the icon set stays consistent when other-type anchors land.
-void TrainFront;

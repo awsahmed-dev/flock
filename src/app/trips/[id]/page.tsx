@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import {
-  itineraryItems, expenses, packingItems, bookings as bookingsTable,
+  itineraryItems, expenses, packingItems,
   placeLikes, cachedPlaces, activities, expenseSplits, settlements,
   huddleDecisions, documents,
 } from "@/lib/db/schema";
@@ -115,27 +115,19 @@ export default async function TripPage({ params }: Props) {
     .where(eq(packingItems.tripId, id));
   const packing = { packed: packRows.filter((p) => p.packed).length, total: packRows.length };
 
-  // Booking anchors for the Departure Board + LIVE travel-day mode.
-  const anchorIds = rows.filter((r) => r.stopType !== "regular").map((r) => r.id);
-  const bookingRows = anchorIds.length
-    ? await db.select().from(bookingsTable).where(inArray(bookingsTable.stopId, anchorIds))
-    : [];
-  const anchors = rows
-    .filter((r) => r.stopType !== "regular")
-    .map((r) => {
-      const b = bookingRows.find((x) => x.stopId === r.id);
-      return {
-        id: r.id,
-        dayDate: r.dayDate,
-        title: r.title,
-        stopType: r.stopType,
-        startTime: r.startTime,
-        confirmationNumber: b?.confirmationNumber ?? null,
-        providerName: b?.providerName ?? null,
-        pdfUrl: b?.pdfUrl ?? null,
-        nights: b?.nights ?? null,
-      };
-    });
+  // Sprint 5: booking anchors are gone from the UI. Documents own the
+  // "I have a confirmation" job — fetched once here for readiness, the
+  // PLANNING strip, the DEPARTURE board, and the LIVE day view.
+  const tripDocs = await db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      type: documents.type,
+      url: documents.url,
+      dayDate: documents.dayDate,
+    })
+    .from(documents)
+    .where(eq(documents.tripId, id));
 
   // Crew-hearted places (Discover teaser / free-day ideas): place_likes joined
   // with the cached place snapshot for name + photo.
@@ -178,14 +170,16 @@ export default async function TripPage({ params }: Props) {
       }
     : null;
 
-  // §6.5 readiness: locked-days 40% · budget 10% · packing 20% · crew 10% · bookings 20%.
+  // §6.5 readiness: locked-days 40% · budget 10% · packing 20% · crew 10% ·
+  // documents 20% (Sprint 5: docs replaced booking anchors as the
+  // "confirmations are in" signal).
   const daysWithLocked = new Set(rows.filter((r) => r.status === "confirmed").map((r) => r.dayDate)).size;
   const readiness = Math.round(
     (days.length ? (daysWithLocked / days.length) * 40 : 0) +
       (trip.budgetTotal != null && trip.budgetTotal > 0 ? 10 : 0) +
       (packing.total > 0 ? Math.min(1, packing.packed / Math.max(1, packing.total)) * 20 : 0) +
       (crew.length >= 2 ? 10 : 0) +
-      (anchors.length > 0 ? 20 : 0),
+      (tripDocs.length > 0 ? 20 : 0),
   );
 
   // Phase 7 §5: open decisions drive the ONE primary action card.
@@ -211,7 +205,7 @@ export default async function TripPage({ params }: Props) {
     readiness,
     ticker,
     teaser,
-    anchors,
+    documents: tripDocs,
     huddleOpen,
   };
 
@@ -285,21 +279,6 @@ export default async function TripPage({ params }: Props) {
     );
   }
 
-  // Sprint 4 FIX-5b: day-pinned documents surface on the day they're
-  // needed (boarding passes, bus tickets) instead of 4 taps deep in Pack.
-  const dayDocs = (
-    await db
-      .select({
-        id: documents.id,
-        title: documents.title,
-        type: documents.type,
-        url: documents.url,
-        dayDate: documents.dayDate,
-      })
-      .from(documents)
-      .where(eq(documents.tripId, id))
-  ).filter((d) => d.dayDate != null);
-
   // LIVE — the map cockpit.
   return (
     <>
@@ -325,8 +304,7 @@ export default async function TripPage({ params }: Props) {
       crew={crew}
       endDate={trip.endDate}
       teaser={teaser}
-      anchors={anchors}
-      documents={dayDocs}
+      documents={tripDocs.filter((d) => d.dayDate != null)}
     />
     </>
   );

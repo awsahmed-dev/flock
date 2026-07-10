@@ -9,6 +9,7 @@ import { createDocument } from "@/lib/actions/documents";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Plus, Upload, Link as LinkIcon, FileUp } from "lucide-react";
+import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/document-kind";
 
 interface Props {
   tripId: string;
@@ -46,6 +47,8 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
     }
   };
   const [mode, setMode] = useState<"upload" | "link">("upload");
+  // Sprint 5 §3a: what the document IS — the first thing every card shows.
+  const [kind, setKind] = useState<DocumentKind>("other");
   const [isPending, startTransition] = useTransition();
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -109,14 +112,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
         const url = urlData.publicUrl;
 
         const isImage = file.type.startsWith("image/");
-        const type = isImage ? "image" : "pdf";
 
         setUploadProgress("Saving…");
         const docFd = new FormData();
         docFd.set("tripId", tripId);
         docFd.set("title", title);
         docFd.set("url", url);
-        docFd.set("type", type);
+        // Sprint 5 §3a: type records the KIND, not the file format.
+        docFd.set("type", kind);
         if (dayDate) docFd.set("dayDate", dayDate);
         await createDocument(docFd);
 
@@ -242,6 +245,29 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
               />
             </div>
 
+            {/* Sprint 5 §3a: kind picker — scan your documents by icon. */}
+            <div className="space-y-1.5">
+              <Label>What is it?</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {DOCUMENT_KINDS.map((k) => (
+                  <button
+                    key={k.value}
+                    type="button"
+                    onClick={() => setKind(k.value)}
+                    aria-pressed={kind === k.value}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-all ${
+                      kind === k.value
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span aria-hidden>{k.icon}</span>
+                    {k.value.charAt(0).toUpperCase() + k.value.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="doc-day-up">Pin to day (optional)</Label>
               <Input id="doc-day-up" name="dayDate" type="date" />
@@ -268,7 +294,6 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
         ) : (
           <form onSubmit={handleLinkSubmit} className="space-y-4">
             <input type="hidden" name="tripId" value={tripId} />
-            <input type="hidden" name="type" value="link" />
 
             <div className="space-y-1.5">
               <Label htmlFor="doc-title">Title</Label>
@@ -300,10 +325,34 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
               />
             </div>
 
+            {/* Sprint 5 §3a: kind picker (link mode) — scan your documents by icon. */}
+            <div className="space-y-1.5">
+              <Label>What is it?</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {DOCUMENT_KINDS.map((k) => (
+                  <button
+                    key={k.value}
+                    type="button"
+                    onClick={() => setKind(k.value)}
+                    aria-pressed={kind === k.value}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-all ${
+                      kind === k.value
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span aria-hidden>{k.icon}</span>
+                    {k.value.charAt(0).toUpperCase() + k.value.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="doc-day">Pin to day (optional)</Label>
               <Input id="doc-day" name="dayDate" type="date" />
             </div>
+            <input type="hidden" name="type" value={kind} />
 
             <div className="flex gap-2 pt-1">
               <Button

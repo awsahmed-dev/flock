@@ -5,6 +5,7 @@ import { parseDateOnly } from "@/lib/date-only";
 import { Star, ChevronRight, Vote, MapPin, Users, Wallet, Package } from "lucide-react";
 import { ReadinessChecklist } from "./readiness-checklist";
 import { CrewPulse } from "./crew-pulse";
+import { docKindIcon } from "@/lib/document-kind";
 import { MetricGrid } from "./metric-grid";
 import { DayPillRail } from "./day-pill-rail";
 import type { CockpitShared } from "./types";
@@ -19,7 +20,7 @@ export function PlanningCockpit(props: CockpitShared) {
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl,
     currency, budgetTotal, days, items, crew, packing,
-    readiness, ticker, teaser, huddleOpen,
+    readiness, ticker, teaser, huddleOpen, documents,
   } = props;
   const base = `/trips/${tripId}`;
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
@@ -114,6 +115,40 @@ export function PlanningCockpit(props: CockpitShared) {
 
         {/* 5. THE CREW. */}
         <CrewPulse tripId={tripId} crew={crew} readiness={readiness} ticker={ticker} />
+
+        {/* Sprint 5 §3b: confirmations at a glance — more time-sensitive than
+            packing. Quiet prompt when empty; up to 3 chips + See all after. */}
+        {documents.length === 0 ? (
+          <Link
+            href={`${base}/pack?view=docs`}
+            className="text-[13px] text-muted-foreground px-1 -mt-1"
+          >
+            🎫 Add a confirmation — flight, hotel, visa →
+          </Link>
+        ) : (
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[15px] font-bold text-foreground">Documents</p>
+              <Link href={`${base}/pack?view=docs`} className="text-[13px] font-bold text-primary">
+                See all →
+              </Link>
+            </div>
+            <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4">
+              {documents.slice(0, 3).map((d) => (
+                <a
+                  key={d.id}
+                  href={d.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 max-w-[220px] inline-flex items-center gap-2 rounded-2xl bg-card border border-border px-3 h-11"
+                >
+                  <span aria-hidden className="text-base leading-none">{docKindIcon(d.type)}</span>
+                  <span className="text-[13px] font-semibold truncate">{d.title}</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* 6. DISCOVER TEASER — the crew's shortlist. */}
         {teaser.length > 0 && (

@@ -45,7 +45,9 @@ export const expenseCategoryEnum = pgEnum("expense_category", [
 // trip cap. "personal" = pocket spend by one member, no splits, counts
 // only toward that member's personal_budget.
 export const expenseScopeEnum = pgEnum("expense_scope", ["shared", "personal"]);
-export const documentTypeEnum = pgEnum("document_type", ["pdf", "link", "image"]);
+// Sprint 5 §3a: type = document KIND; pdf/link/image are legacy format
+// values kept for historical rows (display as "Other").
+export const documentTypeEnum = pgEnum("document_type", ["pdf", "link", "image", "flight", "hotel", "transport", "visa", "other"]);
 export const notificationTypeEnum = pgEnum("notification_type", [
   "vote_opened",
   "vote_resolved",
