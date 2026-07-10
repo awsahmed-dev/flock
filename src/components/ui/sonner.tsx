@@ -1,5 +1,6 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
@@ -7,8 +8,18 @@ import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
+  // Sprint 3 FIX-2 (BUG-15): sonner v2 cannot dismiss toasts in a hidden
+  // window — its timers pause on document.hidden AND its Toaster processes
+  // dismiss events inside requestAnimationFrame, which hidden windows never
+  // run (verified on prod: toast.dismiss() fired, data-removed stayed
+  // false). Keying the Toaster to the pathname remounts it on every route
+  // change: React unmounts the old toast DOM synchronously (no rAF), the
+  // fresh Toaster starts empty, and past ToastState events never replay.
+  const pathname = usePathname()
+
   return (
     <Sonner
+      key={pathname}
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       icons={{

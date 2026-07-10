@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { RouteToastReset } from "@/components/ui/route-toast-reset";
 import { Providers } from "@/components/providers";
 import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { PushNotificationInit } from "@/components/pwa/push-notification-init";
@@ -171,7 +170,6 @@ export default async function RootLayout({
             <RegisterSW />
           </Providers>
           {/* §11-F: one toast queue, bottom-centered above the nav pill. */}
-          <RouteToastReset />
           <Toaster
             richColors
             duration={4000}
