@@ -13,6 +13,9 @@ import { reactToDecision, createPoll, votePoll } from "@/lib/actions/huddle";
 import { createClient } from "@/lib/supabase/client";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { DocumentCard, type DocumentCardData } from "@/components/documents/document-card";
+import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
 import { motion } from "motion/react";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -57,6 +60,7 @@ export interface PulseItem {
 export function HuddleBoard({
   tripId, tripName, currency, currentUserId, crew, decisions, pulse, openCompose,
   packing = { packed: 0, total: 0 }, showPrepRow = false,
+  documents = [], initialTab = "decisions",
 }: {
   tripId: string;
   tripName: string;
@@ -70,11 +74,22 @@ export function HuddleBoard({
   packing?: { packed: number; total: number };
   /** Only during PLANNING/DEPARTURE — irrelevant once departed. */
   showPrepRow?: boolean;
+  /** Sprint 6 FIX-1: Huddle is the coordination hub — docs live here. */
+  documents?: DocumentCardData[];
+  initialTab?: "decisions" | "docs";
 }) {
   const router = useRouter();
   const [feed, setFeed] = useState(pulse);
   const [newPill, setNewPill] = useState(false);
   const [pollOpen, setPollOpen] = useState(openCompose ?? false);
+  // Sprint 6 FIX-1: Decisions | Docs segments. ?tab=docs deep-links Docs.
+  const [seg, setSeg] = useState<"decisions" | "docs">(initialTab);
+  const sortedDocs = [...documents].sort((a, b) => {
+    if (a.dayDate && b.dayDate) return a.dayDate.localeCompare(b.dayDate);
+    if (a.dayDate) return -1;
+    if (b.dayDate) return 1;
+    return 0;
+  });
   const [thread, setThread] = useState<{ entityType: "place"; entityId: string; title: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +160,41 @@ export function HuddleBoard({
         className="max-w-2xl mx-auto px-4 pt-4 flex flex-col gap-5"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
       >
+        {/* Sprint 6 FIX-1: Huddle = the full coordination hub. */}
+        <SegmentedControl<"decisions" | "docs">
+          aria-label="Huddle sections"
+          value={seg}
+          onChange={setSeg}
+          options={[
+            { value: "decisions", label: "Decisions" },
+            { value: "docs", label: "Docs" },
+          ]}
+        />
+
+        {seg === "docs" ? (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[12px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.5 }}>
+                DOCUMENTS · {sortedDocs.length}
+              </p>
+              <AddDocumentDialog tripId={tripId} />
+            </div>
+            {sortedDocs.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                No documents yet — add a confirmation or file your crew needs.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {sortedDocs.map((d) => (
+                  <li key={d.id}>
+                    <DocumentCard doc={d} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : (
+        <>
         {/* ── ZONE 1: Decision Deck. ─────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-2">
@@ -253,6 +303,8 @@ export function HuddleBoard({
             </div>
           )}
         </section>
+        </>
+        )}
       </div>
 
       <PollComposer

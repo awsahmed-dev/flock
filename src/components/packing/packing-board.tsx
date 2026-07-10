@@ -98,8 +98,14 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
       // wait a frame so the input is mounted if we just switched tabs.
       requestAnimationFrame(() => addInputRef.current?.focus());
     };
+    // Sprint 6 FIX-2: the nav's + toggles open (focus) / closed (blur).
+    const blurAdd = () => addInputRef.current?.blur();
     window.addEventListener("pack:focusAdd", focusAdd);
-    return () => window.removeEventListener("pack:focusAdd", focusAdd);
+    window.addEventListener("pack:blurAdd", blurAdd);
+    return () => {
+      window.removeEventListener("pack:focusAdd", focusAdd);
+      window.removeEventListener("pack:blurAdd", blurAdd);
+    };
   }, []);
 
   const shared = useMemo(() => items.filter((i) => i.userId === null), [items]);

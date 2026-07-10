@@ -123,7 +123,7 @@ export async function DepartureCockpit(props: CockpitShared) {
             <BoardRow>
               <span className="flex items-center justify-between w-full">
                 <span className="text-muted-foreground">🎫 Add your confirmations for the board</span>
-                <Link href={`${base}/pack?view=docs`} className="text-primary font-bold">
+                <Link href={`${base}/huddle?tab=docs`} className="text-primary font-bold">
                   [+]
                 </Link>
               </span>

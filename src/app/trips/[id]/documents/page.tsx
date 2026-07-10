@@ -1,4 +1,4 @@
-// B6: Documents merged into the new /pack tab. Redirect preserves any
+// Sprint 6: documents live in Huddle (Docs segment). Redirect preserves any
 // existing links (chat cards, bookmarks, revalidatePath calls).
 import { redirect } from "next/navigation";
 
@@ -8,5 +8,5 @@ interface Props {
 
 export default async function DocumentsRedirect({ params }: Props) {
   const { id } = await params;
-  redirect(`/trips/${id}/pack?view=docs`);
+  redirect(`/trips/${id}/huddle?tab=docs`);
 }

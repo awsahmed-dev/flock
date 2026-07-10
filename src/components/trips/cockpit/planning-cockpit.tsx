@@ -120,7 +120,7 @@ export function PlanningCockpit(props: CockpitShared) {
             packing. Quiet prompt when empty; up to 3 chips + See all after. */}
         {documents.length === 0 ? (
           <Link
-            href={`${base}/pack?view=docs`}
+            href={`${base}/huddle?tab=docs`}
             className="text-[13px] text-muted-foreground px-1 -mt-1"
           >
             🎫 Add a confirmation — flight, hotel, visa →
@@ -129,7 +129,7 @@ export function PlanningCockpit(props: CockpitShared) {
           <section>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[15px] font-bold text-foreground">Documents</p>
-              <Link href={`${base}/pack?view=docs`} className="text-[13px] font-bold text-primary">
+              <Link href={`${base}/huddle?tab=docs`} className="text-[13px] font-bold text-primary">
                 See all →
               </Link>
             </div>

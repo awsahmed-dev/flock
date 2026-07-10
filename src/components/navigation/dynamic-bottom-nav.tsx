@@ -4,12 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { format as isoFmt } from "date-fns";
-import { toast } from "sonner";
 import {
   Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
   Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
-  Luggage, Camera, Map as MapIcon, Bookmark, Clock, Search, MessageCircle,
-  FileText,
+  Camera, Map as MapIcon, Bookmark, Clock, Search, MessageCircle,
+  FileText, X,
   type LucideIcon,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -21,7 +20,6 @@ import {
 } from "@/components/animate-ui/primitives/animate/tabs";
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
 import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
-import { createPackingItem } from "@/lib/actions/packing";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 import { tripPhase, type TripPhase } from "@/lib/trip-phase";
@@ -87,8 +85,7 @@ export function DynamicBottomNav({
 
   const [plusOpen, setPlusOpen] = useState(false);
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
-  // Sprint 4 FIX-4/5a: quick-add composers owned by the + menu.
-  const [packOpen, setPackOpen] = useState(false);
+  // Sprint 4 FIX-5a: the document composer owned by the + menu.
   const [docOpen, setDocOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [huddleBadge, setHuddleBadge] = useState(0);
@@ -173,6 +170,7 @@ export function DynamicBottomNav({
 
   function onPlusDown() {
     longPressed.current = false;
+    if (isPackPage) return; // Sprint 6 FIX-2: no menu on Pack — + is the input toggle.
     pressTimer.current = setTimeout(() => {
       longPressed.current = true;
       if (navigator.vibrate) navigator.vibrate(10);
@@ -194,6 +192,19 @@ export function DynamicBottomNav({
 
   const dispatch = (name: string) => window.dispatchEvent(new CustomEvent(name));
 
+  // Sprint 6 FIX-2: on the Pack screen the + button IS the add-item toggle —
+  // it never opens the global menu there. Open = focus the inline input
+  // (keyboard up), close = blur. State resets when the route changes.
+  const isPackPage = pathname === `${base}/pack`;
+  const [packInputOpen, setPackInputOpen] = useState(false);
+  useEffect(() => setPackInputOpen(false), [pathname]);
+  function togglePackInput() {
+    setPackInputOpen((cur) => {
+      dispatch(cur ? "pack:blurAdd" : "pack:focusAdd");
+      return !cur;
+    });
+  }
+
   // ── Phase 7 §2: contextual satellites — icons/actions follow the tab. ──
   const isDiscoverTab = activeIndex === 1 && phase !== "RECAP";
   const isMoneyTab = activeIndex === 2;
@@ -207,7 +218,14 @@ export function DynamicBottomNav({
         ? { icon: Clock, label: t("expenses.activity"), action: () => dispatch("money:scrollActivity"), badge: 0 }
         : { icon: MessageCircle, label: t("nav.huddle"), action: () => router.push(`${base}/huddle`), badge: 0 };
 
-  const right: { icon: LucideIcon; accent: boolean; label: string; action: () => void } = isDiscoverTab
+  const right: { icon: LucideIcon; accent: boolean; label: string; action: () => void } = isPackPage
+    ? {
+        icon: packInputOpen ? X : Plus,
+        accent: true,
+        label: packInputOpen ? t("common.close") : t("pack.add"),
+        action: togglePackInput,
+      }
+    : isDiscoverTab
     ? { icon: Search, accent: false, label: t("nav.search"), action: () => dispatch("discover:toggleSearch") }
     : isMoneyTab
       ? {
@@ -248,6 +266,22 @@ export function DynamicBottomNav({
 
   return (
     <div className="xl:hidden">
+      {/* Sprint 6 FIX-3 Layer A: content fades into the page background just
+          above the nav, so lists scroll UNDER it instead of smashing against
+          the edge. Purely visual (pointer-events none, z-39 under the z-40
+          nav); var(--background) keeps both themes correct. The nav's glass
+          itself (Layer B) is the existing inline backdropFilter + the
+          semi-transparent --pill-bg tokens. */}
+      <div
+        aria-hidden
+        className="fixed inset-x-0 z-[39]"
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom) + 56px)",
+          height: 56,
+          background: "linear-gradient(to bottom, transparent, var(--background))",
+          pointerEvents: "none",
+        }}
+      />
       {/* §3-A cluster: [Huddle 44] [8] [pill] [8] [+ 44]. */}
       <div
         className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-center gap-2 px-3"
@@ -378,9 +412,6 @@ export function DynamicBottomNav({
               dispatches the crew-sheet event every trip route listens for
               (FIX-2 — paxawa:shareTrip only had a LIVE listener); documents
               get their first entry point (FIX-5a). */}
-          {phase === "DEPARTURE" && (
-            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); setPackOpen(true); }} />
-          )}
           <ActionRow icon={MapPin} label={t("nav.addPlace")} onClick={() => { setPlusOpen(false); setAddPlaceOpen(true); }} />
           <ActionRow
             icon={Wallet}
@@ -391,9 +422,6 @@ export function DynamicBottomNav({
             }}
           />
           <ActionRow icon={FileText} label={t("nav.addDocument")} onClick={() => { setPlusOpen(false); setDocOpen(true); }} />
-          {phase !== "DEPARTURE" && (
-            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); setPackOpen(true); }} />
-          )}
           <ActionRow icon={Users} label={t("nav.askCrew")} onClick={() => { setPlusOpen(false); router.push(`${base}/huddle?compose=poll`); }} />
           <ActionRow icon={Share2} label={t("nav.shareTrip")} onClick={() => { setPlusOpen(false); dispatch("paxawa:openCrewSheet"); }} />
           <ActionRow icon={CalendarDays} label={t("nav.setBudget")} onClick={() => { setPlusOpen(false); setBudgetOpen(true); }} />
@@ -410,82 +438,9 @@ export function DynamicBottomNav({
         defaultDay={defaultDay}
       />
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={currency} total={budgetTotal} />
-      {/* Sprint 4 FIX-4: inline pack composer — no page redirect. */}
-      <PackItemComposer open={packOpen} onClose={() => setPackOpen(false)} tripId={tripId} />
       {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
       <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
     </div>
-  );
-}
-
-/**
- * Sprint 4 FIX-4 — quick pack-item composer. The + menu's pack row used to
- * redirect to /pack (a nav shortcut, not a quick-add); this submits a real
- * item without leaving the current screen.
- */
-function PackItemComposer({ open, onClose, tripId }: { open: boolean; onClose: () => void; tripId: string }) {
-  const t = useT();
-  const [label, setLabel] = useState("");
-  const [scope, setScope] = useState<"shared" | "mine">("mine");
-  const [pending, setPending] = useState(false);
-
-  async function submit() {
-    const trimmed = label.trim();
-    if (!trimmed || pending) return;
-    setPending(true);
-    try {
-      const fd = new FormData();
-      fd.set("tripId", tripId);
-      fd.set("label", trimmed);
-      fd.set("scope", scope);
-      await createPackingItem(fd);
-      toast.success(`${trimmed} ✓`);
-      setLabel("");
-      onClose();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't add that");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  return (
-    <BottomSheet open={open} onClose={onClose} title={t("nav.addPackItem")} size="sm">
-      <div className="flex flex-col gap-3 pb-2">
-        <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
-          placeholder={t("pack.itemPlaceholder")}
-          autoFocus
-          className="h-12 rounded-2xl border border-border bg-background px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-        />
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            onClick={() => setScope("mine")}
-            className={`h-10 rounded-xl text-xs font-bold border transition-all ${scope === "mine" ? "bg-primary/10 border-primary/30 text-primary" : "border-border bg-card text-muted-foreground"}`}
-          >
-            {t("pack.mine")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setScope("shared")}
-            className={`h-10 rounded-xl text-xs font-bold border transition-all ${scope === "shared" ? "bg-primary/10 border-primary/30 text-primary" : "border-border bg-card text-muted-foreground"}`}
-          >
-            {t("pack.shared")}
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={submit}
-          disabled={pending || !label.trim()}
-          className="h-12 rounded-2xl bg-primary text-white font-bold text-[15px] disabled:opacity-50"
-        >
-          {t("pack.add")}
-        </button>
-      </div>
-    </BottomSheet>
   );
 }
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { huddleDecisions, activities, packingItems } from "@/lib/db/schema";
+import { huddleDecisions, activities, packingItems , documents } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
 import { expireStaleDecisions } from "@/lib/actions/huddle";
@@ -12,7 +12,7 @@ import { HuddleBoard } from "@/components/huddle/huddle-board";
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ compose?: string }>;
+  searchParams: Promise<{ compose?: string; tab?: string }>;
 }
 
 /**
@@ -22,7 +22,7 @@ interface Props {
  */
 export default async function HuddlePage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { compose } = await searchParams;
+  const { compose, tab } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
@@ -30,6 +30,12 @@ export default async function HuddlePage({ params, searchParams }: Props) {
   if (!trip) redirect("/dashboard");
 
   await expireStaleDecisions(id);
+
+  // Sprint 6 FIX-1: documents live in Huddle now (Docs segment).
+  const tripDocs = await db.query.documents.findMany({
+    where: eq(documents.tripId, id),
+    with: { uploader: true },
+  });
 
   const decisions = await db.query.huddleDecisions.findMany({
     where: and(eq(huddleDecisions.tripId, id), eq(huddleDecisions.status, "open")),
@@ -66,6 +72,15 @@ export default async function HuddlePage({ params, searchParams }: Props) {
       currentUserId={user.id}
       crew={crew}
       openCompose={compose === "poll"}
+      initialTab={tab === "docs" ? "docs" : "decisions"}
+      documents={tripDocs.map((d) => ({
+        id: d.id,
+        title: d.title,
+        type: d.type,
+        url: d.url,
+        dayDate: d.dayDate,
+        uploaderName: d.uploader?.displayName ?? null,
+      }))}
       packing={packing}
       showPrepRow={phase === "PLANNING" || phase === "DEPARTURE"}
       decisions={decisions.map((d) => ({
