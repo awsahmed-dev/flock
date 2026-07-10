@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import {
   itineraryItems, expenses, packingItems, bookings as bookingsTable,
   placeLikes, cachedPlaces, activities, expenseSplits, settlements,
-  huddleDecisions,
+  huddleDecisions, documents,
 } from "@/lib/db/schema";
 import { simplifySettlements } from "@/lib/settle";
 import { effectiveTripBudget } from "@/lib/budget";
@@ -285,6 +285,21 @@ export default async function TripPage({ params }: Props) {
     );
   }
 
+  // Sprint 4 FIX-5b: day-pinned documents surface on the day they're
+  // needed (boarding passes, bus tickets) instead of 4 taps deep in Pack.
+  const dayDocs = (
+    await db
+      .select({
+        id: documents.id,
+        title: documents.title,
+        type: documents.type,
+        url: documents.url,
+        dayDate: documents.dayDate,
+      })
+      .from(documents)
+      .where(eq(documents.tripId, id))
+  ).filter((d) => d.dayDate != null);
+
   // LIVE — the map cockpit.
   return (
     <>
@@ -311,6 +326,7 @@ export default async function TripPage({ params }: Props) {
       endDate={trip.endDate}
       teaser={teaser}
       anchors={anchors}
+      documents={dayDocs}
     />
     </>
   );

@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import {
   ChevronRight, Trash2, Navigation, Check, MessageSquare, Wallet,
   Plane, BedDouble, FileText, Map as MapIcon,
+  Image as ImageIcon, ExternalLink, Link as LinkIcon,
 } from "lucide-react";
-import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
+import { type CrewMember } from "@/components/trips/share-trip-sheet";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { format as isoFmt } from "date-fns";
@@ -72,6 +73,7 @@ export function NowCockpit({
   endDate,
   teaser = [],
   anchors = [],
+  documents = [],
 }: {
   tripId: string;
   tripName: string;
@@ -83,6 +85,9 @@ export function NowCockpit({
   endDate?: string;
   teaser?: TeaserPlace[];
   anchors?: CockpitAnchor[];
+  /** Sprint 4 FIX-5b: day-pinned documents — a boarding pass surfaces on
+   *  the day it's needed, not four taps deep in Pack. */
+  documents?: { id: string; title: string; type: string; url: string; dayDate: string | null }[];
 }) {
   const t = useT();
   const router = useRouter();
@@ -97,7 +102,6 @@ export function NowCockpit({
   const lastDetentRef = useRef<Detent>("half");
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set());
   const [optimisticDone, setOptimisticDone] = useState<Map<string, boolean>>(new Map());
-  const [shareOpen, setShareOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [recapDismissed, setRecapDismissed] = useState(false);
 
@@ -110,7 +114,6 @@ export function NowCockpit({
   }, [selectedDay]);
 
   useEffect(() => {
-    const openShare = () => setShareOpen(true);
     // Phase 7 §2/§3-A: the nav's left circle (map icon) toggles map-full view.
     const toggleMap = () =>
       setDetent((cur) => {
@@ -118,10 +121,10 @@ export function NowCockpit({
         lastDetentRef.current = cur;
         return "peek";
       });
-    window.addEventListener("paxawa:shareTrip", openShare);
+    // Sprint 4 FIX-2: paxawa:shareTrip retired — the + menu opens the crew
+    // sheet via paxawa:openCrewSheet (trip-shell) in every phase.
     window.addEventListener("paxawa:toggleMapView", toggleMap);
     return () => {
-      window.removeEventListener("paxawa:shareTrip", openShare);
       window.removeEventListener("paxawa:toggleMapView", toggleMap);
     };
   }, []);
@@ -567,6 +570,35 @@ export function NowCockpit({
               </ul>
             )}
 
+            {/* Sprint 4 FIX-5b: documents pinned to this day. */}
+            {documents.filter((d) => d.dayDate === selectedDay).length > 0 && (
+              <div className="mt-4">
+                <p className="text-[12px] font-bold uppercase text-tertiary mb-2" style={{ letterSpacing: 1.2 }}>
+                  {t("now.docsForDay")}
+                </p>
+                <ul className="space-y-2">
+                  {documents
+                    .filter((d) => d.dayDate === selectedDay)
+                    .map((d) => (
+                      <li key={d.id}>
+                        <a
+                          href={d.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 rounded-2xl bg-card border border-border px-3 h-14"
+                        >
+                          <span className="w-9 h-9 rounded-xl bg-primary/12 text-primary flex items-center justify-center shrink-0">
+                            {d.type === "image" ? <ImageIcon size={16} /> : d.type === "pdf" ? <FileText size={16} /> : <LinkIcon size={16} />}
+                          </span>
+                          <span className="flex-1 min-w-0 text-[14px] font-semibold truncate">{d.title}</span>
+                          <ExternalLink size={14} className="text-tertiary shrink-0" />
+                        </a>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+
             {/* Quick actions (full detent). */}
             <div className="flex gap-2 mt-4">
               <Link href={`/trips/${tripId}/money/expense-camera`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
@@ -580,7 +612,6 @@ export function NowCockpit({
         </div>
       </div>
 
-      <ShareTripSheet open={shareOpen} onClose={() => setShareOpen(false)} tripId={tripId} tripName={tripName} crew={crew} />
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={budget.currency} total={budget.total} />
     </div>
   );

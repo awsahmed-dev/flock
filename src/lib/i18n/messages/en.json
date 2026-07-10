@@ -201,7 +201,8 @@
     "huddle": "Huddle",
     "addPackItem": "Add a pack item",
     "addBooking": "Add a booking",
-    "askCrew": "Ask the crew"
+    "askCrew": "Ask the crew",
+    "addDocument": "Add a document"
   },
   "greeting": {
     "morning": "Good morning, {name} ☀️",
@@ -576,7 +577,9 @@
     "addItemShort": "Add an item…",
     "nothingHere": "Nothing here yet",
     "sharedHint": "Add shared items your whole crew needs",
-    "mineHint": "Your personal checklist"
+    "mineHint": "Your personal checklist",
+    "itemPlaceholder": "Sunscreen, adapter, meds…",
+    "mine": "Just mine"
   },
   "notifications": {
     "title": "Notifications",
@@ -1054,7 +1057,8 @@
     "dayProgress": "{done} of {total} stops done",
     "ofBudget": "of budget",
     "gettingThere": "GETTING THERE",
-    "stopRemoved": "Stop removed"
+    "stopRemoved": "Stop removed",
+    "docsForDay": "Documents for this day"
   },
   "manage": {
     "expenses": "Expenses",

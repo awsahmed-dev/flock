@@ -88,11 +88,16 @@ export function BottomSheet({
             onClick={onClose}
             className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-[2px]"
           />
-          {/* Sheet */}
+          {/* Sheet. Sprint 4 FIX-6: entrance is a FADE, not a slide — the old
+              y:100%→0 spring moved every row upward for ~500ms (longer in
+              throttled/hidden windows), so taps aimed at a label landed 2–3
+              rows below it ("Add a booking" was unreachable in QA Round 3).
+              Opacity keeps every hit target at its final position from the
+              first frame. */}
           <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}

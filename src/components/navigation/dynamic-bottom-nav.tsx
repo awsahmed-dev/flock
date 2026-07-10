@@ -9,6 +9,7 @@ import {
   Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
   Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
   Luggage, Camera, Map as MapIcon, Bookmark, Clock, Search, MessageCircle,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -19,6 +20,8 @@ import {
   TabsHighlightItem,
 } from "@/components/animate-ui/primitives/animate/tabs";
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
+import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
+import { createPackingItem } from "@/lib/actions/packing";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 import { tripPhase, type TripPhase } from "@/lib/trip-phase";
@@ -84,6 +87,9 @@ export function DynamicBottomNav({
 
   const [plusOpen, setPlusOpen] = useState(false);
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
+  // Sprint 4 FIX-4/5a: quick-add composers owned by the + menu.
+  const [packOpen, setPackOpen] = useState(false);
+  const [docOpen, setDocOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [huddleBadge, setHuddleBadge] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
@@ -365,18 +371,32 @@ export function DynamicBottomNav({
           tap default. DEPARTURE puts the pack row first (§3-A table). */}
       <BottomSheet open={plusOpen} onClose={() => setPlusOpen(false)} title={t("nav.addTitle")} size="sm">
         <div className="divide-y divide-border/60">
+          {/* Sprint 4: every row produces something in ≤2 taps. The AI stub
+              is gone (audit FIX-1 — no toast, no promise); pack opens a real
+              composer (FIX-4); expenses are phase-aware (FIX-3: pre-trip you
+              TYPE a deposit, on the ground you photograph a bill); Share
+              dispatches the crew-sheet event every trip route listens for
+              (FIX-2 — paxawa:shareTrip only had a LIVE listener); documents
+              get their first entry point (FIX-5a). */}
           {phase === "DEPARTURE" && (
-            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); router.push(`${base}/pack`); }} />
+            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); setPackOpen(true); }} />
           )}
           <ActionRow icon={MapPin} label={t("nav.addPlace")} onClick={() => { setPlusOpen(false); setAddPlaceOpen(true); }} />
           <ActionRow icon={PlaneTakeoff} label={t("nav.addBooking")} onClick={() => { setPlusOpen(false); dispatch("paxawa:addBooking"); }} />
-          <ActionRow icon={Wallet} label={t("now.logExpense")} onClick={() => { setPlusOpen(false); router.push(`${base}/money/expense-camera`); }} />
+          <ActionRow
+            icon={Wallet}
+            label={t("now.logExpense")}
+            onClick={() => {
+              setPlusOpen(false);
+              router.push(phase === "PLANNING" ? `${base}/money?add=expense` : `${base}/money/expense-camera`);
+            }}
+          />
+          <ActionRow icon={FileText} label={t("nav.addDocument")} onClick={() => { setPlusOpen(false); setDocOpen(true); }} />
           {phase !== "DEPARTURE" && (
-            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); router.push(`${base}/pack`); }} />
+            <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); setPackOpen(true); }} />
           )}
-          <ActionRow icon={Sparkles} label={t("nav.aiFillDay")} onClick={() => { setPlusOpen(false); toast(`${t("nav.aiComingSoon")} ✦`); }} />
           <ActionRow icon={Users} label={t("nav.askCrew")} onClick={() => { setPlusOpen(false); router.push(`${base}/huddle?compose=poll`); }} />
-          <ActionRow icon={Share2} label={t("nav.shareTrip")} onClick={() => { setPlusOpen(false); dispatch("paxawa:shareTrip"); }} />
+          <ActionRow icon={Share2} label={t("nav.shareTrip")} onClick={() => { setPlusOpen(false); dispatch("paxawa:openCrewSheet"); }} />
           <ActionRow icon={CalendarDays} label={t("nav.setBudget")} onClick={() => { setPlusOpen(false); setBudgetOpen(true); }} />
         </div>
       </BottomSheet>
@@ -391,7 +411,82 @@ export function DynamicBottomNav({
         defaultDay={defaultDay}
       />
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={currency} total={budgetTotal} />
+      {/* Sprint 4 FIX-4: inline pack composer — no page redirect. */}
+      <PackItemComposer open={packOpen} onClose={() => setPackOpen(false)} tripId={tripId} />
+      {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
+      <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
     </div>
+  );
+}
+
+/**
+ * Sprint 4 FIX-4 — quick pack-item composer. The + menu's pack row used to
+ * redirect to /pack (a nav shortcut, not a quick-add); this submits a real
+ * item without leaving the current screen.
+ */
+function PackItemComposer({ open, onClose, tripId }: { open: boolean; onClose: () => void; tripId: string }) {
+  const t = useT();
+  const [label, setLabel] = useState("");
+  const [scope, setScope] = useState<"shared" | "mine">("mine");
+  const [pending, setPending] = useState(false);
+
+  async function submit() {
+    const trimmed = label.trim();
+    if (!trimmed || pending) return;
+    setPending(true);
+    try {
+      const fd = new FormData();
+      fd.set("tripId", tripId);
+      fd.set("label", trimmed);
+      fd.set("scope", scope);
+      await createPackingItem(fd);
+      toast.success(`${trimmed} ✓`);
+      setLabel("");
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't add that");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <BottomSheet open={open} onClose={onClose} title={t("nav.addPackItem")} size="sm">
+      <div className="flex flex-col gap-3 pb-2">
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+          placeholder={t("pack.itemPlaceholder")}
+          autoFocus
+          className="h-12 rounded-2xl border border-border bg-background px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        />
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            onClick={() => setScope("mine")}
+            className={`h-10 rounded-xl text-xs font-bold border transition-all ${scope === "mine" ? "bg-primary/10 border-primary/30 text-primary" : "border-border bg-card text-muted-foreground"}`}
+          >
+            {t("pack.mine")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setScope("shared")}
+            className={`h-10 rounded-xl text-xs font-bold border transition-all ${scope === "shared" ? "bg-primary/10 border-primary/30 text-primary" : "border-border bg-card text-muted-foreground"}`}
+          >
+            {t("pack.shared")}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={pending || !label.trim()}
+          className="h-12 rounded-2xl bg-primary text-white font-bold text-[15px] disabled:opacity-50"
+        >
+          {t("pack.add")}
+        </button>
+      </div>
+    </BottomSheet>
   );
 }
 

@@ -12,6 +12,10 @@ import { Plus, Upload, Link as LinkIcon, FileUp } from "lucide-react";
 
 interface Props {
   tripId: string;
+  /** Sprint 4 FIX-5a: controlled mode for the + menu — when `open` is
+   *  provided the internal trigger button is not rendered. */
+  open?: boolean;
+  onClose?: () => void;
 }
 
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB — matches the bucket's hard cap
@@ -30,8 +34,17 @@ const ACCEPT =
  * - **Link**: keep the original behavior — paste a Google Docs / Notion /
  *   booking-confirmation URL. No upload, just metadata.
  */
-export function AddDocumentDialog({ tripId }: Props) {
-  const [open, setOpen] = useState(false);
+export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Props) {
+  const [selfOpen, setSelfOpen] = useState(false);
+  const controlled = controlledOpen !== undefined;
+  const open = controlled ? controlledOpen : selfOpen;
+  const setOpen = (v: boolean) => {
+    if (controlled) {
+      if (!v) onClose?.();
+    } else {
+      setSelfOpen(v);
+    }
+  };
   const [mode, setMode] = useState<"upload" | "link">("upload");
   const [isPending, startTransition] = useTransition();
   const [file, setFile] = useState<File | null>(null);
@@ -135,10 +148,12 @@ export function AddDocumentDialog({ tripId }: Props) {
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 me-1" />
-        Add document
-      </Button>
+      {!controlled && (
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <Plus className="w-4 h-4 me-1" />
+          Add document
+        </Button>
+      )}
       <BottomSheet
         open={open}
         onClose={() => { setOpen(false); resetState(); }}

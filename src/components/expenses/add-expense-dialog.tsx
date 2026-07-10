@@ -89,6 +89,13 @@ export function AddExpenseDialog({
   useEffect(() => {
     const openSheet = () => setOpen(true);
     window.addEventListener("paxawa:logExpense", openSheet);
+    // Sprint 4 FIX-3: the + menu's pre-trip path lands on /money?add=expense
+    // (typing a deposit, not photographing a bill). Strip the param right
+    // away so a post-revalidate remount can't reopen the sheet.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("add") === "expense") {
+      setOpen(true);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     return () => window.removeEventListener("paxawa:logExpense", openSheet);
   }, []);
 

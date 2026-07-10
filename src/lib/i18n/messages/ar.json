@@ -201,7 +201,8 @@
     "huddle": "الفريق",
     "addPackItem": "أضف غرض تعبئة",
     "addBooking": "أضف حجزًا",
-    "askCrew": "اسأل الفريق"
+    "askCrew": "اسأل الفريق",
+    "addDocument": "أضف مستندًا"
   },
   "greeting": {
     "morning": "صباح الخير، {name} ☀️",
@@ -576,7 +577,9 @@
     "addItemShort": "أضف عنصرًا…",
     "nothingHere": "لا شيء هنا بعد",
     "sharedHint": "أضف الأغراض المشتركة التي يحتاجها فريقك",
-    "mineHint": "قائمتك الشخصية"
+    "mineHint": "قائمتك الشخصية",
+    "itemPlaceholder": "واقي شمس، محوّل، أدوية…",
+    "mine": "لي فقط"
   },
   "notifications": {
     "title": "الإشعارات",
@@ -1054,7 +1057,8 @@
     "dayProgress": "أُنجزت {done} من {total} محطات",
     "ofBudget": "من الميزانية",
     "gettingThere": "في الطريق",
-    "stopRemoved": "أُزيلت المحطة"
+    "stopRemoved": "أُزيلت المحطة",
+    "docsForDay": "مستندات هذا اليوم"
   },
   "manage": {
     "expenses": "المصاريف",
