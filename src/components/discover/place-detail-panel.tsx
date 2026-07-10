@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { PoweredByGoogle } from "./primitives";
 import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/animate-ui/components/radix/sheet";
 
 /**
  * Paxawa v2 — the place detail, Airbnb-style.
@@ -23,7 +24,8 @@ import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primi
  * A swipeable photo gallery up top, then clean sectioned content with real
  * breathing room (about · hours · location). The action bar replaces the old
  * radio-button day grid with a single elegant day strip + one "Add to plan"
- * button. Full-screen sheet on mobile, right slide-over on desktop.
+ * button. Discover-fix brief: an Animate UI bottom Sheet on every breakpoint
+ * (spring entry, Radix-managed state) — no more custom aside/slide-over.
  */
 const CAT_KEY: Record<string, string> = {
   eat: "discover.catEat", coffee: "discover.catCoffee", sight: "discover.catSight",
@@ -80,17 +82,7 @@ export function PlaceDetailPanel({
     return () => { alive = false; };
   }, [open, base]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    if (open) {
-      document.addEventListener("keydown", onKey);
-      document.body.style.overflow = "hidden";
-    }
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open, onClose]);
+  // Escape + body scroll-lock now come free from the Radix-managed Sheet.
 
   if ((!scored || !base) && !open) return null;
 
@@ -198,18 +190,17 @@ export function PlaceDetailPanel({
   }
 
   return (
-    <>
-      <div
-        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={onClose}
-      />
-      <aside
-        className={`fixed z-50 bg-background flex flex-col shadow-2xl transition-transform duration-300 ease-out
-          inset-x-0 bottom-0 top-10 rounded-t-3xl
-          sm:inset-y-0 sm:end-0 sm:top-0 sm:inset-x-auto sm:w-[480px] sm:rounded-none sm:border-s
-          ${open ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-y-0 sm:translate-x-full sm:rtl:-translate-x-full"}`}
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        transition={{ type: "spring", stiffness: 150, damping: 22 }}
+        className="z-50 gap-0 h-auto max-h-[92vh] rounded-t-3xl border-t border-border bg-background sm:mx-auto sm:max-w-xl"
       >
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        <SheetHeader className="sr-only">
+          <SheetTitle>{p?.name ?? ""}</SheetTitle>
+        </SheetHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-t-3xl">
           {/* Gallery */}
           <div className="relative">
             <div
@@ -386,8 +377,8 @@ export function PlaceDetailPanel({
             </>
           )}
         </div>
-      </aside>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }
 

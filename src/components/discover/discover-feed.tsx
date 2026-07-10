@@ -27,7 +27,6 @@ import { useTheme } from "next-themes";
 import { recordInteraction, getTasteContext, getPlaceTags } from "@/lib/actions/taste";
 import { reasonChip, championFor, crewScore, type FiveDimVector } from "@/lib/taste-engine";
 import { TasteOnboarding } from "./taste-onboarding";
-import { PlaceFullScreen } from "./place-full-screen";
 
 /** lg+ desktop detection (SSR-safe: mobile until mounted). Drives the two
  *  native Discover layouts — immersive stream on mobile, grid+map on desktop. */
@@ -47,10 +46,11 @@ function useIsDesktop(): boolean {
  * Paxawa v2 — Discover, cinematic/immersive (TikTok-Reels language).
  *
  * A dark cinematic stage. Opens FULL on the cold-start seed (never a blank
- * search box). Full-bleed photo cards in a vertical stream — one place fills the
- * view, the next peeks. Glass category-filter chips + a Map toggle float on top;
- * search is a secondary affordance. The feed learns live as you dwell. A bold
- * departure from V1 — the photo is the experience.
+ * search box). Photo-first cards in a plain vertical scroll (the full-screen
+ * snap stream + swipe-to-next view are gone — discover brief). Glass
+ * category-filter chips + a Map toggle float on top; search is a secondary
+ * affordance. The feed learns live as you dwell. Tap a card → detail bottom
+ * sheet (Animate UI).
  */
 const MapboxPlanMap = dynamic(
   () => import("@/components/map/mapbox-plan-map").then((m) => m.MapboxPlanMap),
@@ -142,7 +142,6 @@ export function DiscoverFeed({
   const [tasteCtx, setTasteCtx] = useState<Awaited<ReturnType<typeof getTasteContext>> | null>(null);
   const [placeTags, setPlaceTags] = useState<Record<string, FiveDimVector>>({});
   const [onboardDismissed, setOnboardDismissed] = useState(false);
-  const [fullScreenIdx, setFullScreenIdx] = useState<number | null>(null);
   const [whySheetFor, setWhySheetFor] = useState<ScoredPlace | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [specialFilter, setSpecialFilter] = useState<"crew" | "saved" | null>(null);
@@ -834,15 +833,17 @@ export function DiscoverFeed({
           </div>
         </div>
       ) : (
-        /* Immersive stream — each card fills the viewport minus the tab bar;
-           snap-scroll shows one place at a time, the next peeks below. */
+        /* Discover-fix brief: a plain vertical scroll of photo-first cards —
+           the full-screen snap stream and swipe-up-to-next are gone. Cards are
+           tall (4:5) so the photo still leads; tap opens the detail bottom
+           sheet. Top padding clears the floating chip strip. */
         <div
           ref={containerRef}
-          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-none"
+          className="h-full overflow-y-auto scrollbar-none px-3 pb-6 pt-[68px] space-y-3"
         >
           {/* §5-F: vibe onboarding lives inside the feed for cold users. */}
           {tasteCtx && !tasteCtx.onboarded && tasteCtx.interactionCount < 3 && !onboardDismissed && (
-            <div className="snap-start px-4 pt-[calc(env(safe-area-inset-top)+96px)]">
+            <div className="px-1">
               <TasteOnboarding
                 onDone={() => {
                   setOnboardDismissed(true);
@@ -856,8 +857,8 @@ export function DiscoverFeed({
               {t("discover.noMatches")}
             </div>
           ) : (
-            visible.map((s, i) => (
-              <div key={s.place.placeId} className="w-full h-full shrink-0 snap-start snap-always">
+            visible.map((s) => (
+              <div key={s.place.placeId} className="w-full aspect-[4/5] rounded-3xl overflow-hidden">
                 <PlaceCard
                   scored={s} center={center}
                   saved={saved.has(s.place.placeId)}
@@ -865,7 +866,7 @@ export function DiscoverFeed({
                   likeCount={likeCountMap[s.place.placeId] ?? 0}
                   added={added.has(s.place.placeId)}
                   reason={reasonChips[s.place.placeId]}
-                  onOpen={() => setFullScreenIdx(i)}
+                  onOpen={() => onOpen(s)}
                   onSave={onSave} onLike={onLike} onHover={setHighlightedId}
                   onLongPress={(sp) => setWhySheetFor(sp)}
                 />
@@ -895,23 +896,6 @@ export function DiscoverFeed({
         onClose={() => setOpenPlace(null)} onSave={() => openPlace && onSave(openPlace)} onAdded={onAdded}
         onUndone={onUndone}
       />
-
-      {/* §5-G: tap-to-full-screen immersive view; swipe walks the feed. */}
-      {fullScreenIdx != null && visible[fullScreenIdx] && (
-        <PlaceFullScreen
-          places={visible}
-          index={fullScreenIdx}
-          liked={liked}
-          likeCounts={likeCountMap}
-          onLike={onLike}
-          onAdd={(s) => { setFullScreenIdx(null); onOpen(s); }}
-          onCrew={(s) => { setFullScreenIdx(null); onOpen(s); }}
-          onThread={(s) => { setFullScreenIdx(null); onOpen(s); }}
-          onMore={(s) => setWhySheetFor(s)}
-          onNavigate={setFullScreenIdx}
-          onClose={() => setFullScreenIdx(null)}
-        />
-      )}
 
       {/* §5-G: "Not interested" why sheet — the answer becomes a −5 signal. */}
       <BottomSheet
