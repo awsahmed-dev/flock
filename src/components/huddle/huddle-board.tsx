@@ -188,8 +188,8 @@ export function HuddleBoard({
               </span>
               <span className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                 <span
-                  className="block h-full rounded-full bg-primary"
-                  style={{ width: `${packing.total > 0 ? Math.round((packing.packed / packing.total) * 100) : 0}%` }}
+                  className="block h-full rounded-full"
+                  style={{ background: "var(--clr-moss)", width: `${packing.total > 0 ? Math.round((packing.packed / packing.total) * 100) : 0}%` }}
                 />
               </span>
               <span className="text-[13px] font-bold text-primary whitespace-nowrap">Pack →</span>
@@ -403,7 +403,7 @@ function DecisionCard({
               className={`h-12 flex flex-col items-center justify-center text-[13px] font-semibold active:scale-95 transition-transform ${
                 cast ? "text-primary" : "text-foreground"
               }`}
-              style={cast ? { background: "var(--accent-glow)", boxShadow: "inset 0 0 0 1px #6B5CE7" } : undefined}
+              style={cast ? { background: "var(--clr-brand-dim)", boxShadow: "inset 0 0 0 1px var(--clr-brand)" } : undefined}
             >
               <span>{b.label}</span>
               {voters.length > 0 && b.key !== "discuss" && (
@@ -507,6 +507,22 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
     );
   }
 
+  // Dev-audit A5: full row deep-links to the entity it describes.
+  const href = (() => {
+    switch (item.eventType) {
+      case "place_hearted": return `/trips/${tripId}/discover`;
+      case "expense_logged":
+      case "expense_settled": return `/trips/${tripId}/money`;
+      case "stop_added":
+      case "stop_done":
+      case "stop_locked":
+      case "suggestion_added": return `/trips/${tripId}/itinerary`;
+      case "pack_item_claimed":
+      case "pack_completed": return `/trips/${tripId}/pack`;
+      default: return null;
+    }
+  })();
+
   const verb = (() => {
     switch (item.eventType) {
       case "place_hearted": return `hearted ${item.placeName ?? "a place"}`;
@@ -523,8 +539,8 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
     }
   })();
 
-  return (
-    <div className="flex items-center gap-3 px-4 py-2" style={{ minHeight: 64 }}>
+  const body = (
+    <>
       {item.isSystem ? (
         <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--accent-glow)" }}>
           ✦
@@ -550,6 +566,15 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
         </span>
       )}
       <span className="text-[11px] text-tertiary shrink-0">{time}</span>
+    </>
+  );
+  return href ? (
+    <Link href={href} className="flex items-center gap-3 px-4 py-2" style={{ minHeight: 64 }}>
+      {body}
+    </Link>
+  ) : (
+    <div className="flex items-center gap-3 px-4 py-2" style={{ minHeight: 64 }}>
+      {body}
     </div>
   );
 }

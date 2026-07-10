@@ -89,7 +89,7 @@ export function MembersBoard({
           type="button"
           onClick={() => setShareOpen(true)}
           className="w-full flex items-center justify-center gap-2 rounded-2xl font-semibold text-white active:scale-[0.98] transition-transform"
-          style={{ height: 52, background: "#6B5CE7" }}
+          style={{ height: 52, background: "var(--clr-brand)" }}
         >
           <UserPlus className="w-5 h-5" />
           {t("crew.inviteMore")}

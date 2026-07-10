@@ -57,9 +57,9 @@ export function PlaceFullScreen({
   const actions = [
     { key: "heart", icon: Heart, label: count > 0 ? String(count) : "", active: isLiked, color: "#FF375F", onClick: () => onLike(s) },
     { key: "add", icon: PlusCircle, label: "", active: false, color: "#34C759", onClick: () => onAdd(s) },
-    { key: "crew", icon: Users, label: "", active: false, color: "#6B5CE7", onClick: () => onCrew(s) },
-    { key: "thread", icon: MessageCircle, label: "", active: false, color: "#6B5CE7", onClick: () => onThread(s) },
-    { key: "more", icon: MoreHorizontal, label: "", active: false, color: "#6B5CE7", onClick: () => onMore(s) },
+    { key: "crew", icon: Users, label: "", active: false, color: "var(--clr-brand)", onClick: () => onCrew(s) },
+    { key: "thread", icon: MessageCircle, label: "", active: false, color: "var(--clr-brand)", onClick: () => onThread(s) },
+    { key: "more", icon: MoreHorizontal, label: "", active: false, color: "var(--clr-brand)", onClick: () => onMore(s) },
   ];
 
   return (

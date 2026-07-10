@@ -332,7 +332,7 @@ export function NowCockpit({
           days={days}
           showRoutes
           numbered
-          pinColor="#6b5ce7"
+          pinColor="#3EC5B7"
           mapStyle={resolvedTheme === "light" ? "light-v11" : "dark-v11"}
           fitPadding={fitPadding}
           showNav={false}
@@ -428,7 +428,8 @@ export function NowCockpit({
                   type="button"
                   onClick={() => navigateTo(upNext)}
                   disabled={upNext.lat == null}
-                  className="flex-1 h-12 rounded-2xl bg-primary text-white font-bold text-[14px] flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="flex-1 h-12 rounded-2xl text-white font-bold text-[14px] flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  style={{ background: "var(--clr-wayfind)" }}
                 >
                   <Navigation size={16} /> {t("now.navigate")}
                 </button>
@@ -504,7 +505,7 @@ export function NowCockpit({
                 )}
               </div>
               <div className="h-1 rounded-full bg-foreground/10 overflow-hidden">
-                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${budgetPct}%` }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${budgetPct}%`, background: "var(--clr-moss)" }} />
               </div>
             </button>
 
@@ -526,8 +527,9 @@ export function NowCockpit({
                     type="button"
                     onClick={() => setSelectedDay(d)}
                     className={`shrink-0 h-11 min-w-[84px] px-4 rounded-full text-sm font-bold transition-colors ${
-                      active ? "bg-primary text-white" : "bg-foreground/10 text-muted-foreground"
+                      active ? "text-white" : "bg-foreground/10 text-muted-foreground"
                     }`}
+                    style={active ? { background: "var(--clr-wayfind)" } : undefined}
                   >
                     {isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
                   </button>
@@ -652,7 +654,7 @@ function StopRow({
           transform: `translateX(${dx}px)`,
           transition: startX.current == null ? "transform 150ms ease" : "none",
           ...(anchor
-            ? { borderInlineStart: "3px solid #6B5CE7", background: "var(--accent-glow)" }
+            ? { borderInlineStart: "3px solid var(--clr-horizon)", background: "var(--clr-horizon-dim)" }
             : undefined),
         }}
       >
@@ -664,8 +666,9 @@ function StopRow({
             onClick={onToggleDone}
             aria-label={done ? t("now.done") : t("now.markDone")}
             className={`shrink-0 w-7 h-7 rounded-full text-white text-xs font-extrabold flex items-center justify-center ${
-              done ? "bg-success" : "bg-primary"
+              done ? "bg-success" : ""
             }`}
+            style={done ? undefined : { background: "var(--clr-wayfind)" }}
           >
             {done ? <Check size={14} strokeWidth={3} /> : index}
           </button>

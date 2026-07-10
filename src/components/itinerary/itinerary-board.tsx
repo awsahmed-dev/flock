@@ -131,9 +131,13 @@ export function ItineraryBoard({
   const [planDayOpen, setPlanDayOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [focusedDay, setFocusedDay] = useState<string | null>(
-    initialDay && days.includes(initialDay) ? initialDay : days[0] ?? null,
-  );
+  const [focusedDay, setFocusedDay] = useState<string | null>(() => {
+    if (initialDay && days.includes(initialDay)) return initialDay;
+    // Design-audit Page 7: during the trip, Today is the default day.
+    const todayIso = new Date().toISOString().slice(0, 10);
+    if (days.includes(todayIso)) return todayIso;
+    return days[0] ?? null;
+  });
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   // B7c: start collapsed so the map dominates the surface (was opening
   // to ~55vh by default which made the map feel like a sub-feature).
@@ -304,7 +308,7 @@ export function ItineraryBoard({
           onItemClick={handleMarkerClick}
           days={days}
           mapStyle={resolvedTheme === "light" ? "light-v11" : "dark-v11"}
-          pinColor="#6b5ce7"
+          pinColor="#3EC5B7"
         />
       </div>
 
@@ -1082,7 +1086,7 @@ function SortableItemRow({
             }
             className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
               item.status === "confirmed"
-                ? "bg-[#6B5CE7]"
+                ? "bg-success"
                 : item.status === "rejected"
                   ? "bg-foreground/35"
                   : "bg-[#FFD60A]"

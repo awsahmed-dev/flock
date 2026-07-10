@@ -35,7 +35,7 @@ export function DashboardTripCard({
   // UPCOMING = muted.
   const chipTone: Record<TripStatusTone, string> = {
     now: "bg-success text-white",
-    soon: "bg-primary text-white",
+    soon: "",
     upcoming: "bg-white/20 text-white",
     past: "bg-white/15 text-white/70",
   };
@@ -78,6 +78,7 @@ export function DashboardTripCard({
         {variant === "full" && status && (
           <span
             className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide ${chipTone[status.tone]}`}
+            style={status.tone === "soon" ? { background: "var(--clr-horizon)", color: "#fff" } : undefined}
           >
             {status.label}
           </span>

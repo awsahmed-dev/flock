@@ -42,15 +42,14 @@ export function DayPillRail({
                 key={d}
                 href={`${base}/itinerary?day=${d}`}
                 className={`flex flex-col items-center gap-0.5 rounded-xl py-2 shrink-0 w-14 border ${
-                  isToday
-                    ? "bg-primary border-primary text-white"
-                    : "bg-muted border-border"
+                  isToday ? "text-white" : "bg-muted border-border"
                 }`}
+                style={isToday ? { background: "var(--clr-wayfind)", borderColor: "var(--clr-wayfind)" } : undefined}
               >
                 <span className={`text-[10px] font-semibold uppercase ${isToday ? "text-white/75" : "text-muted-foreground"}`}>
                   {dfFormat(dt, "EEE")}
                 </span>
-                <span className={`text-[15px] font-bold ${isToday ? "text-white" : "text-primary"}`}>
+                <span className={`text-[15px] font-bold ${isToday ? "text-white" : "text-foreground"}`}>
                   {dfFormat(dt, "d")}
                 </span>
                 <span className={`w-1.5 h-1.5 rounded-full ${count > 0 ? (isToday ? "bg-white" : "bg-primary") : "bg-transparent"}`} />

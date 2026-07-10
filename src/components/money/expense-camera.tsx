@@ -169,7 +169,7 @@ export function ExpenseCamera({
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div
                   className="rounded-2xl"
-                  style={{ width: 280, height: 380, border: "2px solid #6B5CE7", boxShadow: "0 0 0 100vmax rgba(0,0,0,0.35)" }}
+                  style={{ width: 280, height: 380, border: "2px solid var(--clr-wayfind)", boxShadow: "0 0 0 100vmax rgba(0,0,0,0.35)" }}
                 />
               </div>
               <div

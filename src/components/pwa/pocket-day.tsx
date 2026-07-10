@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { tripPhase } from "@/lib/trip-phase";
 import { flushQueue } from "@/lib/offline-queue";
@@ -72,6 +72,26 @@ export function PocketDay({
     return () => window.removeEventListener("online", flush);
   }, []);
 
+  // Dev-audit A3: manual [Refresh now] from the Account sheet re-runs the
+  // warmer immediately (only meaningful while a trip cockpit is mounted).
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        localStorage.removeItem("paxawa-pocket-day");
+      } catch {}
+      window.dispatchEvent(new CustomEvent("paxawa:pocketRefreshTick"));
+    };
+    window.addEventListener("paxawa:pocketRefresh", refresh);
+    return () => window.removeEventListener("paxawa:pocketRefresh", refresh);
+  }, []);
+
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setRefreshTick((n) => n + 1);
+    window.addEventListener("paxawa:pocketRefreshTick", bump);
+    return () => window.removeEventListener("paxawa:pocketRefreshTick", bump);
+  }, []);
+
   // Nightly pre-cache (§10-A fallback path).
   useEffect(() => {
     if (!navigator.onLine || !pocketDayEnabled()) return;
@@ -113,7 +133,7 @@ export function PocketDay({
     };
     const id = window.setTimeout(warm, 4000); // after first paint settles
     return () => window.clearTimeout(id);
-  }, [tripId, startDate, endDate, days, stops]);
+  }, [tripId, startDate, endDate, days, stops, refreshTick]);
 
   return null;
 }

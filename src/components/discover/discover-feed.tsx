@@ -1018,7 +1018,13 @@ function CategoryStrip({
   const isGlass = tone === "glass";
 
   const baseChip = "shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
-  const activeChip = isGlass ? "bg-white text-neutral-900" : "bg-foreground text-background";
+  // Master color brief: selected/curated = dune, not white/purple.
+  const activeChip = "";
+  const duneStyle: React.CSSProperties = {
+    background: "var(--clr-dune-dim)",
+    color: "var(--clr-dune)",
+    border: "1px solid rgba(224, 178, 82, 0.3)",
+  };
   const restChip = isGlass
     ? "glass-dark text-white/90"
     : "glass-light text-muted-foreground hover:text-foreground";
@@ -1035,6 +1041,7 @@ function CategoryStrip({
               onClick={() => onSpecialFilter(active ? null : f)}
               aria-pressed={active}
               className={`${baseChip} ${active ? activeChip : restChip}`}
+              style={active ? duneStyle : undefined}
             >
               {f === "crew" ? t("discover.crewPicks") : t("discover.savedTitle")}
             </button>
@@ -1049,6 +1056,7 @@ function CategoryStrip({
             onClick={() => onSelect(c)}
             aria-pressed={active}
             className={`${baseChip} ${active ? activeChip : restChip}`}
+            style={active ? duneStyle : undefined}
           >
             {c === null ? t("discover.catAll") : t(CAT_KEY[c])}
           </button>

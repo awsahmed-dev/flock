@@ -66,38 +66,52 @@
    picks up the new palette: bg-secondary→--muted, text-secondary→
    --muted-foreground, text-tertiary→--text-tertiary, danger→--destructive. */
 :root {
-  --background: #ffffff;        /* bg-primary */
-  --foreground: #0a0a0a;        /* text-primary */
-  --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  /* Master color brief STEP 4: warm cream light surfaces. */
+  --background: #F7F5F0;        /* bg-primary — warm off-white page */
+  --foreground: #1a1720;        /* text-primary */
+  --card: #ffffff;              /* cards stay white */
+  --card-foreground: #1a1720;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  /* Brand purple — primary CTA only (brief §1.4). */
-  --primary: #6b5ce7;
+  --popover-foreground: #1a1720;
+  /* Master color brief STEP 1 — the five semantic colors (light). */
+  --clr-brand: #5B4BD9;
+  --clr-brand-dim: rgba(91, 75, 217, 0.12);
+  --clr-horizon: #BE4E1A;
+  --clr-horizon-dim: rgba(190, 78, 26, 0.12);
+  --clr-wayfind: #0C7A6F;
+  --clr-wayfind-dim: rgba(12, 122, 111, 0.12);
+  --clr-moss: #4E7A34;
+  --clr-moss-dim: rgba(78, 122, 52, 0.14);
+  --clr-dune: #8F6400;
+  --clr-dune-dim: rgba(143, 100, 0, 0.12);
+  --pill-bg: rgba(247, 245, 240, 0.88);
+  --pill-border: rgba(0, 0, 0, 0.10);
+  /* Brand purple — primary CTA + nav ONLY. */
+  --primary: var(--clr-brand);
   --primary-foreground: #ffffff;
-  --secondary: #f5f5f7;         /* bg-secondary */
-  --secondary-foreground: #0a0a0a;
-  --muted: #f5f5f7;
+  --secondary: #F0EDE8;         /* bg-secondary — warm cream */
+  --secondary-foreground: #1a1720;
+  --muted: #F0EDE8;
   --muted-foreground: #6b6b6b;  /* text-secondary */
-  --accent: #f5f5f7;            /* subtle surface (shadcn hover); brand = --primary */
-  --accent-foreground: #0a0a0a;
+  --accent: #F0EDE8;            /* subtle surface (shadcn hover); brand = --primary */
+  --accent-foreground: #1a1720;
   --destructive: #ff453a;       /* danger */
-  --border: #e5e5ea;
-  --input: #e5e5ea;
-  --ring: #6b5ce7;
+  --border: #E5E0D8;            /* warm grey borders */
+  --input: #E5E0D8;
+  --ring: var(--clr-brand);
 
   /* Brief status + extras */
   --success: #30d158;
   --warning: #ff9f0a;
   --danger: #ff453a;
   --text-tertiary: #aeaeb2;
-  --accent-glow: rgba(107, 92, 231, 0.25);
-  --route-line: #6b5ce7;
-  --pin-today: #6b5ce7;
-  --pin-other: rgba(107, 92, 231, 0.4);
+  --accent-glow: var(--clr-brand-dim);
+  --route-line: var(--clr-wayfind);
+  --pin-today: var(--clr-wayfind);
+  --pin-other: var(--clr-wayfind-dim);
   /* §10.1: translucent sheet surface (NOW cockpit bottom sheet, blurred
      panels). Pair with inline backdropFilter — never Tailwind blur. */
-  --sheet-bg: rgba(255, 255, 255, 0.92);
+  --sheet-bg: rgba(247, 245, 240, 0.92);
 
   /* Elevation (brief §1.5) */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -107,69 +121,82 @@
   /* Radius base (brief §1.6: cards/inputs = 12). */
   --radius: 0.75rem;
 
-  --chart-1: #6b5ce7;
+  --chart-1: var(--clr-brand);
   --chart-2: #30d158;
   --chart-3: #ff9f0a;
   --chart-4: #ff453a;
   --chart-5: #0a84ff;
   --sidebar: #ffffff;
   --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #6b5ce7;
+  --sidebar-primary: var(--clr-brand);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f5f5f7;
   --sidebar-accent-foreground: #0a0a0a;
   --sidebar-border: #e5e5ea;
-  --sidebar-ring: #6b5ce7;
+  --sidebar-ring: var(--clr-brand);
 }
 
 .dark {
-  /* NOW-screen / cinematic dark theme (brief §1.4 Dark). */
-  --background: #0a0a0a;        /* bg-primary */
+  /* Master color brief STEP 4: warm purple-black dark surfaces. */
+  --background: #0D0A0F;        /* bg-primary */
   --foreground: #f5f5f7;        /* text-primary */
-  --card: #1c1c1e;
+  --card: #1A1720;
   --card-foreground: #f5f5f7;
-  --popover: #1c1c1e;
+  --popover: #1A1720;
   --popover-foreground: #f5f5f7;
-  --primary: #6b5ce7;
+  /* Master color brief STEP 1 — the five semantic colors (dark). */
+  --clr-brand: #8B7CFF;
+  --clr-brand-dim: rgba(139, 124, 255, 0.16);
+  --clr-horizon: #FF8A5C;
+  --clr-horizon-dim: rgba(255, 138, 92, 0.16);
+  --clr-wayfind: #3EC5B7;
+  --clr-wayfind-dim: rgba(62, 197, 183, 0.16);
+  --clr-moss: #9BC97E;
+  --clr-moss-dim: rgba(155, 201, 126, 0.18);
+  --clr-dune: #E0B252;
+  --clr-dune-dim: rgba(224, 178, 82, 0.16);
+  --pill-bg: rgba(26, 23, 32, 0.82);
+  --pill-border: rgba(255, 255, 255, 0.10);
+  --primary: var(--clr-brand);
   --primary-foreground: #ffffff;
-  --secondary: #141414;         /* bg-secondary */
+  --secondary: #16131b;         /* bg-secondary */
   --secondary-foreground: #f5f5f7;
-  --muted: #141414;
+  --muted: #252130;             /* elevated surface */
   --muted-foreground: #aeaeb2;  /* text-secondary */
-  --accent: #1c1c1e;
+  --accent: #1A1720;
   --accent-foreground: #f5f5f7;
   --destructive: #ff453a;
-  --border: #2c2c2e;
-  --input: #2c2c2e;
-  --ring: #6b5ce7;
+  --border: #312D3D;            /* warm borders */
+  --input: #312D3D;
+  --ring: var(--clr-brand);
 
   --success: #30d158;
   --warning: #ff9f0a;
   --danger: #ff453a;
-  --text-tertiary: #636366;
-  --accent-glow: rgba(107, 92, 231, 0.25);
-  --route-line: #6b5ce7;
-  --pin-today: #6b5ce7;
-  --pin-other: rgba(107, 92, 231, 0.4);
-  --sheet-bg: rgba(10, 10, 10, 0.92);
+  --text-tertiary: #8b8794;
+  --accent-glow: var(--clr-brand-dim);
+  --route-line: var(--clr-wayfind);
+  --pin-today: var(--clr-wayfind);
+  --pin-other: var(--clr-wayfind-dim);
+  --sheet-bg: rgba(26, 23, 32, 0.92);
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
 
-  --chart-1: #6b5ce7;
+  --chart-1: var(--clr-brand);
   --chart-2: #30d158;
   --chart-3: #ff9f0a;
   --chart-4: #ff453a;
   --chart-5: #0a84ff;
   --sidebar: #141414;
   --sidebar-foreground: #f5f5f7;
-  --sidebar-primary: #6b5ce7;
+  --sidebar-primary: var(--clr-brand);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #1c1c1e;
   --sidebar-accent-foreground: #f5f5f7;
   --sidebar-border: #2c2c2e;
-  --sidebar-ring: #6b5ce7;
+  --sidebar-ring: var(--clr-brand);
 }
 
 @layer base {
@@ -346,4 +373,9 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Master-prompt Phase A §STEP 6: kill the 300ms mobile tap delay. */
+button, a, [role="button"] {
+  touch-action: manipulation;
 }

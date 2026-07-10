@@ -31,20 +31,20 @@ import { createClient } from "@/lib/supabase/client";
  * shrinks on 360px viewports via min().
  */
 const CIRCLE_GLASS = {
-  background: "var(--sheet-bg)",
+  background: "var(--pill-bg)",
   backdropFilter: "blur(24px) saturate(180%)",
   WebkitBackdropFilter: "blur(24px) saturate(180%)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--pill-border)",
   boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
   pointerEvents: "auto" as const,
 };
 const PILL_GLASS = {
   width: "min(250px, calc(100vw - 140px))",
   borderRadius: "9999px",
-  background: "var(--sheet-bg)",
+  background: "var(--pill-bg)",
   backdropFilter: "saturate(180%) blur(16px)",
   WebkitBackdropFilter: "saturate(180%) blur(16px)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--pill-border)",
   boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
   pointerEvents: "auto" as const,
   transform: "translateZ(0)",
@@ -286,7 +286,7 @@ export function DynamicBottomNav({
             style={{
               width: "calc(33.333% - 6px)",
               insetInlineStart: `calc(${activeIndex * 33.333}% + 3px)`,
-              background: "var(--muted)",
+              background: "var(--clr-brand)",
               transition: "inset-inline-start 200ms cubic-bezier(0.34,1.3,0.64,1)",
             }}
           />
@@ -305,12 +305,12 @@ export function DynamicBottomNav({
                 <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
                   <Icon
                     size={20}
-                    className={active ? "text-foreground" : "text-muted-foreground"}
+                    className={active ? "text-white" : "text-muted-foreground"}
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </span>
                 <span
-                  className={`truncate max-w-full px-1 ${active ? "text-foreground" : "text-muted-foreground"}`}
+                  className={`truncate max-w-full px-1 ${active ? "text-white" : "text-muted-foreground"}`}
                   style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 600 }}
                 >
                   {tab.label}
@@ -332,7 +332,7 @@ export function DynamicBottomNav({
           className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 active:scale-95"
           style={
             right.accent
-              ? { background: "#6B5CE7", boxShadow: "0 4px 20px rgba(107,92,231,0.5)", pointerEvents: "auto" }
+              ? { background: "var(--clr-brand)", boxShadow: "0 4px 20px var(--clr-brand-dim)", pointerEvents: "auto" }
               : { ...CIRCLE_GLASS }
           }
         >
@@ -356,7 +356,7 @@ export function DynamicBottomNav({
             <ActionRow icon={Luggage} label={t("nav.addPackItem")} onClick={() => { setPlusOpen(false); router.push(`${base}/pack`); }} />
           )}
           <ActionRow icon={Sparkles} label={t("nav.aiFillDay")} onClick={() => { setPlusOpen(false); toast(`${t("nav.aiComingSoon")} ✦`); }} />
-          <ActionRow icon={Users} label={t("nav.askCrew")} onClick={() => { setPlusOpen(false); dispatch("paxawa:openPollComposer"); }} />
+          <ActionRow icon={Users} label={t("nav.askCrew")} onClick={() => { setPlusOpen(false); router.push(`${base}/huddle?compose=poll`); }} />
           <ActionRow icon={Share2} label={t("nav.shareTrip")} onClick={() => { setPlusOpen(false); dispatch("paxawa:shareTrip"); }} />
           <ActionRow icon={CalendarDays} label={t("nav.setBudget")} onClick={() => { setPlusOpen(false); setBudgetOpen(true); }} />
         </div>

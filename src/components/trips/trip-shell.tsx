@@ -170,7 +170,7 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
 
           {/* User avatar → Account sheet. */}
           <div className="xl:hidden shrink-0">
-            <AccountAvatarButton size={36} borderColor="#6B5CE7" />
+            <AccountAvatarButton size={36} borderColor="var(--clr-brand)" />
           </div>
 
           {/* Desktop: avatar → dropdown menu. */}

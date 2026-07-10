@@ -25,7 +25,7 @@ const CAT_KEY: Record<string, string> = {
 };
 
 const LIKE_COLOR = "#FF375F";
-const ACCENT = "#6B5CE7";
+const ACCENT = "var(--clr-brand)";
 
 export function PlaceCard({
   scored,
@@ -189,7 +189,7 @@ export function PlaceCard({
             style={
               reason.startsWith("Wild card")
                 ? { border: "1px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.7)" }
-                : { background: "rgba(107,92,231,0.35)", color: "#fff" }
+                : { background: "var(--clr-brand-dim)", color: "var(--clr-brand)" }
             }
           >
             {reason}

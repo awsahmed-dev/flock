@@ -73,8 +73,8 @@ export function PlanningCockpit(props: CockpitShared) {
           </p>
         </div>
         <div
-          className="absolute top-3 start-4 rounded-lg px-2.5 py-1 bg-primary text-white"
-          style={{ fontSize: 11, fontWeight: 700 }}
+          className="absolute top-3 start-4 rounded-lg px-2.5 py-1"
+          style={{ fontSize: 11, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}
         >
           {daysUntil <= 0 ? "TODAY" : `IN ${daysUntil} ${daysUntil === 1 ? "DAY" : "DAYS"}`}
         </div>
@@ -88,7 +88,7 @@ export function PlanningCockpit(props: CockpitShared) {
         <Link
           href={primary.href}
           className="flex items-center gap-3 h-16 px-4 rounded-2xl bg-primary text-white active:scale-[0.99] transition-transform"
-          style={{ boxShadow: "0 4px 20px rgba(107,92,231,0.35)" }}
+          style={{ boxShadow: "0 4px 20px var(--clr-brand-dim)" }}
         >
           <PrimaryIcon size={22} className="shrink-0" />
           <span className="flex-1 min-w-0 text-[17px] font-bold truncate">{primary.label}</span>

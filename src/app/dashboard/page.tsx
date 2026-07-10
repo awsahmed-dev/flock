@@ -30,7 +30,7 @@ import type { trips as tripsTable } from "@/lib/db/schema";
 
 type Trip = InferSelectModel<typeof tripsTable>;
 
-const ACCENT = "#6B5CE7";
+const ACCENT = "var(--clr-brand)";
 
 const CARD_GRADIENTS = [
   "from-blue-500 to-indigo-600",
@@ -277,9 +277,9 @@ export default async function DashboardPage() {
                     <StatChip icon={Users} value={t("dashboard.crewCount", { count: activeStats.memberCount })} />
                   </div>
                   <div className="flex gap-2 mt-3 pointer-events-auto">
-                    <QuickActionPill href={`/trips/${activeTrip.id}/chat`} icon={MessageCircle} label={t("nav.chat")} />
+                    <QuickActionPill href={`/trips/${activeTrip.id}/huddle`} icon={MessageCircle} label={t("nav.huddle")} />
                     <QuickActionPill href={`/trips/${activeTrip.id}/itinerary`} icon={MapIcon} label={t("nav.map")} />
-                    <QuickActionPill href={`/trips/${activeTrip.id}/expenses`} icon={Receipt} label={t("nav.expenses")} />
+                    <QuickActionPill href={`/trips/${activeTrip.id}/money`} icon={Receipt} label={t("nav.money")} />
                   </div>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default async function DashboardPage() {
                       <div className="absolute inset-0 bg-card border border-border rounded-2xl flex items-center justify-center">
                         <span
                           className="font-extrabold"
-                          style={{ fontSize: 40, fontWeight: 800, color: "rgba(107,92,231,0.45)" }}
+                          style={{ fontSize: 40, fontWeight: 800, color: "var(--clr-brand)", opacity: 0.45 }}
                         >
                           {(trip.destination || trip.name || "?").charAt(0).toUpperCase()}
                         </span>
@@ -390,7 +390,7 @@ export default async function DashboardPage() {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="mb-3 px-4 text-[11px] font-semibold tracking-wider uppercase text-tertiary">
+    <p className="mt-1 mb-3 px-4 text-[11px] font-semibold tracking-wider uppercase text-tertiary">
       {label}
     </p>
   );

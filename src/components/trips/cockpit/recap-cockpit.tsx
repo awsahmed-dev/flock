@@ -398,13 +398,13 @@ async function generateWrapCard(
     const h = 900;
     const sx = (lng: number) => pad + ((lng - Math.min(...lngs)) / Math.max(1e-6, Math.max(...lngs) - Math.min(...lngs))) * w;
     const sy = (lat: number) => 350 + h - ((lat - Math.min(...lats)) / Math.max(1e-6, Math.max(...lats) - Math.min(...lats))) * h;
-    ctx.strokeStyle = "#6B5CE7";
+    ctx.strokeStyle = "#3EC5B7";
     ctx.lineWidth = 6;
     ctx.lineJoin = "round";
     ctx.beginPath();
     coords.forEach((c, i) => (i === 0 ? ctx.moveTo(sx(c.lng), sy(c.lat)) : ctx.lineTo(sx(c.lng), sy(c.lat))));
     ctx.stroke();
-    ctx.fillStyle = "#6B5CE7";
+    ctx.fillStyle = "#3EC5B7";
     for (const c of coords) {
       ctx.beginPath();
       ctx.arc(sx(c.lng), sy(c.lat), 10, 0, Math.PI * 2);
@@ -417,7 +417,7 @@ async function generateWrapCard(
   ctx.fillText(`${tripName},`, 80, 1420);
   ctx.fillText("wrapped.", 80, 1515);
 
-  ctx.fillStyle = "#6B5CE7";
+  ctx.fillStyle = "#8B7CFF";
   ctx.font = "700 48px system-ui, -apple-system, sans-serif";
   ctx.fillText(
     `${stats.days} days · ${stats.stops} stops · ${stats.currency} ${stats.spent.toLocaleString()}`,
@@ -464,9 +464,9 @@ function RouteArt({ items, className }: { items: CockpitShared["items"]; classNa
   const d = coords.map((c, i) => `${i === 0 ? "M" : "L"}${nx(c.lng).toFixed(1)},${ny(c.lat).toFixed(1)}`).join(" ");
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className={`${className ?? ""} bg-background`}>
-      <path d={d} fill="none" stroke="#6B5CE7" strokeWidth={1.2} strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="#3EC5B7" strokeWidth={1.2} strokeLinejoin="round" />
       {coords.map((c, i) => (
-        <circle key={i} cx={nx(c.lng)} cy={ny(c.lat)} r={1.8} fill="#6B5CE7" />
+        <circle key={i} cx={nx(c.lng)} cy={ny(c.lat)} r={1.8} fill="#3EC5B7" />
       ))}
     </svg>
   );

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AccountSheet } from "./account-sheet";
 import { useProfile } from "./use-profile";
 
-const ACCENT = "#6B5CE7";
+const ACCENT = "var(--clr-brand)";
 
 /**
  * §3-F: one shared header avatar — the single source of truth for "my avatar"

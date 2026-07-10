@@ -396,7 +396,7 @@ export function ExpensesBoard({
                 className="rounded-full h-8 px-3 text-[13px] font-semibold transition-colors"
                 style={
                   active
-                    ? { background: "var(--accent-glow)", color: "#6B5CE7" }
+                    ? { background: "var(--clr-dune-dim)", color: "var(--clr-dune)", border: "1px solid rgba(224, 178, 82, 0.3)" }
                     : { background: "var(--muted)", color: "var(--muted-foreground)" }
                 }
               >

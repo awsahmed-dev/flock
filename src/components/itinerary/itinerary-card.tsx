@@ -49,7 +49,7 @@ const TYPE_CONFIG = {
 // design vision §3.2 — Suggested gold, Locked purple, Skipped muted.
 const STATUS_CONFIG = {
   proposed:  { dot: "bg-[#FFD60A]",   ring: "ring-[#FFD60A]/30",  label: "Suggested · tap to vote" },
-  confirmed: { dot: "bg-[#6B5CE7]",   ring: "ring-[#6B5CE7]/30",  label: "Locked in" },
+  confirmed: { dot: "bg-success",   ring: "ring-success/30",  label: "Locked in" },
   rejected:  { dot: "bg-foreground/35", ring: "ring-foreground/20", label: "Skipped" },
 };
 
@@ -217,7 +217,7 @@ export function ItineraryCard({
               />
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem onClick={() => handleStatusChange("confirmed")} className="gap-2">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#6B5CE7]" /> Lock in
+                  <CheckCircle className="w-3.5 h-3.5 text-success" /> Lock in
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange("proposed")} className="gap-2">
                   <Circle className="w-3.5 h-3.5 text-[#FFD60A]" /> Mark suggested

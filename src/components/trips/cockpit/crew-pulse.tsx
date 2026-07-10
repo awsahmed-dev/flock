@@ -41,8 +41,8 @@ export function CrewPulse({
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary transition-[width] duration-700"
-                style={{ width: `${Math.min(100, Math.max(0, readiness))}%` }}
+                className="h-full rounded-full transition-[width] duration-700"
+                style={{ background: "var(--clr-moss)", width: `${Math.min(100, Math.max(0, readiness))}%` }}
               />
             </div>
             <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap tabular-nums">

@@ -80,10 +80,10 @@ export async function DepartureCockpit(props: CockpitShared) {
           <h1 className="text-white" style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.4 }}>
             {name}
           </h1>
-          <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 bg-primary text-white shrink-0" style={{ fontSize: 11, fontWeight: 700 }}>
+          <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 shrink-0" style={{ fontSize: 11, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}>
             {daysUntil <= 0 ? "TODAY ✈" : `IN ${daysUntil} ${daysUntil === 1 ? "DAY" : "DAYS"}`}
             {daysUntil > 0 && (
-              <span className="w-1.5 h-1.5 rounded-full bg-white" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+              <span className="w-1.5 h-1.5 rounded-full" style={{ animation: "pulse 2s ease-in-out infinite", background: "var(--clr-horizon)" }} />
             )}
           </span>
         </div>
@@ -135,7 +135,7 @@ export async function DepartureCockpit(props: CockpitShared) {
 
           <BoardRow>
             <span className="flex items-center justify-between w-full">
-              <span className={packUrgent ? "text-warning font-semibold" : ""}>
+              <span className={packUrgent ? "font-semibold" : ""}>
                 <Luggage size={14} className="inline me-1.5 -mt-0.5" />
                 Packing {packing.packed}/{packing.total}
                 {packLeft > 0 ? ` — ${packLeft} left` : " ✓"}
@@ -170,7 +170,7 @@ export async function DepartureCockpit(props: CockpitShared) {
                   className="flex items-center gap-3 px-4 h-12"
                   style={
                     s.stopType !== "regular"
-                      ? { borderInlineStart: "3px solid #6B5CE7", background: "var(--accent-glow)" }
+                      ? { borderInlineStart: "3px solid var(--clr-horizon)", background: "var(--clr-horizon-dim)" }
                       : undefined
                   }
                 >

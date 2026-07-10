@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/components/i18n/locale-provider";
 import { getPocketDayStatus, pocketDayEnabled, type PocketDayStatus } from "@/components/pwa/pocket-day";
 
-const ACCENT = "#6B5CE7";
+const ACCENT = "var(--clr-brand)";
 const APP_VERSION = "0.1.0";
 
 /**
@@ -325,6 +325,19 @@ function PocketDayRow() {
           <p className="text-[12px] text-tertiary">
             Includes maps, addresses, booking files, and photos for tomorrow.
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (!navigator.onLine) return;
+              window.dispatchEvent(new CustomEvent("paxawa:pocketRefresh"));
+              toast.success("Up to date ✓");
+              setStatus(getPocketDayStatus());
+            }}
+            disabled={typeof navigator !== "undefined" && !navigator.onLine}
+            className="text-start text-[13px] font-semibold text-primary disabled:opacity-50"
+          >
+            Refresh now
+          </button>
           <button
             type="button"
             onClick={clearCache}
