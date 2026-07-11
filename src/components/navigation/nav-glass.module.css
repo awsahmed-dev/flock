@@ -17,16 +17,6 @@
   pointer-events: none;
 }
 
-.nav-backdrop-edge {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 1px;
-  height: 4px;
-  border-radius: 9999px;
-  pointer-events: none;
-}
-
 /* Browsers without backdrop-filter: high-opacity solids stay readable. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .nav-element-circle {

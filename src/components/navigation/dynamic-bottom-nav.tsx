@@ -44,57 +44,64 @@ import { createClient } from "@/lib/supabase/client";
  *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
  *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-/* Sprint 7.1 — extended-backdrop frosted glass, per
- * joshwcomeau.com/css/backdrop-filter (read in full):
- *   · the blur layer is a CHILD at height:200%, bottom-anchored so the
- *     filter samples content ABOVE the floating nav;
- *   · mask-image clips it back to the visible shape (never overflow:hidden
- *     or clip-path — Chrome applies those BEFORE the filter);
- *   · a thin lower-blur edge strip fakes the thick-glass rim;
- *   · both layers are pointer-events:none; the wrapper stays interactive;
- *   · @supports fallback (nav-glass.module.css) goes opaque.
- * DEVIATION from the earlier SVG-<mask> approach: WebKit does not resolve
- * CSS mask-image url(#inlineMask) on HTML elements, which left the
- * backdrops UNMASKED on iPhones — three frosted SQUARES (the "white band"
- * over Discover's bright photos). Shapes are now composed from pure
- * gradient mask layers (the article's own mechanism): a bottom-anchored
- * radial cap at each end + a connecting band, unioned. Works in Safari,
- * Chrome and Firefox. backdropFilter stays INLINE (Lightning CSS). */
-const CAP = "radial-gradient(circle 28px at 28px 50%, black 98%, transparent 100%)";
-const CAP_END = "radial-gradient(circle 28px at calc(100% - 28px) 50%, black 98%, transparent 100%)";
-const BAND = "linear-gradient(to right, transparent 28px, black 28px, black calc(100% - 28px), transparent calc(100% - 28px))";
-const SHAPE_MASK = {
-  maskImage: `${CAP}, ${CAP_END}, ${BAND}`,
-  WebkitMaskImage: `${CAP}, ${CAP_END}, ${BAND}`,
-  maskSize: "100% 50%",
-  WebkitMaskSize: "100% 50%",
-  maskPosition: "bottom",
-  WebkitMaskPosition: "bottom",
-  maskRepeat: "no-repeat",
-  WebkitMaskRepeat: "no-repeat",
-} as const;
+/* Sprint 7.2 — frosted glass, device-fix revision.
+ * Two layers per element:
+ *   1. BLUR-ONLY extended backdrop (200% tall, bottom-anchored) so the
+ *      filter samples content above the nav — masked to the shape with
+ *      the simplest possible gradients (NO calc() anywhere: some mobile
+ *      renderers mishandled calc-heavy mask stops, which is what made the
+ *      purple button read as a square). Untinted, so any residual mask
+ *      softness at the corners is invisible.
+ *   2. TINT + top rim on a plain rounded div — border-radius shapes a
+ *      filterless layer perfectly on every browser, and the rim is an
+ *      inset box-shadow that follows the curve (the old 4px strip
+ *      rendered as a detached floating line on device).
+ * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
+const CIRCLE_MASK = "radial-gradient(circle closest-side at 50% 75%, black 96%, transparent 100%)";
 
-function GlassLayers({ tint }: { tint: string }) {
+function GlassLayers({ tint, shape }: { tint: string; shape: "circle" | "pill" }) {
+  const mask =
+    shape === "circle"
+      ? CIRCLE_MASK
+      : // Pill: bottom-half band with softly faded ends — calc-free.
+        "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)";
+  const maskProps =
+    shape === "circle"
+      ? {
+          maskImage: mask,
+          WebkitMaskImage: mask,
+        }
+      : {
+          maskImage: mask,
+          WebkitMaskImage: mask,
+          maskSize: "100% 50%",
+          WebkitMaskSize: "100% 50%",
+          maskPosition: "bottom",
+          WebkitMaskPosition: "bottom",
+          maskRepeat: "no-repeat",
+          WebkitMaskRepeat: "no-repeat",
+        };
   return (
     <>
-      {/* 200%-tall bottom-anchored blur layer, masked to the pill/circle.
-          (A 56px-wide element's caps meet in the middle → a circle.) */}
+      {/* Blur-only extended layer — invisible except for what it blurs. */}
       <div
         className={glass["nav-backdrop"]}
         style={{
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
-          background: tint,
-          ...SHAPE_MASK,
+          ...maskProps,
         }}
       />
-      {/* Glassy edge — smaller blur + brightness shift along the top rim. */}
+      {/* Shape-perfect tint + rim (no filter → border-radius just works). */}
       <div
-        className={glass["nav-backdrop-edge"]}
+        aria-hidden
         style={{
-          backdropFilter: "blur(12px) brightness(1.15)",
-          WebkitBackdropFilter: "blur(12px) brightness(1.15)",
-          background: "var(--nav-edge)",
+          position: "absolute",
+          inset: 0,
+          borderRadius: 9999,
+          background: tint,
+          boxShadow: "inset 0 1px 0 var(--nav-edge)",
+          pointerEvents: "none",
         }}
       />
     </>
@@ -285,7 +292,7 @@ export function DynamicBottomNav({
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle"]}`}
           style={{ pointerEvents: "auto" }}
         >
-          <GlassLayers tint="var(--nav-glass)" />
+          <GlassLayers tint="var(--nav-glass)" shape="circle" />
           <span key={`left-${left.label}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <left.icon size={24} className="text-foreground" />
           </span>
@@ -300,7 +307,7 @@ export function DynamicBottomNav({
           className={`relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full ${glass["nav-element-pill"]}`}
           style={{ pointerEvents: "auto" }}
         >
-          <GlassLayers tint="var(--nav-glass)" />
+          <GlassLayers tint="var(--nav-glass)" shape="pill" />
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
@@ -355,7 +362,7 @@ export function DynamicBottomNav({
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle-brand"]}`}
           style={{ border: "1.6px solid white", pointerEvents: "auto" }}
         >
-          <GlassLayers tint="rgba(163, 149, 255, 0.50)" />
+          <GlassLayers tint="rgba(163, 149, 255, 0.50)" shape="circle" />
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-black dark:text-white" />
           </span>
