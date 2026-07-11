@@ -88,7 +88,8 @@
   /* Sprint 7C — Figma 4EUY…/100:175 nav glass (light). */
   --nav-glass: rgba(222, 222, 222, 0.46);
   --nav-chip: rgba(255, 255, 255, 0.5);
-  --nav-border: white;
+  --nav-border: rgba(222, 222, 222, 0.2);
+  --nav-pad: 18px;
   --pill-border: rgba(0, 0, 0, 0.10);
   --tab-thumb-bg: #FFFFFF;
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.06);
@@ -165,7 +166,8 @@
   /* Sprint 7C — Figma 4EUY…/100:175 nav glass (dark). */
   --nav-glass: rgba(52, 51, 51, 0.46);
   --nav-chip: rgba(14, 14, 14, 0.5);
-  --nav-border: #0a0a0a;
+  --nav-border: rgba(52, 51, 51, 0.8);
+  --nav-pad: 16px;
   --pill-border: rgba(255, 255, 255, 0.10);
   --tab-thumb-bg: rgba(255,255,255,0.12);
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.08);

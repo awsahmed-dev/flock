@@ -43,40 +43,46 @@ import { createClient } from "@/lib/supabase/client";
  *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
  *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-/* Sprint 7C — exact Figma match (file 4EUYzPzh8Uo357Ep7FccGk, node
- * 100:175). Solid 1px hairline borders (no gradients, no reflections in
- * this revision), plain tints, padding-based sizing (24px pad + 24px icon
- * ≈ 74px circles), 16px gaps. --nav-border flips white→#0a0a0a with the
- * theme; the action circle keeps 1px white in both. backdropFilter stays
- * INLINE — Lightning CSS strips it from classes/stylesheets. */
+/* Sprint 7C rev2 — exact Figma (4EUYzPzh8Uo357Ep7FccGk/100:175, detail
+ * pass). blur(10px) on wrappers (chip 20), semi-transparent tint-matched
+ * hairlines, soft drop shadows, tight metrics: circle pad via --nav-pad
+ * (18px light / 16px dark), pill pad 2px, tabs 6px 8px with 2px gap and
+ * 10px/14px labels. Deviations, both deliberate: the pill is flex:1 in
+ * BOTH modes (the brief's own root-cause #4; its dark-mode fixed 225px is
+ * a Figma frame artifact) and the dark active chip's 30px side padding is
+ * skipped (tabs are equal-width flex:1 — extra padding would skew them).
+ * backdropFilter stays INLINE — Lightning CSS strips classes/stylesheets. */
+const NAV_SHADOW = "0px 0px 6px 0px rgba(0,0,0,0.05), 0px 1px 4px 0px rgba(0,0,0,0.1)";
 const CIRCLE_FRAME = {
-  backdropFilter: "blur(25px)",
-  WebkitBackdropFilter: "blur(25px)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
   background: "var(--nav-glass)",
   border: "1px solid var(--nav-border)",
   borderRadius: 9999,
-  padding: 24,
+  padding: "var(--nav-pad)",
+  boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
 };
 const PILL_FRAME = {
-  backdropFilter: "blur(25px)",
-  WebkitBackdropFilter: "blur(25px)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
   background: "var(--nav-glass)",
   border: "1px solid var(--nav-border)",
   borderRadius: 9999,
-  padding: "6px 7px",
+  padding: 2,
+  boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
 };
 const BRAND_FRAME = {
-  backdropFilter: "blur(25px)",
-  WebkitBackdropFilter: "blur(25px)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
   background: "rgba(163, 149, 255, 0.80)",
-  border: "1px solid white",
+  border: "1px solid rgba(163, 149, 255, 0.2)",
   borderRadius: 9999,
-  padding: 24,
+  padding: 16,
+  boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
 };
-
 interface Tab { key: string; label: string; icon: LucideIcon; href: string }
 
 export function DynamicBottomNav({
@@ -249,7 +255,7 @@ export function DynamicBottomNav({
       {/* Sprint 6 FIX-3 — Figma pill nav: [home 56] [12] [pill flex] [12]
           [action 56], all same height, separate floating glass elements. */}
       <div
-        className="fixed inset-x-0 z-40 flex items-center justify-center gap-4"
+        className="fixed inset-x-0 z-40 flex items-center justify-center gap-2"
         style={{ bottom: "env(safe-area-inset-bottom)", padding: "12px 16px", pointerEvents: "none" }}
       >
         {/* LEFT — itinerary shortcut (Sprint 7 FIX-3); on the itinerary it
@@ -295,11 +301,15 @@ export function DynamicBottomNav({
                       href={tab.href}
                       prefetch
                       aria-current={active ? "page" : undefined}
-                      className="flex flex-col items-center justify-center gap-1 w-full min-w-0"
-                      style={{ padding: "8px 24px" }}
+                      /* padding via classes: HighlightItem clones this Link
+                         and REPLACES its style prop (position/zIndex), so
+                         inline styles here never render. */
+                      className="flex flex-col items-center justify-center gap-0.5 w-full min-w-0 px-2 py-1.5"
                     >
-                      {/* Icon morph at phase boundary: keyed crossfade. */}
-                      <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
+                      {/* Icon morph at phase boundary: keyed crossfade.
+                          flex: an inline span line-boxes the 24px svg down
+                          to ~17px and shrinks the whole pill. */}
+                      <span key={`${tab.key}-${phase}`} className="flex" style={{ animation: "fadeIn 200ms ease" }}>
                         <Icon
                           size={24}
                           className="text-foreground"
@@ -309,7 +319,7 @@ export function DynamicBottomNav({
                       </span>
                       <span
                         className="truncate max-w-full text-foreground"
-                        style={{ fontSize: 14, lineHeight: "18px", fontWeight: active ? 700 : 400 }}
+                        style={{ fontSize: 10, lineHeight: "14px", fontWeight: active ? 700 : 400 }}
                       >
                         {tab.label}
                       </span>
