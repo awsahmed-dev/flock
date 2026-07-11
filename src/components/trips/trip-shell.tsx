@@ -18,6 +18,7 @@ import {
   Moon,
   LogOut,
   ChevronLeft,
+  MessageCircle,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -73,6 +74,49 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
     window.addEventListener("paxawa:openCrewSheet", open);
     return () => window.removeEventListener("paxawa:openCrewSheet", open);
   }, []);
+  // Sprint 7 FIX-1: Huddle lives in the header with an unread dot. Reuses
+  // the nav's old badge logic (open decisions without the user's reaction);
+  // visiting Huddle stamps a per-trip "seen" time so the dot clears until
+  // something newer lands.
+  const [huddleUnread, setHuddleUnread] = useState(false);
+  const seenKey = `paxawa-huddle-seen:${trip.id}`;
+  useEffect(() => {
+    if (pathname.startsWith(`${base}/huddle`)) {
+      try { localStorage.setItem(seenKey, new Date().toISOString()); } catch {}
+      setHuddleUnread(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data: open } = await supabase
+          .from("huddle_decisions")
+          .select("id, created_at")
+          .eq("trip_id", trip.id)
+          .eq("status", "open");
+        if (!open || open.length === 0 || cancelled) { setHuddleUnread(false); return; }
+        const { data: mine } = await supabase
+          .from("decision_reactions")
+          .select("decision_id")
+          .eq("user_id", user.id)
+          .in("decision_id", open.map((d) => d.id));
+        if (cancelled) return;
+        const reacted = new Set((mine ?? []).map((r) => r.decision_id));
+        let seen = 0;
+        try { seen = Date.parse(localStorage.getItem(seenKey) ?? "") || 0; } catch {}
+        setHuddleUnread(
+          open.some((d) => !reacted.has(d.id) && Date.parse(d.created_at as string) > seen),
+        );
+      } catch {
+        /* the dot is decoration — never break the header over it */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, trip.id]);
+
   const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null; email: string | null }>({
     name: "",
     avatarUrl: null,
@@ -174,6 +218,23 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
               </AvatarGroup>
             </div>
           )}
+
+          {/* Sprint 7 FIX-1: Huddle is an inbox — it lives up here, left of
+              the profile, with a brand dot when something needs the user. */}
+          <Link
+            href={`${base}/huddle`}
+            aria-label="Huddle"
+            className="relative shrink-0 w-11 h-11 flex items-center justify-center text-foreground active:opacity-70"
+          >
+            <MessageCircle className="w-[22px] h-[22px]" />
+            {huddleUnread && (
+              <span
+                aria-hidden
+                className="absolute top-2 end-2 w-2.5 h-2.5 rounded-full ring-2 ring-background"
+                style={{ background: "var(--clr-brand)" }}
+              />
+            )}
+          </Link>
 
           {/* User avatar → Account sheet. */}
           <div className="xl:hidden shrink-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -214,6 +214,17 @@ export function ItineraryBoard({
     setDefaultAddDay(day);
     setSearchOpen(true);
   }
+
+  // Sprint 7 FIX-3: the nav's right circle on the itinerary = "+ add stop
+  // to the current day". Ref keeps the listener stable across focus changes.
+  const focusedDayRef = useRef(focusedDay);
+  focusedDayRef.current = focusedDay;
+  useEffect(() => {
+    const add = () => openAddFor(focusedDayRef.current ?? days[0] ?? null);
+    window.addEventListener("paxawa:addStop", add);
+    return () => window.removeEventListener("paxawa:addStop", add);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const mapItems = useMemo(
     () =>

@@ -1,0 +1,40 @@
+/* Sprint 7 FIX-4 — structural classes for the extended-backdrop glass
+ * technique (joshwcomeau.com/css/backdrop-filter). The blur layer is 200%
+ * tall and bottom-anchored so backdrop-filter samples content ABOVE the
+ * nav, then an SVG mask trims it back to the element's shape (mask-image
+ * applies AFTER the filter; overflow/clip-path would clip BEFORE it).
+ *
+ * backdropFilter itself is NEVER in this file — Lightning CSS strips it
+ * from stylesheets; it lives inline on the elements. */
+
+.nav-backdrop {
+  position: absolute;
+  inset: 0;
+  /* Extends 100% above the element (200% total height, anchored at bottom). */
+  height: 200%;
+  bottom: 0;
+  top: auto;
+  pointer-events: none;
+}
+
+.nav-backdrop-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  pointer-events: none;
+}
+
+/* Browsers without backdrop-filter: high-opacity solids stay readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-element-circle {
+    background: rgba(10, 10, 10, 0.82) !important;
+  }
+  .nav-element-circle-brand {
+    background: rgba(100, 85, 200, 0.9) !important;
+  }
+  .nav-element-pill {
+    background: rgba(10, 10, 10, 0.82) !important;
+  }
+}

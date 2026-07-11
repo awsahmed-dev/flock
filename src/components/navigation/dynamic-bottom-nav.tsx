@@ -7,11 +7,12 @@ import { format as isoFmt } from "date-fns";
 import {
   Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
   Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
-  Camera, Search, House,
+  Camera, Search, House, Luggage,
   FileText, X,
   type LucideIcon,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import glass from "./nav-glass.module.css";
 import {
   Tabs,
   TabsList,
@@ -43,11 +44,46 @@ import { createClient } from "@/lib/supabase/client";
  *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
  *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-const NAV_BLUR = {
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  pointerEvents: "auto" as const,
-};
+/* Sprint 7 FIX-4 — the extended-backdrop glass (Josh Comeau technique).
+ * Each element renders: a 200%-tall bottom-anchored blur layer (so the
+ * filter samples content ABOVE the nav) masked back to shape by an inline
+ * SVG <mask> (mask-image applies AFTER the filter; overflow/clip-path
+ * would clip BEFORE it and kill the nearby-content pickup), plus a 4px
+ * brightness edge for depth. backdropFilter stays INLINE — Lightning CSS
+ * strips it from stylesheets. Mask rects live in the backdrop's own box:
+ * y=50%→100% of the 200% layer = exactly the visible element, rx=9999
+ * clamps to a circle/pill. */
+function GlassLayers({ maskId, tint }: { maskId: string; tint: string }) {
+  return (
+    <>
+      <div
+        className={glass["nav-backdrop"]}
+        style={{
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          background: tint,
+          maskImage: `url(#${maskId})`,
+          WebkitMaskImage: `url(#${maskId})`,
+        }}
+      />
+      <svg aria-hidden style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }}>
+        <defs>
+          <mask id={maskId}>
+            <rect x="0" y="50%" width="100%" height="50%" rx="9999" fill="white" />
+          </mask>
+        </defs>
+      </svg>
+      <div
+        className={glass["nav-backdrop-edge"]}
+        style={{
+          backdropFilter: "blur(10px) brightness(1.15)",
+          WebkitBackdropFilter: "blur(10px) brightness(1.15)",
+          background: "var(--nav-edge)",
+        }}
+      />
+    </>
+  );
+}
 
 interface Tab { key: string; label: string; icon: LucideIcon; href: string }
 
@@ -80,36 +116,42 @@ export function DynamicBottomNav({
   const [docOpen, setDocOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
 
-  // §3-A tab config per phase. Money always → /money (the /expenses era
-  // routes 301 there).
+  // Sprint 7 FIX-2 — the exact tab table:
+  //   PLANNING  Now · Discover · Money
+  //   LIVE      Today · Nearby · Money
+  //   DEPARTURE Now · Pack · Discover
+  //   RECAP     Now · Money (two tabs; the pill shrinks)
+  const nowTab: Tab = {
+    key: "now",
+    label: phase === "LIVE" ? t("nav.today") : t("nav.now"),
+    icon: phase === "LIVE" ? Navigation : phase === "DEPARTURE" ? PlaneTakeoff : phase === "RECAP" ? Sparkles : MapPin,
+    href: base,
+  };
+  const discoverTab: Tab = {
+    key: "discover",
+    label: phase === "LIVE" ? t("nav.nearby") : t("nav.discover"),
+    icon: Compass,
+    href: `${base}/discover`,
+  };
+  const moneyTab: Tab = { key: "money", label: t("nav.money"), icon: Wallet, href: `${base}/money` };
+  const packTab: Tab = { key: "pack", label: t("nav.pack"), icon: Luggage, href: `${base}/pack` };
   const tabs: Tab[] =
     phase === "RECAP"
-      ? [
-          { key: "recap", label: t("nav.recap"), icon: Sparkles, href: base },
-          { key: "photos", label: t("nav.photos"), icon: ImageIcon, href: `${base}/recap/photos` },
-          { key: "settle", label: t("nav.settle"), icon: HandCoins, href: `${base}/money` },
-        ]
-      : [
-          {
-            key: "plan",
-            label: phase === "LIVE" ? t("nav.today") : t("nav.plan"),
-            icon: phase === "LIVE" ? Navigation : phase === "DEPARTURE" ? PlaneTakeoff : MapPin,
-            href: base,
-          },
-          {
-            key: "discover",
-            label: phase === "LIVE" ? t("nav.nearby") : t("nav.discover"),
-            icon: Compass,
-            href: `${base}/discover`,
-          },
-          { key: "money", label: t("nav.money"), icon: Wallet, href: `${base}/money` },
-        ];
+      ? [nowTab, moneyTab]
+      : phase === "DEPARTURE"
+        ? [nowTab, packTab, discoverTab]
+        : [nowTab, discoverTab, moneyTab];
 
-  const activeIndex = (() => {
-    if (pathname.startsWith(`${base}/discover`)) return phase === "RECAP" ? 0 : 1;
-    if (pathname.startsWith(`${base}/recap/photos`)) return 1;
-    if (/^\/trips\/[^/]+\/(money|expenses|wallet|manage|pack|members|settings)/.test(pathname)) return 2;
-    return 0; // trip root (cockpit) and everything else
+  // Active tab = longest matching href; money-era routes count as Money.
+  // No match (e.g. /members) → no chip.
+  const moneyish = /^\/trips\/[^/]+\/(money|expenses|wallet)/.test(pathname);
+  const activeKey = (() => {
+    const match = [...tabs]
+      .sort((a, b) => b.href.length - a.href.length)
+      .find((tab) => (tab.href === base ? pathname === base : pathname.startsWith(tab.href)));
+    if (match) return match.key;
+    if (moneyish && tabs.some((tab) => tab.key === "money")) return "money";
+    return "";
   })();
 
   const todayIso = isoFmt(new Date(), "yyyy-MM-dd");
@@ -121,7 +163,7 @@ export function DynamicBottomNav({
 
   function onPlusDown() {
     longPressed.current = false;
-    if (isPackPage) return; // Sprint 6 FIX-2: no menu on Pack — + is the input toggle.
+    // Sprint 7 FIX-3: long-press ALWAYS opens the + menu, on every screen.
     pressTimer.current = setTimeout(() => {
       longPressed.current = true;
       if (navigator.vibrate) navigator.vibrate(10);
@@ -143,10 +185,12 @@ export function DynamicBottomNav({
 
   const dispatch = (name: string) => window.dispatchEvent(new CustomEvent(name));
 
-  // Sprint 6 FIX-2: on the Pack screen the + button IS the add-item toggle —
-  // it never opens the global menu there. Open = focus the inline input
-  // (keyboard up), close = blur. State resets when the route changes.
+  // Sprint 7 FIX-3 — route flags drive both circles (screen-based, not
+  // tab-based: /money in DEPARTURE has no Money tab but is still Money).
   const isPackPage = pathname === `${base}/pack`;
+  const isMoneyPage = moneyish;
+  const isDiscoverPage = pathname.startsWith(`${base}/discover`);
+  const isItineraryPage = pathname.startsWith(`${base}/itinerary`);
   const [packInputOpen, setPackInputOpen] = useState(false);
   useEffect(() => setPackInputOpen(false), [pathname]);
   function togglePackInput() {
@@ -156,11 +200,14 @@ export function DynamicBottomNav({
     });
   }
 
-  // Sprint 6 FIX-3: the left satellite chain is retired — the Figma design
-  // makes the left circle a single home button (back to the trips list).
-  const isDiscoverTab = activeIndex === 1 && phase !== "RECAP";
-  const isMoneyTab = activeIndex === 2;
+  // LEFT circle — one job: get to the itinerary fast; on the itinerary,
+  // flip home to the cockpit.
+  const left: { icon: LucideIcon; label: string; action: () => void } = isItineraryPage
+    ? { icon: House, label: phase === "LIVE" ? t("nav.today") : t("nav.now"), action: () => router.push(base) }
+    : { icon: CalendarDays, label: t("nav.itinerary"), action: () => router.push(`${base}/itinerary`) };
 
+  // RIGHT circle — the Sprint 7 scenario table. Long-press (below) always
+  // opens the + menu regardless of screen.
   const right: { icon: LucideIcon; accent: boolean; label: string; action: () => void } = isPackPage
     ? {
         icon: packInputOpen ? X : Plus,
@@ -168,18 +215,21 @@ export function DynamicBottomNav({
         label: packInputOpen ? t("common.close") : t("pack.add"),
         action: togglePackInput,
       }
-    : isDiscoverTab
+    : isDiscoverPage
     ? { icon: Search, accent: false, label: t("nav.search"), action: () => dispatch("discover:toggleSearch") }
-    : isMoneyTab
+    : isMoneyPage
       ? {
-          icon: phase === "LIVE" ? Camera : Plus,
+          // Phase-aware expense entry: typing pre-trip, camera on the ground.
+          icon: phase === "LIVE" || phase === "RECAP" ? Camera : Plus,
           accent: true,
           label: t("nav.add"),
           action: () =>
-            phase === "LIVE" ? router.push(`${base}/money/expense-camera`) : dispatch("paxawa:logExpense"),
+            phase === "LIVE" || phase === "RECAP"
+              ? router.push(`${base}/money/expense-camera`)
+              : dispatch("paxawa:logExpense"),
         }
-      : phase === "RECAP"
-        ? { icon: Share2, accent: true, label: t("nav.shareTrip"), action: () => dispatch("paxawa:shareWrap") }
+      : isItineraryPage
+        ? { icon: Plus, accent: true, label: t("nav.addPlace"), action: () => dispatch("paxawa:addStop") }
         : phase === "LIVE"
           ? { icon: Camera, accent: true, label: t("nav.add"), action: () => router.push(`${base}/money/expense-camera`) }
           : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };
@@ -208,35 +258,40 @@ export function DynamicBottomNav({
         className="fixed inset-x-0 z-40 flex items-center justify-center gap-3"
         style={{ bottom: "env(safe-area-inset-bottom)", padding: "12px 16px", pointerEvents: "none" }}
       >
-        {/* LEFT — home circle: glass, icon only, back to the trips list. */}
+        {/* LEFT — itinerary shortcut (Sprint 7 FIX-3); on the itinerary it
+            flips home to the cockpit. Extended-backdrop glass (FIX-4). */}
         <button
           type="button"
-          onClick={() => router.push("/dashboard")}
-          aria-label={t("nav.allTrips")}
-          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
-          style={{ background: "var(--nav-glass)", ...NAV_BLUR }}
+          onClick={left.action}
+          aria-label={left.label}
+          className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle"]}`}
+          style={{ pointerEvents: "auto" }}
         >
-          <House size={24} className="text-foreground" />
+          <GlassLayers maskId="circle-left-mask" tint="var(--nav-glass)" />
+          <span key={`left-${left.label}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
+            <left.icon size={24} className="text-foreground" />
+          </span>
         </button>
 
         {/* CENTER pill — equal-width tabs, icon over label. The Animate UI
             highlight is the active chip (rgba black at 3%/10% per theme);
             active icon is the filled variant (fill=currentColor). */}
         <Tabs
-          value={tabs[activeIndex].key}
+          value={activeKey}
           aria-label="Trip sections"
-          className="relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full overflow-hidden"
-          style={{ background: "var(--nav-glass)", ...NAV_BLUR }}
+          className={`relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full ${glass["nav-element-pill"]}`}
+          style={{ pointerEvents: "auto" }}
         >
+          <GlassLayers maskId="center-pill-mask" tint="var(--nav-glass)" />
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
             style={{ top: 4, bottom: 4, insetInlineStart: 4, insetInlineEnd: 4, background: "var(--nav-chip)" }}
           >
             <TabsList className="flex items-center w-full h-full px-1">
-              {tabs.map((tab, i) => {
+              {tabs.map((tab) => {
                 const Icon = tab.icon;
-                const active = i === activeIndex;
+                const active = tab.key === activeKey;
                 return (
                   <TabsHighlightItem key={tab.key} value={tab.key} className="flex-1 h-full min-w-0">
                     <Link
@@ -279,14 +334,11 @@ export function DynamicBottomNav({
           onPointerLeave={onPlusCancel}
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
-          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
-          style={{
-            background: "rgba(163, 149, 255, 0.50)",
-            border: "1.6px solid white",
-            ...NAV_BLUR,
-          }}
+          className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle-brand"]}`}
+          style={{ border: "1.6px solid white", pointerEvents: "auto" }}
         >
-          <span key={`right-${right.label}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
+          <GlassLayers maskId="circle-right-mask" tint="rgba(163, 149, 255, 0.50)" />
+          <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-black dark:text-white" />
           </span>
         </button>

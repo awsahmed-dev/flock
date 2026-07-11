@@ -88,6 +88,7 @@
   /* Sprint 6 FIX-3 — Figma pill nav glass + active chip (light). */
   --nav-glass: rgba(255, 255, 255, 0.46);
   --nav-chip: rgba(0, 0, 0, 0.03);
+  --nav-edge: rgba(0, 0, 0, 0.04);
   --pill-border: rgba(0, 0, 0, 0.10);
   --tab-thumb-bg: #FFFFFF;
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.06);
@@ -164,6 +165,7 @@
   /* Sprint 6 FIX-3 — Figma pill nav glass + active chip (dark). */
   --nav-glass: rgba(10, 10, 10, 0.46);
   --nav-chip: rgba(0, 0, 0, 0.10);
+  --nav-edge: rgba(255, 255, 255, 0.08);
   --pill-border: rgba(255, 255, 255, 0.10);
   --tab-thumb-bg: rgba(255,255,255,0.12);
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.08);
