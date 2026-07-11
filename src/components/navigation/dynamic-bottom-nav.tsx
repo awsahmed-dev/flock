@@ -7,7 +7,7 @@ import { format as isoFmt } from "date-fns";
 import {
   Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
   Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
-  Camera, Map as MapIcon, Bookmark, Clock, Search, MessageCircle,
+  Camera, Search, House,
   FileText, X,
   type LucideIcon,
 } from "lucide-react";
@@ -37,25 +37,16 @@ import { createClient } from "@/lib/supabase/client";
  * source of truth (§2). The pill is NEVER hard 250px (§0 rule 8): it
  * shrinks on 360px viewports via min().
  */
-const CIRCLE_GLASS = {
-  background: "var(--pill-bg)",
-  backdropFilter: "blur(24px) saturate(180%)",
-  WebkitBackdropFilter: "blur(24px) saturate(180%)",
-  border: "1px solid var(--pill-border)",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+/* Sprint 6 FIX-3 — Figma pill nav (node 2002:192): three same-height
+ * floating glass elements. Values from the design:
+ *   glass  — light rgba(255,255,255,0.46) · dark rgba(10,10,10,0.46)
+ *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
+ *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
+ * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
+const NAV_BLUR = {
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
   pointerEvents: "auto" as const,
-};
-const PILL_GLASS = {
-  width: "min(250px, calc(100vw - 140px))",
-  borderRadius: "9999px",
-  background: "var(--pill-bg)",
-  backdropFilter: "saturate(180%) blur(16px)",
-  WebkitBackdropFilter: "saturate(180%) blur(16px)",
-  border: "1px solid var(--pill-border)",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-  pointerEvents: "auto" as const,
-  transform: "translateZ(0)",
-  overflow: "hidden" as const,
 };
 
 interface Tab { key: string; label: string; icon: LucideIcon; href: string }
@@ -88,14 +79,6 @@ export function DynamicBottomNav({
   // Sprint 4 FIX-5a: the document composer owned by the + menu.
   const [docOpen, setDocOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
-  const [huddleBadge, setHuddleBadge] = useState(0);
-  const [savedCount, setSavedCount] = useState(0);
-  useEffect(() => {
-    const onCount = (e: Event) => setSavedCount((e as CustomEvent<number>).detail ?? 0);
-    window.addEventListener("discover:savedCount", onCount as EventListener);
-    window.dispatchEvent(new CustomEvent("discover:requestCount"));
-    return () => window.removeEventListener("discover:savedCount", onCount as EventListener);
-  }, [pathname]);
 
   // §3-A tab config per phase. Money always → /money (the /expenses era
   // routes 301 there).
@@ -128,38 +111,6 @@ export function DynamicBottomNav({
     if (/^\/trips\/[^/]+\/(money|expenses|wallet|manage|pack|members|settings)/.test(pathname)) return 2;
     return 0; // trip root (cockpit) and everything else
   })();
-
-  // Huddle badge: open decisions the user hasn't reacted to + unread thread
-  // replies. Client-side count via RLS-protected supabase — cheap, cached
-  // per route change.
-  useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || cancelled) return;
-        const { data: open } = await supabase
-          .from("huddle_decisions")
-          .select("id")
-          .eq("trip_id", tripId)
-          .eq("status", "open");
-        if (!open || cancelled) return;
-        if (open.length === 0) { setHuddleBadge(0); return; }
-        const { data: mine } = await supabase
-          .from("decision_reactions")
-          .select("decision_id")
-          .eq("user_id", user.id)
-          .in("decision_id", open.map((d) => d.id));
-        if (cancelled) return;
-        const reacted = new Set((mine ?? []).map((r) => r.decision_id));
-        setHuddleBadge(open.filter((d) => !reacted.has(d.id)).length);
-      } catch {
-        /* badge is decoration — never break nav over it */
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [tripId, pathname]);
 
   const todayIso = isoFmt(new Date(), "yyyy-MM-dd");
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? "";
@@ -205,18 +156,10 @@ export function DynamicBottomNav({
     });
   }
 
-  // ── Phase 7 §2: contextual satellites — icons/actions follow the tab. ──
+  // Sprint 6 FIX-3: the left satellite chain is retired — the Figma design
+  // makes the left circle a single home button (back to the trips list).
   const isDiscoverTab = activeIndex === 1 && phase !== "RECAP";
   const isMoneyTab = activeIndex === 2;
-  const isTodayTab = activeIndex === 0 && phase === "LIVE";
-
-  const left: { icon: LucideIcon; label: string; action: () => void; badge: number } = isTodayTab
-    ? { icon: MapIcon, label: t("nav.map"), action: () => dispatch("paxawa:toggleMapView"), badge: 0 }
-    : isDiscoverTab
-      ? { icon: Bookmark, label: t("discover.savedTitle"), action: () => dispatch("discover:openWishlist"), badge: savedCount }
-      : isMoneyTab
-        ? { icon: Clock, label: t("expenses.activity"), action: () => dispatch("money:scrollActivity"), badge: 0 }
-        : { icon: MessageCircle, label: t("nav.huddle"), action: () => router.push(`${base}/huddle`), badge: 0 };
 
   const right: { icon: LucideIcon; accent: boolean; label: string; action: () => void } = isPackPage
     ? {
@@ -241,29 +184,6 @@ export function DynamicBottomNav({
           ? { icon: Camera, accent: true, label: t("nav.add"), action: () => router.push(`${base}/money/expense-camera`) }
           : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };
 
-  // Left long-press (400ms) → Huddle, when decisions are pending.
-  const leftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const leftLong = useRef(false);
-  function onLeftDown() {
-    leftLong.current = false;
-    leftTimer.current = setTimeout(() => {
-      leftLong.current = true;
-      if (navigator.vibrate) navigator.vibrate(10);
-      router.push(`${base}/huddle`);
-    }, 400);
-  }
-  function onLeftUp() {
-    if (leftTimer.current) clearTimeout(leftTimer.current);
-  }
-  function onLeftClick() {
-    // FIX 1: click is the tap path — synthesized reliably on mobile even
-    // with slight finger movement (pointerup is not).
-    if (!leftLong.current) left.action();
-  }
-  function onLeftCancel() {
-    if (leftTimer.current) clearTimeout(leftTimer.current);
-  }
-
   return (
     <div className="xl:hidden">
       {/* Sprint 6 FIX-3 Layer A: content fades into the page background just
@@ -276,75 +196,44 @@ export function DynamicBottomNav({
         aria-hidden
         className="fixed inset-x-0 z-[39]"
         style={{
-          bottom: "calc(env(safe-area-inset-bottom) + 56px)",
-          height: 56,
+          bottom: 0,
+          height: 120,
           background: "linear-gradient(to bottom, transparent, var(--background))",
           pointerEvents: "none",
         }}
       />
-      {/* §3-A cluster: [Huddle 44] [8] [pill] [8] [+ 44]. */}
+      {/* Sprint 6 FIX-3 — Figma pill nav: [home 56] [12] [pill flex] [12]
+          [action 56], all same height, separate floating glass elements. */}
       <div
-        className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-center gap-2 px-3"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)", pointerEvents: "none" }}
+        className="fixed inset-x-0 z-40 flex items-center justify-center gap-3"
+        style={{ bottom: "env(safe-area-inset-bottom)", padding: "12px 16px", pointerEvents: "none" }}
       >
-        {/* LEFT — contextual satellite (§2). Icon changes per tab; the
-            huddle needs-you dot persists on EVERY icon; long-press → Huddle. */}
+        {/* LEFT — home circle: glass, icon only, back to the trips list. */}
         <button
           type="button"
-          onClick={onLeftClick}
-          onPointerDown={onLeftDown}
-          onPointerUp={onLeftUp}
-          onPointerCancel={onLeftCancel}
-          onPointerLeave={onLeftCancel}
-          onContextMenu={(e) => e.preventDefault()}
-          aria-label={left.label}
-          className="w-11 h-11 rounded-full flex items-center justify-center relative active:scale-95 shrink-0"
-          style={CIRCLE_GLASS}
+          onClick={() => router.push("/dashboard")}
+          aria-label={t("nav.allTrips")}
+          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
+          style={{ background: "var(--nav-glass)", ...NAV_BLUR }}
         >
-          <span key={`left-${left.label}`} style={{ animation: "fadeIn 200ms ease" }}>
-            <left.icon size={20} className="text-foreground" />
-          </span>
-          {left.badge > 0 && (
-            <span
-              className="absolute -top-0.5 -end-0.5 min-w-4 h-4 px-0.5 rounded-full bg-primary text-white flex items-center justify-center"
-              style={{ fontSize: 10, fontWeight: 700 }}
-            >
-              {left.badge > 9 ? "9+" : left.badge}
-            </span>
-          )}
-          {huddleBadge > 0 && (
-            <span
-              className="absolute -bottom-0.5 -end-0.5 w-3 h-3 rounded-full ring-2 ring-background"
-              style={{ background: "#FF453A" }}
-              aria-label={`${huddleBadge} decisions need you`}
-            />
-          )}
+          <House size={24} className="text-foreground" />
         </button>
 
-        {/* CENTER pill — phase tabs. Brief A: the thumb is Animate UI's
-            layoutId spring highlight (mode "children"), styled per FIX 6:
-            elevation not color — white pill w/ shadow, inline so Lightning
-            CSS can't strip the layered shadow. Links stay Links (prefetch,
-            real navigation); the route controls the Tabs value. */}
+        {/* CENTER pill — equal-width tabs, icon over label. The Animate UI
+            highlight is the active chip (rgba black at 3%/10% per theme);
+            active icon is the filled variant (fill=currentColor). */}
         <Tabs
           value={tabs[activeIndex].key}
           aria-label="Trip sections"
-          className="relative shrink flex items-center h-14"
-          style={PILL_GLASS}
+          className="relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full overflow-hidden"
+          style={{ background: "var(--nav-glass)", ...NAV_BLUR }}
         >
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
-            style={{
-              top: 6,
-              bottom: 6,
-              insetInlineStart: 3,
-              insetInlineEnd: 3,
-              background: "var(--tab-thumb-bg)",
-              boxShadow: "var(--tab-thumb-shadow)",
-            }}
+            style={{ top: 4, bottom: 4, insetInlineStart: 4, insetInlineEnd: 4, background: "var(--nav-chip)" }}
           >
-            <TabsList className="flex items-center w-full h-full">
+            <TabsList className="flex items-center w-full h-full px-1">
               {tabs.map((tab, i) => {
                 const Icon = tab.icon;
                 const active = i === activeIndex;
@@ -359,14 +248,15 @@ export function DynamicBottomNav({
                       {/* Icon morph at phase boundary: keyed crossfade. */}
                       <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
                         <Icon
-                          size={20}
-                          className={active ? "text-foreground" : "text-tertiary"}
-                          strokeWidth={active ? 2.5 : 2}
+                          size={24}
+                          className="text-foreground"
+                          strokeWidth={2}
+                          fill={active ? "currentColor" : "none"}
                         />
                       </span>
                       <span
-                        className={`truncate max-w-full px-1 ${active ? "text-foreground" : "text-tertiary"}`}
-                        style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 600 }}
+                        className="truncate max-w-full px-1 text-foreground"
+                        style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 500, letterSpacing: "-0.02em" }}
                       >
                         {tab.label}
                       </span>
@@ -378,7 +268,8 @@ export function DynamicBottomNav({
           </TabsHighlight>
         </Tabs>
 
-        {/* RIGHT — [+] circle. Tap = phase default; long-press = full sheet. */}
+        {/* RIGHT — action circle: brand at 50% + white border (Figma), the
+            contextual action unchanged (menu / camera / search / pack X). */}
         <button
           type="button"
           onClick={onPlusClick}
@@ -388,15 +279,15 @@ export function DynamicBottomNav({
           onPointerLeave={onPlusCancel}
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
-          className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 active:scale-95"
-          style={
-            right.accent
-              ? { background: "var(--clr-brand)", boxShadow: "0 4px 20px var(--clr-brand-dim)", pointerEvents: "auto" }
-              : { ...CIRCLE_GLASS }
-          }
+          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
+          style={{
+            background: "rgba(163, 149, 255, 0.50)",
+            border: "1.6px solid white",
+            ...NAV_BLUR,
+          }}
         >
           <span key={`right-${right.label}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
-            <right.icon size={20} className={right.accent ? "text-white" : "text-foreground"} />
+            <right.icon size={24} className="text-black dark:text-white" />
           </span>
         </button>
       </div>
