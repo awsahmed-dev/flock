@@ -19,10 +19,11 @@
 
 .nav-backdrop-edge {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
+  left: 12px;
+  right: 12px;
+  top: 1px;
   height: 4px;
+  border-radius: 9999px;
   pointer-events: none;
 }
 

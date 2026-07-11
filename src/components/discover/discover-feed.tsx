@@ -683,7 +683,12 @@ export function DiscoverFeed({
   }
 
   return (
-    <div className="relative h-[calc(100dvh-56px-60px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
+    /* Sprint 7.1 FIX-1: the stage used to stop 60px short of the bottom
+       (sized for the retired docked nav), exposing a strip of the page
+       background under the hardcoded-dark feed — the "band" behind the
+       floating nav. The immersive feed now runs to the viewport bottom and
+       content clears the floating nav via list padding instead. */
+    <div className="relative h-[calc(100dvh-56px-env(safe-area-inset-top))] rounded-none ring-0 sm:rounded-[2rem] sm:ring-1 sm:ring-white/10 bg-neutral-950 overflow-hidden">
       {/* §4-A: floating gradient top header, overlaid on the feed (not in the
           content flow). Fixed to the viewport, hidden only on desktop (xl),
           pointer-events none except the back link. */}
@@ -765,7 +770,8 @@ export function DiscoverFeed({
             <div
               ref={mapCarouselRef}
               onScroll={onCarouselScroll}
-              className="absolute inset-x-0 bottom-4 z-10 flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none px-[11%]"
+              className="absolute inset-x-0 z-10 flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none px-[11%]"
+              style={{ bottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
             >
               {ranked.map((s) => {
                 const photo = s.place.photoRef
@@ -839,7 +845,8 @@ export function DiscoverFeed({
            sheet. Top padding clears the floating chip strip. */
         <div
           ref={containerRef}
-          className="h-full overflow-y-auto scrollbar-none px-3 pb-6 pt-[68px] space-y-3"
+          className="h-full overflow-y-auto scrollbar-none px-3 pt-[68px] space-y-3"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
         >
           {/* §5-F: vibe onboarding lives inside the feed for cold users. */}
           {tasteCtx && !tasteCtx.onboarded && tasteCtx.interactionCount < 3 && !onboardDismissed && (

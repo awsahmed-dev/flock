@@ -44,40 +44,56 @@ import { createClient } from "@/lib/supabase/client";
  *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
  *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-/* Sprint 7 FIX-4 — the extended-backdrop glass (Josh Comeau technique).
- * Each element renders: a 200%-tall bottom-anchored blur layer (so the
- * filter samples content ABOVE the nav) masked back to shape by an inline
- * SVG <mask> (mask-image applies AFTER the filter; overflow/clip-path
- * would clip BEFORE it and kill the nearby-content pickup), plus a 4px
- * brightness edge for depth. backdropFilter stays INLINE — Lightning CSS
- * strips it from stylesheets. Mask rects live in the backdrop's own box:
- * y=50%→100% of the 200% layer = exactly the visible element, rx=9999
- * clamps to a circle/pill. */
-function GlassLayers({ maskId, tint }: { maskId: string; tint: string }) {
+/* Sprint 7.1 — extended-backdrop frosted glass, per
+ * joshwcomeau.com/css/backdrop-filter (read in full):
+ *   · the blur layer is a CHILD at height:200%, bottom-anchored so the
+ *     filter samples content ABOVE the floating nav;
+ *   · mask-image clips it back to the visible shape (never overflow:hidden
+ *     or clip-path — Chrome applies those BEFORE the filter);
+ *   · a thin lower-blur edge strip fakes the thick-glass rim;
+ *   · both layers are pointer-events:none; the wrapper stays interactive;
+ *   · @supports fallback (nav-glass.module.css) goes opaque.
+ * DEVIATION from the earlier SVG-<mask> approach: WebKit does not resolve
+ * CSS mask-image url(#inlineMask) on HTML elements, which left the
+ * backdrops UNMASKED on iPhones — three frosted SQUARES (the "white band"
+ * over Discover's bright photos). Shapes are now composed from pure
+ * gradient mask layers (the article's own mechanism): a bottom-anchored
+ * radial cap at each end + a connecting band, unioned. Works in Safari,
+ * Chrome and Firefox. backdropFilter stays INLINE (Lightning CSS). */
+const CAP = "radial-gradient(circle 28px at 28px 50%, black 98%, transparent 100%)";
+const CAP_END = "radial-gradient(circle 28px at calc(100% - 28px) 50%, black 98%, transparent 100%)";
+const BAND = "linear-gradient(to right, transparent 28px, black 28px, black calc(100% - 28px), transparent calc(100% - 28px))";
+const SHAPE_MASK = {
+  maskImage: `${CAP}, ${CAP_END}, ${BAND}`,
+  WebkitMaskImage: `${CAP}, ${CAP_END}, ${BAND}`,
+  maskSize: "100% 50%",
+  WebkitMaskSize: "100% 50%",
+  maskPosition: "bottom",
+  WebkitMaskPosition: "bottom",
+  maskRepeat: "no-repeat",
+  WebkitMaskRepeat: "no-repeat",
+} as const;
+
+function GlassLayers({ tint }: { tint: string }) {
   return (
     <>
+      {/* 200%-tall bottom-anchored blur layer, masked to the pill/circle.
+          (A 56px-wide element's caps meet in the middle → a circle.) */}
       <div
         className={glass["nav-backdrop"]}
         style={{
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
           background: tint,
-          maskImage: `url(#${maskId})`,
-          WebkitMaskImage: `url(#${maskId})`,
+          ...SHAPE_MASK,
         }}
       />
-      <svg aria-hidden style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }}>
-        <defs>
-          <mask id={maskId}>
-            <rect x="0" y="50%" width="100%" height="50%" rx="9999" fill="white" />
-          </mask>
-        </defs>
-      </svg>
+      {/* Glassy edge — smaller blur + brightness shift along the top rim. */}
       <div
         className={glass["nav-backdrop-edge"]}
         style={{
-          backdropFilter: "blur(10px) brightness(1.15)",
-          WebkitBackdropFilter: "blur(10px) brightness(1.15)",
+          backdropFilter: "blur(12px) brightness(1.15)",
+          WebkitBackdropFilter: "blur(12px) brightness(1.15)",
           background: "var(--nav-edge)",
         }}
       />
@@ -242,6 +258,7 @@ export function DynamicBottomNav({
           nav); var(--background) keeps both themes correct. The nav's glass
           itself (Layer B) is the existing inline backdropFilter + the
           semi-transparent --pill-bg tokens. */}
+      {!isDiscoverPage && (
       <div
         aria-hidden
         className="fixed inset-x-0 z-[39]"
@@ -252,6 +269,7 @@ export function DynamicBottomNav({
           pointerEvents: "none",
         }}
       />
+      )}
       {/* Sprint 6 FIX-3 — Figma pill nav: [home 56] [12] [pill flex] [12]
           [action 56], all same height, separate floating glass elements. */}
       <div
@@ -267,7 +285,7 @@ export function DynamicBottomNav({
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle"]}`}
           style={{ pointerEvents: "auto" }}
         >
-          <GlassLayers maskId="circle-left-mask" tint="var(--nav-glass)" />
+          <GlassLayers tint="var(--nav-glass)" />
           <span key={`left-${left.label}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <left.icon size={24} className="text-foreground" />
           </span>
@@ -282,7 +300,7 @@ export function DynamicBottomNav({
           className={`relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full ${glass["nav-element-pill"]}`}
           style={{ pointerEvents: "auto" }}
         >
-          <GlassLayers maskId="center-pill-mask" tint="var(--nav-glass)" />
+          <GlassLayers tint="var(--nav-glass)" />
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
@@ -337,7 +355,7 @@ export function DynamicBottomNav({
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle-brand"]}`}
           style={{ border: "1.6px solid white", pointerEvents: "auto" }}
         >
-          <GlassLayers maskId="circle-right-mask" tint="rgba(163, 149, 255, 0.50)" />
+          <GlassLayers tint="rgba(163, 149, 255, 0.50)" />
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-black dark:text-white" />
           </span>
