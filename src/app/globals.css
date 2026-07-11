@@ -143,13 +143,67 @@
   --sidebar-ring: var(--clr-brand);
 }
 
+/* ── Full hue palette — Figma "Paxawa Design System" Page 1 ────────────────
+   Nine 10-step OKLCH-even ramps for trip tags, category colors, avatar
+   pools, charts and dynamic coloring. Step 400 = dark-mode voice (hero),
+   step 600 = light-mode voice. Red/Yellow/Green/Teal absorb the state
+   colors (error/dune/moss/wayfind); Purple and Orange are the brand ramps.
+   Primitives — identical in both modes; semantic tokens pick per mode. */
+:root {
+  --red-50: #FFF2F0;    --red-100: #FFE1DD;   --red-200: #FFC5BE;
+  --red-300: #FF9C92;   --red-400: #FF6B5E;   --red-500: #E5544A;
+  --red-600: #C93F30;   --red-700: #A32E24;   --red-800: #7A211A;
+  --red-900: #4E1310;
+
+  --orange-50: #FFF3ED;  --orange-100: #FFE4D6; --orange-200: #FFC9AD;
+  --orange-300: #FFAA84; --orange-400: #FF8A5C; --orange-500: #E06A3B;
+  --orange-600: #BE4E1A; --orange-700: #9A3F14; --orange-800: #75300F;
+  --orange-900: #4A1E09;
+
+  --yellow-50: #FCF6E8;  --yellow-100: #F8EACB; --yellow-200: #F0D89E;
+  --yellow-300: #E9C577; --yellow-400: #E0B252; --yellow-500: #B98B27;
+  --yellow-600: #8F6400; --yellow-700: #745100; --yellow-800: #573D00;
+  --yellow-900: #392800;
+
+  --green-50: #F2F8ED;   --green-100: #E3F0D8;  --green-200: #C9E2B4;
+  --green-300: #B2D699;  --green-400: #9BC97E;  --green-500: #74A258;
+  --green-600: #4E7A34;  --green-700: #3E6329;  --green-800: #2E4B1E;
+  --green-900: #1E3213;
+
+  --teal-50: #EAF7F5;    --teal-100: #D0EEEA;   --teal-200: #A3DFD8;
+  --teal-300: #71D2C7;   --teal-400: #3EC5B7;   --teal-500: #25A093;
+  --teal-600: #0C7A6F;   --teal-700: #09635A;   --teal-800: #074B44;
+  --teal-900: #04322E;
+
+  --blue-50: #EFF5FF;    --blue-100: #DBE9FF;   --blue-200: #B8D3FF;
+  --blue-300: #92BDFF;   --blue-400: #6BA6FF;   --blue-500: #3D82F6;
+  --blue-600: #2160D3;   --blue-700: #1B4DA8;   --blue-800: #143A7E;
+  --blue-900: #0D2653;
+
+  --indigo-50: #F0F1FF;  --indigo-100: #E0E3FF; --indigo-200: #C2C8FF;
+  --indigo-300: #99A2FF; --indigo-400: #6E7BFF; --indigo-500: #5560E8;
+  --indigo-600: #3D46C4; --indigo-700: #313A9E; --indigo-800: #252C77;
+  --indigo-900: #181D4F;
+
+  --purple-50: #F3F1FF;  --purple-100: #E7E3FF; --purple-200: #D1C9FF;
+  --purple-300: #B3A6FF; --purple-400: #8B7CFF; --purple-500: #7263EC;
+  --purple-600: #5B4BD9; --purple-700: #4A3CB8; --purple-800: #392E90;
+  --purple-900: #241D5C;
+
+  --pink-50: #FDF0F7;    --pink-100: #FBDEED;   --pink-200: #F7BDDB;
+  --pink-300: #F49CC9;   --pink-400: #F07BB7;   --pink-500: #D6539A;
+  --pink-600: #B23579;   --pink-700: #8F2A61;   --pink-800: #6B1F49;
+  --pink-900: #471430;
+}
+
 .dark {
-  /* Master color brief STEP 4: warm purple-black dark surfaces. */
-  --background: #0D0A0F;        /* bg-primary */
+  /* Design-system revision: cast-free neutral dark surfaces (was the
+     plum family #0D0A0F/#1A1720/#252130/#312D3D). */
+  --background: #0D0D0D;        /* bg-primary */
   --foreground: #f5f5f7;        /* text-primary */
-  --card: #1A1720;
+  --card: #1A1A1A;
   --card-foreground: #f5f5f7;
-  --popover: #1A1720;
+  --popover: #1A1A1A;
   --popover-foreground: #f5f5f7;
   /* Master color brief STEP 1 — the five semantic colors (dark). */
   --clr-brand: #8B7CFF;
@@ -162,7 +216,7 @@
   --clr-moss-dim: rgba(155, 201, 126, 0.18);
   --clr-dune: #E0B252;
   --clr-dune-dim: rgba(224, 178, 82, 0.16);
-  --pill-bg: rgba(26, 23, 32, 0.82);
+  --pill-bg: rgba(26, 26, 26, 0.82);
   /* Sprint 7C — Figma 4EUY…/100:175 nav glass (dark). */
   --nav-glass: rgba(52, 51, 51, 0.46);
   --nav-chip: rgba(14, 14, 14, 0.5);
@@ -175,13 +229,13 @@
   --primary-foreground: #ffffff;
   --secondary: #16131b;         /* bg-secondary */
   --secondary-foreground: #f5f5f7;
-  --muted: #252130;             /* elevated surface */
+  --muted: #242424;             /* elevated surface */
   --muted-foreground: #aeaeb2;  /* text-secondary */
-  --accent: #1A1720;
+  --accent: #1A1A1A;
   --accent-foreground: #f5f5f7;
   --destructive: #ff453a;
-  --border: #312D3D;            /* warm borders */
-  --input: #312D3D;
+  --border: #313131;            /* neutral borders */
+  --input: #313131;
   --ring: var(--clr-brand);
 
   --success: #30d158;
@@ -192,7 +246,7 @@
   --route-line: var(--clr-wayfind);
   --pin-today: var(--clr-wayfind);
   --pin-other: var(--clr-wayfind-dim);
-  --sheet-bg: rgba(26, 23, 32, 0.92);
+  --sheet-bg: rgba(26, 26, 26, 0.92);
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
