@@ -190,7 +190,7 @@ export function AccountSheet({
             type="button"
             onClick={save}
             disabled={isPending || !name.trim()}
-            className="w-full mt-3 rounded-xl font-semibold text-white inline-flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
+            className="w-full mt-3 rounded-xl font-semibold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
             style={{ height: 48, background: ACCENT, fontSize: 15 }}
           >
             {isPending ? (
