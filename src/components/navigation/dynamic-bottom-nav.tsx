@@ -116,10 +116,13 @@ function GlassLayers({ tint, shape, glow }: { tint: string; shape: "circle" | "p
             top: 0,
             left: 0,
             right: 0,
-            height: 3,
+            height: 5,
             backdropFilter: "blur(12px) brightness(0.96)",
             WebkitBackdropFilter: "blur(12px) brightness(0.96)",
             background: "var(--nav-edge)",
+            // FIX 5: feather the strip itself — light catching a rim, not a
+            // border. (The rounded container clips the upward bleed.)
+            filter: "blur(3px)",
           }}
         />
       </div>
@@ -330,7 +333,16 @@ export function DynamicBottomNav({
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
-            style={{ top: 4, bottom: 4, insetInlineStart: 4, insetInlineEnd: 4, background: "var(--nav-chip)" }}
+            style={{
+              top: 4,
+              bottom: 4,
+              insetInlineStart: 4,
+              insetInlineEnd: 4,
+              // FIX 6: same design language as the action circle — soft
+              // purple tint, gentle glow, a whisper of elevation.
+              background: "rgba(163, 149, 255, 0.30)",
+              boxShadow: "0 0 10px 2px rgba(163, 149, 255, 0.22), 0 2px 8px rgba(0, 0, 0, 0.18)",
+            }}
           >
             <TabsList className="flex items-center w-full h-full px-1">
               {tabs.map((tab) => {
