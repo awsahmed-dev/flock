@@ -58,26 +58,27 @@ import { createClient } from "@/lib/supabase/client";
  *      rendered as a detached floating line on device).
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
 const CIRCLE_MASK = "radial-gradient(circle closest-side at 50% 75%, black 96%, transparent 100%)";
+// Pill = union of two soft caps + a soft-edged connecting band, all on the
+// 200% layer. The 96→100% fades ARE the glass stroke (same as the circle).
+const PILL_CAP_L = "radial-gradient(circle 28px at 28px 75%, black 96%, transparent 100%)";
+const PILL_CAP_R = "radial-gradient(circle 28px at calc(100% - 28px) 75%, black 96%, transparent 100%)";
+const PILL_BAND = "linear-gradient(to bottom, transparent 49.2%, black 50.8%, black 99.2%, transparent 100%)";
 
-function GlassLayers({ tint, shape }: { tint: string; shape: "circle" | "pill" }) {
-  const mask =
-    shape === "circle"
-      ? CIRCLE_MASK
-      : // Pill: bottom-half band with softly faded ends — calc-free.
-        "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)";
+function GlassLayers({ tint, shape, glow }: { tint: string; shape: "circle" | "pill"; glow?: string }) {
   const maskProps =
     shape === "circle"
       ? {
-          maskImage: mask,
-          WebkitMaskImage: mask,
+          maskImage: CIRCLE_MASK,
+          WebkitMaskImage: CIRCLE_MASK,
         }
       : {
-          maskImage: mask,
-          WebkitMaskImage: mask,
-          maskSize: "100% 50%",
-          WebkitMaskSize: "100% 50%",
-          maskPosition: "bottom",
-          WebkitMaskPosition: "bottom",
+          // FIX 2: a real pill shape — caps + band unioned; no rectangle.
+          maskImage: `${PILL_CAP_L}, ${PILL_CAP_R}, ${PILL_BAND}`,
+          WebkitMaskImage: `${PILL_CAP_L}, ${PILL_CAP_R}, ${PILL_BAND}`,
+          maskSize: "100% 100%, 100% 100%, calc(100% - 56px) 100%",
+          WebkitMaskSize: "100% 100%, 100% 100%, calc(100% - 56px) 100%",
+          maskPosition: "0 0, 0 0, center",
+          WebkitMaskPosition: "0 0, 0 0, center",
           maskRepeat: "no-repeat",
           WebkitMaskRepeat: "no-repeat",
         };
@@ -106,6 +107,7 @@ function GlassLayers({ tint, shape }: { tint: string; shape: "circle" | "pill" }
           background: tint,
           overflow: "hidden",
           pointerEvents: "none",
+          ...(glow ? { boxShadow: `0 0 10px 2px ${glow}` } : {}),
         }}
       >
         <div
@@ -377,9 +379,11 @@ export function DynamicBottomNav({
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle-brand"]}`}
-          style={{ border: "1.6px solid white", pointerEvents: "auto" }}
+          style={{ pointerEvents: "auto" }}
         >
-          <GlassLayers tint="rgba(163, 149, 255, 0.50)" shape="circle" />
+          {/* FIX 3: the stroke belongs to the glass — the mask's soft edge
+              is the rim (same as the left circle) + a diffuse purple halo. */}
+          <GlassLayers tint="rgba(163, 149, 255, 0.50)" shape="circle" glow="rgba(163, 149, 255, 0.40)" />
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-black dark:text-white" />
           </span>
