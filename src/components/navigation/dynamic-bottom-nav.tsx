@@ -92,7 +92,11 @@ function GlassLayers({ tint, shape }: { tint: string; shape: "circle" | "pill" }
           ...maskProps,
         }}
       />
-      {/* Shape-perfect tint + rim (no filter → border-radius just works). */}
+      {/* Shape-perfect tint (no filter → border-radius just works). The
+          glassy edge lives INSIDE this rounded, clipping container so it
+          follows the curve — a soft blur(12px) brightness(0.96) strip per
+          the article, not a hard line. (overflow clipping is safe here:
+          only the EXTENDED layer above must avoid pre-filter clipping.) */}
       <div
         aria-hidden
         style={{
@@ -100,10 +104,23 @@ function GlassLayers({ tint, shape }: { tint: string; shape: "circle" | "pill" }
           inset: 0,
           borderRadius: 9999,
           background: tint,
-          boxShadow: "inset 0 1px 0 var(--nav-edge)",
+          overflow: "hidden",
           pointerEvents: "none",
         }}
-      />
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            backdropFilter: "blur(12px) brightness(0.96)",
+            WebkitBackdropFilter: "blur(12px) brightness(0.96)",
+            background: "var(--nav-edge)",
+          }}
+        />
+      </div>
     </>
   );
 }

@@ -29,3 +29,11 @@
     background: rgba(10, 10, 10, 0.82) !important;
   }
 }
+
+/* If gradient masks are unsupported, the extended layer would render as an
+ * unclipped square — drop it; the rounded tint layer stays clean. */
+@supports not ((mask-image: linear-gradient(black, black)) or (-webkit-mask-image: linear-gradient(black, black))) {
+  .nav-backdrop {
+    display: none;
+  }
+}
