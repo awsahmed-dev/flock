@@ -43,45 +43,39 @@ import { createClient } from "@/lib/supabase/client";
  *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
  *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-/* Sprint 7B — nav glass restyle (Figma node 2004:38). The extended-backdrop
- * technique is gone: each element carries a direct inline blur(25px), a
- * theme-tinted fill, and a GRADIENT BORDER via the padding-box/border-box
- * two-layer background (works with any border-radius). Gradient stops
- * follow the brief's direction; exact Figma stops were unavailable (MCP
- * plan limit) — see tokens in globals.css to retune. backdropFilter stays
- * INLINE (Lightning CSS strips it from stylesheets). */
-const GLASS_FRAME = (borderWidth: number) => ({
-  border: `${borderWidth}px solid transparent`,
-  background:
-    "linear-gradient(var(--nav-glass), var(--nav-glass)) padding-box, var(--nav-border-gradient) border-box",
+/* Sprint 7C — exact Figma match (file 4EUYzPzh8Uo357Ep7FccGk, node
+ * 100:175). Solid 1px hairline borders (no gradients, no reflections in
+ * this revision), plain tints, padding-based sizing (24px pad + 24px icon
+ * ≈ 74px circles), 16px gaps. --nav-border flips white→#0a0a0a with the
+ * theme; the action circle keeps 1px white in both. backdropFilter stays
+ * INLINE — Lightning CSS strips it from classes/stylesheets. */
+const CIRCLE_FRAME = {
   backdropFilter: "blur(25px)",
   WebkitBackdropFilter: "blur(25px)",
-  pointerEvents: "auto" as const,
-});
-const BRAND_FRAME = {
-  border: "3px solid transparent",
-  background:
-    "linear-gradient(rgba(163, 149, 255, 0.80), rgba(163, 149, 255, 0.80)) padding-box, linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.35)) border-box",
-  backdropFilter: "blur(25px)",
-  WebkitBackdropFilter: "blur(25px)",
+  background: "var(--nav-glass)",
+  border: "1px solid var(--nav-border)",
+  borderRadius: 9999,
+  padding: 24,
   pointerEvents: "auto" as const,
 };
-/* PART 6 — soft diagonal light reflection (liquid-glass gloss). */
-function Reflection({ angle = 135 }: { angle?: number }) {
-  return (
-    <div
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: `linear-gradient(${angle}deg, rgba(255,255,255,0.25) 0%, transparent 55%)`,
-        mixBlendMode: "soft-light",
-        pointerEvents: "none",
-        borderRadius: "inherit",
-      }}
-    />
-  );
-}
+const PILL_FRAME = {
+  backdropFilter: "blur(25px)",
+  WebkitBackdropFilter: "blur(25px)",
+  background: "var(--nav-glass)",
+  border: "1px solid var(--nav-border)",
+  borderRadius: 9999,
+  padding: "6px 7px",
+  pointerEvents: "auto" as const,
+};
+const BRAND_FRAME = {
+  backdropFilter: "blur(25px)",
+  WebkitBackdropFilter: "blur(25px)",
+  background: "rgba(163, 149, 255, 0.80)",
+  border: "1px solid white",
+  borderRadius: 9999,
+  padding: 24,
+  pointerEvents: "auto" as const,
+};
 
 interface Tab { key: string; label: string; icon: LucideIcon; href: string }
 
@@ -255,7 +249,7 @@ export function DynamicBottomNav({
       {/* Sprint 6 FIX-3 — Figma pill nav: [home 56] [12] [pill flex] [12]
           [action 56], all same height, separate floating glass elements. */}
       <div
-        className="fixed inset-x-0 z-40 flex items-center justify-center gap-3"
+        className="fixed inset-x-0 z-40 flex items-center justify-center gap-4"
         style={{ bottom: "env(safe-area-inset-bottom)", padding: "12px 16px", pointerEvents: "none" }}
       >
         {/* LEFT — itinerary shortcut (Sprint 7 FIX-3); on the itinerary it
@@ -264,11 +258,10 @@ export function DynamicBottomNav({
           type="button"
           onClick={left.action}
           aria-label={left.label}
-          className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
-          style={GLASS_FRAME(4)}
+          className="relative flex items-center justify-center shrink-0 active:scale-95"
+          style={CIRCLE_FRAME}
         >
-          <Reflection />
-          <span key={`left-${left.label}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
+          <span key={`left-${left.label}`} className="relative flex" style={{ animation: "fadeIn 200ms ease" }}>
             <left.icon size={24} className="text-foreground" />
           </span>
         </button>
@@ -279,33 +272,31 @@ export function DynamicBottomNav({
         <Tabs
           value={activeKey}
           aria-label="Trip sections"
-          className="relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full"
-          style={GLASS_FRAME(3)}
+          className="relative flex-1 min-w-0 max-w-[420px] flex items-center"
+          style={PILL_FRAME}
         >
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
             style={{
-              top: 4,
-              bottom: 4,
-              insetInlineStart: 4,
-              insetInlineEnd: 4,
+              inset: 0,
               background: "var(--nav-chip)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
             }}
           >
-            <TabsList className="flex items-center w-full h-full px-1">
+            <TabsList className="flex items-center w-full">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = tab.key === activeKey;
                 return (
-                  <TabsHighlightItem key={tab.key} value={tab.key} className="flex-1 h-full min-w-0">
+                  <TabsHighlightItem key={tab.key} value={tab.key} className="flex-1 min-w-0">
                     <Link
                       href={tab.href}
                       prefetch
                       aria-current={active ? "page" : undefined}
-                      className="flex flex-col items-center justify-center gap-0.5 h-full w-full min-w-0"
+                      className="flex flex-col items-center justify-center gap-1 w-full min-w-0"
+                      style={{ padding: "8px 24px" }}
                     >
                       {/* Icon morph at phase boundary: keyed crossfade. */}
                       <span key={`${tab.key}-${phase}`} style={{ animation: "fadeIn 200ms ease" }}>
@@ -317,8 +308,8 @@ export function DynamicBottomNav({
                         />
                       </span>
                       <span
-                        className="truncate max-w-full px-1 text-foreground"
-                        style={{ fontSize: "clamp(10px, 3vw, 12px)", fontWeight: 500, letterSpacing: "-0.02em" }}
+                        className="truncate max-w-full text-foreground"
+                        style={{ fontSize: 14, lineHeight: "18px", fontWeight: active ? 700 : 400 }}
                       >
                         {tab.label}
                       </span>
@@ -341,11 +332,9 @@ export function DynamicBottomNav({
           onPointerLeave={onPlusCancel}
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
-          className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
+          className="relative flex items-center justify-center shrink-0 active:scale-95"
           style={BRAND_FRAME}
         >
-          {/* Figma's reflection vectors sit at ~-15deg on the action circle. */}
-          <Reflection angle={120} />
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-black dark:text-white" />
           </span>
