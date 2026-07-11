@@ -121,7 +121,7 @@ export function ProfileForm({
           disabled={uploading}
           className="relative group"
         >
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/15 to-violet-500/15 border-2 border-border flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/15 to-primary/10 border-2 border-border flex items-center justify-center overflow-hidden">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
@@ -210,7 +210,7 @@ export function ProfileForm({
         <button
           type="submit"
           disabled={isPending || uploading}
-          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white text-sm font-bold px-5 py-2.5 hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground text-sm font-bold px-5 py-2.5 hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {isPending ? (
             <>

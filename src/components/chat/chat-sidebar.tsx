@@ -238,9 +238,9 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 bg-gradient-to-r from-primary/5 to-violet-500/5">
+      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 bg-gradient-to-r from-primary/5 to-primary/5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-sm">
             <MessageSquare className="w-3.5 h-3.5 text-white" />
           </div>
           <div>

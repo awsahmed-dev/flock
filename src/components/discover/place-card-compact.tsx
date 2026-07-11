@@ -70,7 +70,7 @@ export function PlaceCardCompact({
             />
           </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/15 to-violet-500/15 text-3xl font-bold text-primary/40">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/10 text-3xl font-bold text-primary/40">
             {p.name.charAt(0)}
           </div>
         )}

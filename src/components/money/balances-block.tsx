@@ -70,7 +70,7 @@ export function BalancesBlock({
                           });
                       });
                     }}
-                    className="shrink-0 h-8 px-3 rounded-full bg-primary text-white text-[12px] font-bold"
+                    className="shrink-0 h-8 px-3 rounded-full bg-primary text-primary-foreground text-[12px] font-bold"
                   >
                     Confirm
                   </button>

@@ -242,7 +242,7 @@ export function ThreadSheet({
             onClick={send}
             disabled={!draft.trim()}
             aria-label="Send"
-            className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40"
+            className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40"
           >
             <Send size={17} />
           </button>

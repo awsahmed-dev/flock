@@ -213,7 +213,7 @@ function LinkCard({
   return (
     <div className="rounded-xl border bg-card overflow-hidden w-full">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary/8 to-violet-500/8 border-b">
+      <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary/8 to-primary/5 border-b">
         <span className="text-primary">{SITE_ICONS[meta.siteType]}</span>
         <span className="text-xs font-semibold text-primary uppercase tracking-wide">
           {SITE_LABEL[meta.siteType]}

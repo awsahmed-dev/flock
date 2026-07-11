@@ -485,7 +485,7 @@ export default async function SharePage({ params }: Props) {
           </div>
           <Link
             href={appUrl}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-opacity"
+            className="inline-flex items-center gap-2 rounded-full bg-primary hover:opacity-90 px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-opacity"
           >
             Start planning free
           </Link>

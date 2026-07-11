@@ -327,7 +327,7 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
           size="icon"
           aria-label={t("chat.send")}
           disabled={!body.trim() || isPending}
-          className="rounded-xl h-10 w-10 shrink-0 bg-gradient-to-br from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/25 disabled:opacity-40 disabled:shadow-none"
+          className="rounded-xl h-10 w-10 shrink-0 bg-primary hover:opacity-90 border-0 shadow-sm shadow-primary/25 disabled:opacity-40 disabled:shadow-none"
         >
           <Send className="w-4 h-4" />
         </Button>

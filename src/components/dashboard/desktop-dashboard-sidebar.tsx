@@ -90,7 +90,7 @@ export function DesktopDashboardSidebar({
                 key={item.href}
                 href={item.href}
                 prefetch
-                className="group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-bold bg-gradient-to-r from-primary to-violet-600 text-white shadow-md shadow-primary/20 hover:opacity-90 transition-opacity mb-1.5"
+                className="group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-bold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:opacity-90 transition-opacity mb-1.5"
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span className="flex-1">{item.label}</span>

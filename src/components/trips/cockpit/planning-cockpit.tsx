@@ -62,7 +62,7 @@ export function PlanningCockpit(props: CockpitShared) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={heroImageUrl} alt={destination} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-violet-900/50" />
+          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-primary/60" />
         )}
         <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 20%, rgba(0,0,0,0.88))" }} />
         <div className="absolute bottom-0 inset-x-0 px-4 pb-3">
@@ -88,7 +88,7 @@ export function PlanningCockpit(props: CockpitShared) {
         {/* 2. THE ONE PRIMARY ACTION — 64px, unmissable. */}
         <Link
           href={primary.href}
-          className="flex items-center gap-3 h-16 px-4 rounded-2xl bg-primary text-white active:scale-[0.99] transition-transform"
+          className="flex items-center gap-3 h-16 px-4 rounded-2xl bg-primary text-primary-foreground active:scale-[0.99] transition-transform"
           style={{ boxShadow: "0 4px 20px var(--clr-brand-dim)" }}
         >
           <PrimaryIcon size={22} className="shrink-0" />

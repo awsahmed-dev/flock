@@ -229,7 +229,7 @@ export function AddPlaceSearch({
             type="button"
             onClick={handleSubmit}
             disabled={isPending || !canSubmit}
-            className="flex-1 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white py-2.5 text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {t("itinerary.addToItinerary")}

@@ -47,7 +47,7 @@ const STEPS: Array<{
 
 export function OnboardingCard() {
   return (
-    <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-violet-500/5 p-6 sm:p-10 overflow-hidden relative">
+    <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-primary/5 p-6 sm:p-10 overflow-hidden relative">
       {/* Decorative orbs */}
       <div
         aria-hidden
@@ -107,7 +107,7 @@ export function OnboardingCard() {
         {/* CTA */}
         <Link
           href="/trips/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-opacity"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary hover:opacity-90 px-5 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-opacity"
         >
           Plan your first trip
           <ArrowRight className="w-4 h-4 rtl:rotate-180" />

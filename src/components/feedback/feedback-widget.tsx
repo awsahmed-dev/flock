@@ -207,7 +207,7 @@ export function FeedbackWidget() {
                     <button
                       type="submit"
                       disabled={isPending || (!body.trim() && rating == null)}
-                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-primary to-violet-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-3 text-sm font-bold text-white transition-opacity"
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-3 text-sm font-bold text-primary-foreground transition-opacity"
                     >
                       {isPending ? (
                         "Sending…"

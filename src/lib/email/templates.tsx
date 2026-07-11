@@ -67,7 +67,7 @@ function EmailShell({
             {/* Brand bar. Email clients are unfriendly to inline SVG +
                 currentColor, so we serve the wordmark as a hosted asset
                 with explicit width/height for the Outlook fallback path. */}
-            <Section className="bg-gradient-to-br from-indigo-600 to-violet-600 px-6 py-5">
+            <Section className="bg-gradient-to-br from-[#5B4BD9] to-[#8B7CFF] px-6 py-5">
               <table>
                 <tr>
                   <td>

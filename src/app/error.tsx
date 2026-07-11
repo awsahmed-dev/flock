@@ -47,7 +47,7 @@ export default function RouteError({
           <button
             type="button"
             onClick={() => unstable_retry()}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-primary to-violet-600 text-white font-bold text-sm px-4 py-2.5 hover:opacity-90 transition-opacity"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm px-4 py-2.5 hover:opacity-90 transition-opacity"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Try again

@@ -132,7 +132,7 @@ export function AddBookingSheet({ tripId, days }: { tripId: string; days: string
           type="button"
           onClick={submit}
           disabled={pending || !name.trim() || !dayDate}
-          className="h-13 rounded-2xl bg-primary text-white font-bold text-[15px] py-3.5 disabled:opacity-50"
+          className="h-13 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-50"
         >
           {pending ? "Adding…" : "Add booking"}
         </button>

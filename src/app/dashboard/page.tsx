@@ -413,7 +413,7 @@ function QuickActionPill({ href, icon: Icon, label }: { href: string; icon: type
       href={href}
       prefetch
       className="relative z-20 flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 active:scale-[0.97] transition-transform"
-      style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
     >
       <Icon size={14} className="text-white" />
       <span className="text-[12px] font-semibold text-white">{label}</span>

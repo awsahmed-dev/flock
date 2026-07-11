@@ -73,11 +73,10 @@ const PILL_FRAME = {
   boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
 };
+/* Design-system Step 2: one purple — solid brand-primary (was the
+ * off-token rgba(163,149,255,0.80) lavender + tinted border). */
 const BRAND_FRAME = {
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-  background: "rgba(163, 149, 255, 0.80)",
-  border: "1px solid rgba(163, 149, 255, 0.2)",
+  background: "var(--clr-brand)",
   borderRadius: 9999,
   padding: 16,
   boxShadow: NAV_SHADOW,
@@ -287,8 +286,8 @@ export function DynamicBottomNav({
             style={{
               inset: 0,
               background: "var(--nav-chip)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
             }}
           >
             <TabsList className="flex items-center w-full">
@@ -346,7 +345,7 @@ export function DynamicBottomNav({
           style={BRAND_FRAME}
         >
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
-            <right.icon size={24} className="text-black dark:text-white" />
+            <right.icon size={24} className="text-primary-foreground" />
           </span>
         </button>
       </div>

@@ -100,7 +100,7 @@ export function CreateTripForm({ defaultDestination }: { defaultDestination?: st
 
       <Button
         type="submit"
-        className="w-full bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0 py-5 text-sm font-bold shadow-md shadow-primary/20"
+        className="w-full bg-primary hover:opacity-90 border-0 py-5 text-sm font-bold shadow-md shadow-primary/20"
         disabled={isPending}
       >
         {isPending ? (

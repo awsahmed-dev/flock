@@ -150,7 +150,7 @@ export function HuddleBoard({
             setNewPill(false);
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-40 rounded-full bg-primary text-white text-[13px] font-bold px-4 py-2 flex items-center gap-1 shadow-lg"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-40 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2 flex items-center gap-1 shadow-lg"
         >
           <ArrowUp size={14} /> New activity
         </button>
@@ -266,7 +266,7 @@ export function HuddleBoard({
                   </p>
                   <Link
                     href={`/trips/${tripId}/members`}
-                    className="inline-flex items-center gap-1.5 mt-3 rounded-full bg-primary text-white text-[13px] font-bold px-4 py-2"
+                    className="inline-flex items-center gap-1.5 mt-3 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2"
                   >
                     <Users size={14} /> Invite crew
                   </Link>
@@ -279,7 +279,7 @@ export function HuddleBoard({
                   </p>
                   <Link
                     href={`/trips/${tripId}/discover`}
-                    className="inline-block mt-3 rounded-full bg-primary text-white text-[13px] font-bold px-4 py-2"
+                    className="inline-block mt-3 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2"
                   >
                     Open Discover
                   </Link>
@@ -588,7 +588,7 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
         </p>
         <Link
           href={`/trips/${tripId}/itinerary`}
-          className="inline-block mt-1.5 rounded-full bg-primary text-white text-[12px] font-bold px-3 py-1.5"
+          className="inline-block mt-1.5 rounded-full bg-primary text-primary-foreground text-[12px] font-bold px-3 py-1.5"
         >
           Add to a day
         </Link>
@@ -734,7 +734,7 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
           type="button"
           onClick={submit}
           disabled={pending || !question.trim() || trimmed.length < 2 || hasDuplicates}
-          className="h-12 rounded-2xl bg-primary text-white font-bold text-[15px] disabled:opacity-50"
+          className="h-12 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] disabled:opacity-50"
         >
           Post to the crew
         </button>

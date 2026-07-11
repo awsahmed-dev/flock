@@ -68,7 +68,7 @@ export function InstallPrompt() {
           right of every page. */}
       {installPrompt && (
         <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 rounded-2xl border bg-background shadow-xl shadow-black/10 p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4 lg:hidden">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-sm">
             <span className="text-white text-lg">✈</span>
           </div>
           <div className="flex-1 min-w-0">
@@ -78,7 +78,7 @@ export function InstallPrompt() {
             </p>
             <button
               onClick={handleInstall}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity"
             >
               <Download className="w-3 h-3" />
               Install app
@@ -96,7 +96,7 @@ export function InstallPrompt() {
       {/* iOS install guide — same lg:hidden treatment as Android. */}
       {isIOS && !showIOSGuide && (
         <div className="fixed bottom-20 left-4 right-4 z-50 rounded-2xl border bg-background shadow-xl shadow-black/10 p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4 lg:hidden">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
             <span className="text-white text-lg">✈</span>
           </div>
           <div className="flex-1 min-w-0">

@@ -339,7 +339,7 @@ export function ItineraryBoard({
           <button
             type="button"
             onClick={() => setPlanDayOpen(true)}
-            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 text-white px-3 py-2.5 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-3 py-2.5 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity"
           >
             <Sparkles className="w-4 h-4" />
             {t("itinerary.aiEntry")}
@@ -370,7 +370,7 @@ export function ItineraryBoard({
                 onClick={() => setFocusedDay(null)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
                   focusedDay === null
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -387,7 +387,7 @@ export function ItineraryBoard({
                     onClick={() => setFocusedDay(day)}
                     className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
                       active
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-primary-foreground"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -573,7 +573,7 @@ export function ItineraryBoard({
                 setAddPickerOpen(false);
                 setPlanDayOpen(true);
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 text-white shadow-lg px-4 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg px-4 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
             >
               <Sparkles className="w-3.5 h-3.5" />
               {t("itinerary.aiEntry")}
@@ -598,7 +598,7 @@ export function ItineraryBoard({
         <button
           type="button"
           onClick={() => setAddPickerOpen((o) => !o)}
-          className={`pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-br from-primary to-violet-600 text-white flex items-center justify-center shadow-xl shadow-primary/40 hover:scale-105 transition-all ${addPickerOpen ? "rotate-45" : ""}`}
+          className={`pointer-events-auto w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl shadow-primary/40 hover:scale-105 transition-all ${addPickerOpen ? "rotate-45" : ""}`}
           aria-label={addPickerOpen ? "Close" : "Add"}
         >
           <Plus className="w-6 h-6" />
@@ -662,7 +662,7 @@ export function ItineraryBoard({
                 onClick={() => setFocusedDay(null)}
                 className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                   focusedDay === null
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -679,7 +679,7 @@ export function ItineraryBoard({
                     onClick={() => setFocusedDay(day)}
                     className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                       active
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-primary-foreground"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"
                     }`}
                   >

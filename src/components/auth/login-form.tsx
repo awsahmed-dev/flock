@@ -157,7 +157,7 @@ export function LoginForm() {
           <RippleButton
             type="submit"
             tapScale={0.95} hoverScale={1.02}
-            className="w-full inline-flex items-center justify-center rounded-md h-9 px-4 py-2 text-sm font-medium text-primary-foreground bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full inline-flex items-center justify-center rounded-md h-9 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
             disabled={loading}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}

@@ -158,7 +158,7 @@ export function ExpenseCamera({
               <button
                 type="button"
                 onClick={() => setScreen("review")}
-                className="mt-2 rounded-full bg-primary text-white text-[14px] font-bold px-5 py-2.5"
+                className="mt-2 rounded-full bg-primary text-primary-foreground text-[14px] font-bold px-5 py-2.5"
               >
                 Type instead
               </button>
@@ -188,7 +188,7 @@ export function ExpenseCamera({
                   type="button"
                   onClick={() => setScreen("review")}
                   className="inline-flex items-center gap-1.5 rounded-full bg-black/50 text-white text-[13px] font-semibold px-4 py-2"
-                  style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
+                  style={{ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
                 >
                   <Keyboard size={14} /> Type instead
                 </button>
@@ -261,7 +261,7 @@ export function ExpenseCamera({
             type="button"
             onClick={() => setScreen("split")}
             disabled={!(amt > 0)}
-            className="h-13 rounded-2xl bg-primary text-white font-bold text-[15px] py-3.5 disabled:opacity-50"
+            className="h-13 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-50"
           >
             Next — split it
           </button>
@@ -312,7 +312,7 @@ export function ExpenseCamera({
             onClick={submit}
             disabled={pending || selected.size === 0 || !(amt > 0)}
             tapScale={0.95} hoverScale={1.02}
-            className="h-13 rounded-2xl bg-primary text-white font-bold text-[15px] py-3.5 disabled:opacity-50"
+            className="h-13 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-50"
           >
             {pending ? "Logging…" : "Split it"}
             <RippleButtonRipples color="rgba(255,255,255,0.3)" />

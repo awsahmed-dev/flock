@@ -62,7 +62,7 @@ export function InvitePreviewActions({
         type="button"
         onClick={accept}
         disabled={isPending}
-        className="flex-[1.5] inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-primary to-violet-600 text-white font-bold text-sm px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="flex-[1.5] inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? (
           <Loader2 className="w-4 h-4 animate-spin" />

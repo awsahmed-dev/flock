@@ -247,7 +247,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
       title={t("aiPlan.title")}
       subtitle={t("aiPlan.subtitle", { destination })}
       icon={<Sparkles className="w-4 h-4 text-white" />}
-      accentGradient="from-primary to-violet-600"
+      accentGradient="from-primary to-primary"
       width="md"
     >
       {/* B3-b: 3-step questionnaire — Vibe → Rhythm → Constraints. Each
@@ -450,7 +450,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
               <Button
                 type="button"
                 onClick={() => setStep((s) => (s === 1 ? 2 : 3))}
-                className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
+                className="flex-1 bg-primary hover:opacity-90 border-0"
               >
                 {t("aiPlan.next")}
               </Button>
@@ -458,7 +458,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
               <Button
                 onClick={generate}
                 disabled={loading}
-                className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0 shadow-sm shadow-primary/20"
+                className="flex-1 bg-primary hover:opacity-90 border-0 shadow-sm shadow-primary/20"
               >
                 {loading ? (
                   <>
@@ -658,7 +658,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
               size="sm"
               onClick={handleAddSelected}
               disabled={selectedItems.length === 0 || busy !== null}
-              className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:opacity-90 border-0"
+              className="flex-1 bg-primary hover:opacity-90 border-0"
             >
               {busy === "add-bulk" ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -361,7 +361,7 @@ function SharePanel({
         type="button"
         onClick={share}
         disabled={busy}
-        className="w-full h-13 flex items-center justify-center gap-2 rounded-2xl bg-primary text-white font-bold text-[15px] py-3.5 disabled:opacity-60"
+        className="w-full h-13 flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-60"
       >
         <Share2 size={18} /> Share the Wrap
       </button>
@@ -455,7 +455,7 @@ function routeKm(stops: CockpitShared["items"]): number {
 function RouteArt({ items, className }: { items: CockpitShared["items"]; className?: string }) {
   const coords = items.filter((i) => i.lat != null && i.lng != null) as { lat: number; lng: number }[];
   if (coords.length < 2) {
-    return <div className={`${className ?? ""} bg-gradient-to-br from-primary/30 to-violet-900/40`} />;
+    return <div className={`${className ?? ""} bg-gradient-to-br from-primary/30 to-primary/50`} />;
   }
   const lats = coords.map((c) => c.lat);
   const lngs = coords.map((c) => c.lng);

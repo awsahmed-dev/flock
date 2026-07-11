@@ -15,7 +15,7 @@ export default function LoginPage() {
         aria-hidden
         className="absolute inset-0 pointer-events-none -z-10 [mask-image:radial-gradient(70%_70%_at_50%_50%,black_40%,transparent_85%)]"
       >
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full bg-gradient-to-br from-primary/20 via-violet-500/15 to-fuchsia-500/10 blur-[100px]" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 blur-[100px]" />
       </div>
       <div className="fixed top-4 end-4">
         <ThemeToggle />

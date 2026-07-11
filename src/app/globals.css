@@ -85,10 +85,11 @@
   --clr-dune: #8F6400;
   --clr-dune-dim: rgba(143, 100, 0, 0.12);
   --pill-bg: rgba(250, 250, 248, 0.88);
-  /* Sprint 7C — Figma 4EUY…/100:175 nav glass (light). */
-  --nav-glass: rgba(222, 222, 222, 0.46);
-  --nav-chip: rgba(255, 255, 255, 0.5);
-  --nav-border: rgba(222, 222, 222, 0.2);
+  /* Design-system Step 2: nav glass joins the neutral ladder — warm paper
+     tint instead of pure #DEDEDE gray; hairline = border-glass black@10%. */
+  --nav-glass: rgba(250, 250, 248, 0.72);
+  --nav-chip: rgba(255, 255, 255, 1);
+  --nav-border: rgba(0, 0, 0, 0.10);
   --nav-pad: 18px;
   --pill-border: rgba(0, 0, 0, 0.10);
   --tab-thumb-bg: #FFFFFF;
@@ -99,19 +100,20 @@
   --secondary: #F5F4F1;         /* bg-secondary — subtle warm elevation */
   --secondary-foreground: #1a1720;
   --muted: #F5F4F1;
-  --muted-foreground: #6b6b6b;  /* text-secondary */
+  --muted-foreground: #625E6D;  /* text-secondary — plum-warmed, was pure #6b6b6b */
   --accent: #F5F4F1;            /* subtle surface (shadcn hover); brand = --primary */
   --accent-foreground: #1a1720;
-  --destructive: #ff453a;       /* danger */
+  --destructive: var(--red-600); /* danger — was Apple #ff453a (3.4:1 on white) */
   --border: #E8E6E1;            /* soft warm grey borders */
   --input: #E8E6E1;
   --ring: var(--clr-brand);
 
-  /* Brief status + extras */
-  --success: #30d158;
-  --warning: #ff9f0a;
-  --danger: #ff453a;
-  --text-tertiary: #aeaeb2;
+  /* Brief status + extras — Step 2: Apple system colors replaced by the
+     palette's own ramps (green=moss, yellow=dune, teal=wayfind homes). */
+  --success: var(--green-600);
+  --warning: var(--yellow-600);
+  --danger: var(--red-600);
+  --text-tertiary: #8F8B99;
   --accent-glow: var(--clr-brand-dim);
   --route-line: var(--clr-wayfind);
   --pin-today: var(--clr-wayfind);
@@ -129,17 +131,17 @@
   --radius: 0.75rem;
 
   --chart-1: var(--clr-brand);
-  --chart-2: #30d158;
-  --chart-3: #ff9f0a;
-  --chart-4: #ff453a;
-  --chart-5: #0a84ff;
+  --chart-2: var(--green-600);
+  --chart-3: var(--yellow-600);
+  --chart-4: var(--red-600);
+  --chart-5: var(--teal-600);
   --sidebar: #ffffff;
-  --sidebar-foreground: #0a0a0a;
+  --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--clr-brand);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f5f7;
-  --sidebar-accent-foreground: #0a0a0a;
-  --sidebar-border: #e5e5ea;
+  --sidebar-accent: #F5F4F1;
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: #E8E6E1;
   --sidebar-ring: var(--clr-brand);
 }
 
@@ -217,30 +219,34 @@
   --clr-dune: #E0B252;
   --clr-dune-dim: rgba(224, 178, 82, 0.16);
   --pill-bg: rgba(26, 26, 26, 0.82);
-  /* Sprint 7C — Figma 4EUY…/100:175 nav glass (dark). */
-  --nav-glass: rgba(52, 51, 51, 0.46);
-  --nav-chip: rgba(14, 14, 14, 0.5);
-  --nav-border: rgba(52, 51, 51, 0.8);
+  /* Design-system Step 2: nav glass on the neutral ladder (was #343333 pure
+     gray); hairline white@10% (was #343333@80% — too heavy); active chip
+     lifts with white@12% instead of sinking with #0E0E0E. */
+  --nav-glass: rgba(26, 26, 26, 0.72);
+  --nav-chip: rgba(255, 255, 255, 0.12);
+  --nav-border: rgba(255, 255, 255, 0.10);
   --nav-pad: 16px;
   --pill-border: rgba(255, 255, 255, 0.10);
   --tab-thumb-bg: rgba(255,255,255,0.12);
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.08);
   --primary: var(--clr-brand);
-  --primary-foreground: #ffffff;
-  --secondary: #16131b;         /* bg-secondary */
+  /* Step 2 contrast fix (Figma Page 5): ink on purple-400 = 6.0:1; white
+     was 3.3:1. Solid purple fills carry dark content in dark mode. */
+  --primary-foreground: #0D0D0D;
+  --secondary: #161616;         /* bg-secondary — was plum #16131b */
   --secondary-foreground: #f5f5f7;
   --muted: #242424;             /* elevated surface */
-  --muted-foreground: #aeaeb2;  /* text-secondary */
+  --muted-foreground: #A9A5B2;  /* text-secondary — plum-warmed, was Apple #aeaeb2 */
   --accent: #1A1A1A;
   --accent-foreground: #f5f5f7;
-  --destructive: #ff453a;
+  --destructive: var(--red-400);
   --border: #313131;            /* neutral borders */
   --input: #313131;
   --ring: var(--clr-brand);
 
-  --success: #30d158;
-  --warning: #ff9f0a;
-  --danger: #ff453a;
+  --success: var(--green-400);
+  --warning: var(--yellow-400);
+  --danger: var(--red-400);
   --text-tertiary: #8b8794;
   --accent-glow: var(--clr-brand-dim);
   --route-line: var(--clr-wayfind);
@@ -253,17 +259,17 @@
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
 
   --chart-1: var(--clr-brand);
-  --chart-2: #30d158;
-  --chart-3: #ff9f0a;
-  --chart-4: #ff453a;
-  --chart-5: #0a84ff;
-  --sidebar: #141414;
+  --chart-2: var(--green-400);
+  --chart-3: var(--yellow-400);
+  --chart-4: var(--red-400);
+  --chart-5: var(--teal-400);
+  --sidebar: #1A1A1A;
   --sidebar-foreground: #f5f5f7;
   --sidebar-primary: var(--clr-brand);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1c1c1e;
+  --sidebar-accent: #242424;
   --sidebar-accent-foreground: #f5f5f7;
-  --sidebar-border: #2c2c2e;
+  --sidebar-border: #313131;
   --sidebar-ring: var(--clr-brand);
 }
 

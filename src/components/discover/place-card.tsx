@@ -127,7 +127,7 @@ export function PlaceCard({
           />
         </>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-violet-700/40 flex items-center justify-center text-7xl font-bold text-white/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-primary/60 flex items-center justify-center text-7xl font-bold text-white/30">
           {p.name.charAt(0)}
         </div>
       )}

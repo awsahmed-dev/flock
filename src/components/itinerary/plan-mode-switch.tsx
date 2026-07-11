@@ -114,7 +114,7 @@ function SegmentButton({
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap ${
         active
-          ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
+          ? "bg-primary text-primary-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground"
       }`}
     >

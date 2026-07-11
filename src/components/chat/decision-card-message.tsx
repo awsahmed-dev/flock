@@ -85,7 +85,7 @@ export function DecisionCardMessage({ meta, onActionDone }: { meta: DecisionCard
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt={meta.snapshot.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center text-3xl font-bold text-primary/40">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-3xl font-bold text-primary/40">
             {meta.snapshot.name.charAt(0)}
           </div>
         )}

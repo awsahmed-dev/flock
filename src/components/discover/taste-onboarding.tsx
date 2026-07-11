@@ -63,7 +63,7 @@ export function TasteOnboarding({ onDone }: { onDone: () => void }) {
           type="button"
           onClick={done}
           disabled={pending}
-          className="mt-3 w-full h-11 rounded-2xl bg-primary text-white font-bold text-[14px] disabled:opacity-60"
+          className="mt-3 w-full h-11 rounded-2xl bg-primary text-primary-foreground font-bold text-[14px] disabled:opacity-60"
         >
           Done →
         </button>

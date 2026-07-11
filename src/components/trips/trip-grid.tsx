@@ -134,7 +134,7 @@ function NewTripTile() {
   return (
     <Link href="/trips/new" prefetch>
       <article className="group h-full min-h-[120px] lg:min-h-full rounded-3xl border-2 border-dashed border-border bg-card/40 flex items-center lg:flex-col lg:justify-center gap-3.5 p-5 lg:p-8 text-start lg:text-center hover:border-primary/40 hover:bg-card transition-colors cursor-pointer">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/15 to-violet-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
           <Plus className="w-5 h-5 text-primary" />
         </div>
         <div className="flex-1 lg:flex-none">

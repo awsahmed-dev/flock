@@ -360,8 +360,8 @@ export function NowCockpit({
         className="xl:hidden absolute top-3 end-3 z-20 inline-flex items-center gap-1.5 rounded-full px-3 h-9 text-[13px] font-bold text-foreground"
         style={{
           background: "var(--sheet-bg)",
-          backdropFilter: "blur(16px) saturate(180%)",
-          WebkitBackdropFilter: "blur(16px) saturate(180%)",
+          backdropFilter: "blur(10px) saturate(180%)",
+          WebkitBackdropFilter: "blur(10px) saturate(180%)",
           border: "1px solid var(--border)",
           pointerEvents: "auto",
         }}
@@ -377,8 +377,8 @@ export function NowCockpit({
         style={{
           height: sheetHeight,
           background: "var(--sheet-bg)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
         }}
       >
         {/* Drag handle. */}

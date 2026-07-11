@@ -107,7 +107,7 @@ export default async function InvitePage({ params }: Props) {
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-violet-800/50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-primary/60" />
       )}
       <div className="absolute inset-0 bg-black/60" />
 

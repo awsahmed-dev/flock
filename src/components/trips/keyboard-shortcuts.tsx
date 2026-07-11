@@ -164,9 +164,9 @@ export function KeyboardShortcuts({ tripId, onToggleChat }: Props) {
         className="w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-gradient-to-r from-primary/8 to-violet-500/8">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-gradient-to-r from-primary/8 to-primary/5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Keyboard className="w-4 h-4 text-white" />
             </div>
             <div>

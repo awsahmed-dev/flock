@@ -182,8 +182,8 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
             height: "calc(56px + env(safe-area-inset-top))",
             paddingTop: "env(safe-area-inset-top)",
             background: "var(--sheet-bg)",
-            backdropFilter: "blur(16px) saturate(180%)",
-            WebkitBackdropFilter: "blur(16px) saturate(180%)",
+            backdropFilter: "blur(10px) saturate(180%)",
+            WebkitBackdropFilter: "blur(10px) saturate(180%)",
           }}
         >
           <Link

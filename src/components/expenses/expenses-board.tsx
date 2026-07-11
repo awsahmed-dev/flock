@@ -240,7 +240,7 @@ export function ExpensesBoard({
   return (
     <div className="space-y-5">
       {/* ── Balance hero ───────────────────────────────────────────── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-primary via-violet-600 to-fuchsia-600 text-white overflow-hidden">
+      <div className="relative rounded-3xl bg-gradient-to-br from-[var(--purple-600)] to-[var(--purple-400)] text-white overflow-hidden">
         <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute right-10 -bottom-6 w-24 h-24 rounded-full bg-white/8 pointer-events-none" />
 

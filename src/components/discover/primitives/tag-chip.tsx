@@ -17,7 +17,7 @@ const TAG_META: Record<
 > = {
   ai_pick: {
     labelKey: "discover.tagAiPick",
-    className: "bg-gradient-to-r from-primary to-violet-600 text-white shadow",
+    className: "bg-primary text-primary-foreground shadow",
     icon: true,
   },
   hidden_gem: {

@@ -92,7 +92,7 @@ export function CookieBanner() {
           <div className="flex items-center gap-2 mt-3">
             <button
               onClick={() => decide(true)}
-              className="flex-1 inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-violet-600 text-white text-xs font-bold px-3 py-2 hover:opacity-90 transition-opacity"
+              className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold px-3 py-2 hover:opacity-90 transition-opacity"
             >
               Allow
             </button>

@@ -67,7 +67,7 @@ export async function DepartureCockpit(props: CockpitShared) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={heroImageUrl} alt={destination} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-violet-900/50" />
+          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-primary/60" />
         )}
         <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 20%, rgba(0,0,0,0.88))" }} />
         <div className="absolute bottom-0 inset-x-0 px-4 pb-3 flex items-end justify-between gap-3">
@@ -171,7 +171,7 @@ export async function DepartureCockpit(props: CockpitShared) {
                       : undefined
                   }
                 >
-                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-extrabold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   <span className="flex-1 min-w-0 text-[14px] font-semibold truncate">{s.title}</span>

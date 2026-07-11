@@ -223,7 +223,7 @@ export function PlaceDetailPanel({
                   />
                 ))
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-violet-500/20 text-5xl font-bold text-primary/40">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 text-5xl font-bold text-primary/40">
                   {p?.name.charAt(0)}
                 </div>
               )}
@@ -361,7 +361,7 @@ export function PlaceDetailPanel({
                 <RippleButton
                   type="button" onClick={handleAdd} disabled={isPending || !effectiveDay}
                   tapScale={0.95} hoverScale={1.02}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-bold py-3.5 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 text-sm shadow-lg shadow-primary/20 disabled:opacity-60 transition-opacity"
                 >
                   {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                   {t("discover.addToPlan")}

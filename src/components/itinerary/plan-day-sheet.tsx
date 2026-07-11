@@ -158,7 +158,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
       title={offerScope && !scopeChosen ? t("itinerary.aiEntry") : t("planDay.title")}
       subtitle={offerScope && !scopeChosen ? t("planDay.scopeHeading") : t("planDay.subtitle")}
       icon={<Sparkles className="w-5 h-5" />}
-      accentGradient="from-primary to-violet-600"
+      accentGradient="from-primary to-primary"
       width="md"
     >
       <div className="flex flex-col gap-4">
@@ -340,7 +340,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
               type="button"
               onClick={handleAdd}
               disabled={kept.length === 0 || isAdding || isSending}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-3 text-sm font-bold shadow-md shadow-primary/20 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               {t("planDay.add", { count: kept.length })}

@@ -199,7 +199,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
           </p>
           <a
             href={`/trips/${tripId}/members`}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white px-3.5 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-primary-foreground px-3.5 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
           >
             Invite the crew
             <ArrowRight className="w-3 h-3 rtl:rotate-180" />

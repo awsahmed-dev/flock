@@ -132,7 +132,7 @@ export function ExpenseSheet({
       }
     >
       {/* Amount card */}
-      <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/5 via-violet-500/5 to-background p-4 mb-4">
+      <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/5 to-background p-4 mb-4">
         <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1">
           Amount
         </p>
