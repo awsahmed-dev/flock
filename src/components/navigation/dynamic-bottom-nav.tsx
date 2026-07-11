@@ -12,7 +12,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import glass from "./nav-glass.module.css";
 import {
   Tabs,
   TabsList,
@@ -44,89 +43,43 @@ import { createClient } from "@/lib/supabase/client";
  *   chip   — light rgba(0,0,0,0.03)       · dark rgba(0,0,0,0.10)
  *   action — rgba(163,149,255,0.50) + 1.6px white border (both themes)
  * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-/* Sprint 7.2 — frosted glass, device-fix revision.
- * Two layers per element:
- *   1. BLUR-ONLY extended backdrop (200% tall, bottom-anchored) so the
- *      filter samples content above the nav — masked to the shape with
- *      the simplest possible gradients (NO calc() anywhere: some mobile
- *      renderers mishandled calc-heavy mask stops, which is what made the
- *      purple button read as a square). Untinted, so any residual mask
- *      softness at the corners is invisible.
- *   2. TINT + top rim on a plain rounded div — border-radius shapes a
- *      filterless layer perfectly on every browser, and the rim is an
- *      inset box-shadow that follows the curve (the old 4px strip
- *      rendered as a detached floating line on device).
- * backdropFilter stays INLINE (Lightning CSS strips it from stylesheets). */
-const CIRCLE_MASK = "radial-gradient(circle closest-side at 50% 75%, black 96%, transparent 100%)";
-// Pill = union of two soft caps + a soft-edged connecting band, all on the
-// 200% layer. The 96→100% fades ARE the glass stroke (same as the circle).
-const PILL_CAP_L = "radial-gradient(circle 28px at 28px 75%, black 96%, transparent 100%)";
-const PILL_CAP_R = "radial-gradient(circle 28px at calc(100% - 28px) 75%, black 96%, transparent 100%)";
-const PILL_BAND = "linear-gradient(to bottom, transparent 49.2%, black 50.8%, black 99.2%, transparent 100%)";
-
-function GlassLayers({ tint, shape, glow }: { tint: string; shape: "circle" | "pill"; glow?: string }) {
-  const maskProps =
-    shape === "circle"
-      ? {
-          maskImage: CIRCLE_MASK,
-          WebkitMaskImage: CIRCLE_MASK,
-        }
-      : {
-          // FIX 2: a real pill shape — caps + band unioned; no rectangle.
-          maskImage: `${PILL_CAP_L}, ${PILL_CAP_R}, ${PILL_BAND}`,
-          WebkitMaskImage: `${PILL_CAP_L}, ${PILL_CAP_R}, ${PILL_BAND}`,
-          maskSize: "100% 100%, 100% 100%, calc(100% - 56px) 100%",
-          WebkitMaskSize: "100% 100%, 100% 100%, calc(100% - 56px) 100%",
-          maskPosition: "0 0, 0 0, center",
-          WebkitMaskPosition: "0 0, 0 0, center",
-          maskRepeat: "no-repeat",
-          WebkitMaskRepeat: "no-repeat",
-        };
+/* Sprint 7B — nav glass restyle (Figma node 2004:38). The extended-backdrop
+ * technique is gone: each element carries a direct inline blur(25px), a
+ * theme-tinted fill, and a GRADIENT BORDER via the padding-box/border-box
+ * two-layer background (works with any border-radius). Gradient stops
+ * follow the brief's direction; exact Figma stops were unavailable (MCP
+ * plan limit) — see tokens in globals.css to retune. backdropFilter stays
+ * INLINE (Lightning CSS strips it from stylesheets). */
+const GLASS_FRAME = (borderWidth: number) => ({
+  border: `${borderWidth}px solid transparent`,
+  background:
+    "linear-gradient(var(--nav-glass), var(--nav-glass)) padding-box, var(--nav-border-gradient) border-box",
+  backdropFilter: "blur(25px)",
+  WebkitBackdropFilter: "blur(25px)",
+  pointerEvents: "auto" as const,
+});
+const BRAND_FRAME = {
+  border: "3px solid transparent",
+  background:
+    "linear-gradient(rgba(163, 149, 255, 0.80), rgba(163, 149, 255, 0.80)) padding-box, linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.35)) border-box",
+  backdropFilter: "blur(25px)",
+  WebkitBackdropFilter: "blur(25px)",
+  pointerEvents: "auto" as const,
+};
+/* PART 6 — soft diagonal light reflection (liquid-glass gloss). */
+function Reflection({ angle = 135 }: { angle?: number }) {
   return (
-    <>
-      {/* Blur-only extended layer — invisible except for what it blurs. */}
-      <div
-        className={glass["nav-backdrop"]}
-        style={{
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          ...maskProps,
-        }}
-      />
-      {/* Shape-perfect tint (no filter → border-radius just works). The
-          glassy edge lives INSIDE this rounded, clipping container so it
-          follows the curve — a soft blur(12px) brightness(0.96) strip per
-          the article, not a hard line. (overflow clipping is safe here:
-          only the EXTENDED layer above must avoid pre-filter clipping.) */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 9999,
-          background: tint,
-          overflow: "hidden",
-          pointerEvents: "none",
-          ...(glow ? { boxShadow: `0 0 10px 2px ${glow}` } : {}),
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 5,
-            backdropFilter: "blur(12px) brightness(0.96)",
-            WebkitBackdropFilter: "blur(12px) brightness(0.96)",
-            background: "var(--nav-edge)",
-            // FIX 5: feather the strip itself — light catching a rim, not a
-            // border. (The rounded container clips the upward bleed.)
-            filter: "blur(3px)",
-          }}
-        />
-      </div>
-    </>
+    <div
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        background: `linear-gradient(${angle}deg, rgba(255,255,255,0.25) 0%, transparent 55%)`,
+        mixBlendMode: "soft-light",
+        pointerEvents: "none",
+        borderRadius: "inherit",
+      }}
+    />
   );
 }
 
@@ -311,10 +264,10 @@ export function DynamicBottomNav({
           type="button"
           onClick={left.action}
           aria-label={left.label}
-          className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle"]}`}
-          style={{ pointerEvents: "auto" }}
+          className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
+          style={GLASS_FRAME(4)}
         >
-          <GlassLayers tint="var(--nav-glass)" shape="circle" />
+          <Reflection />
           <span key={`left-${left.label}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <left.icon size={24} className="text-foreground" />
           </span>
@@ -326,10 +279,9 @@ export function DynamicBottomNav({
         <Tabs
           value={activeKey}
           aria-label="Trip sections"
-          className={`relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full ${glass["nav-element-pill"]}`}
-          style={{ pointerEvents: "auto" }}
+          className="relative flex-1 min-w-0 max-w-[420px] flex items-center h-14 rounded-full"
+          style={GLASS_FRAME(3)}
         >
-          <GlassLayers tint="var(--nav-glass)" shape="pill" />
           <TabsHighlight
             className="rounded-full"
             transition={{ type: "spring", stiffness: 250, damping: 27 }}
@@ -338,10 +290,9 @@ export function DynamicBottomNav({
               bottom: 4,
               insetInlineStart: 4,
               insetInlineEnd: 4,
-              // FIX 6: same design language as the action circle — soft
-              // purple tint, gentle glow, a whisper of elevation.
-              background: "rgba(163, 149, 255, 0.30)",
-              boxShadow: "0 0 10px 2px rgba(163, 149, 255, 0.22), 0 2px 8px rgba(0, 0, 0, 0.18)",
+              background: "var(--nav-chip)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
             }}
           >
             <TabsList className="flex items-center w-full h-full px-1">
@@ -390,12 +341,11 @@ export function DynamicBottomNav({
           onPointerLeave={onPlusCancel}
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
-          className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95 ${glass["nav-element-circle-brand"]}`}
-          style={{ pointerEvents: "auto" }}
+          className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 active:scale-95"
+          style={BRAND_FRAME}
         >
-          {/* FIX 3: the stroke belongs to the glass — the mask's soft edge
-              is the rim (same as the left circle) + a diffuse purple halo. */}
-          <GlassLayers tint="rgba(163, 149, 255, 0.50)" shape="circle" glow="rgba(163, 149, 255, 0.40)" />
+          {/* Figma's reflection vectors sit at ~-15deg on the action circle. */}
+          <Reflection angle={120} />
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-black dark:text-white" />
           </span>

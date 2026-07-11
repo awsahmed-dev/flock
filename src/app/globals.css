@@ -85,10 +85,11 @@
   --clr-dune: #8F6400;
   --clr-dune-dim: rgba(143, 100, 0, 0.12);
   --pill-bg: rgba(250, 250, 248, 0.88);
-  /* Sprint 6 FIX-3 — Figma pill nav glass + active chip (light). */
-  --nav-glass: rgba(255, 255, 255, 0.46);
-  --nav-chip: rgba(0, 0, 0, 0.03);
-  --nav-edge: rgba(255, 255, 255, 0.45);
+  /* Sprint 7B — Figma 2004:38 nav glass (light). Border-gradient stops are
+     directional approximations (Figma MCP plan limit) — retune here. */
+  --nav-glass: rgba(222, 222, 222, 0.46);
+  --nav-chip: rgba(255, 255, 255, 0.5);
+  --nav-border-gradient: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.3));
   --pill-border: rgba(0, 0, 0, 0.10);
   --tab-thumb-bg: #FFFFFF;
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.06);
@@ -162,10 +163,10 @@
   --clr-dune: #E0B252;
   --clr-dune-dim: rgba(224, 178, 82, 0.16);
   --pill-bg: rgba(26, 23, 32, 0.82);
-  /* Sprint 6 FIX-3 — Figma pill nav glass + active chip (dark). */
-  --nav-glass: rgba(10, 10, 10, 0.46);
-  --nav-chip: rgba(0, 0, 0, 0.10);
-  --nav-edge: rgba(255, 255, 255, 0.07);
+  /* Sprint 7B — Figma 2004:38 nav glass (dark). */
+  --nav-glass: rgba(52, 51, 51, 0.46);
+  --nav-chip: rgba(14, 14, 14, 0.5);
+  --nav-border-gradient: linear-gradient(to bottom, rgba(10, 10, 10, 0.9), rgba(96, 94, 100, 0.6));
   --pill-border: rgba(255, 255, 255, 0.10);
   --tab-thumb-bg: rgba(255,255,255,0.12);
   --tab-thumb-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.08);
