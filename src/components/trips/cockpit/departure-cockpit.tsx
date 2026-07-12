@@ -2,7 +2,7 @@ import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { Luggage, Users } from "lucide-react";
+import { Suitcase as Luggage, Users } from "@phosphor-icons/react/dist/ssr";
 import { TripPrepChecklist } from "@/components/trips/trip-prep-checklist";
 import { MetricGrid } from "./metric-grid";
 import { CrewPulse } from "./crew-pulse";

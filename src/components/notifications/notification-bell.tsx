@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Bell, Receipt, Vote, Gavel, Check, Users as UsersIcon } from "lucide-react";
+import { Bell, Receipt, CheckSquareOffset as Vote, Gavel, Check, Users as UsersIcon } from "@phosphor-icons/react/dist/ssr";
 import { formatDistanceToNow } from "@/lib/i18n/date-fns";
 import {
   DropdownMenu,

@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { MessageSquarePlus, X, Send, Check } from "lucide-react";
+import { ChatDots as MessageSquarePlus, X, PaperPlaneTilt as Send, Check } from "@phosphor-icons/react/dist/ssr";
 import { sendFeedback } from "@/lib/actions/feedback";
 import { toast } from "sonner";
 

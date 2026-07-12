@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  Plane,
-  Hotel,
-  Train,
-  Bus,
-  Wifi,
-  Ticket,
-  Users,
-  Lock,
-  ChevronRight,
-  Star,
-} from "lucide-react";
+import { Airplane as Plane, Buildings as Hotel, Train, Bus, WifiHigh as Wifi, Ticket, Users, Lock, CaretRight as ChevronRight, Star } from "@phosphor-icons/react/dist/ssr";
 import type { MockBooking, BookingType } from "./mock-bookings";
 import { useT } from "@/components/i18n/locale-provider";
 

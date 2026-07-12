@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Heart, Bookmark, PlusCircle, Star, MapPin } from "lucide-react";
+import { Heart, BookmarkSimple as Bookmark, PlusCircle, Star, MapPin } from "@phosphor-icons/react/dist/ssr";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { distanceKm } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
@@ -254,7 +254,7 @@ function ActionIcon({
       className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
     >
       <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.40)" }}>
-        <Icon size={20} color={active ? activeColor : "white"} fill={active ? activeColor : "none"} strokeWidth={1.75} />
+        <Icon size={20} color={active ? activeColor : "white"} weight={active ? "fill" : "regular"} />
       </span>
       {count != null && (
         <span className="text-[11px] font-semibold text-white leading-none">

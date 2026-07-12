@@ -1,10 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Receipt, ChevronRight, ArrowRightLeft, Search,
-  Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal,
-} from "lucide-react";
+import { Receipt, CaretRight as ChevronRight, ArrowsLeftRight as ArrowRightLeft, MagnifyingGlass as Search, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { fmtAmount as fmt } from "@/lib/numerals";

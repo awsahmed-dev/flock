@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import {
-  Hotel,
-  Plane,
-  Wifi,
-  Ticket,
-  ArrowUpRight,
-  Sparkles,
-  Check,
-  AlertCircle,
-  X,
-  Info,
-} from "lucide-react";
+import { Buildings as Hotel, Airplane as Plane, WifiHigh as Wifi, Ticket, ArrowUpRight, Sparkle as Sparkles, Check, WarningCircle as AlertCircle, X, Info } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";

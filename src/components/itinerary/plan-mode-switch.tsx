@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Map, CreditCard } from "lucide-react";
+import { MapTrifold as Map, CreditCard } from "@phosphor-icons/react/dist/ssr";
 import { useT } from "@/components/i18n/locale-provider";
 
 /**

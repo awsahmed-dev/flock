@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { format } from "@/lib/i18n/date-fns";
-import { CheckCircle2, Trash2, Receipt, ArrowRightLeft } from "lucide-react";
+import { CheckCircle as CheckCircle2, Trash as Trash2, Receipt, ArrowsLeftRight as ArrowRightLeft } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { settleSplit, deleteExpense } from "@/lib/actions/expenses";

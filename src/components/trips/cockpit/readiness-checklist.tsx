@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, MapPin, Wallet, Package, CalendarDays, Check, ChevronRight } from "lucide-react";
+import { Users, MapPin, Wallet, Package, CalendarDots as CalendarDays, Check, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 import {
   Accordion,
   AccordionItem,

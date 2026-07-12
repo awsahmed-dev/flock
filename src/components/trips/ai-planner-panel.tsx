@@ -2,21 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Sparkles,
-  Loader2,
-  CheckCircle2,
-  MapPin,
-  Clock,
-  Utensils,
-  Hotel,
-  Bus,
-  Ticket,
-  Plus,
-  Vote,
-  CheckSquare,
-  Square,
-} from "lucide-react";
+import { Sparkle as Sparkles, CircleNotch as Loader2, CheckCircle as CheckCircle2, MapPin, Clock, ForkKnife as Utensils, Buildings as Hotel, Bus, Ticket, Plus, CheckSquareOffset as Vote, CheckSquare, Square } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
 import { toast } from "sonner";

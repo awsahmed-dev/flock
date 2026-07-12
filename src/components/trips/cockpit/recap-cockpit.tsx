@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { Share2, Check, X } from "lucide-react";
+import { ShareNetwork as Share2, Check, X } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { setStopCompleted } from "@/lib/actions/itinerary";

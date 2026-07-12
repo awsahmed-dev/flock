@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Send, X } from "lucide-react";
+import { PaperPlaneTilt as Send, X } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getThread, addThreadComment, toggleTapback, type ThreadEntityType } from "@/lib/actions/threads";

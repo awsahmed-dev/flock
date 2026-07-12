@@ -4,13 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { format as isoFmt } from "date-fns";
-import {
-  Compass, Plus, MapPin, ChevronRight, Users, CalendarDays, Sparkles,
-  Wallet, Share2, PlaneTakeoff, Navigation, Image as ImageIcon, HandCoins,
-  Camera, Search, House, Luggage,
-  FileText, X,
-  type LucideIcon,
-} from "lucide-react";
+import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, Camera, MagnifyingGlass as Search, House, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
+import type { Icon as LucideIcon } from "@phosphor-icons/react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
   Tabs,
@@ -309,11 +304,12 @@ export function DynamicBottomNav({
                           flex: an inline span line-boxes the 24px svg down
                           to ~17px and shrinks the whole pill. */}
                       <span key={`${tab.key}-${phase}`} className="flex" style={{ animation: "fadeIn 200ms ease" }}>
+                        {/* Phosphor weight prop: fill = active, regular = inactive —
+                            the reason for the icon-library switch. */}
                         <Icon
                           size={24}
                           className="text-foreground"
-                          strokeWidth={2}
-                          fill={active ? "currentColor" : "none"}
+                          weight={active ? "fill" : "regular"}
                         />
                       </span>
                       <span

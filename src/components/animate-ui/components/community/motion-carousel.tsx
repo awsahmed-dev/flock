@@ -5,7 +5,7 @@ import { motion, type Transition } from 'motion/react';
 import { EmblaOptionsType, EmblaCarouselType } from 'embla-carousel';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/animate-ui/components/buttons/button';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { CaretRight as ChevronRight, CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
 
 type PropType = {
   slides: number[];

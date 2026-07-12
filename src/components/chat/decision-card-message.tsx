@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { ThumbsUp, ThumbsDown, Check, X, Star, Calendar, Loader2, Sparkles } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Check, X, Star, Calendar, CircleNotch as Loader2, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import {
   getDecision,

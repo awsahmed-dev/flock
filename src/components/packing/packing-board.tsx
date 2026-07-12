@@ -2,21 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  Backpack,
-  Check,
-  Plus,
-  Trash2,
-  Users,
-  User,
-  Sparkles,
-  FileText,
-  Smartphone,
-  Pill,
-  Droplet,
-  Tent,
-  Tag,
-} from "lucide-react";
+import { Backpack, Check, Plus, Trash as Trash2, Users, User, Sparkle as Sparkles, FileText, DeviceMobile as Smartphone, Pill, Drop as Droplet, Tent, Tag } from "@phosphor-icons/react/dist/ssr";
 import {
   createPackingItem,
   togglePackingItem,

@@ -2,15 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Wallet,
-  User,
-  Users,
-  Pencil,
-  Check,
-  X,
-  TrendingUp,
-} from "lucide-react";
+import { Wallet, User, Users, Pencil, Check, X, TrendUp as TrendingUp } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { setPersonalBudget } from "@/lib/actions/budget";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";

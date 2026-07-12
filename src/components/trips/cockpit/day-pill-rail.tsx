@@ -2,7 +2,7 @@ import Link from "next/link";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { ChevronRight } from "lucide-react";
+import { CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Phase 6 §3-B(4) — the itinerary strip: a "Plan days →" full-width row

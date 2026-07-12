@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOut, Loader2, Check, Moon, Sun, Camera, Bell, ChevronRight } from "lucide-react";
+import { SignOut as LogOut, CircleNotch as Loader2, Check, Moon, Sun, Camera, Bell, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/animate-ui/components/radix/sheet";
 import { Switch } from "@/components/animate-ui/components/radix/switch";

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createTrip } from "@/lib/actions/trips";
-import { Loader2, Sparkles } from "lucide-react";
+import { CircleNotch as Loader2, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";
 

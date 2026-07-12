@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Loader2, Check, User as UserIcon, LogOut } from "lucide-react";
+import { Camera, CircleNotch as Loader2, Check, User as UserIcon, SignOut as LogOut } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/lib/actions/profile";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import { WaitlistForm } from "./waitlist-form";
 

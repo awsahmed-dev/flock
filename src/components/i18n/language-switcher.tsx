@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Globe2 } from "lucide-react";
+import { GlobeHemisphereWest as Globe2 } from "@phosphor-icons/react/dist/ssr";
 import { setLocale } from "@/lib/actions/set-locale";
 import { useLocale, useT } from "./locale-provider";
 

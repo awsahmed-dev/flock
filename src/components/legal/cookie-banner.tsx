@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Cookie, X } from "lucide-react";
+import { Cookie, X } from "@phosphor-icons/react/dist/ssr";
 import {
   setAnalyticsConsent,
   hasAnalyticsConsent,

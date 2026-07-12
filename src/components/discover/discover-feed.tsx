@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, X, Loader2, Compass, AlertCircle, Map as MapIcon, Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash2, ChevronLeft } from "lucide-react";
+import { MagnifyingGlass as Search, X, CircleNotch as Loader2, Compass, WarningCircle as AlertCircle, MapTrifold as MapIcon, Sparkle as Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash as Trash2, CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { toggleWishlist, removeWishlist, type WishlistPlace } from "@/lib/actions/wishlist";
 import { togglePlaceLike } from "@/lib/actions/place-likes";

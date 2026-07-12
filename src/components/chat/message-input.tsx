@@ -4,14 +4,7 @@ import { useRef, useState, useTransition, useCallback } from "react";
 import { sendMessage } from "@/lib/actions/chat";
 import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";
-import {
-  Send,
-  X,
-  Plus,
-  ReceiptText,
-  MapPin,
-  Image as ImageIcon,
-} from "lucide-react";
+import { PaperPlaneTilt as Send, X, Plus, Receipt as ReceiptText, MapPin, Image as ImageIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 

@@ -2,15 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import {
-  Compass,
-  MapPin,
-  Wallet,
-  Users,
-  MessageCircle,
-  Map as MapIcon,
-  Receipt,
-} from "lucide-react";
+import { Compass, MapPin, Wallet, Users, ChatCircle as MessageCircle, MapTrifold as MapIcon, Receipt } from "@phosphor-icons/react/dist/ssr";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { trips, tripMembers, profiles, itineraryItems, expenses } from "@/lib/db/schema";

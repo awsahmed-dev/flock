@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import {
-  UserCircle,
-  Bell,
-  LogOut,
-  Globe,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { UserCircle, Bell, SignOut as LogOut, Globe, Sun, Moon } from "@phosphor-icons/react/dist/ssr";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { AccountSheet } from "@/components/account/account-sheet";
 import { useT } from "@/components/i18n/locale-provider";

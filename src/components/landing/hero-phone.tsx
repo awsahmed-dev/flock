@@ -1,16 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import {
-  Calendar,
-  Wallet,
-  Vote,
-  MessageSquare,
-  MapPin,
-  Hotel,
-  Utensils,
-  Plane,
-} from "lucide-react";
+import { Calendar, Wallet, CheckSquareOffset as Vote, Chat as MessageSquare, MapPin, Buildings as Hotel, ForkKnife as Utensils, Airplane as Plane } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Hero centerpiece — JobSeekr-style. A flat black phone-ish frame in the

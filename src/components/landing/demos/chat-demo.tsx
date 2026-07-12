@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Send, Sparkles, Calendar, Wallet, Vote } from "lucide-react";
+import { PaperPlaneTilt as Send, Sparkle as Sparkles, Calendar, Wallet, CheckSquareOffset as Vote } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
 
 /**

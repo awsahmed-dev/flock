@@ -5,16 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AddDocumentDialog } from "./add-document-dialog";
 import { deleteDocument } from "@/lib/actions/documents";
 import { toast } from "sonner";
-import {
-  FolderOpen,
-  Link2,
-  ExternalLink,
-  Trash2,
-  FileText,
-  Image as ImageIcon,
-  Files,
-  X,
-} from "lucide-react";
+import { FolderOpen, LinkSimple as Link2, ArrowSquareOut as ExternalLink, Trash as Trash2, FileText, Image as ImageIcon, Files, X } from "@phosphor-icons/react/dist/ssr";
 import { format } from "@/lib/i18n/date-fns";
 import { PageHeader } from "@/components/ui/page-header";
 

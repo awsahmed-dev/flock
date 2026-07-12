@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Download, Share2, Plane, Hotel, Train, Bus, Wifi, Ticket, Calendar } from "lucide-react";
+import { X, DownloadSimple as Download, ShareNetwork as Share2, Airplane as Plane, Buildings as Hotel, Train, Bus, WifiHigh as Wifi, Ticket, Calendar } from "@phosphor-icons/react/dist/ssr";
 import type { MockBooking } from "./mock-bookings";
 import { FakeBarcode } from "./barcode";
 import { useT } from "@/components/i18n/locale-provider";

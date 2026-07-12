@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle, Globe, Copy, RefreshCw, EyeOff, Check, Link2, Eraser } from "lucide-react";
+import { Trash as Trash2, Warning as AlertTriangle, Globe, Copy, ArrowsClockwise as RefreshCw, EyeSlash as EyeOff, Check, LinkSimple as Link2, Eraser } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/ui/page-header";
 import { useT } from "@/components/i18n/locale-provider";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 
 interface Props {

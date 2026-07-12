@@ -4,11 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import { ExpenseSheet } from "./expense-sheet";
-import {
-  Receipt, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Eye, EyeOff,
-  Plane, Utensils, Bed, ShoppingBag, Ticket, MoreHorizontal, ChevronRight,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Receipt, ArrowUpRight, ArrowDownRight, ArrowsLeftRight as ArrowRightLeft, Eye, EyeSlash as EyeOff, Airplane as Plane, ForkKnife as Utensils, Bed, ShoppingBag, Ticket, DotsThree as MoreHorizontal, CaretRight as ChevronRight, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { fmtAmount as fmt } from "@/lib/numerals";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Crown, UserPlus } from "lucide-react";
+import { Crown, UserPlus } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/ui/page-header";
 import { ShareTripSheet } from "@/components/trips/share-trip-sheet";
 import { useT } from "@/components/i18n/locale-provider";

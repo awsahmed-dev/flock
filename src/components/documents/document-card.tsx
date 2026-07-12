@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { ArrowSquareOut as ExternalLink } from "@phosphor-icons/react/dist/ssr";
 import { parseDateOnly } from "@/lib/date-only";
 import { format } from "@/lib/i18n/date-fns";
 import { docKindIcon } from "@/lib/document-kind";

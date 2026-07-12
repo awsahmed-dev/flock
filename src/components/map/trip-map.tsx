@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { MapPin, Loader2, Compass } from "lucide-react";
+import { MapPin, CircleNotch as Loader2, Compass } from "@phosphor-icons/react/dist/ssr";
 import { saveItemCoordinates } from "@/lib/actions/geocode-items";
 import type { MapItem, PoiItem } from "./map-inner";
 

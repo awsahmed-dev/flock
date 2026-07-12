@@ -4,11 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ChevronRight, Trash2, Navigation, Check, MessageSquare, Wallet,
-  Plane, BedDouble, FileText, Map as MapIcon,
-  Image as ImageIcon, ExternalLink, Link as LinkIcon,
-} from "lucide-react";
+import { CaretRight as ChevronRight, Trash as Trash2, NavigationArrow as Navigation, Check, Chat as MessageSquare, Wallet, Airplane as Plane, Bed as BedDouble, FileText, MapTrifold as MapIcon, Image as ImageIcon, ArrowSquareOut as ExternalLink, Link as LinkIcon } from "@phosphor-icons/react/dist/ssr";
 import { type CrewMember } from "@/components/trips/share-trip-sheet";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";

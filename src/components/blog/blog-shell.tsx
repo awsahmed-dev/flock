@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowLeft, Calendar, Clock } from "lucide-react";
+import { ArrowRight, ArrowLeft, Calendar, Clock } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import type { BlogPostMeta } from "@/lib/blog/posts";
 

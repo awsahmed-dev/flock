@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, ArrowLeft } from "lucide-react";
+import { House as Home, ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 
 /**

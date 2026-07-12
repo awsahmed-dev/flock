@@ -16,24 +16,7 @@ import {
 } from "@/lib/actions/chat";
 import { convert, type RateBundle } from "@/lib/fx";
 import { toast } from "sonner";
-import {
-  MoreHorizontal,
-  Trash2,
-  Pin,
-  Reply,
-  ExternalLink,
-  CheckCircle2,
-  MapPin,
-  FileText,
-  Utensils,
-  Plane,
-  Hotel,
-  Ticket,
-  ReceiptText,
-  Vote,
-  Calendar,
-  Sparkles,
-} from "lucide-react";
+import { DotsThree as MoreHorizontal, Trash as Trash2, PushPin as Pin, ArrowBendUpLeft as Reply, ArrowSquareOut as ExternalLink, CheckCircle as CheckCircle2, MapPin, FileText, ForkKnife as Utensils, Airplane as Plane, Buildings as Hotel, Ticket, Receipt as ReceiptText, CheckSquareOffset as Vote, Calendar, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import {
   DropdownMenu,
   DropdownMenuContent,

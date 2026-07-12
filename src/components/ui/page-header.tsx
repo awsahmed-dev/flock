@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
 
 interface Props {
   /** Where the back button goes. Omit to hide the back arrow. */

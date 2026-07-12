@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { X, Keyboard, Camera } from "lucide-react";
+import { X, Keyboard, Camera } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { createCameraExpense } from "@/lib/actions/expenses";
 import { convert, type RateBundle } from "@/lib/fx";

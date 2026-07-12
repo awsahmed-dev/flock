@@ -12,7 +12,7 @@ import { track } from "@/lib/analytics/events";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";
 import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
 import { convert, type RateBundle } from "@/lib/fx";
-import { Plus, Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal, Users, User, Receipt, X, Loader2 } from "lucide-react";
+import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal, Users, User, Receipt, X, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/components/i18n/locale-provider";
 

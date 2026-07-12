@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { CircleNotch as Loader2, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";

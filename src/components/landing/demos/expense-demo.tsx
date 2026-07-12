@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "motion/react";
-import { ArrowDownRight, ArrowUpRight, Receipt } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Receipt } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
 
 /**

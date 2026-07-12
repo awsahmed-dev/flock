@@ -6,7 +6,7 @@ import {
   acceptInvite,
   declineInvite,
 } from "@/lib/actions/invite-accept";
-import { ArrowRight, X, Loader2 } from "lucide-react";
+import { ArrowRight, X, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Accept / Decline button row for the invite preview page (signed-in path).

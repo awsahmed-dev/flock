@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react/dist/ssr";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Hotel, Wifi, X, ArrowUpRight, Info } from "lucide-react";
+import { Buildings as Hotel, WifiHigh as Wifi, X, ArrowUpRight, Info } from "@phosphor-icons/react/dist/ssr";
 import { useT } from "@/components/i18n/locale-provider";
 import {
   buildBookingLink,

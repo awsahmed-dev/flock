@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Keyboard, X } from "lucide-react";
+import { Keyboard, X } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Trip-scoped keyboard shortcuts. Mounted once inside TripShell.

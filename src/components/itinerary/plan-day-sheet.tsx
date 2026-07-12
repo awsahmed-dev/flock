@@ -4,10 +4,7 @@ import { useEffect, useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
-import {
-  Sparkles, Coffee, Landmark, Utensils, Ticket, UtensilsCrossed,
-  Loader2, X, Star, Plus, Compass, Users, CalendarDays, CalendarRange, ChevronRight,
-} from "lucide-react";
+import { Sparkle as Sparkles, Coffee, Bank as Landmark, ForkKnife as Utensils, Ticket, ForkKnife as UtensilsCrossed, CircleNotch as Loader2, X, Star, Plus, Compass, Users, CalendarDots as CalendarDays, CalendarBlank as CalendarRange, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SidePanel } from "@/components/ui/side-panel";

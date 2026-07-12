@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Hotel, MapPin, ExternalLink, Loader2 } from "lucide-react";
+import { Buildings as Hotel, MapPin, ArrowSquareOut as ExternalLink, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { RatingPill, PriceLevel, PoweredByGoogle } from "@/components/discover/primitives";
 import { discoverStays, type StayCard } from "@/lib/actions/discover-stays";
 import { useT } from "@/components/i18n/locale-provider";

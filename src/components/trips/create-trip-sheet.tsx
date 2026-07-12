@@ -1,16 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import {
-  Search,
-  X,
-  Plus,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  MapPin,
-} from "lucide-react";
+import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin } from "@phosphor-icons/react/dist/ssr";
 import {
   addDays,
   addMonths,

@@ -1,15 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  X,
-  Calendar,
-  Wallet,
-  MapPin,
-  Backpack,
-  Loader2,
-  Crown,
-} from "lucide-react";
+import { X, Calendar, Wallet, MapPin, Backpack, CircleNotch as Loader2, Crown } from "@phosphor-icons/react/dist/ssr";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { format } from "@/lib/i18n/date-fns";

@@ -5,10 +5,7 @@ import { motion } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
-import {
-  Plus, Sparkles, ChevronUp, ChevronDown, ExternalLink, Search, Compass,
-  Bed, Plane, Car, Utensils, Ticket, HelpCircle, Trash2, Pencil, GripVertical, MapPin, Clock,
-} from "lucide-react";
+import { Plus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDown, ArrowSquareOut as ExternalLink, MagnifyingGlass as Search, Compass, Bed, Airplane as Plane, Car, ForkKnife as Utensils, Ticket, Question as HelpCircle, Trash as Trash2, Pencil, DotsSixVertical as GripVertical, MapPin, Clock } from "@phosphor-icons/react/dist/ssr";
 import dynamicImport from "next/dynamic";
 import {
   DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor,

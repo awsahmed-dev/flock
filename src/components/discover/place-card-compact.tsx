@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Heart, Star, MapPin, Check } from "lucide-react";
+import { Heart, Star, MapPin, Check } from "@phosphor-icons/react/dist/ssr";
 import type { ScoredPlace } from "@/lib/discovery/score";
 import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { addBooking } from "@/lib/actions/bookings";

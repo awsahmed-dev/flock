@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { WifiOff } from "lucide-react";
+import { WifiSlash as WifiOff } from "@phosphor-icons/react/dist/ssr";
 import { useT } from "@/components/i18n/locale-provider";
 import { getPocketDayStatus } from "@/components/pwa/pocket-day";
 

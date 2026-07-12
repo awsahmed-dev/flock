@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Bell, Mail, Smartphone, Calendar } from "lucide-react";
+import { Bell, EnvelopeSimple as Mail, DeviceMobile as Smartphone, Calendar } from "@phosphor-icons/react/dist/ssr";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { BackButton } from "@/components/navigation/back-button";
 import { db } from "@/lib/db";

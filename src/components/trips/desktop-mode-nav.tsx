@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, LayoutGrid, ChevronLeft, type LucideIcon } from "lucide-react";
+import { House as Home, Compass, GridFour as LayoutGrid, CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
+import type { Icon as LucideIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
 

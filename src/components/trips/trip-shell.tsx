@@ -10,16 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  LayoutDashboard,
-  UserCircle,
-  Settings,
-  Sun,
-  Moon,
-  LogOut,
-  ChevronLeft,
-  MessageCircle,
-} from "lucide-react";
+import { SquaresFour as LayoutDashboard, UserCircle, GearSix as Settings, Sun, Moon, SignOut as LogOut, CaretLeft as ChevronLeft, ChatCircle as MessageCircle } from "@phosphor-icons/react/dist/ssr";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Plus, ArrowRight, Calendar } from "lucide-react";
+import { Plus, ArrowRight, Calendar } from "@phosphor-icons/react/dist/ssr";
 import { isPast, differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";

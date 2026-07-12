@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Users, Vote, Wallet, ArrowRight } from "lucide-react";
+import { Sparkle as Sparkles, Users, CheckSquareOffset as Vote, Wallet, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * First-run onboarding for the dashboard. Shown in place of the bare

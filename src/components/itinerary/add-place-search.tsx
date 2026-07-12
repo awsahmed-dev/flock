@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, Loader2, X, Calendar, Sparkles, ChevronDown, Clock, Tag, PencilLine } from "lucide-react";
+import { MagnifyingGlass as Search, MapPin, CircleNotch as Loader2, X, Calendar, Sparkle as Sparkles, CaretDown as ChevronDown, Clock, Tag, PencilLine } from "@phosphor-icons/react/dist/ssr";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { toast } from "sonner";

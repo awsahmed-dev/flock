@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Sparkles, Users, Lock, MapPin } from "lucide-react";
+import { Sparkle as Sparkles, Users, Lock, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { MOCK_BOOKINGS, type MockBooking } from "./mock-bookings";

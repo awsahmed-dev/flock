@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "motion/react";
-import { Check, Users, User, UsersRound } from "lucide-react";
+import { Check, Users, User, UsersThree as UsersRound } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
 
 /**

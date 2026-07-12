@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { Scrollytelling } from "@/components/landing/scrollytelling";
 import { LandingClosing } from "@/components/landing/landing-closing";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/server";
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { Star, ChevronRight, Vote, MapPin, Users, Wallet, Package } from "lucide-react";
+import { Star, CaretRight as ChevronRight, CheckSquareOffset as Vote, MapPin, Users, Wallet, Package } from "@phosphor-icons/react/dist/ssr";
 import { ReadinessChecklist } from "./readiness-checklist";
 import { CrewPulse } from "./crew-pulse";
 import { docKindIcon } from "@/lib/document-kind";

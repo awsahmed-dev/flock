@@ -10,11 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  MapPin, Clock, Link2, GripVertical, MoreHorizontal,
-  CheckCircle, XCircle, Circle, Pencil, Trash2,
-  Utensils, Bed, Car, Ticket, HelpCircle,
-} from "lucide-react";
+import { MapPin, Clock, LinkSimple as Link2, DotsSixVertical as GripVertical, DotsThree as MoreHorizontal, CheckCircle, XCircle, Circle, Pencil, Trash as Trash2, ForkKnife as Utensils, Bed, Car, Ticket, Question as HelpCircle } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 import { updateItemStatus, deleteItineraryItem } from "@/lib/actions/itinerary";
 import { EditItemDialog } from "./edit-item-dialog";

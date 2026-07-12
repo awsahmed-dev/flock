@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Warning as AlertTriangle, ArrowsClockwise as RefreshCw } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Per-route error boundary. Used when an error happens below the root

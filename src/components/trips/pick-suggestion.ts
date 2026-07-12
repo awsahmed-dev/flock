@@ -1,11 +1,4 @@
-import {
-  Calendar,
-  Vote,
-  Wallet,
-  Backpack,
-  Sparkles,
-  MessageSquare,
-} from "lucide-react";
+import { Calendar, CheckSquareOffset as Vote, Wallet, Backpack, Sparkle as Sparkles, Chat as MessageSquare } from "@phosphor-icons/react/dist/ssr";
 import { fmtAmount } from "@/lib/numerals";
 
 /**

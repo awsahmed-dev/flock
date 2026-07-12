@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellSlash as BellOff } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 
 /**

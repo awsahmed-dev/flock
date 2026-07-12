@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { createDocument } from "@/lib/actions/documents";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Plus, Upload, Link as LinkIcon, FileUp } from "lucide-react";
+import { Plus, UploadSimple as Upload, Link as LinkIcon, FileArrowUp as FileUp } from "@phosphor-icons/react/dist/ssr";
 import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/document-kind";
 
 interface Props {

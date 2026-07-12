@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput, type ReplyTarget } from "./message-input";
-import { X, MessageSquare, RefreshCw, Circle, Pin, ChevronRight } from "lucide-react";
+import { X, Chat as MessageSquare, ArrowsClockwise as RefreshCw, Circle, PushPin as Pin, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
 
 interface Reaction {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
-import { Pin } from "lucide-react";
+import { PushPin as Pin } from "@phosphor-icons/react/dist/ssr";
 import { useT } from "@/components/i18n/locale-provider";
 import type { RateBundle } from "@/lib/fx";
 

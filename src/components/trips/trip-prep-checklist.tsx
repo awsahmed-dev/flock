@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Users, MapPin, Wallet, Package, CalendarDays, Check, ChevronRight, ChevronDown } from "lucide-react";
+import { Users, MapPin, Wallet, Package, CalendarDots as CalendarDays, Check, CaretRight as ChevronRight, CaretDown as ChevronDown } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Phase 6 §3-B(3): the Trip Prep checklist.

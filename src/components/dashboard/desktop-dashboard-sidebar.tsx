@@ -2,16 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  Plus,
-  UserCircle,
-  Bell,
-  Sun,
-  Moon,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
+import { House as Home, Plus, UserCircle, Bell, Sun, Moon, SignOut as LogOut, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import { useTheme } from "next-themes";
 import { useT } from "@/components/i18n/locale-provider";
 import { Logo } from "@/components/ui/logo";

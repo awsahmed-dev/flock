@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
+import { CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
 import { useSmartBack } from "@/lib/use-smart-back";
 import { useT } from "@/components/i18n/locale-provider";
 

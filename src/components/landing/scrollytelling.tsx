@@ -19,7 +19,7 @@
  */
 
 import { motion } from "motion/react";
-import { Calendar, Vote, Wallet, Backpack, Sparkles } from "lucide-react";
+import { Calendar, CheckSquareOffset as Vote, Wallet, Backpack, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import { SectionGlow } from "./aurora";
 import { ChatDemo } from "./demos/chat-demo";
 import { VoteDemo } from "./demos/vote-demo";

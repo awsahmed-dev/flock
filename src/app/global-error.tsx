@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Warning as AlertTriangle, ArrowsClockwise as RefreshCw, House as Home } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Top-level error boundary. Renders when an error escapes the root layout —

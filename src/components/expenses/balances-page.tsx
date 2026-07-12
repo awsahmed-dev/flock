@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
-import { ArrowRight, Check, Loader2, Bell } from "lucide-react";
+import { ArrowRight, Check, CircleNotch as Loader2, Bell } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";

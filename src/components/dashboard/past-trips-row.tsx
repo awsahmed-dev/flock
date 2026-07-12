@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { InferSelectModel } from "drizzle-orm";
 import type { trips as tripsTable } from "@/lib/db/schema";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock } from "@phosphor-icons/react/dist/ssr";
 import { differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";

@@ -13,11 +13,7 @@ import { eq, and, asc, desc } from "drizzle-orm";
 import { parseISO, differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import {
-  MapPin, Calendar, Clock, DollarSign,
-  Ticket, Hotel, Bus, Utensils, Star,
-  ExternalLink, Users, Globe, CheckCircle2, BarChart3,
-} from "lucide-react";
+import { MapPin, Calendar, Clock, CurrencyDollar as DollarSign, Ticket, Buildings as Hotel, Bus, ForkKnife as Utensils, Star, ArrowSquareOut as ExternalLink, Users, Globe, CheckCircle as CheckCircle2, ChartBar as BarChart3 } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
 import type { Metadata } from "next";

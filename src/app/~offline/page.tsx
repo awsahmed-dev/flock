@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { WifiOff, RefreshCw, ArrowRight } from "lucide-react";
+import { WifiSlash as WifiOff, ArrowsClockwise as RefreshCw, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { useT } from "@/components/i18n/locale-provider";
 
 /**

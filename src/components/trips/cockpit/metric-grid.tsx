@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Wallet, Users, Package, ChevronRight } from "lucide-react";
+import { MapPin, Wallet, Users, Package, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Phase 6 §3-B(5) — the 2×2 metric row, tokenized. Icon + ≤8-char

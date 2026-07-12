@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  Bed, Plane, Utensils, Ticket, ShoppingBag, MoreHorizontal,
-} from "lucide-react";
+import { Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { convert, type RateBundle } from "@/lib/fx";
 import { PageHeader } from "@/components/ui/page-header";

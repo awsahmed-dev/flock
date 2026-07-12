@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, Check, Mail } from "lucide-react";
+import { ArrowRight, Check, EnvelopeSimple as Mail } from "@phosphor-icons/react/dist/ssr";
 import { joinWaitlist } from "@/lib/actions/waitlist";
 
 /**

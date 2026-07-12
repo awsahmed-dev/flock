@@ -2,18 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  MapPin,
-  Calendar,
-  Mail,
-  Copy,
-  Check,
-  Hotel,
-  Plane,
-  Ticket,
-  ClipboardList,
-  CheckCircle2,
-} from "lucide-react";
+import { MapPin, Calendar, EnvelopeSimple as Mail, Copy, Check, Buildings as Hotel, Airplane as Plane, Ticket, ClipboardText as ClipboardList, CheckCircle as CheckCircle2 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";

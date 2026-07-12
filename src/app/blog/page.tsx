@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { ArrowRight, Calendar, Clock } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import { BLOG_POSTS } from "@/lib/blog/posts";
 

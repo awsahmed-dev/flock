@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import {
-  X, Star, MapPin, Clock, Plus, Check, ChevronLeft, ChevronRight, ExternalLink,
-  Loader2, Heart, Sparkles, Tag, Users,
-} from "lucide-react";
+import { X, Star, MapPin, Clock, Plus, Check, CaretLeft as ChevronLeft, CaretRight as ChevronRight, ArrowSquareOut as ExternalLink, CircleNotch as Loader2, Heart, Sparkle as Sparkles, Tag, Users } from "@phosphor-icons/react/dist/ssr";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { toast } from "sonner";

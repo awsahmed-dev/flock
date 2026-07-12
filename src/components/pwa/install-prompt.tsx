@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, X, Share } from "lucide-react";
+import { DownloadSimple as Download, X, ShareFat as Share } from "@phosphor-icons/react/dist/ssr";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, Trophy } from "lucide-react";
+import { Check, Trophy } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
 
 /**

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateItineraryItem } from "@/lib/actions/itinerary";
-import { Loader2 } from "lucide-react";
+import { CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import type { InferSelectModel } from "drizzle-orm";
 import type { itineraryItems } from "@/lib/db/schema";

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { joinTripAsGuest } from "@/lib/actions/invite";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
+import { CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 
 interface Props {

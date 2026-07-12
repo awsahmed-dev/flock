@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "motion/react";
-import { GripVertical, Sparkles, Utensils, MapPin, Coffee, Music } from "lucide-react";
+import { DotsSixVertical as GripVertical, Sparkle as Sparkles, ForkKnife as Utensils, MapPin, Coffee, MusicNotes as Music } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
 
 /**

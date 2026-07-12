@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Check, Share2, Loader2 } from "lucide-react";
+import { Copy, Check, ShareNetwork as Share2, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createTripInvite } from "@/lib/actions/invite";
 import { useT } from "@/components/i18n/locale-provider";

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Star, Plus, Users, ArrowUp } from "lucide-react";
+import { Star, Plus, Users, ArrowUp } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ReceiptText, Vote, Sparkles } from "lucide-react";
+import { Calendar, Receipt as ReceiptText, CheckSquareOffset as Vote, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { applyDetectedAction } from "@/lib/actions/smart-actions";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/locale-provider";
 
