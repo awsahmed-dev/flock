@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import type { CockpitAnchor, TeaserPlace } from "@/components/trips/cockpit/types";
 import { getDayColor } from "@/lib/day-colors";
 import { Progress } from "@/components/animate-ui/components/radix/progress";
+import { ChipRail } from "@/components/ui/chip-rail";
+import { DayChip } from "@/components/trips/day-chip";
 
 const MapboxPlanMap = dynamic(
   () => import("@/components/map/mapbox-plan-map").then((m) => m.MapboxPlanMap),
@@ -388,8 +390,16 @@ export function NowCockpit({
           <div className="w-9 h-1 rounded-full bg-foreground/20" />
         </div>
 
+        {/* Sprint 8 Item 5: half detent used to be overflow-hidden like peek,
+            so the stop list was cut off with no way to scroll. Only peek (a
+            fixed-height summary) suppresses scroll now; min-h-0 keeps the
+            flex child from refusing to shrink below its content height. */}
         <div
-          className={detent === "full" ? "flex-1 overflow-y-auto px-4" : "flex-1 overflow-hidden px-4"}
+          className={
+            detent === "peek" && dragH == null
+              ? "flex-1 min-h-0 overflow-hidden px-4"
+              : "flex-1 min-h-0 overflow-y-auto px-4"
+          }
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
         >
           {/* Special banners. */}
@@ -519,31 +529,24 @@ export function NowCockpit({
               </p>
             )}
 
-            {/* Day rail (full detent spec, shown from half for usefulness). */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 py-3">
+            {/* Day rail (full detent spec, shown from half for usefulness).
+                Sprint 8 Items 2+4: unified DayChip inside a ChipRail whose
+                trailing fade matches the sheet's glass surface. */}
+            <ChipRail wrapperClassName="-mx-4" className="flex gap-2 px-4 py-3" fadeColor="var(--sheet-bg)">
               {days.map((d) => {
-                const active = d === selectedDay;
                 const isToday = d === todayIso;
                 return (
-                  <button
+                  <DayChip
                     key={d}
-                    ref={isToday ? todayPillRef : undefined}
-                    type="button"
+                    chipRef={isToday ? todayPillRef : undefined}
+                    active={d === selectedDay}
+                    dayColor={getDayColor(days.indexOf(d))}
                     onClick={() => setSelectedDay(d)}
-                    className={`shrink-0 h-11 min-w-[84px] px-4 rounded-full text-sm font-bold transition-colors ${
-                      active ? "text-white" : "bg-foreground/10 text-muted-foreground"
-                    }`}
-                    style={{
-                      // FIX 5: each chip carries its day's map color.
-                      borderBottom: `3px solid ${getDayColor(days.indexOf(d))}`,
-                      ...(active ? { background: "var(--clr-wayfind)" } : {}),
-                    }}
-                  >
-                    {isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
-                  </button>
+                    label={isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
+                  />
                 );
               })}
-            </div>
+            </ChipRail>
 
             {/* Item list. */}
             {dayItems.length === 0 ? (

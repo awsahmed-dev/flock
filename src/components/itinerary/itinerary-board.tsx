@@ -5,7 +5,8 @@ import { motion } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
-import { Plus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDown, ArrowSquareOut as ExternalLink, MagnifyingGlass as Search, Compass, Bed, Airplane as Plane, Car, ForkKnife as Utensils, Ticket, Question as HelpCircle, Trash as Trash2, Pencil, DotsSixVertical as GripVertical, MapPin, Clock } from "@phosphor-icons/react/dist/ssr";
+import { Plus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDown, ArrowSquareOut as ExternalLink, MagnifyingGlass as Search, Compass, Bed, Airplane as Plane, Car, ForkKnife as Utensils, Ticket, Question as HelpCircle, Trash as Trash2, Pencil, DotsSixVertical as GripVertical, MapPin, Clock, Note as StickyNote, Wallet, FileText, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
+import { useRouter } from "next/navigation";
 import dynamicImport from "next/dynamic";
 import {
   DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor,
@@ -15,7 +16,13 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { CSS } from "@dnd-kit/utilities";
 
 import { AddPlaceSearch } from "./add-place-search";
+import { AddItemDialog } from "./add-item-dialog";
 import { EditItemDialog } from "./edit-item-dialog";
+import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { ChipRail } from "@/components/ui/chip-rail";
+import { DayChip } from "@/components/trips/day-chip";
+import { getDayColor } from "@/lib/day-colors";
 import { DocumentCard } from "@/components/documents/document-card";
 import { PlanDaySheet } from "./plan-day-sheet";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
@@ -125,8 +132,13 @@ export function ItineraryBoard({
     setSyncedItems(initialItems);
     setItems(initialItems);
   }
+  const router = useRouter();
   // B24: planMode removed — Book mode merged into the Bookings tab.
-  const [addPickerOpen, setAddPickerOpen] = useState(false);
+  // Sprint 8 Item 3: the floating FAB is gone; the nav's right circle
+  // opens this action sheet instead, listing everything addable to a day.
+  const [addActionsOpen, setAddActionsOpen] = useState(false);
+  const [manualAdd, setManualAdd] = useState<{ day: string; type: string } | null>(null);
+  const [docAddOpen, setDocAddOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -212,15 +224,15 @@ export function ItineraryBoard({
     setSearchOpen(true);
   }
 
-  // Sprint 7 FIX-3: the nav's right circle on the itinerary = "+ add stop
-  // to the current day". Ref keeps the listener stable across focus changes.
+  // Sprint 7 FIX-3 → Sprint 8 Item 3: the nav's right circle on the
+  // itinerary opens the add-actions sheet (was: straight to place search).
+  // Ref keeps the listener stable across focus changes.
   const focusedDayRef = useRef(focusedDay);
   focusedDayRef.current = focusedDay;
   useEffect(() => {
-    const add = () => openAddFor(focusedDayRef.current ?? days[0] ?? null);
+    const add = () => setAddActionsOpen(true);
     window.addEventListener("paxawa:addStop", add);
     return () => window.removeEventListener("paxawa:addStop", add);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const mapItems = useMemo(
@@ -545,62 +557,9 @@ export function ItineraryBoard({
           below. Top of canvas is now clean — map gets the full surface,
           no floating chrome competing with the trip topbar. */}
 
-      {/* B24: Add controls live on a floating + FAB at bottom-right
-          again, sitting just above the sheet. Tapping opens a small
-          picker offering AI Plan or manual Add. The previous in-sheet +
-          button felt fiddly on mobile and didn't expose AI Plan from
-          the same spot. */}
-      {/* B25-r4: FAB back to bottom-RIGHT — the bottom-left placement
-          felt orphaned from the sheet content + competed with where the
-          eye lands after reading a left-anchored card list. Now sitting
-          just above the collapsed sheet handle (bottom-[80px], was 120px
-          on mobile / 88px on desktop) so the + button reads as part of
-          the sheet's control strip rather than floating in dead space.
-          Feedback widget is gone from trip pages so there's no longer a
-          right-side collision to dodge. */}
-      <div className="absolute z-40 end-4 sm:end-6 bottom-[80px] flex flex-col items-end gap-2 pointer-events-none lg:hidden">
-        {addPickerOpen && (
-          <div className="pointer-events-auto animate-in slide-in-from-bottom-2 fade-in duration-200 flex flex-col gap-2">
-            {/* P0-3: two affordances — one AI entry (scope chosen inside
-                the panel) + one manual Add. No more "Plan this day" vs
-                "AI Plan" twins. */}
-            <button
-              type="button"
-              onClick={() => {
-                setAddPickerOpen(false);
-                setPlanDayOpen(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg px-4 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {t("itinerary.aiEntry")}
-            </button>
-            {/* B3 / Paxawa Control Language: this Add affordance floats over
-                the Plan map, so it joins the glass control layer (glass-on-dark
-                with the reduced-transparency fallback) — Plan and Discover now
-                share one material on their floating controls. */}
-            <button
-              type="button"
-              onClick={() => {
-                setAddPickerOpen(false);
-                openAddFor(focusedDay);
-              }}
-              className="glass-dark inline-flex items-center gap-2 rounded-full text-white shadow-lg px-4 py-2 text-xs font-bold transition-all hover:scale-[1.03]"
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              {t("itinerary.addPlace")}
-            </button>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() => setAddPickerOpen((o) => !o)}
-          className={`pointer-events-auto w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl shadow-primary/40 hover:scale-105 transition-all ${addPickerOpen ? "rotate-45" : ""}`}
-          aria-label={addPickerOpen ? "Close" : "Add"}
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      </div>
+      {/* Sprint 8 Item 3: the floating + FAB is gone — the nav's right
+          circle is the single Add entry; it opens the action sheet below
+          (place, note, time block, expense, document, AI plan). */}
 
       {/* ── Bottom sheet (B11: motion-driven drag-to-expand) ────────
           Was a click-to-toggle button which made the sheet feel like a
@@ -649,48 +608,27 @@ export function ItineraryBoard({
               and already-booked tickets. Cleaner mental model: Plan =
               what you're doing, Bookings = what you're spending on. */}
 
-          {/* Day chips — own row, horizontal scroll, full width. Bumped to
-              px-3.5/py-2 + text-xs so each chip clears a comfortable ~36px
-              thumb target (was px-3/py-1.5 text-[11px] ≈ 28px). */}
-          <div className="px-3 pb-2 overflow-x-auto scrollbar-none">
-            <div className="inline-flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setFocusedDay(null)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
-                  focusedDay === null
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/40 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("itinerary.all")}
-              </button>
-              {days.map((day, idx) => {
-                const count = getItemsForDay(day).length;
-                const active = focusedDay === day;
-                const palette = DAY_PALETTE[idx % DAY_PALETTE.length];
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => setFocusedDay(day)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
-                    {/* §6-A: real calendar date, not "D1" — "Thu 18". */}
-                    {format(parseISO(day), "EEE d")}
-                    {count > 0 && (
-                      <span className="opacity-70 tabular-nums">·{count}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Day chips — Sprint 8 Items 2+4: the unified DayChip (planning
+              tokens at LIVE size, day-color bottom border) in a ChipRail
+              whose trailing fade signals there's more to scroll. */}
+          <ChipRail className="flex items-center gap-1.5 px-3 pb-2" fadeColor="var(--card)">
+            <DayChip
+              label={t("itinerary.all")}
+              active={focusedDay === null}
+              onClick={() => setFocusedDay(null)}
+            />
+            {days.map((day, idx) => (
+              <DayChip
+                key={day}
+                active={focusedDay === day}
+                dayColor={getDayColor(idx)}
+                count={getItemsForDay(day).length}
+                onClick={() => setFocusedDay(day)}
+                /* §6-A: real calendar date, not "D1" — "Thu 18". */
+                label={format(parseISO(day), "EEE d")}
+              />
+            ))}
+          </ChipRail>
 
           {/* Row 3: day title (tap to expand sheet) — Add controls moved
               to a floating + FAB at bottom-right which opens a picker
@@ -873,6 +811,93 @@ export function ItineraryBoard({
       </motion.div>
 
       {/* Sheets / dialogs */}
+      {/* Sprint 8 Item 3: everything addable to the focused day, one sheet.
+          Opened by the nav's right circle (paxawa:addStop). */}
+      <BottomSheet
+        open={addActionsOpen}
+        onClose={() => setAddActionsOpen(false)}
+        title={t("itinerary.addToDay")}
+        subtitle={
+          (focusedDay ?? days[0])
+            ? format(parseISO(focusedDay ?? days[0]), "EEEE, MMM d")
+            : undefined
+        }
+        size="sm"
+      >
+        <div className="divide-y divide-border/60">
+          <AddActionRow
+            icon={MapPin}
+            label={t("itinerary.addPlace")}
+            onClick={() => {
+              setAddActionsOpen(false);
+              openAddFor(focusedDay ?? days[0] ?? null);
+            }}
+          />
+          {(focusedDay ?? days[0]) && (
+            <AddActionRow
+              icon={StickyNote}
+              label={t("itinerary.addNote")}
+              onClick={() => {
+                setAddActionsOpen(false);
+                setManualAdd({ day: focusedDay ?? days[0], type: "other" });
+              }}
+            />
+          )}
+          {(focusedDay ?? days[0]) && (
+            <AddActionRow
+              icon={Clock}
+              label={t("itinerary.addTimeBlock")}
+              onClick={() => {
+                setAddActionsOpen(false);
+                setManualAdd({ day: focusedDay ?? days[0], type: "activity" });
+              }}
+            />
+          )}
+          <AddActionRow
+            icon={Wallet}
+            label={t("itinerary.logExpenseDay")}
+            onClick={() => {
+              setAddActionsOpen(false);
+              router.push(`/trips/${tripId}/money?add=expense`);
+            }}
+          />
+          <AddActionRow
+            icon={FileText}
+            label={t("nav.addDocument")}
+            onClick={() => {
+              setAddActionsOpen(false);
+              setDocAddOpen(true);
+            }}
+          />
+          {/* The FAB was the only mobile entry to the AI day planner — it
+              moves here rather than silently disappearing. */}
+          <AddActionRow
+            icon={Sparkles}
+            label={t("itinerary.aiEntry")}
+            onClick={() => {
+              setAddActionsOpen(false);
+              setPlanDayOpen(true);
+            }}
+          />
+        </div>
+      </BottomSheet>
+
+      {manualAdd && (
+        <AddItemDialog
+          tripId={tripId}
+          dayDate={manualAdd.day}
+          sortOrder={getItemsForDay(manualAdd.day).length}
+          defaultValues={{ type: manualAdd.type }}
+          onClose={() => setManualAdd(null)}
+          onAdded={(item) => {
+            setItems((prev) => [...prev, item]);
+            setManualAdd(null);
+          }}
+        />
+      )}
+
+      <AddDocumentDialog tripId={tripId} open={docAddOpen} onClose={() => setDocAddOpen(false)} />
+
       <AddPlaceSearch
         open={searchOpen}
         onClose={() => {
@@ -929,6 +954,32 @@ export function ItineraryBoard({
         />
       )}
     </div>
+  );
+}
+
+/* Sprint 8 Item 3: one row of the add-actions sheet — same anatomy as the
+   nav's + menu rows so both sheets read as the same control. */
+function AddActionRow({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 h-14 px-1 text-start active:bg-muted/40 transition-colors"
+    >
+      <span className="w-9 h-9 rounded-full bg-primary/12 text-primary flex items-center justify-center shrink-0">
+        <Icon className="w-4.5 h-4.5" />
+      </span>
+      <span className="flex-1 font-semibold text-[15px]">{label}</span>
+      <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
+    </button>
   );
 }
 

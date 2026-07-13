@@ -221,7 +221,9 @@ export function DynamicBottomNav({
               : dispatch("paxawa:logExpense"),
         }
       : isItineraryPage
-        ? { icon: Plus, accent: true, label: t("nav.addPlace"), action: () => dispatch("paxawa:addStop") }
+        // Sprint 8 Item 3: opens the itinerary's add-actions sheet
+        // (place/note/time block/expense/document), not just add-place.
+        ? { icon: Plus, accent: true, label: t("nav.add"), action: () => dispatch("paxawa:addStop") }
         : phase === "LIVE"
           ? { icon: Camera, accent: true, label: t("nav.add"), action: () => router.push(`${base}/money/expense-camera`) }
           : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };

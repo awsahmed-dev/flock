@@ -459,7 +459,7 @@
     "typeName": "Type a name (e.g. Osaka Castle, lunch with crew…)",
     "suggestions": "Suggestions · pick one or keep typing",
     "typeForSuggestions": "💡 Type a place name to see suggestions — or just write anything.",
-    "addToDay": "Add to day",
+    "addToDay": "Add to this day",
     "moreDetails": "More details (optional)",
     "time": "Time",
     "cost": "Cost",
@@ -471,7 +471,10 @@
     "failedToAdd": "Couldn't add that — try again.",
     "addManuallyNamed": "Add “{name}” manually",
     "notesPlaceholder": "anything to remember",
-    "aiEntry": "AI plan"
+    "aiEntry": "AI plan",
+    "addNote": "Add a note",
+    "addTimeBlock": "Add a time block",
+    "logExpenseDay": "Log an expense for this day"
   },
   "discover": {
     "eyebrow": "Discover",
