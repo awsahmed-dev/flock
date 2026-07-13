@@ -1101,5 +1101,22 @@
     "error": "Couldn't create an invite link. Try again.",
     "inviteTo": "Invite to {name}",
     "peopleCount": "{count, plural, one {# person in this trip} other {# people in this trip}}"
+  },
+  "docs": {
+    "kindFlight": "Flight",
+    "kindHotel": "Hotel",
+    "kindTransport": "Transport",
+    "kindVisa": "Visa",
+    "kindOther": "Other",
+    "header": "DOCUMENTS · {count}",
+    "empty": "No documents yet — add a confirmation or file your crew needs.",
+    "badgeFile": "File",
+    "badgeLink": "Link",
+    "viewList": "List view",
+    "viewGrid": "Grid view",
+    "offlineUnavailable": "This document isn't available offline yet — open it once while online and it'll be saved on your device.",
+    "loadFailed": "Couldn't load this document.",
+    "boardingPass": "Boarding-pass mode",
+    "exitBoardingPass": "Tap to exit"
   }
 }

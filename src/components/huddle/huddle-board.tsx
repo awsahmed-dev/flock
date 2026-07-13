@@ -14,8 +14,8 @@ import { createClient } from "@/lib/supabase/client";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { DocumentCard, type DocumentCardData } from "@/components/documents/document-card";
-import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
+import { type DocumentCardData } from "@/components/documents/document-card";
+import { DocsPanel } from "@/components/documents/docs-panel";
 import { motion } from "motion/react";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -172,27 +172,9 @@ export function HuddleBoard({
         />
 
         {seg === "docs" ? (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[12px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.5 }}>
-                DOCUMENTS · {sortedDocs.length}
-              </p>
-              <AddDocumentDialog tripId={tripId} />
-            </div>
-            {sortedDocs.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                No documents yet — add a confirmation or file your crew needs.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {sortedDocs.map((d) => (
-                  <li key={d.id}>
-                    <DocumentCard doc={d} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          /* Sprint 8 Item 1: list/grid toggle + in-app viewer live in the
+             shared DocsPanel. */
+          <DocsPanel tripId={tripId} docs={sortedDocs} />
         ) : (
         <>
         {/* ── ZONE 1: Decision Deck. ─────────────────────────────────── */}

@@ -26,6 +26,8 @@ import { ChipRail } from "@/components/ui/chip-rail";
 import { DayChip } from "@/components/trips/day-chip";
 import { getDayColor } from "@/lib/day-colors";
 import { DocumentCard } from "@/components/documents/document-card";
+import { DocumentViewer } from "@/components/documents/document-viewer";
+import { isFileDoc } from "@/lib/doc-file";
 import { PlanDaySheet } from "./plan-day-sheet";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
@@ -151,6 +153,13 @@ export function ItineraryBoard({
   const [addActionsOpen, setAddActionsOpen] = useState(false);
   const [manualAdd, setManualAdd] = useState<{ day: string; type: string } | null>(null);
   const [docAddOpen, setDocAddOpen] = useState(false);
+  // Sprint 8 Item 1: uploaded day-docs open the in-app viewer.
+  const [docViewerIdx, setDocViewerIdx] = useState<number | null>(null);
+  const fileDocs = documents.filter((d) => isFileDoc(d.url));
+  const openDocViewer = (docId: string) => {
+    const i = fileDocs.findIndex((f) => f.id === docId);
+    if (i >= 0) setDocViewerIdx(i);
+  };
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -544,7 +553,7 @@ export function ItineraryBoard({
                       {documents
                         .filter((d) => d.dayDate === day)
                         .map((d) => (
-                          <DocumentCard key={d.id} doc={d} dayLabel={null} />
+                          <DocumentCard key={d.id} doc={d} dayLabel={null} onOpen={() => openDocViewer(d.id)} />
                         ))}
                     </div>
                   )}
@@ -839,7 +848,7 @@ export function ItineraryBoard({
                       {documents
                         .filter((d) => d.dayDate === day)
                         .map((d) => (
-                          <DocumentCard key={d.id} doc={d} dayLabel={null} />
+                          <DocumentCard key={d.id} doc={d} dayLabel={null} onOpen={() => openDocViewer(d.id)} />
                         ))}
                     </div>
                   )}
@@ -970,6 +979,10 @@ export function ItineraryBoard({
       )}
 
       <AddDocumentDialog tripId={tripId} open={docAddOpen} onClose={() => setDocAddOpen(false)} />
+
+      {docViewerIdx != null && fileDocs[docViewerIdx] && (
+        <DocumentViewer docs={fileDocs} initialIndex={docViewerIdx} onClose={() => setDocViewerIdx(null)} />
+      )}
 
       <AddPlaceSearch
         open={searchOpen}

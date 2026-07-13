@@ -21,6 +21,9 @@ import { getDayColor } from "@/lib/day-colors";
 import { Progress } from "@/components/animate-ui/components/radix/progress";
 import { ChipRail } from "@/components/ui/chip-rail";
 import { DayChip } from "@/components/trips/day-chip";
+import { DocumentCard } from "@/components/documents/document-card";
+import { DocumentViewer } from "@/components/documents/document-viewer";
+import { isFileDoc } from "@/lib/doc-file";
 
 const MapboxPlanMap = dynamic(
   () => import("@/components/map/mapbox-plan-map").then((m) => m.MapboxPlanMap),
@@ -96,6 +99,13 @@ export function NowCockpit({
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? todayIso;
   const [selectedDay, setSelectedDay] = useState(defaultDay);
   const [detent, setDetent] = useState<Detent>("peek");
+  // Sprint 8 Item 1: uploaded day-docs open the in-app viewer.
+  const [docViewerIdx, setDocViewerIdx] = useState<number | null>(null);
+  const fileDocs = documents.filter((d) => isFileDoc(d.url));
+  const openDocViewer = (docId: string) => {
+    const i = fileDocs.findIndex((f) => f.id === docId);
+    if (i >= 0) setDocViewerIdx(i);
+  };
   // §3-A map chip: remembers the detent to restore after a map-full view.
   const lastDetentRef = useRef<Detent>("half");
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set());
@@ -570,7 +580,10 @@ export function NowCockpit({
               </ul>
             )}
 
-            {/* Sprint 4 FIX-5b: documents pinned to this day. */}
+            {/* Sprint 4 FIX-5b: documents pinned to this day. Sprint 8
+                Item 1: uploaded files open the in-app viewer — critical
+                on the ground, where leaving the app to a browser tab is
+                worst-case (boarding passes, tickets). */}
             {documents.filter((d) => d.dayDate === selectedDay).length > 0 && (
               <div className="mt-4">
                 <p className="text-[12px] font-bold uppercase text-tertiary mb-2" style={{ letterSpacing: 1.2 }}>
@@ -581,18 +594,7 @@ export function NowCockpit({
                     .filter((d) => d.dayDate === selectedDay)
                     .map((d) => (
                       <li key={d.id}>
-                        <a
-                          href={d.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 rounded-2xl bg-card border border-border px-3 h-14"
-                        >
-                          <span className="w-9 h-9 rounded-xl bg-primary/12 text-primary flex items-center justify-center shrink-0">
-                            {d.type === "image" ? <ImageIcon size={16} /> : d.type === "pdf" ? <FileText size={16} /> : <LinkIcon size={16} />}
-                          </span>
-                          <span className="flex-1 min-w-0 text-[14px] font-semibold truncate">{d.title}</span>
-                          <ExternalLink size={14} className="text-tertiary shrink-0" />
-                        </a>
+                        <DocumentCard doc={d} dayLabel={null} onOpen={() => openDocViewer(d.id)} />
                       </li>
                     ))}
                 </ul>
@@ -613,6 +615,10 @@ export function NowCockpit({
       </div>
 
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={budget.currency} total={budget.total} />
+
+      {docViewerIdx != null && fileDocs[docViewerIdx] && (
+        <DocumentViewer docs={fileDocs} initialIndex={docViewerIdx} onClose={() => setDocViewerIdx(null)} />
+      )}
     </div>
   );
 }
