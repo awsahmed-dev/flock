@@ -303,6 +303,20 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Sprint 8 Item 6 (RECAP sheet): crew photos attached to stops for the Wrap.
+export const tripPhotos = pgTable("trip_photos", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  itemId: uuid("item_id").references(() => itineraryItems.id, { onDelete: "set null" }),
+  url: text("url").notNull(),
+  uploadedBy: uuid("uploaded_by")
+    .notNull()
+    .references(() => profiles.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
 export const comments = pgTable("comments", {

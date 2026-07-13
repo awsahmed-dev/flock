@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { itineraryItems } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { itineraryItems, tripPhotos } from "@/lib/db/schema";
+import { eq, asc, desc } from "drizzle-orm";
 import { PhotosGrid } from "@/components/trips/cockpit/photos-grid";
 
 interface Props {
@@ -39,5 +39,28 @@ export default async function RecapPhotosPage({ params }: Props) {
     photoUrl: string;
   }[];
 
-  return <PhotosGrid tripId={id} tripName={trip.name} photos={photos} />;
+  // Sprint 8 Item 6: crew photos dropped on stops in the RECAP sheet join
+  // the Wrap grid, labeled with their stop's title when pinned to one.
+  const crewShots = await db
+    .select({
+      id: tripPhotos.id,
+      url: tripPhotos.url,
+      itemId: tripPhotos.itemId,
+      createdAt: tripPhotos.createdAt,
+    })
+    .from(tripPhotos)
+    .where(eq(tripPhotos.tripId, id))
+    .orderBy(desc(tripPhotos.createdAt));
+  const titleByItem = new Map(rows.map((r) => [r.id, { title: r.title, dayDate: r.dayDate }]));
+  const crewPhotos = crewShots.map((p) => {
+    const stop = p.itemId ? titleByItem.get(p.itemId) : undefined;
+    return {
+      id: p.id,
+      title: stop?.title ?? trip.name,
+      dayDate: stop?.dayDate ?? "",
+      photoUrl: p.url,
+    };
+  });
+
+  return <PhotosGrid tripId={id} tripName={trip.name} photos={[...crewPhotos, ...photos]} />;
 }

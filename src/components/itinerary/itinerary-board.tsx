@@ -18,6 +18,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { AddPlaceSearch } from "./add-place-search";
 import { AddItemDialog } from "./add-item-dialog";
 import { EditItemDialog } from "./edit-item-dialog";
+import { LiveDayTimeline, DepartureStrip, RecapStopCard, InlineAddRow } from "./itinerary-phase-sections";
+import type { TripPhase } from "@/lib/trip-phase";
 import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ChipRail } from "@/components/ui/chip-rail";
@@ -63,6 +65,12 @@ interface Props {
   bookingsByStop?: Record<string, { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null }>;
   /** Sprint 5 §3c: day-pinned documents render under each day's stops. */
   documents?: { id: string; title: string; type: string | null; url: string; dayDate: string | null }[];
+  /** Sprint 8 Item 6: the sheet is phase-aware — PLANNING list, LIVE
+   *  timeline, DEPARTURE countdown+pack, RECAP did-you-go check-in. */
+  phase?: TripPhase;
+  startDate?: string | null;
+  packItems?: { id: string; label: string; category: string; packed: boolean }[];
+  photoCountByItem?: Record<string, number>;
 }
 
 const DAY_PALETTE = [
@@ -116,6 +124,10 @@ export function ItineraryBoard({
   initialDay = null,
   bookingsByStop = {},
   documents = [],
+  phase = "PLANNING",
+  startDate = null,
+  packItems = [],
+  photoCountByItem = {},
 }: Props) {
   const t = useT();
   const { locale } = useLocale();
@@ -658,6 +670,11 @@ export function ItineraryBoard({
           {/* Scrollable list — trimmed from 55vh to 45vh so map gets
               the larger share of the viewport when sheet is expanded. */}
           <div className="max-h-[45vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
+            {/* Sprint 8 Item 6: DEPARTURE — countdown + pack-today sit once
+                above the day list; day-pinned docs render per-day below. */}
+            {phase === "DEPARTURE" && startDate && (
+              <DepartureStrip tripId={tripId} startDate={startDate} packItems={packItems} t={t} />
+            )}
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -718,6 +735,47 @@ export function ItineraryBoard({
                       </div>
                     )}
 
+                    {/* Sprint 8 Item 6: phase-aware day content. LIVE = a
+                        timeline with a NOW line; RECAP = did-you-go
+                        check-in cards; PLANNING/DEPARTURE = the sortable
+                        list with an inline add row. */}
+                    {phase === "LIVE" ? (
+                      dayItems.length === 0 ? (
+                        <p className="py-6 text-center text-muted-foreground text-sm">{t("now.noStops")}</p>
+                      ) : (
+                        <LiveDayTimeline
+                          tripId={tripId}
+                          items={dayItems}
+                          isToday={today}
+                          t={t}
+                          onLocalDone={(id, done) =>
+                            setItems((prev) =>
+                              prev.map((i) =>
+                                i.id === id
+                                  ? { ...i, completedAt: (done ? new Date() : null) as Item["completedAt"] }
+                                  : i,
+                              ),
+                            )
+                          }
+                        />
+                      )
+                    ) : phase === "RECAP" ? (
+                      <div className="space-y-2.5">
+                        {dayItems.map((item) => (
+                          <RecapStopCard
+                            key={item.id}
+                            tripId={tripId}
+                            item={item}
+                            photoCount={photoCountByItem[item.id] ?? 0}
+                            t={t}
+                            onEdit={() => setEditingItem(item)}
+                            onLocalChange={(id, patch) =>
+                              setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)))
+                            }
+                          />
+                        ))}
+                      </div>
+                    ) : (
                     <SortableContext
                       items={dayItems.map((i) => i.id)}
                       strategy={verticalListSortingStrategy}
@@ -772,6 +830,7 @@ export function ItineraryBoard({
                         ))}
                       </ul>
                     </SortableContext>
+                    )}
 
                   {/* Sprint 5 §3c: the day's pinned confirmations, right
                       under its stops — see the plan AND the booking. */}
@@ -785,14 +844,28 @@ export function ItineraryBoard({
                     </div>
                   )}
 
-                    {dayItems.length === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => openAddFor(day)}
-                        className="ms-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center"
-                      >
-                        Nothing planned · tap to add
-                      </button>
+                    {/* Sprint 8 Item 6: inline add rows per phase — the
+                        mockup's dashed entry at the bottom of each day. */}
+                    {(phase === "PLANNING" || phase === "DEPARTURE") && (
+                      <div className="mt-2">
+                        {dayItems.length === 0 && (
+                          <p className="text-[12px] text-muted-foreground px-1 pb-1.5">
+                            {t("itinerary.nothingPlannedYet")}
+                          </p>
+                        )}
+                        <InlineAddRow
+                          label={t("itinerary.addStopTo", { day: format(parseISO(day), "EEEE") })}
+                          onClick={() => openAddFor(day)}
+                        />
+                      </div>
+                    )}
+                    {phase === "RECAP" && (
+                      <div className="mt-2">
+                        <InlineAddRow
+                          label={t("itinerary.addWhatYouDid")}
+                          onClick={() => setManualAdd({ day, type: "activity" })}
+                        />
+                      </div>
                     )}
                   </div>
                 );

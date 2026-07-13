@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { itineraryItems, documents } from "@/lib/db/schema";
-import { eq, asc, inArray } from "drizzle-orm";
+import { itineraryItems, documents, packingItems, tripPhotos } from "@/lib/db/schema";
+import { eq, asc, inArray, and, or, isNull, sql } from "drizzle-orm";
+import { tripPhase } from "@/lib/trip-phase";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -106,6 +107,37 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
     .from(documents)
     .where(eq(documents.tripId, id));
 
+  // Sprint 8 Item 6: the sheet is phase-aware. DEPARTURE pulls the pack
+  // list (mine + shared); RECAP pulls crew-photo counts per stop.
+  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate });
+  const packList =
+    phase === "DEPARTURE"
+      ? await db
+          .select({
+            id: packingItems.id,
+            label: packingItems.label,
+            category: packingItems.category,
+            packed: packingItems.packed,
+          })
+          .from(packingItems)
+          .where(
+            and(
+              eq(packingItems.tripId, id),
+              or(isNull(packingItems.userId), eq(packingItems.userId, user.id)),
+            ),
+          )
+          .orderBy(asc(packingItems.sortOrder))
+      : [];
+  const photoCountByItem: Record<string, number> = {};
+  if (phase === "RECAP") {
+    const counts = await db
+      .select({ itemId: tripPhotos.itemId, n: sql<number>`count(*)::int` })
+      .from(tripPhotos)
+      .where(eq(tripPhotos.tripId, id))
+      .groupBy(tripPhotos.itemId);
+    for (const c of counts) if (c.itemId) photoCountByItem[c.itemId] = c.n;
+  }
+
   return (
     <ItineraryBoard
       tripId={id}
@@ -120,6 +152,10 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       isOwner={checkOwner(trip, user.id)}
       crewSize={trip.members.length}
       initialDay={initialDay ?? null}
+      phase={phase}
+      startDate={trip.startDate}
+      packItems={packList}
+      photoCountByItem={photoCountByItem}
     />
   );
 }
