@@ -63,7 +63,7 @@ export function TripPrepChecklist({
         cy={26}
         r={R}
         fill="none"
-        stroke={allDone ? "#34C759" : "var(--clr-moss)"}
+        stroke="var(--clr-moss)"
         strokeWidth={4}
         strokeDasharray={CIRC}
         strokeDashoffset={CIRC * (1 - progress)}

@@ -169,8 +169,10 @@ export function ItineraryBoard({
   const [focusedDay, setFocusedDay] = useState<string | null>(() => {
     if (initialDay && days.includes(initialDay)) return initialDay;
     // Design-audit Page 7: during the trip, Today is the default day.
-    const todayIso = new Date().toISOString().slice(0, 10);
-    if (days.includes(todayIso)) return todayIso;
+    // Page 8 fix: LOCAL time via isToday, not toISOString() (UTC) — the
+    // cockpit and this sheet must agree on what "today" is.
+    const localToday = days.find((d) => isToday(parseISO(d)));
+    if (localToday) return localToday;
     return days[0] ?? null;
   });
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
@@ -602,7 +604,16 @@ export function ItineraryBoard({
           else if (info.offset.y < -50 || info.velocity.y < -500) setSheetOpen(true);
         }}
       >
-        <div className="mx-auto max-w-3xl bg-card/95 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl overflow-hidden">
+        {/* Design-review Page 8: the sheet token (--sheet-bg @ 92% + blur 10),
+            blur INLINE — Lightning CSS strips backdrop classes (§0 rule 1). */}
+        <div
+          className="mx-auto max-w-3xl border-t border-border rounded-t-3xl shadow-2xl overflow-hidden"
+          style={{
+            background: "var(--sheet-bg)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+          }}
+        >
           {/* B21: drag handle (small) — the previous double-strip header
               was busy. The drag handle is now just the slim pill at the
               top; tapping it still toggles the sheet. */}
@@ -630,7 +641,7 @@ export function ItineraryBoard({
               what you're doing, Bookings = what you're spending on. */}
 
           {/* Day chips — Sprint 8 Items 2+4: the unified DayChip (planning
-              tokens at LIVE size, day-color bottom border) in a ChipRail
+              tokens at LIVE size, leading day-color dot) in a ChipRail
               whose trailing fade signals there's more to scroll. */}
           <ChipRail className="flex items-center gap-1.5 px-3 pb-2" fadeColor="var(--card)">
             <DayChip
@@ -645,8 +656,13 @@ export function ItineraryBoard({
                 dayColor={getDayColor(idx)}
                 count={getItemsForDay(day).length}
                 onClick={() => setFocusedDay(day)}
-                /* §6-A: real calendar date, not "D1" — "Thu 18". */
-                label={format(parseISO(day), "EEE d")}
+                /* §6-A: real calendar date, not "D1" — "Thu 18". Page 8:
+                   during LIVE the current day reads "Today". */
+                label={
+                  phase === "LIVE" && isToday(parseISO(day))
+                    ? t("nav.today")
+                    : format(parseISO(day), "EEE d")
+                }
               />
             ))}
           </ChipRail>

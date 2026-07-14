@@ -55,7 +55,7 @@ export function LiveDayTimeline({
     <div className="relative h-6 my-1" aria-label={`${t("itinerary.nowLabel")} ${nowHm}`}>
       <div className="absolute inset-x-0 top-1/2 border-t-2" style={{ borderColor: "var(--clr-horizon)" }} />
       <span
-        className="absolute end-0 top-0 text-[10px] font-bold px-2 py-0.5 rounded-full text-white tabular-nums"
+        className="absolute end-0 top-0 text-[10px] font-bold px-2 py-0.5 rounded-full text-primary-foreground tabular-nums"
         style={{ background: "var(--clr-horizon)" }}
       >
         {t("itinerary.nowLabel")} {nowHm}
@@ -98,7 +98,7 @@ export function LiveDayTimeline({
                 className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center border-2"
                 style={
                   done
-                    ? { background: "var(--clr-moss)", borderColor: "var(--clr-moss)", color: "#fff" }
+                    ? { background: "var(--clr-moss)", borderColor: "var(--clr-moss)", color: "var(--primary-foreground)" }
                     : { borderColor: "var(--border)" }
                 }
               >
@@ -222,7 +222,7 @@ export function DepartureStrip({
                       className="shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center"
                       style={
                         isPacked
-                          ? { background: "var(--clr-moss)", borderColor: "var(--clr-moss)", color: "#fff" }
+                          ? { background: "var(--clr-moss)", borderColor: "var(--clr-moss)", color: "var(--primary-foreground)" }
                           : { borderColor: "var(--border)" }
                       }
                     >

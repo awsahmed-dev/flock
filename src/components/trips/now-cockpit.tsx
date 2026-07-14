@@ -445,12 +445,19 @@ export function NowCockpit({
                 <p className="text-[15px] text-muted-foreground truncate">{upNext.locationName}</p>
               )}
               <div className="flex gap-2 mt-2.5">
+                {/* Page 8 tier rule: one solid purple per screen (the camera
+                    FAB). Navigate = tinted secondary — brand-dim + brand
+                    text; wayfind stays with map/route/status only. */}
                 <button
                   type="button"
                   onClick={() => navigateTo(upNext)}
                   disabled={upNext.lat == null}
-                  className="flex-1 h-12 rounded-2xl text-white font-bold text-[14px] flex items-center justify-center gap-1.5 disabled:opacity-50"
-                  style={{ background: "var(--clr-wayfind)" }}
+                  className="flex-1 h-12 rounded-2xl font-bold text-[14px] flex items-center justify-center gap-1.5 border disabled:opacity-40"
+                  style={{
+                    background: "var(--clr-brand-dim)",
+                    color: "var(--clr-brand)",
+                    borderColor: "color-mix(in srgb, var(--clr-brand) 35%, transparent)",
+                  }}
                 >
                   <Navigation size={16} /> {t("now.navigate")}
                 </button>
@@ -679,12 +686,12 @@ function StopRow({
             type="button"
             onClick={onDelete}
             aria-label={t("common.remove")}
-            className="absolute inset-y-0 end-0 w-[72px] flex items-center justify-center bg-destructive text-white"
+            className="absolute inset-y-0 end-0 w-[72px] flex items-center justify-center bg-destructive text-primary-foreground"
           >
             <Trash2 className="w-5 h-5" />
           </button>
           {/* Left-side done zone (revealed by swipe-right). */}
-          <span className="absolute inset-y-0 start-0 w-[72px] flex items-center justify-center bg-success text-white" aria-hidden>
+          <span className="absolute inset-y-0 start-0 w-[72px] flex items-center justify-center bg-success text-primary-foreground" aria-hidden>
             <Check className="w-5 h-5" />
           </span>
         </>
@@ -710,7 +717,7 @@ function StopRow({
             type="button"
             onClick={onToggleDone}
             aria-label={done ? t("now.done") : t("now.markDone")}
-            className={`shrink-0 w-7 h-7 rounded-full text-white text-xs font-extrabold flex items-center justify-center ${
+            className={`shrink-0 w-7 h-7 rounded-full text-primary-foreground text-xs font-extrabold flex items-center justify-center ${
               done ? "bg-success" : ""
             }`}
             style={done ? undefined : { background: "var(--clr-wayfind)" }}

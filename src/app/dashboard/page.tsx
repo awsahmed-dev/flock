@@ -251,9 +251,9 @@ export default async function DashboardPage() {
                 <Link href={`/trips/${activeTrip.id}`} prefetch aria-label={activeTrip.name} className="absolute inset-0 z-10" />
 
                 {/* LIVE badge */}
-                <div className="absolute top-3 end-3 z-20 rounded-full px-3 py-1 flex items-center gap-1.5" style={{ background: "#34C759" }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  <span className="text-[11px] font-bold text-white">{t("dashboard.live")}</span>
+                <div className="absolute top-3 end-3 z-20 rounded-full px-3 py-1 flex items-center gap-1.5" style={{ background: "var(--clr-moss)" }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse" />
+                  <span className="text-[11px] font-bold text-primary-foreground">{t("dashboard.live")}</span>
                 </div>
 
                 {/* Bottom content — non-interactive except the action pills, so
