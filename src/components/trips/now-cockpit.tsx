@@ -333,7 +333,7 @@ export function NowCockpit({
 
   return (
     <div
-      className="fixed bottom-0 start-0 end-0 xl:start-[280px] bg-background text-foreground overflow-hidden"
+      className="fixed bottom-0 start-0 end-0 bg-background text-foreground overflow-hidden"
       style={{ top: "calc(56px + env(safe-area-inset-top))" }}
     >
       {/* Map — fills the viewport behind everything, themed. */}
@@ -379,7 +379,7 @@ export function NowCockpit({
 
       {/* ── Bottom sheet — 3 detents. ───────────────────────────────────── */}
       <div
-        className={`absolute inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] xl:bottom-0 z-30 flex flex-col rounded-t-[20px] border-t border-border ${
+        className={`absolute inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] z-30 flex flex-col rounded-t-[20px] border-t border-border ${
           dragH == null ? "transition-[height] duration-300 ease-out" : ""
         }`}
         style={{

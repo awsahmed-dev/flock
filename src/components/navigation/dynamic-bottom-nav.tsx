@@ -48,17 +48,21 @@ import { createClient } from "@/lib/supabase/client";
  * skipped (tabs are equal-width flex:1 — extra padding would skew them).
  * backdropFilter stays INLINE — Lightning CSS strips classes/stylesheets. */
 const NAV_SHADOW = "0px 0px 6px 0px rgba(0,0,0,0.05), 0px 1px 4px 0px rgba(0,0,0,0.1)";
-const CIRCLE_FRAME = {
+/* Sprint 9 Part 2: the same nav serves every width — the 280px desktop
+ * sidebar is gone. ≥768px the three elements scale up slightly (same
+ * proportions, same material); sizing lives in these frame builders
+ * because the glass MUST stay inline (Lightning CSS strips it). */
+const circleFrame = (desktop: boolean) => ({
   backdropFilter: "blur(10px)",
   WebkitBackdropFilter: "blur(10px)",
   background: "var(--nav-glass)",
   border: "1px solid var(--nav-border)",
   borderRadius: 9999,
-  padding: "var(--nav-pad)",
+  padding: desktop ? 19 : "var(--nav-pad)",
   boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
-};
-const PILL_FRAME = {
+});
+const pillFrame = () => ({
   backdropFilter: "blur(10px)",
   WebkitBackdropFilter: "blur(10px)",
   background: "var(--nav-glass)",
@@ -67,16 +71,16 @@ const PILL_FRAME = {
   padding: 2,
   boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
-};
+});
 /* Design-system Step 2: one purple — solid brand-primary (was the
  * off-token rgba(163,149,255,0.80) lavender + tinted border). */
-const BRAND_FRAME = {
+const brandFrame = (desktop: boolean) => ({
   background: "var(--clr-brand)",
   borderRadius: 9999,
-  padding: 16,
+  padding: desktop ? 19 : 16,
   boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
-};
+});
 interface Tab { key: string; label: string; icon: LucideIcon; href: string }
 
 export function DynamicBottomNav({
@@ -106,6 +110,16 @@ export function DynamicBottomNav({
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
   // Sprint 4 FIX-5a: the document composer owned by the + menu.
   const [docOpen, setDocOpen] = useState(false);
+  // Sprint 9 Part 2: ≥768px the nav scales up (frame padding + label size
+  // are inline styles, so a media query can't reach them).
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const sync = () => setDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
   const [budgetOpen, setBudgetOpen] = useState(false);
 
   // Sprint 7 FIX-2 — the exact tab table:
@@ -229,7 +243,7 @@ export function DynamicBottomNav({
           : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };
 
   return (
-    <div className="xl:hidden">
+    <div>
       {/* Sprint 6 FIX-3 Layer A: content fades into the page background just
           above the nav, so lists scroll UNDER it instead of smashing against
           the edge. Purely visual (pointer-events none, z-39 under the z-40
@@ -261,7 +275,7 @@ export function DynamicBottomNav({
           onClick={left.action}
           aria-label={left.label}
           className="relative flex items-center justify-center shrink-0 active:scale-95"
-          style={CIRCLE_FRAME}
+          style={circleFrame(desktop)}
         >
           <span key={`left-${left.label}`} className="relative flex" style={{ animation: "fadeIn 200ms ease" }}>
             <left.icon size={24} className="text-foreground" />
@@ -274,8 +288,8 @@ export function DynamicBottomNav({
         <Tabs
           value={activeKey}
           aria-label="Trip sections"
-          className="relative flex-1 min-w-0 max-w-[420px] flex items-center"
-          style={PILL_FRAME}
+          className="relative flex-1 min-w-0 max-w-[420px] md:max-w-[560px] flex items-center"
+          style={pillFrame()}
         >
           <TabsHighlight
             className="rounded-full"
@@ -300,7 +314,7 @@ export function DynamicBottomNav({
                       /* padding via classes: HighlightItem clones this Link
                          and REPLACES its style prop (position/zIndex), so
                          inline styles here never render. */
-                      className="flex flex-col items-center justify-center gap-0.5 w-full min-w-0 px-2 py-1.5"
+                      className="flex flex-col items-center justify-center gap-0.5 w-full min-w-0 px-2 py-1.5 md:px-4 md:py-2"
                     >
                       {/* Icon morph at phase boundary: keyed crossfade.
                           flex: an inline span line-boxes the 24px svg down
@@ -316,7 +330,7 @@ export function DynamicBottomNav({
                       </span>
                       <span
                         className="truncate max-w-full text-foreground"
-                        style={{ fontSize: 10, lineHeight: "14px", fontWeight: active ? 700 : 400 }}
+                        style={{ fontSize: desktop ? 12 : 10, lineHeight: desktop ? "16px" : "14px", fontWeight: active ? 700 : 400 }}
                       >
                         {tab.label}
                       </span>
@@ -340,7 +354,7 @@ export function DynamicBottomNav({
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
           className="relative flex items-center justify-center shrink-0 active:scale-95"
-          style={BRAND_FRAME}
+          style={brandFrame(desktop)}
         >
           <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
             <right.icon size={24} className="text-primary-foreground" />

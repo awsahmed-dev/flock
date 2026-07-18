@@ -17,7 +17,6 @@ import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
 import { eachDayOfInterval, format as isoFmt } from "date-fns";
 import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
-import { DesktopModeNav } from "@/components/trips/desktop-mode-nav";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
 import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
 import { AvatarGroup, AvatarGroupTooltip } from "@/components/animate-ui/components/animate/avatar-group";
@@ -44,7 +43,8 @@ interface Props {
 
 /**
  * Reinvention shell (redesign brief §2). A single thin top bar + the three-mode
- * bottom tab bar on mobile, with the 280px desktop sidebar at ≥xl. The old
+ * bottom tab bar at every width (Sprint 9 Part 2: the 280px desktop
+ * sidebar is gone — desktop gets the same glass pill nav, scaled up). The old
  * multi-tab sidebar, mobile floating nav, chat side-panel, crew sheet, tools
  * sheet, notification bell and keyboard-shortcut layer are all gone — chat is a
  * full page reached by route, crew/sharing live in Settings.
@@ -160,9 +160,8 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
 
   return (
     <div className="min-h-svh flex flex-col bg-background text-foreground">
-      <DesktopModeNav tripId={trip.id} tripName={trip.name} />
 
-      <div className="flex flex-col min-h-svh xl:ps-[280px]">
+      <div className="flex flex-col min-h-svh">
         {/* Phase 7 §4: THE standard trip header — every trip route, no
             exceptions. 56px sticky, blur inline (§0 rule 1).
             Phase 7 §1: "← All trips" is a DIRECT jump to /dashboard — never
@@ -179,7 +178,7 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
         >
           <Link
             href="/dashboard"
-            className="xl:hidden shrink-0 flex items-center h-11 ps-1 pe-2 text-foreground active:opacity-70"
+            className="shrink-0 flex items-center h-11 ps-1 pe-2 text-foreground active:opacity-70"
             aria-label="All trips"
           >
             <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
@@ -272,7 +271,7 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
         {/* Screen content. Bottom padding clears the fixed tab bar on mobile;
             the desktop sidebar handles its own offset above. Immersive routes
             (cockpit map, Discover stream) manage their own clearance. */}
-        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(80px+env(safe-area-inset-bottom))] xl:pb-0"}>
+        <main className={immersive ? "flex-1 min-w-0" : "flex-1 min-w-0 pb-[calc(80px+env(safe-area-inset-bottom))]"}>
           {children}
         </main>
 

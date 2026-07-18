@@ -288,7 +288,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
       {/* §4: fixed add-item bar — never inside the scroll; sits above the tab
           bar with safe-area inset. Hidden on the read-only Crew tab. */}
       {tab !== "crew" && (
-        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] xl:bottom-0 xl:start-[280px] z-30 bg-card border-t border-border">
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-30 bg-card border-t border-border">
           <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-stretch gap-2">
             <input
               ref={addInputRef}
