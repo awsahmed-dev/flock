@@ -54,7 +54,15 @@ export function PlaceCardCompact({
             {/* Branded shimmer skeleton until the photo decodes — never a flat
                 gray box (brief §4.5). The image fades in over it on load. */}
             {!imgLoaded && (
-              <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-muted via-muted/60 to-muted" />
+              /* Sprint 9 FIX-3: muted-on-card was invisible in dark mode —
+                 lift the shimmer band so the skeleton actually reads. */
+              <div
+                className="absolute inset-0 animate-pulse"
+                style={{
+                  background:
+                    "linear-gradient(110deg, var(--muted) 25%, color-mix(in srgb, var(--muted) 70%, var(--foreground) 12%) 50%, var(--muted) 75%)",
+                }}
+              />
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
