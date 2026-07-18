@@ -4,13 +4,14 @@ import { useEffect, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { SignOut as LogOut, CircleNotch as Loader2, Check, Moon, Sun, Camera, Bell, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
+import { SignOut as LogOut, CircleNotch as Loader2, Check, Moon, Sun, Camera, Bell, CaretRight as ChevronRight, GlobeHemisphereWest as Globe } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/animate-ui/components/radix/sheet";
 import { Switch } from "@/components/animate-ui/components/radix/switch";
 import { updateProfile } from "@/lib/actions/profile";
 import { createClient } from "@/lib/supabase/client";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { setLocale } from "@/lib/actions/set-locale";
 import { getPocketDayStatus, pocketDayEnabled, type PocketDayStatus } from "@/components/pwa/pocket-day";
 
 const ACCENT = "var(--clr-brand)";
@@ -219,6 +220,13 @@ export function AccountSheet({
 
         <div className="h-px bg-border mx-6" />
 
+        {/* Arabic launch: the language switcher — sets the paxawa_locale
+            cookie via the setLocale action, then hard-reloads so the whole
+            tree re-renders with the new dictionary + <html dir>. */}
+        <LanguageRow />
+
+        <div className="h-px bg-border mx-6" />
+
         {/* 3. Theme toggle. */}
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -267,6 +275,65 @@ export function AccountSheet({
       </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * Arabic launch — the Language row: English | العربية as a segmented pair,
+ * the active locale carries a brand checkmark. Tapping the other option
+ * flips the cookie (setLocale) and reloads the page in that language.
+ */
+function LanguageRow() {
+  const t = useT();
+  const { locale } = useLocale();
+  const [switching, setSwitching] = useState<"en" | "ar" | null>(null);
+  const [, startTransition] = useTransition();
+
+  function choose(next: "en" | "ar") {
+    if (next === locale || switching) return;
+    setSwitching(next);
+    startTransition(async () => {
+      try {
+        await setLocale(next);
+        window.location.reload();
+      } catch {
+        setSwitching(null);
+        toast.error(t("common.error"));
+      }
+    });
+  }
+
+  return (
+    <div className="flex items-center justify-between px-6 py-4">
+      <div className="flex items-center gap-3">
+        <Globe size={20} className="text-muted-foreground" />
+        <span className="text-[15px] font-medium text-foreground">{t("language.label")}</span>
+      </div>
+      <div className="flex rounded-full bg-muted p-0.5">
+        {(["en", "ar"] as const).map((l) => {
+          const active = locale === l;
+          return (
+            <button
+              key={l}
+              type="button"
+              onClick={() => choose(l)}
+              disabled={switching != null}
+              aria-pressed={active}
+              className={`flex items-center gap-1.5 rounded-full px-3 h-8 text-[13px] font-semibold transition-colors ${
+                active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              {switching === l ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : active ? (
+                <Check size={13} weight="bold" style={{ color: ACCENT }} />
+              ) : null}
+              {l === "en" ? t("language.english") : t("language.arabic")}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
