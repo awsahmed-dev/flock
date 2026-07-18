@@ -1,4 +1,32 @@
-# Arabic / RTL readiness audit — Sprint 9 Part 3
+# Arabic / RTL readiness audit — Sprint 9 Part 3 (+ Arabic-launch findings)
+
+## Arabic-launch RTL check (fresh-translation sprint, live on paxawa.com)
+
+Verified in Arabic mode on production — **working**: `dir=rtl` + `lang=ar`
+switch; IBM Plex Sans Arabic renders as the primary family; the bottom
+glass nav (mobile + desktop) mirrors automatically via flex direction —
+tab order reads right-to-left, circles swap sides; Discover's split view
+mirrors (list right, map left); the itinerary panel mirrors; ChipRail's
+scroll fade flips to the left edge; dates render Arabic month/day names
+(٨ نوفمبر); numbers stay Western digits everywhere (incl. money via
+`fmtAmount` "ar-u-nu-latn"); plural forms (one/two/few/many) render
+correctly (e.g. "3 عناصر", "عبر عملة واحدة").
+
+**Flagged, not fixed (do in a follow-up commit):**
+1. Server-cockpit hardcoded English shows through in Arabic — the hero
+   "IN N DAYS" chip, "Keep packing — N% done", "Trip N% ready", "Plan
+   days", "N going" + activity ticker, "Documents"/"See all →" (arrow
+   also doesn't flip). Same list as §1 below — now user-visible.
+2. Money page: "Balances", "You owe {name} …", "{a} owes {b}", "Settle",
+   "Personal cap" are composed in code (expenses-board), not via t().
+3. Itinerary desktop aside: the day header ("SUNDAY, NOVEMBER 8") and
+   day chips ("Sun 8") render English dates while the cockpit chips are
+   Arabic — a format call bypasses the locale wrapper; the DocumentCard
+   date chip ("Nov 8") did too on that page. Investigate the module-level
+   active-locale sync on that render path.
+4. Document viewer / detail-panel gallery swipe DIRECTION is untested in
+   RTL (glyphs already mirror via rtl:rotate-180).
+
 
 **Status: the i18n framework the Sprint 9 brief asked to install already
 exists and works.** This app does NOT use next-intl — it ships a homegrown
