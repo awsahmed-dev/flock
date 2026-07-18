@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { track } from "@/lib/analytics/events";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";
 import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
+import { inferLocalCurrency } from "@/lib/country-currency";
 import { convert, type RateBundle } from "@/lib/fx";
 import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal, Users, User, Receipt, X, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +40,13 @@ const COMMON_CURRENCIES = [
   "ZAR", "EGP", "NZD", "NOK", "SEK", "DKK", "PLN",
 ];
 
+/** Today as a date-input value in the USER'S timezone — toISOString()
+ *  would flip to yesterday/tomorrow around midnight. */
+function localDateIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 interface Props {
   tripId: string;
   /** Trip's base currency — used as the default for the currency picker. */
@@ -62,6 +70,9 @@ interface Props {
   /** Sprint 3 FIX-3/4: the crew, for the payer picker + custom splits. */
   members?: { userId: string; displayName: string; avatarUrl?: string | null }[];
   currentUserId?: string;
+  /** Sprint 9 FIX-2A: trip destination — the picker defaults to the
+   *  on-the-ground currency (SAR in Riyadh), not the trip's base. */
+  destination?: string;
 }
 
 export function AddExpenseDialog({
@@ -75,9 +86,11 @@ export function AddExpenseDialog({
   fxRates = null,
   members = [],
   currentUserId = "",
+  destination = "",
 }: Props) {
+  const localCurrency = inferLocalCurrency(destination);
   const currencyOptions = Array.from(
-    new Set([baseCurrency, ...COMMON_CURRENCIES]),
+    new Set([...(localCurrency ? [localCurrency] : []), baseCurrency, ...COMMON_CURRENCIES]),
   );
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -112,7 +125,9 @@ export function AddExpenseDialog({
   // Local mirror of the amount input so the live-projection pill can
   // recompute on every keystroke without dragging in a controlled form.
   const [amountInput, setAmountInput] = useState("");
-  const [currencyInput, setCurrencyInput] = useState(baseCurrency);
+  // Sprint 9 FIX-2A: you spend in the destination's currency far more
+  // often than the trip's base — seed the picker with it when known.
+  const [currencyInput, setCurrencyInput] = useState(localCurrency ?? baseCurrency);
   // B4: smart-category auto-detect. Description text → category via the
   // keyword dictionary. User can override via the dropdown; we keep the
   // override in state so manual choices stick.
@@ -483,12 +498,15 @@ export function AddExpenseDialog({
               <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
                 {t("expenses.date")} <span aria-hidden className="text-destructive">*</span>
               </Label>
+              {/* Sprint 9 FIX-8: a repeatedly-filled form defaults to today
+                  (local date, not UTC) — the user can still change it. */}
               <Input
                 id="expenseDate"
                 name="expenseDate"
                 type="date"
                 required
                 aria-required="true"
+                defaultValue={localDateIso()}
                 onInvalid={(e) => { e.preventDefault(); setDateError(true); e.currentTarget.focus(); }}
                 onChange={() => setDateError(false)}
                 className={`h-9 ${dateError ? "border-destructive ring-1 ring-destructive" : ""}`}

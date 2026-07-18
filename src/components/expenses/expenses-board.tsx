@@ -86,6 +86,8 @@ interface Props {
   fxRates: RateBundle | null;
   startDate: string;
   endDate: string;
+  /** Sprint 9 FIX-2A: destination seeds the expense currency default. */
+  destination?: string;
   /** Phase 6 §8-A: recorded settlements (reduce live balances). */
   settlements?: { creditorId: string | null; debtorId: string | null; amount: number }[];
 }
@@ -111,6 +113,7 @@ export function ExpensesBoard({
   members,
   fxRates,
   startDate,
+  destination = "",
   endDate,
   settlements = [],
 }: Props) {
@@ -333,6 +336,7 @@ export function ExpensesBoard({
         <AddExpenseDialog
           tripId={tripId}
           baseCurrency={currency}
+          destination={destination}
           tripBudget={tripBudget}
           sharedSpent={derived.totalSharedBase}
           personalBudget={personalBudget}

@@ -256,6 +256,16 @@ export function PlaceDetailPanel({
             )}
           </div>
 
+          {/* Sprint 9 FIX-7: Google Places photos require visible
+              attribution. A proper text credit under the gallery keeps
+              us inside the Maps Platform terms and stops the baked-in
+              watermark from being the only credit users ever see. */}
+          {photos.length > 0 && (
+            <p className="px-5 pt-2 text-[10px] text-muted-foreground/70">
+              {t("discover.photoAttribution")}
+            </p>
+          )}
+
           {/* Content sections */}
           <div className="p-5 space-y-5">
             {/* Title */}

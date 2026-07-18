@@ -18,6 +18,7 @@ export default async function MoneyTransactionsRoute({ params }: Props) {
       tripId={id}
       userId={user.id}
       currency={trip.currency}
+      destination={trip.destination}
       tripBudget={effectiveTripBudget(trip.budgetTotal, (trip as { budgetType?: string }).budgetType, members.length)}
       personalBudget={personalBudget}
       expenses={expenseList as any}

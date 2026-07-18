@@ -58,6 +58,8 @@ interface Props {
   fxRates: RateBundle | null;
   startDate: string;
   endDate: string;
+  /** Sprint 9 FIX-2A: destination seeds the expense currency default. */
+  destination?: string;
 }
 
 /**
@@ -76,6 +78,7 @@ export function TransactionsPage({
   members,
   fxRates,
   startDate,
+  destination = "",
   endDate,
 }: Props) {
   const isOwner = members.some((m) => m.userId === userId);
@@ -194,6 +197,7 @@ export function TransactionsPage({
         </div>
         <AddExpenseDialog
           tripId={tripId}
+          destination={destination}
           baseCurrency={currency}
           tripBudget={tripBudget}
           sharedSpent={derived.totalSharedBase}

@@ -3,19 +3,22 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CockpitCrew } from "./types";
 
 /**
- * Phase 6 §3-B(2) / §6.5 — the Crew Pulse strip. Overlapping avatars,
- * a readiness meter, and a one-line ticker of the last unactioned crew
- * move (always ending in an action). Hidden entirely for solo trips.
+ * Phase 6 §3-B(2) / §6.5 — the Crew Pulse strip. Overlapping avatars and
+ * a one-line ticker of the last unactioned crew move (always ending in
+ * an action). Hidden entirely for solo trips.
+ *
+ * Sprint 9 FIX-4+5: the readiness meter is gone — it duplicated the
+ * "Trip N% ready" bar sitting right above this strip. In its place the
+ * row says how many people are going, so the avatar dots don't need
+ * counting to be understood.
  */
 export function CrewPulse({
   tripId,
   crew,
-  readiness,
   ticker,
 }: {
   tripId: string;
   crew: CockpitCrew[];
-  readiness: number;
   ticker: { text: string; eventType: string } | null;
 }) {
   if (crew.length < 2) return null;
@@ -37,19 +40,9 @@ export function CrewPulse({
             </span>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full transition-[width] duration-700"
-                style={{ background: "var(--clr-moss)", width: `${Math.min(100, Math.max(0, readiness))}%` }}
-              />
-            </div>
-            <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap tabular-nums">
-              Trip {readiness}% ready
-            </span>
-          </div>
-        </div>
+        <p className="flex-1 min-w-0 text-[14px] font-bold text-foreground truncate">
+          {crew.length} going
+        </p>
       </div>
       <Link href={`/trips/${tripId}/huddle`} className="block mt-2 text-sm text-muted-foreground truncate">
         {ticker ? `${ticker.text} →` : "Nothing new — go heart something in Discover →"}

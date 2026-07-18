@@ -114,6 +114,11 @@ export function DiscoverFeed({
   defaultMapView?: boolean;
 }) {
   const t = useT();
+  // Sprint 9 FIX-2B: the search hint names YOUR city, not a KL food ref.
+  const destCity = (destination || "").split(",")[0].trim();
+  const searchPlaceholder = destCity
+    ? t("discover.searchPlaceholderIn", { city: destCity })
+    : t("discover.searchPlaceholder");
   const { vector, emit } = useTasteSession(tripId);
   // §10.1: basemap matches the app theme — no more beige streets-v12 flash
   // against the dark feed (design vision §1.3).
@@ -575,7 +580,7 @@ export function DiscoverFeed({
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t("discover.searchPlaceholder")}
+                  placeholder={searchPlaceholder}
                   className="w-full rounded-full bg-muted/50 ring-1 ring-border/60 ps-9 pe-8 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 {query && (
@@ -707,7 +712,7 @@ export function DiscoverFeed({
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("discover.searchPlaceholder")}
+                placeholder={searchPlaceholder}
                 className="w-full rounded-full glass-dark text-white placeholder:text-white/50 ps-9 pe-8 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               />
               {query && (
@@ -786,11 +791,11 @@ export function DiscoverFeed({
                     onClick={() => onOpen(s)}
                     className={`snap-center shrink-0 w-[78%] sm:w-[300px] rounded-2xl bg-neutral-900/85 backdrop-blur-md overflow-hidden text-start shadow-xl ring-1 transition-all ${focused ? "ring-white/50" : "ring-white/10"}`}
                   >
-                    <div className="relative aspect-[16/9] bg-neutral-800">
-                      {photo && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={photo} alt={s.place.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                      )}
+                    {/* Sprint 9 FIX-3: shimmer skeleton while the photo
+                        loads — never a black box where a photo should be. */}
+                    <div className="relative aspect-[16/9] bg-neutral-800 overflow-hidden">
+                      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700/70 to-neutral-800 animate-pulse" />
+                      {photo && <FeedPhoto src={photo} alt={s.place.name} />}
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onSave(s); }}
@@ -1238,4 +1243,20 @@ function hashPct(id: string): number {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
   return h % 100;
+}
+
+/* Sprint 9 FIX-3: card photo that fades in over the shimmer skeleton once
+   the browser has actually decoded it. */
+function FeedPhoto({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onLoad={() => setLoaded(true)}
+      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+    />
+  );
 }

@@ -87,7 +87,7 @@ export async function DepartureCockpit(props: CockpitShared) {
         className="flex flex-col gap-4 px-4 pt-4 max-w-2xl mx-auto"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
       >
-        <CrewPulse tripId={tripId} crew={crew} readiness={readiness} ticker={ticker} />
+        <CrewPulse tripId={tripId} crew={crew} ticker={ticker} />
 
         {/* 2. DEPARTURE BOARD. */}
         <section className="rounded-3xl bg-card border border-border overflow-hidden" style={{ fontVariantNumeric: "tabular-nums" }}>

@@ -25,6 +25,7 @@ export default async function ExpenseCameraPage({ params }: Props) {
     <ExpenseCamera
       tripId={id}
       tripCurrency={trip.currency}
+      destination={trip.destination}
       currentUserId={user.id}
       fxRates={fxRates}
       crew={trip.members.map((m) => ({

@@ -30,7 +30,8 @@ function ExpenseForm({
 }) {
   const t = useT();
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("food");
+  // Sprint 9 FIX-2C: neutral default — never assume Food.
+  const [category, setCategory] = useState("other");
   const [description, setDescription] = useState("");
   const [isPending, startTransition] = useTransition();
 

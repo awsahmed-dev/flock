@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { X, Keyboard, Camera } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { createCameraExpense } from "@/lib/actions/expenses";
+import { inferLocalCurrency } from "@/lib/country-currency";
+import { inferCategory } from "@/lib/expense-category";
 import { convert, type RateBundle } from "@/lib/fx";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
@@ -21,21 +23,27 @@ type Screen = "camera" | "review" | "split";
  * per-head math. Full-screen; the nav is hidden by covering it.
  */
 export function ExpenseCamera({
-  tripId, tripCurrency, currentUserId, fxRates, crew,
+  tripId, tripCurrency, currentUserId, fxRates, crew, destination = "",
 }: {
   tripId: string;
   tripCurrency: string;
   currentUserId: string;
   fxRates: RateBundle | null;
   crew: CockpitCrew[];
+  /** Sprint 9 FIX-2A: destination seeds the on-the-ground currency. */
+  destination?: string;
 }) {
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>("camera");
   const [camError, setCamError] = useState(false);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState(tripCurrency);
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("food");
+  // Sprint 9 FIX-2A: on the ground you pay in the local currency.
+  const [currency, setCurrency] = useState(() => inferLocalCurrency(destination) ?? tripCurrency);
+  // Sprint 9 FIX-2C: neutral default — "food" mislabeled every non-meal
+  // receipt. The description keeps auto-suggesting until the user picks.
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("other");
+  const [catTouched, setCatTouched] = useState(false);
   const [description, setDescription] = useState("");
   const [selected, setSelected] = useState<Set<string>>(() => new Set(crew.map((m) => m.userId)));
   const [pending, startTransition] = useTransition();
@@ -85,7 +93,10 @@ export function ExpenseCamera({
       if (parsed.amount != null) {
         setAmount(String(parsed.amount));
         if (parsed.currency) setCurrency(parsed.currency);
-        if (parsed.merchant) setDescription(parsed.merchant);
+        if (parsed.merchant) {
+          setDescription(parsed.merchant);
+          if (!catTouched) setCategory(inferCategory(parsed.merchant));
+        }
       } else {
         toast("Couldn't read that one — type the amount");
       }
@@ -235,7 +246,7 @@ export function ExpenseCamera({
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setCategory(c)}
+                  onClick={() => { setCategory(c); setCatTouched(true); }}
                   className={`rounded-full px-3 py-1.5 text-[13px] font-semibold capitalize border ${
                     category === c ? "border-primary text-primary" : "border-border text-muted-foreground"
                   }`}
@@ -251,7 +262,10 @@ export function ExpenseCamera({
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Description</p>
             <input
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (!catTouched) setCategory(inferCategory(e.target.value));
+              }}
               placeholder="Dinner at Jalan Alor"
               className="w-full h-12 rounded-2xl border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             />

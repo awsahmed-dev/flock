@@ -555,7 +555,9 @@
     "noMatches": "لا توجد أماكن تطابق بحثك",
     "viewDay": "عرض اليوم",
     "inPlan": "في الخطة",
-    "crewPicks": "اختيارات الفريق"
+    "crewPicks": "اختيارات الفريق",
+    "searchPlaceholderIn": "ابحث عن أماكن في {city}…",
+    "photoAttribution": "الصور — مساهمو خرائط Google"
   },
   "pack": {
     "title": "أمتعة",

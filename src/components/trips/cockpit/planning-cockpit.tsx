@@ -114,7 +114,9 @@ export function PlanningCockpit(props: CockpitShared) {
         <DayPillRail tripId={tripId} days={days} stopCountByDay={stopCountByDay} />
 
         {/* 5. THE CREW. */}
-        <CrewPulse tripId={tripId} crew={crew} readiness={readiness} ticker={ticker} />
+        {/* Sprint 9 FIX-4: readiness no longer passed — the checklist bar
+            above is the single "N% ready" on this screen. */}
+        <CrewPulse tripId={tripId} crew={crew} ticker={ticker} />
 
         {/* Sprint 5 §3b: confirmations at a glance — more time-sensitive than
             packing. Quiet prompt when empty; up to 3 chips + See all after. */}

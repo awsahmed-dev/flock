@@ -555,7 +555,9 @@
     "noMatches": "No places match your search",
     "viewDay": "View day",
     "inPlan": "In plan",
-    "crewPicks": "Crew picks"
+    "crewPicks": "Crew picks",
+    "searchPlaceholderIn": "Search places in {city}…",
+    "photoAttribution": "Photos — Google Maps contributors"
   },
   "pack": {
     "title": "Pack",

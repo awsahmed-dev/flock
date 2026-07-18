@@ -24,6 +24,7 @@ export default async function MoneyPage({ params }: Props) {
         tripId={id}
         userId={user.id}
         currency={trip.currency}
+        destination={trip.destination}
         // QA BUG-11: per-person budgets multiply by crew size.
         tripBudget={effectiveTripBudget(trip.budgetTotal, (trip as { budgetType?: string }).budgetType, members.length)}
         personalBudget={personalBudget}

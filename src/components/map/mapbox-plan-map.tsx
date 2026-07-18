@@ -501,6 +501,16 @@ export function MapboxPlanMap({
       <div className="absolute inset-0">
         <div ref={containerRef} className="w-full h-full bg-muted/30" />
       </div>
+      {/* Sprint 9 FIX-6: opaque skeleton until the basemap style loads —
+          the split view never shows a half-rendered black canvas. */}
+      {!ready && !tokenMissing && !errorMsg && (
+        <div className="absolute inset-0 bg-muted flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <span className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 border-t-muted-foreground animate-spin" />
+            Loading map…
+          </div>
+        </div>
+      )}
       {(tokenMissing || errorMsg) && (
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
           <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-700 dark:text-amber-300 max-w-xs space-y-1">
