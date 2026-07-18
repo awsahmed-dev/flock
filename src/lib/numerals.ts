@@ -1,3 +1,5 @@
+import { getActiveLocale } from "@/lib/i18n/date-fns";
+
 /**
  * Numeric helpers shared between expense / budget / vote-cost inputs.
  *
@@ -47,7 +49,11 @@ export function fmtAmount(n: number): string {
   if (!Number.isFinite(n)) return "0";
   const rounded = Math.round(n * 100) / 100;
   const isWhole = rounded % 1 === 0;
-  return rounded.toLocaleString(undefined, {
+  // Sprint 9 Part 3 (Step 5): follow the APP locale, not the browser's.
+  // "ar-u-nu-latn" keeps Latin digits for money (the convention most
+  // Arabic finance UIs use) while adopting Arabic grouping separators.
+  const loc = getActiveLocale() === "ar" ? "ar-u-nu-latn" : "en-US";
+  return rounded.toLocaleString(loc, {
     minimumFractionDigits: isWhole ? 0 : 2,
     maximumFractionDigits: 2,
   });

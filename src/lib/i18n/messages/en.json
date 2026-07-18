@@ -497,7 +497,8 @@
     "photoAdded": "Photo added to the Wrap",
     "addWhatYouDid": "Add what you actually did…",
     "addStopTo": "Add a stop to {day}…",
-    "nothingPlannedYet": "Nothing planned yet."
+    "nothingPlannedYet": "Nothing planned yet.",
+    "loadingMap": "Loading map…"
   },
   "discover": {
     "eyebrow": "Discover",
@@ -1119,6 +1120,7 @@
     "offlineUnavailable": "This document isn't available offline yet — open it once while online and it'll be saved on your device.",
     "loadFailed": "Couldn't load this document.",
     "boardingPass": "Boarding-pass mode",
-    "exitBoardingPass": "Tap to exit"
+    "exitBoardingPass": "Tap to exit",
+    "pdfRenderFailed": "Couldn't render this PDF."
   }
 }

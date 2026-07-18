@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Document, Page } from "react-pdf";
+import { useT } from "@/components/i18n/locale-provider";
 import "@/lib/pdf-worker";
 
 /**
@@ -10,6 +11,7 @@ import "@/lib/pdf-worker";
  * (we don't need selection, and skipping them avoids their CSS).
  */
 export default function PdfView({ objectUrl, width }: { objectUrl: string; width: number }) {
+  const t = useT();
   const [numPages, setNumPages] = useState(0);
 
   return (
@@ -17,7 +19,7 @@ export default function PdfView({ objectUrl, width }: { objectUrl: string; width
       file={objectUrl}
       onLoadSuccess={(doc) => setNumPages(doc.numPages)}
       loading={<p className="text-center text-sm text-muted-foreground py-10">…</p>}
-      error={<p className="text-center text-sm text-muted-foreground py-10">Couldn&apos;t render this PDF.</p>}
+      error={<p className="text-center text-sm text-muted-foreground py-10">{t("docs.pdfRenderFailed")}</p>}
     >
       {Array.from({ length: numPages }, (_, i) => (
         <Page

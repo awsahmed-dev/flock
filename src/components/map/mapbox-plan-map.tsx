@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/i18n/locale-provider";
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker, type Popup as MapboxPopup } from "mapbox-gl";
 
 // B7c-fix: Mapbox CSS now ships via a server-rendered `<link>` in
@@ -98,6 +99,7 @@ export function MapboxPlanMap({
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<MapboxMarker[]>([]);
   const popupRef = useRef<MapboxPopup | null>(null);
+  const t = useT();
   const [ready, setReady] = useState(false);
   // B7c: Mapbox Directions route cache. Key = "{day}|{lng,lat;lng,lat;…}"
   // so a re-render with the same items doesn't refetch. Value = the
@@ -507,7 +509,7 @@ export function MapboxPlanMap({
         <div className="absolute inset-0 bg-muted flex items-center justify-center pointer-events-none">
           <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
             <span className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 border-t-muted-foreground animate-spin" />
-            Loading map…
+            {t("itinerary.loadingMap")}
           </div>
         </div>
       )}

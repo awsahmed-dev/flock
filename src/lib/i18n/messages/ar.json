@@ -497,7 +497,8 @@
     "photoAdded": "أُضيفت الصورة إلى الملخّص",
     "addWhatYouDid": "أضِف ما فعلتموه فعلًا…",
     "addStopTo": "أضِف محطة إلى {day}…",
-    "nothingPlannedYet": "لا شيء مخطط بعد."
+    "nothingPlannedYet": "لا شيء مخطط بعد.",
+    "loadingMap": "جارٍ تحميل الخريطة…"
   },
   "discover": {
     "eyebrow": "اكتشف",
@@ -1119,6 +1120,7 @@
     "offlineUnavailable": "هذا المستند غير متاح دون اتصال بعد — افتحه مرة واحدة أثناء الاتصال وسيُحفظ على جهازك.",
     "loadFailed": "تعذّر تحميل هذا المستند.",
     "boardingPass": "وضع بطاقة الصعود",
-    "exitBoardingPass": "انقر للخروج"
+    "exitBoardingPass": "انقر للخروج",
+    "pdfRenderFailed": "تعذّر عرض ملف PDF هذا."
   }
 }

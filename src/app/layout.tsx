@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
@@ -14,6 +14,16 @@ import { setActiveLocale } from "@/lib/i18n/date-fns";
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+});
+
+/* Sprint 9 Part 3 (Step 4): IBM Plex Sans Arabic — chosen over Cairo for
+ * its geometric, modern cut that sits naturally next to Inter. The
+ * variable class is only attached to <html> when the locale is Arabic,
+ * so Latin-locale users never download the Arabic font files. */
+const plexArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-arabic",
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const viewport: Viewport = {
@@ -140,7 +150,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${inter.variable} h-full antialiased overflow-x-hidden`}
+      className={`${inter.variable} ${locale === "ar" ? plexArabic.variable : ""} h-full antialiased overflow-x-hidden`}
       suppressHydrationWarning
     >
       <head>

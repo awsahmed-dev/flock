@@ -453,3 +453,10 @@
 button, a, [role="button"] {
   touch-action: manipulation;
 }
+
+/* Sprint 9 Part 3 (Step 4): when Arabic is active the layout attaches
+   --font-arabic (IBM Plex Sans Arabic) to <html>; this rule makes it the
+   primary family. Falls back to Inter for Latin glyphs inside Arabic UI. */
+html[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+}
