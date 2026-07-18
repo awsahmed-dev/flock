@@ -113,7 +113,16 @@ export function PlaceCard({
       {photo ? (
         <>
           {!imgLoaded && (
-            <div className="absolute inset-0 animate-pulse" style={{ background: "var(--muted)" }} />
+            /* Sprint 9 FIX-3: the old var(--muted) placeholder read as a
+               black box in dark mode. A visibly lighter shimmer band makes
+               "photo is coming" unmistakable. */
+            <div
+              className="absolute inset-0 animate-pulse"
+              style={{
+                background:
+                  "linear-gradient(110deg, var(--muted) 25%, color-mix(in srgb, var(--muted) 70%, var(--foreground) 12%) 50%, var(--muted) 75%)",
+              }}
+            />
           )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -132,11 +141,13 @@ export function PlaceCard({
         </div>
       )}
 
-      {/* Cinematic scrim — strong at bottom, faint at top. */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/35 pointer-events-none" />
+      {/* Cinematic scrim — strong at bottom, faint at top. Sprint 9 FIX-3:
+          scrims only make sense OVER a photo — while the skeleton shows,
+          they just repainted the card black. */}
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/35 pointer-events-none transition-opacity duration-300 ${imgLoaded || !photo ? "opacity-100" : "opacity-0"}`} />
       {/* §1-C: left-fading gradient so the right action stack stays readable. */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imgLoaded || !photo ? "opacity-100" : "opacity-0"}`}
         style={{ background: "linear-gradient(to left, rgba(0,0,0,0.45) 0%, transparent 45%)" }}
       />
 
