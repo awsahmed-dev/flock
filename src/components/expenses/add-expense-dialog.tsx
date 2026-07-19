@@ -15,7 +15,7 @@ import { inferLocalCurrency } from "@/lib/country-currency";
 import { convert, type RateBundle } from "@/lib/fx";
 import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal, Users, User, Receipt, X, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
 
 const CATEGORIES: { value: ExpenseCategory; labelKey: string; icon: React.ElementType; color: string }[] = [
   { value: "accommodation", labelKey: "expenses.catStay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
@@ -93,6 +93,7 @@ export function AddExpenseDialog({
     new Set([...(localCurrency ? [localCurrency] : []), baseCurrency, ...COMMON_CURRENCIES]),
   );
   const t = useT();
+  const { isRtl } = useLocale();
   const [open, setOpen] = useState(false);
   // QA BUG-16: surfaced instead of the silent native re-focus.
   const [dateError, setDateError] = useState(false);
@@ -349,6 +350,7 @@ export function AddExpenseDialog({
                 name="currency"
                 value={currencyInput}
                 onChange={(e) => setCurrencyInput(e.target.value)}
+                dir={isRtl ? "rtl" : "ltr"}
                 className="shrink-0 rounded-lg bg-background border border-border px-2 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {currencyOptions.map((c) => (

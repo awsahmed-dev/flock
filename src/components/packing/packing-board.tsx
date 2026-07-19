@@ -486,7 +486,7 @@ function PackingRow({
     if (startX.current == null) return;
     // RTL: logical delta — the delete zone is at inline-end.
     const d = (e.clientX - startX.current) * (isRtl ? -1 : 1);
-    if (d < 0) setDx(Math.max(d, -88));
+    setDx(Math.min(0, Math.max(d, -88)));
   }
   function up() {
     startX.current = null;

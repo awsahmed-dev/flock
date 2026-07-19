@@ -281,7 +281,9 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                   </div>
                   <div className="flex-1 min-w-0 text-center">
                     <p className="text-sm font-bold">
-                      {fromIsMe ? "You" : tr.fromName} → {toIsMe ? "You" : tr.toName}
+                      <bdi>{fromIsMe ? t("expenses.you") : tr.fromName}</bdi>{" "}
+                      <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>{" "}
+                      <bdi>{toIsMe ? t("expenses.you") : tr.toName}</bdi>
                     </p>
                     <p className="text-[11px] text-muted-foreground tabular-nums">
                       {currency} {fmt(tr.amount)}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { setTripBudget } from "@/lib/actions/trip-settings";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "SAR", "AED", "JPY", "INR", "EGP", "TRY", "THB"];
 
@@ -26,6 +26,7 @@ export function BudgetSheet({
   total: number | null;
 }) {
   const t = useT();
+  const { isRtl } = useLocale();
   const router = useRouter();
   const [cur, setCur] = useState(currency || "USD");
   const [amount, setAmount] = useState(total != null ? String(total) : "");
@@ -52,6 +53,7 @@ export function BudgetSheet({
             value={cur}
             onChange={(e) => setCur(e.target.value)}
             aria-label="Currency"
+            dir={isRtl ? "rtl" : "ltr"}
             className="rounded-xl border border-border bg-card px-3 h-14 text-sm font-bold outline-none"
           >
             {CURRENCIES.map((c) => (

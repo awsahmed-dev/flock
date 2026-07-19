@@ -611,7 +611,12 @@
     "inPlan": "In plan",
     "crewPicks": "Crew picks",
     "searchPlaceholderIn": "Search places in {city}…",
-    "photoAttribution": "Photos — Google Maps contributors"
+    "photoAttribution": "Photos — Google Maps contributors",
+    "chipWildCard": "Wild card — trust us?",
+    "chipHiddenGem": "Hidden gem — your thing",
+    "chipChampion": "{name}'s kind of place",
+    "chipCrewHearts": "{count} crew hearts on similar spots",
+    "chipPopular": "Popular with travelers like you"
   },
   "pack": {
     "title": "Pack",

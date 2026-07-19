@@ -611,7 +611,12 @@
     "inPlan": "في الخطة",
     "crewPicks": "اختيارات المجموعة",
     "searchPlaceholderIn": "ابحث عن أماكن في {city}…",
-    "photoAttribution": "الصور — مساهمو خرائط Google"
+    "photoAttribution": "الصور — مساهمو خرائط Google",
+    "chipWildCard": "ورقة مفاجئة — ثق بنا؟",
+    "chipHiddenGem": "جوهرة مخفية — على ذوقك",
+    "chipChampion": "مكان على ذوق ⁨{name}⁩",
+    "chipCrewHearts": "{count, plural, one {إعجاب واحد من المجموعة على أماكن مشابهة} two {إعجابان من المجموعة على أماكن مشابهة} few {# إعجابات من المجموعة على أماكن مشابهة} many {# إعجابًا من المجموعة على أماكن مشابهة} other {# إعجاب من المجموعة على أماكن مشابهة}}",
+    "chipPopular": "شائع بين المسافرين مثلك"
   },
   "pack": {
     "title": "التجهيز",

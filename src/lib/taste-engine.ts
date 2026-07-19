@@ -98,14 +98,15 @@ export function reasonChip(args: {
   championName: string | null;
   crewHeartsOnSimilar: number;
   isExploration: boolean;
-}): string {
+}): { key: string; params?: Record<string, string | number> } {
   const { placeTags, userVector, championName, crewHeartsOnSimilar, isExploration } = args;
-  if (isExploration) return "Wild card — trust us?";
+  if (isExploration) return { key: "discover.chipWildCard" };
   if (placeTags && userVector && placeTags.discovery > 70 && userVector.discovery > 60)
-    return "Hidden gem — your thing";
-  if (championName) return `${championName}'s kind of place`;
-  if (crewHeartsOnSimilar >= 3) return `${crewHeartsOnSimilar} crew hearts on similar spots`;
-  return "Popular with travelers like you";
+    return { key: "discover.chipHiddenGem" };
+  if (championName) return { key: "discover.chipChampion", params: { name: championName } };
+  if (crewHeartsOnSimilar >= 3)
+    return { key: "discover.chipCrewHearts", params: { count: crewHeartsOnSimilar } };
+  return { key: "discover.chipPopular" };
 }
 
 /** §5-F cold-start tiles → initial dimension seeds. */

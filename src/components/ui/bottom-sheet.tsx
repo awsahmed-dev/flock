@@ -117,6 +117,14 @@ export function BottomSheet({
             {/* Header */}
             {(title || subtitle) && (
               <div className="flex items-start gap-3 px-5 pt-2 pb-3 sm:pt-5 shrink-0">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="shrink-0 w-7 h-7 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
                 <div className="flex-1 min-w-0">
                   {title && (
                     <h3 className="font-bold text-base tracking-tight leading-snug">
@@ -129,14 +137,6 @@ export function BottomSheet({
                     </p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Close"
-                  className="shrink-0 w-7 h-7 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
             )}
 

@@ -1143,7 +1143,7 @@ function SortableItemRow({
     // reveal gesture is a physical swipe-RIGHT there. Work in logical
     // deltas: negative = toward the end edge in both directions.
     const d = (e.clientX - swipeStartX.current) * (isRtl ? -1 : 1);
-    if (d < 0) setDx(Math.max(d, -88));
+    setDx(Math.min(0, Math.max(d, -88)));
   }
   function onSwipeUp() {
     swipeStartX.current = null;

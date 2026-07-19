@@ -249,13 +249,14 @@ export function DiscoverFeed({
       const champ = tags ? championFor(tags, members) : null;
       // Stable pseudo-random 15% exploration set.
       const isExploration = hashPct(s.place.placeId) < 15 && i > 3;
-      chips[s.place.placeId] = reasonChip({
+      const chip = reasonChip({
         placeTags: tags,
         userVector: tasteCtx?.userVector ?? null,
         championName: champ?.name ?? null,
         crewHeartsOnSimilar: tasteCtx?.crewHeartCount ?? 0,
         isExploration,
       });
+      chips[s.place.placeId] = t(chip.key, chip.params);
       const crew = tags && withMe.length ? crewScore(tags, withMe) : 0.5;
       return { s, crew, champ, isExploration };
     });
@@ -277,7 +278,7 @@ export function DiscoverFeed({
       }
     }
     return { crewRanked: base.map((x) => x.s), reasonChips: chips };
-  }, [ranked, placeTags, tasteCtx]);
+  }, [ranked, placeTags, tasteCtx, t]);
 
   // §3-C: the toolbar search is a LOCAL filter over the already-loaded cards
   // (name contains) — never a new API call. §5-G: "not interested" hides;
