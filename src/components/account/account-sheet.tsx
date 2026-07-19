@@ -364,6 +364,7 @@ function LanguageRow() {
  * and the toggle is untouched (no active trips to serve).
  */
 function PocketDayRow() {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const [status, setStatus] = useState<PocketDayStatus | null>(null);
   const [enabled, setEnabled] = useState(true);
@@ -393,9 +394,9 @@ function PocketDayRow() {
       await Promise.all(names.filter((n) => n.startsWith("pax-")).map((n) => caches.delete(n)));
       localStorage.removeItem("paxawa-pocket-day");
       setStatus(null);
-      toast.success("Cached data cleared");
+      toast.success(t("pocket.cleared"));
     } catch {
-      toast.error("Couldn't clear the cache");
+      toast.error(t("pocket.clearFailed"));
     } finally {
       setClearing(false);
     }
@@ -405,15 +406,15 @@ function PocketDayRow() {
     <div className="px-6 py-4">
       <button type="button" onClick={() => setExpanded((v) => !v)} className="w-full flex items-center justify-between">
         <span className="text-[15px] font-medium text-foreground">
-          Pocket Day · {enabled ? "On" : "Off"}
-          {status && <span className="text-muted-foreground font-normal"> · {status.stops} stops cached</span>}
+          {t("pocket.title")} · {enabled ? t("pocket.on") : t("pocket.off")}
+          {status && <span className="text-muted-foreground font-normal"> · {t("pocket.stopsCached", { count: status.stops })}</span>}
         </span>
         <ChevronRight size={18} className={`text-tertiary transition-transform ${expanded ? "rotate-90" : "rtl:rotate-180"}`} />
       </button>
       {expanded && (
         <div className="mt-3 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-[13px] text-foreground">Cache tomorrow&rsquo;s plan nightly</span>
+            <span className="text-[13px] text-foreground">{t("pocket.nightly")}</span>
             {/* Brief G: spring-thumb animated Switch. */}
             <Switch
               checked={enabled}
@@ -426,24 +427,24 @@ function PocketDayRow() {
           </div>
           <p className="text-[12px] text-tertiary">
             {status
-              ? `Cached: ${status.date} · ${status.stops} stops · updated ${new Date(status.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-              : "Nothing cached yet — runs nightly during a trip."}
+              ? t("pocket.cachedLine", { date: status.date, stops: status.stops, time: new Date(status.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })
+              : t("pocket.nothingCached")}
           </p>
           <p className="text-[12px] text-tertiary">
-            Includes maps, addresses, booking files, and photos for tomorrow.
+            {t("pocket.includes")}
           </p>
           <button
             type="button"
             onClick={() => {
               if (!navigator.onLine) return;
               window.dispatchEvent(new CustomEvent("paxawa:pocketRefresh"));
-              toast.success("Up to date ✓");
+              toast.success(t("pocket.upToDate"));
               setStatus(getPocketDayStatus());
             }}
             disabled={typeof navigator !== "undefined" && !navigator.onLine}
             className="text-start text-[13px] font-semibold text-primary disabled:opacity-50"
           >
-            Refresh now
+            {t("pocket.refreshNow")}
           </button>
           <button
             type="button"
@@ -452,7 +453,7 @@ function PocketDayRow() {
             className="text-start text-[13px] font-semibold disabled:opacity-50"
             style={{ color: "#FF3B30" }}
           >
-            {clearing ? "Clearing…" : "Clear cached data"}
+            {clearing ? t("pocket.clearing") : t("pocket.clearData")}
           </button>
         </div>
       )}

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/i18n/locale-provider";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
@@ -22,6 +25,7 @@ export function DayPillRail({
   days: string[];
   stopCountByDay: Record<string, number>;
 }) {
+  const t = useT();
   const base = `/trips/${tripId}`;
   const todayIso = isoFmt(new Date(), "yyyy-MM-dd");
 
@@ -31,7 +35,7 @@ export function DayPillRail({
         href={`${base}/itinerary`}
         className="flex items-center justify-between h-[52px] px-4 rounded-2xl bg-card border border-border font-bold text-[15px] text-foreground active:scale-[0.99] transition-transform"
       >
-        Plan days
+        {t("cockpit.planDays")}
         <ChevronRight size={18} className="text-muted-foreground rtl:rotate-180" />
       </Link>
       {days.length > 0 && (

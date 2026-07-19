@@ -12,6 +12,7 @@ import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
 import { ShareTripSheet, type CrewMember } from "@/components/trips/share-trip-sheet";
 import { AvatarGroup, AvatarGroupTooltip } from "@/components/animate-ui/components/animate/avatar-group";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Trip {
   id: string;
@@ -46,6 +47,7 @@ interface Props {
  * no hamburger, no drawer.
  */
 export function TripShell({ trip, isOwner, crew = [], children }: Props) {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -167,7 +169,7 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
             aria-label="All trips"
           >
             <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-            <span className="text-[13px] font-semibold hidden min-[380px]:inline">All trips</span>
+            <span className="text-[13px] font-semibold hidden min-[380px]:inline">{t("nav.allTrips")}</span>
           </Link>
           <p className="flex-1 min-w-0 text-center font-bold text-[15px] truncate">{trip.name}</p>
 

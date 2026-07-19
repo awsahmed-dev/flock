@@ -516,7 +516,7 @@ export function MapboxPlanMap({
       {(tokenMissing || errorMsg) && (
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
           <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-700 dark:text-amber-300 max-w-xs space-y-1">
-            <p className="font-bold">Map didn't load</p>
+            <p className="font-bold">{t("states.mapFailed")}</p>
             <p className="opacity-90">
               {tokenMissing
                 ? "Mapbox token missing in this deployment."

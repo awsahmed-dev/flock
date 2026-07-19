@@ -12,6 +12,7 @@ import { ThreadSheet } from "@/components/huddle/thread-sheet";
 import { reactToDecision, createPoll, votePoll } from "@/lib/actions/huddle";
 import { createClient } from "@/lib/supabase/client";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
+import { useT } from "@/components/i18n/locale-provider";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { type DocumentCardData } from "@/components/documents/document-card";
@@ -78,6 +79,7 @@ export function HuddleBoard({
   documents?: DocumentCardData[];
   initialTab?: "decisions" | "docs";
 }) {
+  const t = useT();
   const router = useRouter();
   const [feed, setFeed] = useState(pulse);
   const [newPill, setNewPill] = useState(false);
@@ -152,7 +154,7 @@ export function HuddleBoard({
           }}
           className="fixed top-16 left-1/2 -translate-x-1/2 z-40 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2 flex items-center gap-1 shadow-lg"
         >
-          <ArrowUp size={14} /> New activity
+          <ArrowUp size={14} /> {t("huddle.newActivity")}
         </button>
       )}
 
@@ -166,8 +168,8 @@ export function HuddleBoard({
           value={seg}
           onChange={setSeg}
           options={[
-            { value: "decisions", label: "Decisions" },
-            { value: "docs", label: "Docs" },
+            { value: "decisions", label: t("huddle.tabDecisions") },
+            { value: "docs", label: t("huddle.tabDocs") },
           ]}
         />
 
@@ -181,7 +183,7 @@ export function HuddleBoard({
         <section>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[12px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.5 }}>
-              NEEDS YOU · {decisions.length}
+              {t("huddle.needsYou")} · {decisions.length}
             </p>
             <button
               type="button"
@@ -194,7 +196,7 @@ export function HuddleBoard({
           </div>
           {decisions.length === 0 ? (
             <div className="h-11 flex items-center px-1 text-[13px] text-muted-foreground">
-              No open decisions — you&rsquo;re all caught up ✓
+              {t("huddle.noOpenDecisions")}
             </div>
           ) : (
             <DecisionDeck
@@ -219,7 +221,7 @@ export function HuddleBoard({
             >
               <span aria-hidden>🧳</span>
               <span className="text-[15px] font-semibold text-foreground whitespace-nowrap">
-                Packing · {packing.packed}/{packing.total}
+                {t("huddle.prepPacking", { packed: packing.packed, total: packing.total })}
               </span>
               <span className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                 <span
@@ -227,7 +229,7 @@ export function HuddleBoard({
                   style={{ background: "var(--clr-moss)", width: `${packing.total > 0 ? Math.round((packing.packed / packing.total) * 100) : 0}%` }}
                 />
               </span>
-              <span className="text-[13px] font-bold text-primary whitespace-nowrap">Pack →</span>
+              <span className="text-[13px] font-bold text-primary whitespace-nowrap">{t("huddle.prepPack")}</span>
             </Link>
             <div aria-hidden className="h-px bg-border -mx-4" />
           </>
@@ -236,34 +238,34 @@ export function HuddleBoard({
         {/* ── ZONE 2: Pulse. ─────────────────────────────────────────── */}
         <section>
           <p className="text-[12px] font-bold uppercase text-tertiary mb-2" style={{ letterSpacing: 1.5 }}>
-            PULSE
+            {t("huddle.pulse")}
           </p>
           {feed.length === 0 ? (
             <div className="rounded-2xl bg-card border border-border p-5 text-center">
               {solo ? (
                 <>
-                  <p className="font-semibold">It&rsquo;s quiet in here.</p>
+                  <p className="font-semibold">{t("huddle.quietTitle")}</p>
                   <p className="text-[13px] text-muted-foreground mt-1">
-                    Huddle fills up as the crew hearts places, votes, and logs expenses. Start by inviting your people.
+                    {t("huddle.quietBody")}
                   </p>
                   <Link
                     href={`/trips/${tripId}/members`}
                     className="inline-flex items-center gap-1.5 mt-3 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2"
                   >
-                    <Users size={14} /> Invite crew
+                    <Users size={14} /> {t("huddle.inviteCrew")}
                   </Link>
                 </>
               ) : (
                 <>
-                  <p className="font-semibold">The crew&rsquo;s here. Now make some moves.</p>
+                  <p className="font-semibold">{t("huddle.movesTitle")}</p>
                   <p className="text-[13px] text-muted-foreground mt-1">
-                    Heart a place in Discover and it&rsquo;ll show up right here for everyone to vote on.
+                    {t("huddle.movesBody")}
                   </p>
                   <Link
                     href={`/trips/${tripId}/discover`}
                     className="inline-block mt-3 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2"
                   >
-                    Open Discover
+                    {t("huddle.openDiscover")}
                   </Link>
                 </>
               )}
@@ -548,6 +550,7 @@ function PollCard({
 /* ── Pulse activity card (§4-B) ─────────────────────────────────────────── */
 
 function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: string; tripId: string }) {
+  const t = useT();
   const first = item.actorName.split(" ")[0];
   const time = dfFormat(new Date(item.createdAt), "HH:mm");
 
@@ -555,7 +558,7 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
   if (item.eventType === "stop_removed") {
     return (
       <p className="px-4 py-2 text-[13px] text-muted-foreground">
-        {first} removed {item.placeName ?? "a stop"}
+        {t("huddle.removedStop", { name: first, place: item.placeName ?? t("huddle.aStop") })}
       </p>
     );
   }
@@ -565,14 +568,14 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
     return (
       <div className="px-4 py-3">
         <p className="text-[14px]">
-          🔥 <span className="font-bold">Crew match:</span> two of you want{" "}
-          <span className="font-bold">{item.placeName ?? "the same place"}</span>
+          🔥 <span className="font-bold">{t("huddle.crewMatch")}</span> {t("huddle.crewMatchWant")}{" "}
+          <span className="font-bold">{item.placeName ?? t("huddle.samePlace")}</span>
         </p>
         <Link
           href={`/trips/${tripId}/itinerary`}
           className="inline-block mt-1.5 rounded-full bg-primary text-primary-foreground text-[12px] font-bold px-3 py-1.5"
         >
-          Add to a day
+          {t("huddle.addToADay")}
         </Link>
       </div>
     );
@@ -595,18 +598,20 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
   })();
 
   const verb = (() => {
+    const place = item.placeName ?? t("huddle.aPlace");
+    const stop = item.placeName ?? t("huddle.aStop");
     switch (item.eventType) {
-      case "place_hearted": return `hearted ${item.placeName ?? "a place"}`;
-      case "stop_added": return `added ${item.placeName ?? "a stop"}`;
-      case "stop_done": return `checked off ${item.placeName ?? "a stop"} ✓`;
-      case "stop_locked": return `locked in ${item.placeName ?? "a stop"}`;
-      case "suggestion_added": return `→ ${item.placeName ?? "a place"} is going in the plan ✈️`;
-      case "suggestion_passed": return `filed ${item.placeName ?? "a suggestion"} under maybe`;
-      case "expense_logged": return "logged an expense";
-      case "expense_settled": return "marked a debt settled 🤝";
-      case "pack_item_claimed": return "claimed a pack item";
-      case "poll_closed": return `poll closed: ${(item.metadata.winner as string) ?? ""} wins ${(item.metadata.tally as string) ?? ""}`;
-      default: return "made a move";
+      case "place_hearted": return t("huddle.vHearted", { place });
+      case "stop_added": return t("huddle.vAdded", { place: stop });
+      case "stop_done": return t("huddle.vDone", { place: stop });
+      case "stop_locked": return t("huddle.vLocked", { place: stop });
+      case "suggestion_added": return t("huddle.vGoingIn", { place });
+      case "suggestion_passed": return t("huddle.vMaybe", { place: item.placeName ?? t("huddle.aSuggestion") });
+      case "expense_logged": return t("huddle.vExpense");
+      case "expense_settled": return t("huddle.vSettled");
+      case "pack_item_claimed": return t("huddle.vPack");
+      case "poll_closed": return t("huddle.vPoll", { winner: (item.metadata.winner as string) ?? "", tally: (item.metadata.tally as string) ?? "" });
+      default: return t("huddle.vMove");
     }
   })();
 

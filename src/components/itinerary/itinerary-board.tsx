@@ -87,17 +87,18 @@ const DAY_PALETTE = [
 ];
 
 const TYPE_CONFIG = {
-  activity:      { icon: Ticket,    text: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/12", label: "Activity" },
-  accommodation: { icon: Bed,       text: "text-blue-600 dark:text-blue-400",     bg: "bg-blue-500/12",   label: "Stay" },
-  transport:     { icon: Car,       text: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/12", label: "Transport" },
-  meal:          { icon: Utensils,  text: "text-green-600 dark:text-green-400",   bg: "bg-green-500/12",  label: "Meal" },
-  other:         { icon: HelpCircle,text: "text-muted-foreground",                bg: "bg-muted/60",      label: "Other" },
+  activity:      { icon: Ticket,    text: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/12", labelKey: "addItem.typeActivity" },
+  accommodation: { icon: Bed,       text: "text-blue-600 dark:text-blue-400",     bg: "bg-blue-500/12",   labelKey: "addItem.typeStay" },
+  transport:     { icon: Car,       text: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/12", labelKey: "addItem.typeTransport" },
+  meal:          { icon: Utensils,  text: "text-green-600 dark:text-green-400",   bg: "bg-green-500/12",  labelKey: "addItem.typeMeal" },
+  other:         { icon: HelpCircle,text: "text-muted-foreground",                bg: "bg-muted/60",      labelKey: "addItem.typeOther" },
 } as const;
 
 function MapPlaceholder() {
+  const t = useT();
   return (
     <div className="absolute inset-0 bg-muted/30 flex items-center justify-center">
-      <p className="text-xs text-muted-foreground animate-pulse">Loading map…</p>
+      <p className="text-xs text-muted-foreground animate-pulse">{t("states.loadingMap")}</p>
     </div>
   );
 }
@@ -1118,6 +1119,7 @@ function SortableItemRow({
   onStatusCycle: () => void;
   bookingMeta?: { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null } | null;
 }) {
+  const t = useT();
   // Sprint 5: booking anchors retired — legacy anchor rows behave like
   // regular stops (draggable, deletable).
   const isAnchor = false;
@@ -1267,7 +1269,7 @@ function SortableItemRow({
             className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase`}
           >
             <TypeIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{TypeCfg.label}</span>
+            <span className="hidden sm:inline">{t(TypeCfg.labelKey)}</span>
           </span>
         </div>
 

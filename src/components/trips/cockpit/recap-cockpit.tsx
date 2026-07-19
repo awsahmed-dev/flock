@@ -7,6 +7,7 @@ import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { ShareNetwork as Share2, Check, X } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
+import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { setStopCompleted } from "@/lib/actions/itinerary";
 import { markSettled } from "@/lib/actions/settlements";
@@ -27,6 +28,7 @@ export function RecapCockpit(
     currentUserId: string;
   },
 ) {
+  const t = useT();
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl, currency,
     days, items, crew, spent, spentByUser, heartsByUser = {}, settlePairs = [],
@@ -52,9 +54,9 @@ export function RecapCockpit(
   if (crew.length > 1) {
     const byId = new Map(crew.map((m) => [m.userId, m.displayName.split(" ")[0]]));
     const topHearts = Object.entries(heartsByUser).sort((a, b) => b[1] - a[1])[0];
-    if (topHearts && topHearts[1] > 0) awards.push({ label: `Most hearts ❤️ ${topHearts[1]}`, member: byId.get(topHearts[0]) ?? "?" });
+    if (topHearts && topHearts[1] > 0) awards.push({ label: t("cockpit.awardHearts", { count: topHearts[1] }), member: byId.get(topHearts[0]) ?? "?" });
     const topSpender = Object.entries(spentByUser).sort((a, b) => b[1] - a[1])[0];
-    if (topSpender && topSpender[1] > 0) awards.push({ label: "Big spender 💸", member: byId.get(topSpender[0]) ?? "?" });
+    if (topSpender && topSpender[1] > 0) awards.push({ label: t("cockpit.awardSpender"), member: byId.get(topSpender[0]) ?? "?" });
   }
 
   return (
@@ -70,10 +72,10 @@ export function RecapCockpit(
         <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 30%, rgba(0,0,0,0.9))" }} />
         <div className="relative px-5 pb-8">
           <h1 className="text-white" style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.5 }}>
-            {name.replace(/ trip$/i, "")}, wrapped.
+            {t("cockpit.wrappedTitle", { name: name.replace(/ trip$/i, "") })}
           </h1>
           <p className="text-white/70 text-[13px] mt-1">
-            {dfFormat(parseDateOnly(startDate), "d MMM")} – {dfFormat(parseDateOnly(endDate), "d MMM")} · {totalDays} days
+            {dfFormat(parseDateOnly(startDate), "d MMM")} – {dfFormat(parseDateOnly(endDate), "d MMM")} · {t("cockpit.totalDays", { count: totalDays })}
           </p>
         </div>
       </section>
@@ -85,9 +87,9 @@ export function RecapCockpit(
         {completedStops.length === 0 ? (
           /* EMPTY STATE — the retro-mark editor, RECAP's one sanctioned edit. */
           <section className="rounded-3xl bg-card border border-border p-4">
-            <p className="text-[17px] font-bold">The trip happened — the app missed it.</p>
+            <p className="text-[17px] font-bold">{t("cockpit.missedTrip")}</p>
             <p className="text-[14px] text-muted-foreground mt-1 mb-3">
-              Add what you did and we&rsquo;ll build your Wrap.
+              {t("cockpit.missedTripSub")}
             </p>
             <RetroMarkEditor tripId={tripId} items={items} />
           </section>
@@ -95,17 +97,17 @@ export function RecapCockpit(
           <>
             {/* PANEL 2 — STATS with count-up. */}
             <section>
-              <p className="text-[13px] text-muted-foreground mb-3">The numbers tell a story:</p>
+              <p className="text-[13px] text-muted-foreground mb-3">{t("cockpit.numbersStory")}</p>
               <div className="grid grid-cols-2 gap-3">
-                <StatChip value={totalDays} label="days" />
-                <StatChip value={completedStops.length} label="stops" />
-                {kmWalked > 0 && <StatChip value={Math.round(kmWalked)} label="km between stops" />}
-                <StatChip value={Math.round(spent)} label={`${currency} spent`} />
-                <StatChip value={crew.length} label={crew.length === 1 ? "traveler" : "crew"} />
+                <StatChip value={totalDays} label={t("cockpit.statDays")} />
+                <StatChip value={completedStops.length} label={t("cockpit.statStops")} />
+                {kmWalked > 0 && <StatChip value={Math.round(kmWalked)} label={t("cockpit.statKm")} />}
+                <StatChip value={Math.round(spent)} label={t("cockpit.statSpent", { currency })} />
+                <StatChip value={crew.length} label={crew.length === 1 ? t("cockpit.statTraveler") : t("cockpit.statCrew")} />
               </div>
               {topCategory && (
                 <p className="text-[14px] text-muted-foreground mt-3">
-                  Most visited: <span className="font-bold text-foreground capitalize">{topCategory[0]}</span> ({topCategory[1]} stops)
+                  {t("cockpit.mostVisited", { category: topCategory[0], count: topCategory[1] })}
                 </p>
               )}
             </section>
@@ -139,7 +141,7 @@ export function RecapCockpit(
                   ))}
                 </div>
                 <Link href={`${base}/recap/photos`} className="block text-[13px] font-semibold text-primary mt-2">
-                  All photos →
+                  {t("cockpit.allPhotos")}
                 </Link>
               </section>
             )}
@@ -205,6 +207,7 @@ function StatChip({ value, label }: { value: number; label: string }) {
 /* ── Retro-mark editor ──────────────────────────────────────────────────── */
 
 function RetroMarkEditor({ tripId, items }: { tripId: string; items: CockpitShared["items"] }) {
+  const t = useT();
   const [, startTransition] = useTransition();
   const [done, setDone] = useState<Set<string>>(new Set());
 
@@ -224,7 +227,7 @@ function RetroMarkEditor({ tripId, items }: { tripId: string; items: CockpitShar
                 return next;
               });
               startTransition(() => {
-                setStopCompleted(i.id, tripId, !marked).catch(() => toast.error("Couldn't save that"));
+                setStopCompleted(i.id, tripId, !marked).catch(() => toast.error(t("cockpit.couldntSave")));
               });
             }}
             className="w-full flex items-center gap-3 h-12 px-4 text-start"

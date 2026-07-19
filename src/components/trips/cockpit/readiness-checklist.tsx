@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Users, MapPin, Wallet, Package, CalendarDots as CalendarDays, Check, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
+import { useT } from "@/components/i18n/locale-provider";
 import {
   Accordion,
   AccordionItem,
@@ -36,13 +37,14 @@ export function ReadinessChecklist({
   packedCount: number;
   packTotal: number;
 }) {
+  const t = useT();
   const packingPercent = packTotal > 0 ? Math.round((packedCount / packTotal) * 100) : 0;
   const steps = [
-    { id: "dates", label: "Set your dates", done: hasDates, href: `${base}/settings`, icon: CalendarDays },
-    { id: "crew", label: "Invite the crew", done: crewCount > 1, href: `${base}/members`, icon: Users },
-    { id: "stops", label: "Add your first stops", done: stopsCount >= 1, href: `${base}/itinerary`, icon: MapPin },
-    { id: "budget", label: "Set a budget", done: hasBudget, href: `${base}/settings`, icon: Wallet },
-    { id: "pack", label: "Start packing", done: packingPercent >= 50, href: `${base}/pack`, icon: Package },
+    { id: "dates", label: t("cockpit.stepDates"), done: hasDates, href: `${base}/settings`, icon: CalendarDays },
+    { id: "crew", label: t("cockpit.stepCrew"), done: crewCount > 1, href: `${base}/members`, icon: Users },
+    { id: "stops", label: t("cockpit.stepStops"), done: stopsCount >= 1, href: `${base}/itinerary`, icon: MapPin },
+    { id: "budget", label: t("cockpit.stepBudget"), done: hasBudget, href: `${base}/settings`, icon: Wallet },
+    { id: "pack", label: t("cockpit.stepPack"), done: packingPercent >= 50, href: `${base}/pack`, icon: Package },
   ];
   const incomplete = steps.filter((s) => !s.done);
   const doneCount = steps.length - incomplete.length;
@@ -60,7 +62,7 @@ export function ReadinessChecklist({
                 style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
               />
               <span className="text-[13px] font-semibold text-foreground whitespace-nowrap tabular-nums">
-                Trip {readiness}% ready
+                {t("cockpit.tripReady", { percent: readiness })}
               </span>
             </div>
           </AccordionTrigger>
@@ -69,7 +71,7 @@ export function ReadinessChecklist({
             <div className="flex flex-col gap-2 px-3 pb-3">
           {doneCount > 0 && (
             <p className="text-[13px] text-muted-foreground px-1">
-              {doneCount} done ✓
+              {t("cockpit.doneCount", { count: doneCount })}
             </p>
           )}
           {incomplete.map((step, i) => {
@@ -98,7 +100,7 @@ export function ReadinessChecklist({
           })}
               {incomplete.length === 0 && (
                 <p className="flex items-center gap-2 text-[14px] font-semibold text-foreground px-1 py-2">
-                  <Check size={16} className="text-success" /> All set 🎉
+                  <Check size={16} className="text-success" /> {t("cockpit.allSet")}
                 </p>
               )}
             </div>

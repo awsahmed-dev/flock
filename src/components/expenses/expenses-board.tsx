@@ -355,7 +355,7 @@ export function ExpensesBoard({
         className="flex items-center gap-3 h-[52px] px-4 rounded-2xl bg-card border border-border"
       >
         <SlidersHorizontal size={18} className="text-primary shrink-0" />
-        <span className="flex-1 text-[15px] font-medium text-foreground">Personal cap</span>
+        <span className="flex-1 text-[15px] font-medium text-foreground">{t("expenses.personalCapLabel")}</span>
         <span className="text-[13px] text-muted-foreground tabular-nums">
           {personalBudget && personalBudget > 0
             ? `${currency} ${fmt(personalBudget)} · ${Math.round((derived.personalSpentBase / personalBudget) * 100)}% used`
@@ -409,7 +409,7 @@ export function ExpensesBoard({
                     : { background: "var(--muted)", color: "var(--muted-foreground)" }
                 }
               >
-                {f === "all" ? "All" : "Yours"}
+                {f === "all" ? t("wallet.scopeAll") : t("wallet.scopeMine")}
               </button>
             );
           })}

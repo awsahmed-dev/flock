@@ -15,10 +15,12 @@ import { docKindIcon } from "@/lib/document-kind";
  * hotel · packing · crew readiness), a read-only Day 1 preview, the
  * collapsed prep row, and the metric grid.
  */
-export async function DepartureCockpit(props: CockpitShared) {
+type T = (key: string, params?: Record<string, string | number>) => string;
+
+export async function DepartureCockpit(props: CockpitShared & { t: T }) {
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl, currency,
-    budgetTotal, days, items, crew, packing, readiness, ticker,
+    budgetTotal, days, items, crew, packing, readiness, ticker, t,
   } = props;
   const base = `/trips/${tripId}`;
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
@@ -27,7 +29,7 @@ export async function DepartureCockpit(props: CockpitShared) {
   // Weather for the start date — open-meteo, no API key. Row hidden on any
   // failure (§3-D: no placeholder).
   const coords = items.find((i) => i.lat != null && i.lng != null);
-  let weather: { tempMax: number; description: string } | null = null;
+  let weather: { tempMax: number; key: string } | null = null;
   if (coords) {
     try {
       const res = await fetch(
@@ -39,7 +41,7 @@ export async function DepartureCockpit(props: CockpitShared) {
         const code = data?.daily?.weather_code?.[0];
         const tempMax = data?.daily?.temperature_2m_max?.[0];
         if (typeof tempMax === "number" && typeof code === "number") {
-          weather = { tempMax: Math.round(tempMax), description: wmoDescription(code) };
+          weather = { tempMax: Math.round(tempMax), key: wmoKey(code) };
         }
       }
     } catch {
@@ -75,7 +77,7 @@ export async function DepartureCockpit(props: CockpitShared) {
             {name}
           </h1>
           <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 shrink-0" style={{ fontSize: 11, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}>
-            {daysUntil <= 0 ? "TODAY ✈" : `IN ${daysUntil} ${daysUntil === 1 ? "DAY" : "DAYS"}`}
+            {daysUntil <= 0 ? t("cockpit.badgeTodayFly") : t("cockpit.badgeInDays", { count: daysUntil })}
             {daysUntil > 0 && (
               <span className="w-1.5 h-1.5 rounded-full" style={{ animation: "pulse 2s ease-in-out infinite", background: "var(--clr-horizon)" }} />
             )}
@@ -92,7 +94,7 @@ export async function DepartureCockpit(props: CockpitShared) {
         {/* 2. DEPARTURE BOARD. */}
         <section className="rounded-3xl bg-card border border-border overflow-hidden" style={{ fontVariantNumeric: "tabular-nums" }}>
           <div className="px-4 pt-3 pb-2">
-            <p className="text-[11px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">Departure</p>
+            <p className="text-[11px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">{t("cockpit.departure")}</p>
             <p className="text-[15px] font-bold text-foreground mt-0.5">
               {destination} · {dateLabel}
             </p>
@@ -100,10 +102,8 @@ export async function DepartureCockpit(props: CockpitShared) {
 
           {weather && (
             <BoardRow>
-              ⛅ {weather.tempMax}° {weather.description} {dfFormat(parseDateOnly(startDate), "EEEE")}
-              {weather.description.includes("rain") || weather.description.includes("thunder")
-                ? " — pack a rain layer"
-                : ""}
+              ⛅ {weather.tempMax}° {t(weather.key)} {dfFormat(parseDateOnly(startDate), "EEEE")}
+              {/(Rain|Drizzle|Thunder)/.test(weather.key) ? t("cockpit.rainLayer") : ""}
             </BoardRow>
           )}
 
@@ -115,14 +115,14 @@ export async function DepartureCockpit(props: CockpitShared) {
                     <span aria-hidden className="me-1.5">{docKindIcon(d.type)}</span>
                     {d.title}
                   </span>
-                  <span className="text-primary font-bold shrink-0 ms-2">Open ↗</span>
+                  <span className="text-primary font-bold shrink-0 ms-2">{t("cockpit.openDoc")}</span>
                 </a>
               </BoardRow>
             ))
           ) : (
             <BoardRow>
               <span className="flex items-center justify-between w-full">
-                <span className="text-muted-foreground">🎫 Add your confirmations for the board</span>
+                <span className="text-muted-foreground">{t("cockpit.boardAddConfirmations")}</span>
                 <Link href={`${base}/huddle?tab=docs`} className="text-primary font-bold">
                   [+]
                 </Link>
@@ -134,11 +134,11 @@ export async function DepartureCockpit(props: CockpitShared) {
             <span className="flex items-center justify-between w-full">
               <span className={packUrgent ? "font-semibold" : ""}>
                 <Luggage size={14} className="inline me-1.5 -mt-0.5" />
-                Packing {packing.packed}/{packing.total}
-                {packLeft > 0 ? ` — ${packLeft} left` : " ✓"}
+                {t("cockpit.packingLine", { packed: packing.packed, total: packing.total })}
+                {packLeft > 0 ? ` — ${t("cockpit.packLeft", { count: packLeft })}` : " ✓"}
               </span>
               <Link href={`${base}/pack`} className="text-primary font-bold text-[13px]">
-                Pack now
+                {t("cockpit.packNow")}
               </Link>
             </span>
           </BoardRow>
@@ -149,7 +149,7 @@ export async function DepartureCockpit(props: CockpitShared) {
                 <Users size={14} className="inline me-1.5 -mt-0.5" />
                 {crew
                   .slice(0, 3)
-                  .map((m) => `${m.displayName.split(" ")[0]}: joined ✓`)
+                  .map((m) => t("cockpit.joined", { name: m.displayName.split(" ")[0] }))
                   .join(" · ")}
               </span>
             </BoardRow>
@@ -159,7 +159,7 @@ export async function DepartureCockpit(props: CockpitShared) {
         {/* 3. DAY 1 PREVIEW — read-only compact timeline. */}
         {day1Stops.length > 0 && (
           <section>
-            <p className="text-[15px] font-bold text-foreground mb-2">First day, at a glance</p>
+            <p className="text-[15px] font-bold text-foreground mb-2">{t("cockpit.firstDayGlance")}</p>
             <div className="rounded-2xl bg-card border border-border divide-y divide-border/60">
               {day1Stops.slice(0, 6).map((s, i) => (
                 <div
@@ -220,15 +220,15 @@ function BoardRow({ children }: { children: React.ReactNode }) {
 
 
 /** WMO weather code → short human description (open-meteo codes). */
-function wmoDescription(code: number): string {
-  if (code === 0) return "clear";
-  if (code <= 3) return "partly cloudy";
-  if (code <= 48) return "foggy";
-  if (code <= 57) return "drizzle";
-  if (code <= 67) return "rain";
-  if (code <= 77) return "snow";
-  if (code <= 82) return "rain showers";
-  if (code <= 86) return "snow showers";
-  return "thunderstorms";
+function wmoKey(code: number): string {
+  if (code === 0) return "cockpit.weatherClear";
+  if (code <= 3) return "cockpit.weatherPartlyCloudy";
+  if (code <= 48) return "cockpit.weatherFoggy";
+  if (code <= 57) return "cockpit.weatherDrizzle";
+  if (code <= 67) return "cockpit.weatherRain";
+  if (code <= 77) return "cockpit.weatherSnow";
+  if (code <= 82) return "cockpit.weatherRainShowers";
+  if (code <= 86) return "cockpit.weatherSnowShowers";
+  return "cockpit.weatherThunder";
 }
 

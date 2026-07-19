@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/i18n/locale-provider";
 import { MapPin, Wallet, Users, Package, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 
 /**
@@ -21,30 +24,31 @@ export function MetricGrid({
   crewCount: number;
   packing: { packed: number; total: number };
 }) {
+  const t = useT();
   const base = `/trips/${tripId}`;
   const cells = [
     {
       icon: MapPin,
-      label: "PLANNED",
-      value: placesCount > 0 ? `${placesCount} stops` : "Start →",
+      label: t("cockpit.metricPlanned"),
+      value: placesCount > 0 ? t("cockpit.metricStops", { count: placesCount }) : t("cockpit.metricStart"),
       href: `${base}/itinerary`,
     },
     {
       icon: Wallet,
-      label: "BUDGET",
-      value: budgetTotal != null ? `${currency} ${Math.round(budgetTotal).toLocaleString()}` : "Not set",
+      label: t("cockpit.metricBudget"),
+      value: budgetTotal != null ? `${currency} ${Math.round(budgetTotal).toLocaleString()}` : t("cockpit.metricNotSet"),
       href: `${base}/money`,
     },
     {
       icon: Users,
-      label: "CREW",
-      value: `${crewCount} ${crewCount === 1 ? "person" : "people"}`,
+      label: t("cockpit.metricCrew"),
+      value: t("cockpit.metricPeople", { count: crewCount }),
       href: `${base}/members`,
     },
     {
       icon: Package,
-      label: "PACKING",
-      value: packing.total > 0 ? `${packing.packed}/${packing.total} items` : "Create →",
+      label: t("cockpit.metricPacking"),
+      value: packing.total > 0 ? t("cockpit.metricItems", { packed: packing.packed, total: packing.total }) : t("cockpit.metricCreate"),
       href: `${base}/pack`,
     },
   ];

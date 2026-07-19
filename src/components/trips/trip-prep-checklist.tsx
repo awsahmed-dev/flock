@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useT } from "@/components/i18n/locale-provider";
 import { useState } from "react";
 import { Users, MapPin, Wallet, Package, CalendarDots as CalendarDays, Check, CaretRight as ChevronRight, CaretDown as ChevronDown } from "@phosphor-icons/react/dist/ssr";
 
@@ -35,14 +36,15 @@ export function TripPrepChecklist({
   /** §3-D(4): DEPARTURE renders only the collapsed row. */
   collapsedOnly?: boolean;
 }) {
+  const t = useT();
   const packingPercent = packTotal > 0 ? Math.round((packedCount / packTotal) * 100) : 0;
   const steps = [
-    { id: "dates", label: "Set your dates", done: hasDates, href: `${base}/settings`, icon: CalendarDays },
-    { id: "crew", label: "Invite the crew", done: crewCount > 1, href: `${base}/members`, icon: Users },
-    { id: "stops", label: "Add your first stops", done: stopsCount >= 1, href: `${base}/itinerary`, icon: MapPin },
-    { id: "budget", label: "Set a budget", done: hasBudget, href: `${base}/settings`, icon: Wallet },
+    { id: "dates", label: t("cockpit.stepDates"), done: hasDates, href: `${base}/settings`, icon: CalendarDays },
+    { id: "crew", label: t("cockpit.stepCrew"), done: crewCount > 1, href: `${base}/members`, icon: Users },
+    { id: "stops", label: t("cockpit.stepStops"), done: stopsCount >= 1, href: `${base}/itinerary`, icon: MapPin },
+    { id: "budget", label: t("cockpit.stepBudget"), done: hasBudget, href: `${base}/settings`, icon: Wallet },
     // §3-B: completes at ≥50% packed — never on mere item existence.
-    { id: "pack", label: "Start packing", done: packingPercent >= 50, href: `${base}/pack`, icon: Package },
+    { id: "pack", label: t("cockpit.stepPack"), done: packingPercent >= 50, href: `${base}/pack`, icon: Package },
   ];
   const completed = steps.filter((s) => s.done).length;
   const allDone = completed === steps.length;
@@ -86,7 +88,7 @@ export function TripPrepChecklist({
         className="w-full h-16 flex items-center justify-between px-4 rounded-3xl bg-card border border-border text-start"
       >
         <span className="text-[15px] font-bold text-foreground">
-          {allDone ? "All set 🎉 — tap to review" : `Trip prep · ${completed} of ${steps.length} done`}
+          {allDone ? t("cockpit.allSetReview") : t("cockpit.prepProgress", { done: completed, total: steps.length })}
         </span>
         <span className="flex items-center gap-2">
           {ring}
@@ -107,7 +109,7 @@ export function TripPrepChecklist({
         <div>
           <p className="text-[11px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">Trip prep</p>
           <p className="text-[15px] font-bold text-foreground mt-0.5">
-            {allDone ? "All set 🎉" : `${completed} of ${steps.length} done`}
+            {allDone ? t("cockpit.allSet") : t("cockpit.doneOf", { done: completed, total: steps.length })}
           </p>
         </div>
         <span className="flex items-center gap-2">

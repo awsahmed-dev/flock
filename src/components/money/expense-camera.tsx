@@ -11,8 +11,14 @@ import { convert, type RateBundle } from "@/lib/fx";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CockpitCrew } from "@/components/trips/cockpit/types";
 import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
+import { useT } from "@/components/i18n/locale-provider";
 
 const CATEGORIES = ["food", "transport", "accommodation", "activity", "shopping", "other"] as const;
+
+const CAT_KEY: Record<(typeof CATEGORIES)[number], string> = {
+  food: "expenses.catFood", transport: "expenses.catTransport", accommodation: "expenses.catStay",
+  activity: "expenses.catActivity", shopping: "expenses.catShopping", other: "expenses.catOther",
+};
 
 type Screen = "camera" | "review" | "split";
 
@@ -33,6 +39,7 @@ export function ExpenseCamera({
   /** Sprint 9 FIX-2A: destination seeds the on-the-ground currency. */
   destination?: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>("camera");
   const [camError, setCamError] = useState(false);
@@ -98,11 +105,11 @@ export function ExpenseCamera({
           if (!catTouched) setCategory(inferCategory(parsed.merchant));
         }
       } else {
-        toast("Couldn't read that one — type the amount");
+        toast(t("expenses.camOcrFailed"));
       }
       setScreen("review");
     } catch {
-      toast("Couldn't read that one — type the amount");
+      toast(t("expenses.camOcrFailed"));
       setScreen("review");
     } finally {
       setOcrBusy(false);
@@ -117,7 +124,7 @@ export function ExpenseCamera({
     startTransition(() => {
       createCameraExpense({
         tripId,
-        title: description.trim() || "Expense",
+        title: description.trim() || t("expenses.camExpenseFallback"),
         amount: amt,
         currency,
         category,
@@ -125,11 +132,11 @@ export function ExpenseCamera({
       })
         .then(() => {
           toast.success(
-            `Logged ${currency} ${amt.toLocaleString()} · ${description.trim() || "Expense"} — split ${members.length} ways`,
+            t("expenses.camLoggedLine", { currency, amount: amt.toLocaleString(), title: description.trim() || t("expenses.camExpenseFallback"), count: members.length }),
           );
           router.push(`/trips/${tripId}/money`);
         })
-        .catch((e) => toast.error(e?.message ?? "Couldn't log that"));
+        .catch((e) => toast.error(e?.message ?? t("expenses.camLogFailed")));
     });
   }
 
@@ -151,7 +158,7 @@ export function ExpenseCamera({
           <X size={20} />
         </button>
         <p className="font-bold text-[15px]">
-          {screen === "camera" ? "Point at the bill" : screen === "review" ? "Check the numbers" : "Split it"}
+          {screen === "camera" ? t("expenses.camPointAtBill") : screen === "review" ? t("expenses.camCheckNumbers") : t("expenses.camSplitIt")}
         </p>
         <span className="w-11" />
       </div>
@@ -240,7 +247,7 @@ export function ExpenseCamera({
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Category</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t("expenses.camCategory")}</p>
             <div className="flex gap-2 flex-wrap">
               {CATEGORIES.map((c) => (
                 <button
@@ -252,21 +259,21 @@ export function ExpenseCamera({
                   }`}
                   style={category === c ? { background: "var(--accent-glow)" } : undefined}
                 >
-                  {c}
+                  {t(CAT_KEY[c])}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Description</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t("expenses.camDescription")}</p>
             <input
               value={description}
               onChange={(e) => {
                 setDescription(e.target.value);
                 if (!catTouched) setCategory(inferCategory(e.target.value));
               }}
-              placeholder="Dinner at Jalan Alor"
+              placeholder={t("expenses.camDescPlaceholder")}
               className="w-full h-12 rounded-2xl border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             />
           </div>
@@ -306,7 +313,7 @@ export function ExpenseCamera({
                     <UserAvatar name={m.displayName} avatarUrl={m.avatarUrl} seed={m.userId} size="xl" />
                   </span>
                   <span className="text-[12px] font-semibold">
-                    {m.userId === currentUserId ? "You" : m.displayName.split(" ")[0]}
+                    {m.userId === currentUserId ? t("expenses.you") : m.displayName.split(" ")[0]}
                   </span>
                 </button>
               );
@@ -328,7 +335,7 @@ export function ExpenseCamera({
             tapScale={0.95} hoverScale={1.02}
             className="h-13 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-50"
           >
-            {pending ? "Logging…" : "Split it"}
+            {pending ? t("expenses.loggingToast") : t("expenses.camSplitIt")}
             <RippleButtonRipples color="rgba(255,255,255,0.3)" />
           </RippleButton>
         </div>

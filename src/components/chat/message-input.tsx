@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 // ─── Inline expense form ──────────────────────────────────────────────────────
 
 const EXPENSE_CATEGORIES = [
-  { value: "food", label: "🍜 Food" },
-  { value: "accommodation", label: "🏨 Hotel" },
-  { value: "transport", label: "🚌 Transport" },
-  { value: "activity", label: "🎟️ Activity" },
-  { value: "shopping", label: "🛍️ Shopping" },
-  { value: "other", label: "💳 Other" },
+  { value: "food", emoji: "🍜", labelKey: "expenses.catFood" },
+  { value: "accommodation", emoji: "🏨", labelKey: "expenses.catStay" },
+  { value: "transport", emoji: "🚌", labelKey: "expenses.catTransport" },
+  { value: "activity", emoji: "🎟️", labelKey: "expenses.catActivity" },
+  { value: "shopping", emoji: "🛍️", labelKey: "expenses.catShopping" },
+  { value: "other", emoji: "💳", labelKey: "expenses.catOther" },
 ];
 
 function ExpenseForm({
@@ -84,7 +84,7 @@ function ExpenseForm({
           className="flex-1 rounded-md border bg-background px-2 py-1 text-sm h-8"
         >
           {EXPENSE_CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
+            <option key={c.value} value={c.value}>{c.emoji} {t(c.labelKey)}</option>
           ))}
         </select>
       </div>

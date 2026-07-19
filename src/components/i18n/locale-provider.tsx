@@ -36,9 +36,15 @@ export function LocaleProvider({
     () => ({ locale, dict, isRtl: locale === "ar" }),
     [locale, dict],
   );
-  // B15-d: keep the module-level date-fns active locale in sync on the
-  // client so format() calls inside client components match the
-  // currently rendered language.
+  // Arabic sweep: sync the module-level date-fns locale DURING RENDER,
+  // not in an effect. The client bundle is a separate module graph from
+  // the server one — the layout's server-side setActiveLocale never
+  // reaches it, and the old effect ran AFTER children had already
+  // SSR'd/hydrated their dates in English (child renders + child effects
+  // precede parent effects). Result: "Sun 8" chips in an Arabic app.
+  // Setting module state in render is safe here — it's idempotent and
+  // not read by React itself.
+  setActiveLocale(locale);
   useEffect(() => {
     setActiveLocale(locale);
   }, [locale]);

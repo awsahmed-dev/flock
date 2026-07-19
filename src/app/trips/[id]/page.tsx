@@ -18,6 +18,7 @@ import { getRates, convert } from "@/lib/fx";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 import { tripPhase } from "@/lib/trip-phase";
 import { NowCockpit, type NowItem } from "@/components/trips/now-cockpit";
+import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { PlanningCockpit } from "@/components/trips/cockpit/planning-cockpit";
 import { DepartureCockpit } from "@/components/trips/cockpit/departure-cockpit";
 import { RecapCockpit } from "@/components/trips/cockpit/recap-cockpit";
@@ -157,6 +158,9 @@ export default async function TripPage({ params }: Props) {
       .slice(0, 3) as typeof teaser;
   }
 
+  const dict = getDictionary(await getLocale());
+  const t = (key: string, params?: Record<string, string | number>) => tFromDict(dict, key, params);
+
   // Crew Pulse ticker: last activity row (§6.5 — one line, never a feed).
   const lastActivity = await db.query.activities.findFirst({
     where: eq(activities.tripId, id),
@@ -165,7 +169,7 @@ export default async function TripPage({ params }: Props) {
   });
   const ticker = lastActivity
     ? {
-        text: `${lastActivity.actor?.displayName ?? "Someone"} ${describeEvent(lastActivity.eventType, lastActivity.placeName)}`,
+        text: describeEvent(t, lastActivity.actor?.displayName ?? "؟", lastActivity.eventType, lastActivity.placeName),
         eventType: lastActivity.eventType,
       }
     : null;
@@ -209,6 +213,7 @@ export default async function TripPage({ params }: Props) {
     huddleOpen,
   };
 
+
   if (phase === "PLANNING") {
     return <PlanningCockpit {...shared} />;
   }
@@ -223,7 +228,7 @@ export default async function TripPage({ params }: Props) {
           days={days}
           stops={items.map((i) => ({ dayDate: i.dayDate, photoUrl: i.photoUrl ?? null }))}
         />
-        <DepartureCockpit {...shared} />
+        <DepartureCockpit {...shared} t={t} />
       </>
     );
   }
@@ -310,14 +315,15 @@ export default async function TripPage({ params }: Props) {
   );
 }
 
-function describeEvent(eventType: string, placeName: string | null): string {
+type TickerT = (key: string, params?: Record<string, string | number>) => string;
+function describeEvent(t: TickerT, actor: string, eventType: string, placeName: string | null): string {
   switch (eventType) {
-    case "place_hearted": return `hearted ${placeName ?? "a place"}`;
-    case "stop_added": return `added ${placeName ?? "a stop"}`;
-    case "stop_locked": return `locked in ${placeName ?? "a stop"}`;
-    case "expense_logged": return "logged an expense";
-    case "pack_item_claimed": return "claimed a pack item";
-    case "poll_closed": return "closed a poll";
-    default: return "made a move";
+    case "place_hearted": return t("cockpit.tickerHearted", { actor, place: placeName ?? t("cockpit.tickerAPlace") });
+    case "stop_added": return t("cockpit.tickerAdded", { actor, place: placeName ?? t("cockpit.tickerAStop") });
+    case "stop_locked": return t("cockpit.tickerLocked", { actor, place: placeName ?? t("cockpit.tickerAStop") });
+    case "expense_logged": return t("cockpit.tickerExpense", { actor });
+    case "pack_item_claimed": return t("cockpit.tickerPack", { actor });
+    case "poll_closed": return t("cockpit.tickerPoll", { actor });
+    default: return t("cockpit.tickerMove", { actor });
   }
 }

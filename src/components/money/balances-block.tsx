@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { markSettled } from "@/lib/actions/settlements";
 import type { SettlementPair } from "@/lib/settle";
@@ -21,6 +22,7 @@ export function BalancesBlock({
   currency: string;
   currentUserId: string;
 }) {
+  const t = useT();
   const [settled, setSettled] = useState<Set<string>>(new Set());
   const [confirming, setConfirming] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -29,19 +31,20 @@ export function BalancesBlock({
 
   return (
     <section className="rounded-3xl bg-card border border-border p-4 mt-1">
-      <p className="text-[15px] font-bold mb-2" style={{ marginTop: 4 }}>Balances</p>
+      <p className="text-[15px] font-bold mb-2" style={{ marginTop: 4 }}>{t("expenses.balances")}</p>
       {open.length === 0 ? (
-        <p className="text-[15px] text-muted-foreground py-2">All square 🤝 — nobody owes anybody.</p>
+        <p className="text-[15px] text-muted-foreground py-2">{t("expenses.allSquare")}</p>
       ) : (
         <div className="flex flex-col divide-y divide-border/60">
           {open.map((p) => {
             const key = `${p.fromUserId}:${p.toUserId}`;
+            const amountStr = `${currency} ${p.amount.toLocaleString()}`;
             const line =
               p.toUserId === currentUserId
-                ? `${nameOf(p.fromUserId)} owes you ${currency} ${p.amount.toLocaleString()}`
+                ? t("expenses.owesYouLine", { name: nameOf(p.fromUserId), amount: amountStr })
                 : p.fromUserId === currentUserId
-                  ? `You owe ${nameOf(p.toUserId)} ${currency} ${p.amount.toLocaleString()}`
-                  : `${nameOf(p.fromUserId)} owes ${nameOf(p.toUserId)} ${currency} ${p.amount.toLocaleString()}`;
+                  ? t("expenses.youOweLine", { name: nameOf(p.toUserId), amount: amountStr })
+                  : t("expenses.owesLine", { from: nameOf(p.fromUserId), to: nameOf(p.toUserId), amount: amountStr });
             return (
               <div key={key} className="flex items-center gap-3 h-16">
                 <UserAvatar
@@ -59,20 +62,20 @@ export function BalancesBlock({
                       setSettled((prev) => new Set(prev).add(key));
                       startTransition(() => {
                         markSettled({ tripId, creditorId: p.toUserId, debtorId: p.fromUserId, amount: p.amount, currency })
-                          .then(() => toast.success(`${currency} ${p.amount.toLocaleString()} marked settled 🤝`))
+                          .then(() => toast.success(t("expenses.settleMarked", { amount: amountStr })))
                           .catch(() => {
                             setSettled((prev) => {
                               const next = new Set(prev);
                               next.delete(key);
                               return next;
                             });
-                            toast.error("Couldn't mark that settled");
+                            toast.error(t("expenses.settleMarkFailed"));
                           });
                       });
                     }}
                     className="shrink-0 h-8 px-3 rounded-full bg-primary text-primary-foreground text-[12px] font-bold"
                   >
-                    Confirm
+                    {t("expenses.confirm")}
                   </button>
                 ) : (
                   <button
@@ -80,7 +83,7 @@ export function BalancesBlock({
                     onClick={() => setConfirming(key)}
                     className="shrink-0 h-8 px-3 rounded-full border border-border text-[12px] font-bold text-foreground"
                   >
-                    Settle
+                    {t("expenses.settle")}
                   </button>
                 )}
               </div>

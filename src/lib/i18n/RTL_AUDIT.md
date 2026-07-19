@@ -136,3 +136,24 @@ Arabic ships.
 - Currency symbol PLACEMENT (SAR/ريال trails in Arabic) is handled by
   `Intl.NumberFormat` with `style: "currency"` — the app mostly renders
   code + amount ("USD 1,500") which is direction-safe as-is.
+
+## Arabic coverage sweep (post-launch, full-app pass)
+
+All previously flagged English islands are now localized: the entire
+cockpit tree (planning/departure/recap + readiness checklist, crew pulse,
+day-pill rail, metric grid, trip-prep checklist, weather line, activity
+ticker), the Money balances block + scope chips + Personal cap, the
+Point-and-Split camera flow, the Huddle tabs / NEEDS YOU / prep row /
+full Pulse verb table / empty states, Add-item dialog + stop-type chips,
+Pocket Day row, header "All trips", map placeholders/errors, and chat
+expense categories. Root cause for English DATES in client components
+fixed: LocaleProvider now syncs the date-fns module locale during render
+(the client bundle is a separate module graph; the old effect ran after
+children had painted).
+
+Remaining Latin text in Arabic mode is DATA, by design: place names and
+neighborhoods from Google Places, user display names, user-authored trip
+and expense titles, currency codes, and packing items already seeded in
+English rows. One follow-up: the packing auto-seed templates
+(src/lib/actions/packing.ts) generate English item names — Arabic-locale
+users should get Arabic seeds.

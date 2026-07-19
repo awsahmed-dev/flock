@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import type { CockpitCrew } from "./types";
 
@@ -21,6 +24,7 @@ export function CrewPulse({
   crew: CockpitCrew[];
   ticker: { text: string; eventType: string } | null;
 }) {
+  const t = useT();
   if (crew.length < 2) return null;
   const shown = crew.slice(0, 4);
   const extra = crew.length - shown.length;
@@ -41,11 +45,11 @@ export function CrewPulse({
           )}
         </div>
         <p className="flex-1 min-w-0 text-[14px] font-bold text-foreground truncate">
-          {crew.length} going
+          {t("cockpit.going", { count: crew.length })}
         </p>
       </div>
       <Link href={`/trips/${tripId}/huddle`} className="block mt-2 text-sm text-muted-foreground truncate">
-        {ticker ? `${ticker.text} →` : "Nothing new — go heart something in Discover →"}
+        {ticker ? `${ticker.text} →` : t("cockpit.tickerEmpty")}
       </Link>
     </section>
   );

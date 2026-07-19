@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
@@ -8,6 +10,7 @@ import { CrewPulse } from "./crew-pulse";
 import { docKindIcon } from "@/lib/document-kind";
 import { MetricGrid } from "./metric-grid";
 import { DayPillRail } from "./day-pill-rail";
+import { useT } from "@/components/i18n/locale-provider";
 import type { CockpitShared } from "./types";
 
 /**
@@ -17,6 +20,7 @@ import type { CockpitShared } from "./types";
  * LAST (they're reference, not actions).
  */
 export function PlanningCockpit(props: CockpitShared) {
+  const t = useT();
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl,
     currency, budgetTotal, days, items, crew, packing,
@@ -35,22 +39,22 @@ export function PlanningCockpit(props: CockpitShared) {
     if (huddleOpen > 0)
       return {
         icon: Vote,
-        label: `${huddleOpen} ${huddleOpen === 1 ? "place is" : "places are"} waiting for your vote`,
+        label: t("cockpit.votesWaiting", { count: huddleOpen }),
         href: `${base}/huddle`,
       };
     if (items.length === 0)
-      return { icon: MapPin, label: "Start adding your first stops", href: `${base}/itinerary` };
+      return { icon: MapPin, label: t("cockpit.firstStops"), href: `${base}/itinerary` };
     if (crew.length < 2)
-      return { icon: Users, label: "Invite your crew", href: `${base}/members` };
+      return { icon: Users, label: t("cockpit.inviteCrew"), href: `${base}/members` };
     if (budgetTotal == null || budgetTotal <= 0)
-      return { icon: Wallet, label: "Set a budget", href: `${base}/settings` };
+      return { icon: Wallet, label: t("cockpit.setBudget"), href: `${base}/settings` };
     if (packingPercent < 50)
       return {
         icon: Package,
-        label: packing.total === 0 ? "Start your packing list" : `Keep packing — ${packingPercent}% done`,
+        label: packing.total === 0 ? t("cockpit.startPacking") : t("cockpit.keepPacking", { percent: packingPercent }),
         href: `${base}/pack`,
       };
-    return { icon: MapPin, label: "Keep shaping the plan", href: `${base}/itinerary` };
+    return { icon: MapPin, label: t("cockpit.keepShaping"), href: `${base}/itinerary` };
   })();
   const PrimaryIcon = primary.icon;
 
@@ -77,7 +81,7 @@ export function PlanningCockpit(props: CockpitShared) {
           className="absolute top-3 start-4 rounded-lg px-2.5 py-1"
           style={{ fontSize: 11, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}
         >
-          {daysUntil <= 0 ? "TODAY" : `IN ${daysUntil} ${daysUntil === 1 ? "DAY" : "DAYS"}`}
+          {daysUntil <= 0 ? t("cockpit.badgeToday") : t("cockpit.badgeInDays", { count: daysUntil })}
         </div>
       </div>
 
@@ -125,14 +129,14 @@ export function PlanningCockpit(props: CockpitShared) {
             href={`${base}/huddle?tab=docs`}
             className="text-[13px] text-muted-foreground px-1 -mt-1"
           >
-            🎫 Add a confirmation — flight, hotel, visa →
+            {t("cockpit.addConfirmation")}
           </Link>
         ) : (
           <section>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[15px] font-bold text-foreground">Documents</p>
+              <p className="text-[15px] font-bold text-foreground">{t("cockpit.documents")}</p>
               <Link href={`${base}/huddle?tab=docs`} className="text-[13px] font-bold text-primary">
-                See all →
+                {t("cockpit.seeAll")}
               </Link>
             </div>
             <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4">
@@ -155,7 +159,7 @@ export function PlanningCockpit(props: CockpitShared) {
         {/* 6. DISCOVER TEASER — the crew's shortlist. */}
         {teaser.length > 0 && (
           <section>
-            <p className="text-[15px] font-bold text-foreground mb-2">The crew&rsquo;s shortlist</p>
+            <p className="text-[15px] font-bold text-foreground mb-2">{t("cockpit.crewShortlist")}</p>
             <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
               {teaser.map((p) => (
                 <Link
@@ -192,7 +196,7 @@ export function PlanningCockpit(props: CockpitShared) {
                 className="shrink-0 w-28 rounded-2xl bg-muted border border-border flex flex-col items-center justify-center gap-1 text-muted-foreground"
               >
                 <ChevronRight size={18} className="rtl:rotate-180" />
-                <span className="text-[12px] font-semibold text-center px-2">Open Discover</span>
+                <span className="text-[12px] font-semibold text-center px-2">{t("cockpit.openDiscover")}</span>
               </Link>
             </div>
           </section>
