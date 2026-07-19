@@ -158,6 +158,36 @@ English rows. One follow-up: the packing auto-seed templates
 (src/lib/actions/packing.ts) generate English item names — Arabic-locale
 users should get Arabic seeds.
 
+## Arabic fix sprint 2 (device-screenshot round) — results
+
+- Missed sheets localized end-to-end: AddDocumentDialog (both modes, kind
+  chips now use DOCUMENT_KINDS.labelKey, every toast) and PollComposer.
+- Wrap page bottom panels (SettlePanel / SharePanel in recap-cockpit)
+  keyed; settle lines reuse the expenses.* bidi debt patterns.
+- View-all transactions FUNCTIONAL bug: expenses dated outside the trip
+  span never rendered (the timeline only built trip-day buckets). They
+  now render in their own "خارج تواريخ الرحلة" sections above the
+  timeline. Empty state, search-miss, and no-target subtitle keyed.
+- Sub-page shell: money/transactions, expenses/balances,
+  expenses/breakdown, members, settings routes rendered edge-to-edge
+  (no px/pt wrapper — only Money main had one). All wrapped; settings
+  PageHeader gained a back button.
+- BottomSheet X moved to the leading side (top-right in RTL, top-left
+  in LTR) for every sheet on the primitive.
+- Settle rows "{from} → {to}": keyed "You", <bdi> isolation, mirrored
+  arrow glyph.
+- Currency <select>s get explicit dir so Android's native option list
+  mirrors (note: the OS dialog itself is unstylable; dir is the only
+  lever, verify on device).
+- Discover reasonChip returns {key, params}; all five chips localized.
+- Swipe rows (itinerary/packing): clamp is now Math.min(0, …) so a drag
+  crossing back past the origin resets to 0 instead of freezing —
+  removes the on-device stutter. (LIVE cockpit row already clamped
+  symmetrically.)
+- Docs-panel "Add document" trigger stays on the trailing side — that IS
+  the correct RTL mirror of the LTR top-right action slot; only its
+  label was English, which made it read as a leftover.
+
 ## Arabic fix sprint (RTL + Money + itinerary) — results
 
 - Money sub-pages now fully Arabic + RTL: expense detail sheet, log form
