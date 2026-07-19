@@ -481,7 +481,11 @@
     "autoPrefix": "Auto: {label}",
     "projAfterPersonal": "After this · your budget",
     "projAfterShare": "After your share · your budget",
-    "projAfterTrip": "After this · trip budget"
+    "projAfterTrip": "After this · trip budget",
+    "youOweShort": "· you owe {amount}",
+    "txSubtitle": "{count, plural, one {1 transaction} other {# transactions}} · Target {target}/day",
+    "dayBadge": "Day",
+    "liveBadge": "live"
   },
   "itinerary": {
     "add": "Add",

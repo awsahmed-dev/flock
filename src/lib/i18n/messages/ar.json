@@ -481,7 +481,11 @@
     "autoPrefix": "تلقائي: ⁨{label}⁩",
     "projAfterPersonal": "بعد هذا · ميزانيتك",
     "projAfterShare": "بعد حصتك · ميزانيتك",
-    "projAfterTrip": "بعد هذا · ميزانية الرحلة"
+    "projAfterTrip": "بعد هذا · ميزانية الرحلة",
+    "youOweShort": "· عليك ⁨{amount}⁩",
+    "txSubtitle": "{count, plural, one {معاملة واحدة} two {معاملتان} few {# معاملات} many {# معاملة} other {# معاملة}} · الهدف ⁨{target}⁩/اليوم",
+    "dayBadge": "يوم",
+    "liveBadge": "الآن"
   },
   "itinerary": {
     "add": "أضف",

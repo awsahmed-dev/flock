@@ -180,7 +180,7 @@ export function TransactionsPage({
         title={t("expenses.activity")}
         subtitle={
           dailyTarget
-            ? `${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""} · Target ${currency} ${fmt(dailyTarget)}/day`
+            ? t("expenses.txSubtitle", { count: expenseList.length, target: `${currency} ${fmt(dailyTarget)}` })
             : `${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""}`
         }
       />
@@ -277,7 +277,7 @@ export function TransactionsPage({
                         today ? "" : "text-muted-foreground"
                       }`}
                     >
-                      Day
+                      {t("expenses.dayBadge")}
                     </span>
                     <span className="text-sm font-bold leading-tight tabular-nums">
                       {d.dayNumber}
@@ -289,7 +289,7 @@ export function TransactionsPage({
                         {today ? t("nav.today") : format(d.date, "EEE, MMM d")}
                         {today && (
                           <span className="text-[9px] font-bold tracking-widest uppercase text-primary">
-                            live
+                            {t("expenses.liveBadge")}
                           </span>
                         )}
                       </p>
@@ -368,6 +368,7 @@ function SlimRow({
   baseAmount: number | null;
   onClick: () => void;
 }) {
+  const t = useT();
   const cat = CATEGORY_CONFIG[expense.category] ?? CATEGORY_CONFIG.other;
   const CatIcon = cat.icon;
   const isPayer = expense.paidBy === userId;
@@ -391,7 +392,7 @@ function SlimRow({
             {payerName}
             {iOwe && (
               <span className="ms-1.5 text-orange-600 dark:text-orange-400 font-semibold">
-                · you owe {expense.currency} {fmt(mySplit!.amountOwed)}
+                {t("expenses.youOweShort", { amount: `${expense.currency} ${fmt(mySplit!.amountOwed)}` })}
               </span>
             )}
           </p>

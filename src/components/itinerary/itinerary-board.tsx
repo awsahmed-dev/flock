@@ -1131,6 +1131,7 @@ function SortableItemRow({
   // Fix 3: horizontal swipe-left to reveal a delete zone. Reordering is
   // handle-only (dnd-kit listeners live on the grip button), so a horizontal
   // pointer drag on the row body never activates the vertical DnD sensor.
+  const { isRtl } = useLocale();
   const [dx, setDx] = useState(0);
   const swipeStartX = useRef<number | null>(null);
   function onSwipeDown(e: React.PointerEvent) {
@@ -1138,7 +1139,10 @@ function SortableItemRow({
   }
   function onSwipeMove(e: React.PointerEvent) {
     if (swipeStartX.current == null) return;
-    const d = e.clientX - swipeStartX.current;
+    // RTL: the delete zone sits at inline-END (left in Arabic), so the
+    // reveal gesture is a physical swipe-RIGHT there. Work in logical
+    // deltas: negative = toward the end edge in both directions.
+    const d = (e.clientX - swipeStartX.current) * (isRtl ? -1 : 1);
     if (d < 0) setDx(Math.max(d, -88));
   }
   function onSwipeUp() {
@@ -1199,7 +1203,7 @@ function SortableItemRow({
         onPointerUp={canManage && !isAnchor ? onSwipeUp : undefined}
         onPointerCancel={canManage && !isAnchor ? onSwipeUp : undefined}
         style={{
-          transform: `translateX(${dx}px)`,
+          transform: `translateX(${dx * (isRtl ? -1 : 1)}px)`,
           transition: swipeStartX.current == null ? "transform 150ms ease" : "none",
         }}
         className={`group relative flex items-stretch ring-1 bg-card shadow-sm hover:shadow-md transition-[box-shadow] touch-pan-y ${

@@ -13,7 +13,7 @@ import { parseDateOnly } from "@/lib/date-only";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
 import { deleteItineraryItem, setStopCompleted } from "@/lib/actions/itinerary";
 import { enqueue } from "@/lib/offline-queue";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { CockpitAnchor, TeaserPlace } from "@/components/trips/cockpit/types";
@@ -652,6 +652,7 @@ function StopRow({
   t: (k: string, p?: Record<string, string | number>) => string;
 }) {
   const [dx, setDx] = useState(0);
+  const { isRtl } = useLocale();
   const startX = useRef<number | null>(null);
 
   function down(e: React.PointerEvent) {
@@ -660,7 +661,9 @@ function StopRow({
   }
   function move(e: React.PointerEvent) {
     if (startX.current == null) return;
-    const d = e.clientX - startX.current;
+    // RTL: logical delta — "toward start" (done) stays positive, "toward
+    // end" (delete) stays negative, whichever physical side that is.
+    const d = (e.clientX - startX.current) * (isRtl ? -1 : 1);
     setDx(Math.max(-88, Math.min(88, d)));
   }
   function up() {
@@ -703,7 +706,7 @@ function StopRow({
         onPointerCancel={up}
         className="relative flex items-center gap-3 h-[72px] px-3 bg-card touch-pan-y"
         style={{
-          transform: `translateX(${dx}px)`,
+          transform: `translateX(${dx * (isRtl ? -1 : 1)}px)`,
           transition: startX.current == null ? "transform 150ms ease" : "none",
           ...(anchor
             ? { borderInlineStart: "3px solid var(--clr-horizon)", background: "var(--clr-horizon-dim)" }

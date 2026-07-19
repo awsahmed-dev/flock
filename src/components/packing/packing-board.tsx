@@ -11,7 +11,7 @@ import {
 } from "@/lib/actions/packing";
 import { PageHeader } from "@/components/ui/page-header";
 import { Progress } from "@/components/animate-ui/components/radix/progress";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Item {
@@ -477,13 +477,15 @@ function PackingRow({
   const t = useT();
   // §4: swipe-left reveals a red delete zone (no always-visible trash icon).
   const [dx, setDx] = useState(0);
+  const { isRtl } = useLocale();
   const startX = useRef<number | null>(null);
   function down(e: React.PointerEvent) {
     if (canDelete) startX.current = e.clientX;
   }
   function move(e: React.PointerEvent) {
     if (startX.current == null) return;
-    const d = e.clientX - startX.current;
+    // RTL: logical delta — the delete zone is at inline-end.
+    const d = (e.clientX - startX.current) * (isRtl ? -1 : 1);
     if (d < 0) setDx(Math.max(d, -88));
   }
   function up() {
@@ -508,7 +510,7 @@ function PackingRow({
         onPointerMove={move}
         onPointerUp={up}
         onPointerCancel={up}
-        style={{ transform: `translateX(${dx}px)`, transition: startX.current == null ? "transform 150ms ease" : "none" }}
+        style={{ transform: `translateX(${dx * (isRtl ? -1 : 1)}px)`, transition: startX.current == null ? "transform 150ms ease" : "none" }}
         className={`relative flex items-center gap-3 border p-3 bg-card touch-pan-y ${
           item.packed ? "border-emerald-500/40" : "border-border"
         }`}
