@@ -157,3 +157,27 @@ and expense titles, currency codes, and packing items already seeded in
 English rows. One follow-up: the packing auto-seed templates
 (src/lib/actions/packing.ts) generate English item names — Arabic-locale
 users should get Arabic seeds.
+
+## Arabic fix sprint (RTL + Money + itinerary) — results
+
+- Money sub-pages now fully Arabic + RTL: expense detail sheet, log form
+  (fields, currency select, split chips, prefilled RTL date, primary
+  button on the RTL action side), camera flow, budget sheet, settle flow,
+  balances (Arabic debt pattern with FSI/PDI bidi isolates), transactions
+  list (subtitle/day badges/"you owe" row line). "VIEW ALL" inconsistency
+  = one hardcoded string in Money's SectionCard, now t(common.viewAll).
+  The "empty View-All page" reproduced as WORKING after the sweep — the
+  /expenses/transactions → /money/transactions redirect + list render
+  verified live with content.
+- Hardcoded → arrows replaced with rtl:-scale-x-100 spans (dashboard Wrap
+  banner, cockpit ticker); Wrap stops-count is a bidi-isolated plural key
+  (renders the dual محطتان correctly).
+- Pocket Day → جيب اليوم.
+- Swipe rows (itinerary stop, pack item, LIVE cockpit stop) computed
+  deltas in physical clientX — the end-anchored delete zone was
+  unreachable in RTL. All three now use logical deltas and mirrored
+  translateX; delete zones were already start/end-anchored.
+- Sub-page sweep: settings, members, account sheet, + action sheet all
+  clean. Remaining known Latin: sr-only "Close" inside the animate-ui
+  Sheet primitive (invisible, a11y-only), user data, and the
+  English-seeded pack rows (see seed-template note above).
