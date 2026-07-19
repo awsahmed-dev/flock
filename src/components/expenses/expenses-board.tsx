@@ -561,6 +561,7 @@ function SectionCard({
   emptyLabel?: string;
   children: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <section className="rounded-2xl border border-border/60 bg-card p-4">
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -574,7 +575,7 @@ function SectionCard({
           href={viewAllHref}
           className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground transition-colors"
         >
-          View all <ChevronRight className="w-3 h-3" />
+          {t("common.viewAll")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
         </Link>
       </div>
       {empty ? (

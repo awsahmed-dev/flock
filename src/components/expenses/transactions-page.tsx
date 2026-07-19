@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useT } from "@/components/i18n/locale-provider";
 import { Receipt, CaretRight as ChevronRight, ArrowsLeftRight as ArrowRightLeft, MagnifyingGlass as Search, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -12,14 +13,14 @@ import { PageHeader } from "@/components/ui/page-header";
 
 const CATEGORY_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; bg: string; text: string; dot: string }
+  { labelKey: string; icon: React.ElementType; bg: string; text: string; dot: string }
 > = {
-  accommodation: { label: "Stay", icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
-  transport:     { label: "Transport", icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },
-  food:          { label: "Food", icon: Utensils, bg: "bg-green-100 dark:bg-green-950/40", text: "text-green-700 dark:text-green-300", dot: "bg-green-500" },
-  activity:      { label: "Activity", icon: Ticket, bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
-  shopping:      { label: "Shopping", icon: ShoppingBag, bg: "bg-pink-100 dark:bg-pink-950/40", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
-  other:         { label: "Other", icon: MoreHorizontal, bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-slate-400" },
+  accommodation: { labelKey: "expenses.catStay", icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
+  transport:     { labelKey: "expenses.catTransport", icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },
+  food:          { labelKey: "expenses.catFood", icon: Utensils, bg: "bg-green-100 dark:bg-green-950/40", text: "text-green-700 dark:text-green-300", dot: "bg-green-500" },
+  activity:      { labelKey: "expenses.catActivity", icon: Ticket, bg: "bg-purple-100 dark:bg-purple-950/40", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
+  shopping:      { labelKey: "expenses.catShopping", icon: ShoppingBag, bg: "bg-pink-100 dark:bg-pink-950/40", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
+  other:         { labelKey: "expenses.catOther", icon: MoreHorizontal, bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-slate-400" },
 };
 
 interface Split {
@@ -81,6 +82,7 @@ export function TransactionsPage({
   destination = "",
   endDate,
 }: Props) {
+  const t = useT();
   const isOwner = members.some((m) => m.userId === userId);
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -175,7 +177,7 @@ export function TransactionsPage({
     <div className="space-y-4">
       <PageHeader
         backHref={`/trips/${tripId}/money`}
-        title="Activity"
+        title={t("expenses.activity")}
         subtitle={
           dailyTarget
             ? `${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""} · Target ${currency} ${fmt(dailyTarget)}/day`
@@ -191,7 +193,7 @@ export function TransactionsPage({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search transactions"
+            placeholder={t("expenses.searchTransactions")}
             className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground"
           />
         </div>
@@ -284,7 +286,7 @@ export function TransactionsPage({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs font-bold inline-flex items-center gap-1.5">
-                        {today ? "Today" : format(d.date, "EEE, MMM d")}
+                        {today ? t("nav.today") : format(d.date, "EEE, MMM d")}
                         {today && (
                           <span className="text-[9px] font-bold tracking-widest uppercase text-primary">
                             live
@@ -329,7 +331,7 @@ export function TransactionsPage({
                   </ul>
                 ) : (
                   <p className="border-t border-border/40 px-4 py-2 text-[10px] text-muted-foreground italic">
-                    {isFutureDay ? "Upcoming day" : "No spend logged"}
+                    {isFutureDay ? t("expenses.upcomingDay") : t("expenses.noSpendLogged")}
                   </p>
                 )}
               </section>

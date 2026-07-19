@@ -168,8 +168,8 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
     <div className="space-y-5">
       <PageHeader
         backHref={`/trips/${tripId}/expenses`}
-        title="Balances"
-        subtitle={data.nets.length <= 1 ? "Solo trip — no balances to settle" : "Who owes who · settle up"}
+        title={t("expenses.balancesTitle")}
+        subtitle={data.nets.length <= 1 ? t("expenses.balancesSolo") : t("expenses.whoOwesWho")}
       />
 
       {/* View switch — hidden when nothing to settle (solo trip). Canonical
@@ -192,16 +192,15 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
           explains why and links to invite. */}
       {members.length <= 1 ? (
         <div className="rounded-2xl border-2 border-dashed border-border/60 p-10 text-center space-y-3">
-          <p className="text-sm font-bold">No one to settle with yet</p>
+          <p className="text-sm font-bold">{t("states.noOneToSettleWith")}</p>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-            Balances kick in once another traveller joins the trip — invite your
-            crew to start tracking who owes who.
+            {t("expenses.inviteBody")}
           </p>
           <a
             href={`/trips/${tripId}/members`}
             className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-primary-foreground px-3.5 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
           >
-            Invite the crew
+            {t("expenses.inviteCrew")}
             <ArrowRight className="w-3 h-3 rtl:rotate-180" />
           </a>
         </div>
@@ -221,7 +220,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                     size="lg"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{isMe ? "You" : b.displayName}</p>
+                    <p className="text-sm font-bold truncate"><bdi>{isMe ? t("expenses.you") : b.displayName}</bdi></p>
                     {/* B22: Each row is a full sentence so the relationship
                         is unambiguous when scanning. Wraps the amount and
                         currency directly into the verb phrase. */}
@@ -235,10 +234,10 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                       }`}
                     >
                       {b.net > 0.005
-                        ? `${isMe ? "You're" : "They're"} owed ${currency} ${fmt(b.net)}`
+                        ? t(isMe ? "expenses.youOwedGroup" : "expenses.theyOwedGroup", { amount: `${currency} ${fmt(b.net)}` })
                         : b.net < -0.005
-                          ? `${isMe ? "You owe" : "Owes"} the group ${currency} ${fmt(-b.net)}`
-                          : `${isMe ? "You're" : "They're"} settled up`}
+                          ? t(isMe ? "expenses.youOweGroup" : "expenses.owesGroup", { amount: `${currency} ${fmt(-b.net)}` })
+                          : isMe ? t("common.youreSettled") : t("expenses.theySettled")}
                     </p>
                   </div>
                   <div className="text-right">

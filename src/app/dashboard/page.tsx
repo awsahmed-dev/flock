@@ -220,13 +220,13 @@ export default async function DashboardPage() {
                   <Link href={`/trips/${pastTrips[0].id}`} prefetch aria-label={pastTrips[0].name} className="absolute inset-0 z-10" />
                   <div className="absolute inset-x-0 bottom-0 p-4 z-20 pointer-events-none">
                     <h2 className="text-[22px] font-bold text-white leading-tight">
-                      {pastTrips[0].name} — wrapped 🎬
+                      {t("dashboard.wrappedBanner", { name: pastTrips[0].name })}
                     </h2>
                     <p className="text-[13px] text-white/70 mt-0.5">
                       {(itinByTrip.get(pastTrips[0].id)?.total ?? 0) > 0
-                        ? `${itinByTrip.get(pastTrips[0].id)?.total} stops — `
+                        ? t("dashboard.stopsDash", { count: itinByTrip.get(pastTrips[0].id)?.total ?? 0 })
                         : ""}
-                      See your Wrap →
+                      {t("dashboard.seeWrap")} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
                     </p>
                   </div>
                 </div>

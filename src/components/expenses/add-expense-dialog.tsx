@@ -17,13 +17,13 @@ import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBa
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/components/i18n/locale-provider";
 
-const CATEGORIES: { value: ExpenseCategory; label: string; icon: React.ElementType; color: string }[] = [
-  { value: "accommodation", label: "Stay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
-  { value: "transport", label: "Transport", icon: Plane, color: "text-orange-600 dark:text-orange-400" },
-  { value: "food", label: "Food", icon: Utensils, color: "text-green-600 dark:text-green-400" },
-  { value: "activity", label: "Activity", icon: Ticket, color: "text-purple-600 dark:text-purple-400" },
-  { value: "shopping", label: "Shopping", icon: ShoppingBag, color: "text-pink-600 dark:text-pink-400" },
-  { value: "other", label: "Other", icon: MoreHorizontal, color: "text-muted-foreground" },
+const CATEGORIES: { value: ExpenseCategory; labelKey: string; icon: React.ElementType; color: string }[] = [
+  { value: "accommodation", labelKey: "expenses.catStay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
+  { value: "transport", labelKey: "expenses.catTransport", icon: Plane, color: "text-orange-600 dark:text-orange-400" },
+  { value: "food", labelKey: "expenses.catFood", icon: Utensils, color: "text-green-600 dark:text-green-400" },
+  { value: "activity", labelKey: "expenses.catActivity", icon: Ticket, color: "text-purple-600 dark:text-purple-400" },
+  { value: "shopping", labelKey: "expenses.catShopping", icon: ShoppingBag, color: "text-pink-600 dark:text-pink-400" },
+  { value: "other", labelKey: "expenses.catOther", icon: MoreHorizontal, color: "text-muted-foreground" },
 ];
 
 function categoryMeta(value: ExpenseCategory) {
@@ -150,11 +150,11 @@ export function AddExpenseDialog({
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Receipts must be images (jpg, png, heic)");
+      toast.error(t("form.receiptsMustBeImages"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Receipt is too big — keep it under 10 MB");
+      toast.error(t("form.receiptTooBig"));
       return;
     }
     setReceiptUploading(true);
@@ -171,7 +171,7 @@ export function AddExpenseDialog({
       const { data } = supabase.storage.from("trip-documents").getPublicUrl(path);
       setReceiptUrl(data.publicUrl);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(err instanceof Error ? err.message : t("common.failed"));
     } finally {
       setReceiptUploading(false);
     }
@@ -242,7 +242,7 @@ export function AddExpenseDialog({
         setAmountInput("");
         setDescription("");
       } catch (err) {
-        toast.error((err as Error).message || "Failed to log expense");
+        toast.error((err as Error).message || t("settings.failedToPostExpense"));
       }
     });
   }
@@ -618,6 +618,7 @@ function BudgetProjection({
   personalBudget: number | null;
   personalSpent: number;
 }) {
+  const t = useT();
   const parsed = parseFloat(normalizeDigits(amountInput));
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   // B12-followup: when the expense is in a non-base currency, FX-convert
@@ -663,8 +664,8 @@ function BudgetProjection({
         <ProjectionLine
           label={
             scope === "personal"
-              ? "After this · your budget"
-              : "After your share · your budget"
+              ? t("expenses.projAfterPersonal")
+              : t("expenses.projAfterShare")
           }
           projected={personalProjected}
           cap={personalBudget!}
@@ -674,7 +675,7 @@ function BudgetProjection({
       )}
       {showTrip && (
         <ProjectionLine
-          label="After this · trip budget"
+          label={t("expenses.projAfterTrip")}
           projected={tripProjected}
           cap={tripBudget!}
           currency={baseCurrency}
@@ -776,6 +777,7 @@ function CategoryPicker({
   inferred: ExpenseCategory;
   onChange: (v: ExpenseCategory) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   // QA BUG-16: surfaced instead of the silent native re-focus.
   const [dateError, setDateError] = useState(false);
@@ -788,7 +790,7 @@ function CategoryPicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        title={isInferred ? `Auto: ${meta.label}` : meta.label}
+        title={isInferred ? t("expenses.autoPrefix", { label: t(meta.labelKey) }) : t(meta.labelKey)}
         className="relative w-9 h-9 rounded-xl bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
       >
         <Icon className={`w-4 h-4 ${meta.color}`} />
@@ -816,7 +818,7 @@ function CategoryPicker({
                 }`}
               >
                 <CIcon className={`w-3.5 h-3.5 ${c.color}`} />
-                {c.label}
+                {t(c.labelKey)}
               </button>
             );
           })}

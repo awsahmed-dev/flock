@@ -239,7 +239,10 @@
     "daysShort": "{count}d",
     "dayOf": "Day {current} of {total}",
     "crewCount": "{count} crew",
-    "stopsToday": "{count, plural, =0 {No stops today} one {# stop today} other {# stops today}}"
+    "stopsToday": "{count, plural, =0 {No stops today} one {# stop today} other {# stops today}}",
+    "wrappedBanner": "{name} — wrapped 🎬",
+    "stopsDash": "{count, plural, one {1 stop} other {# stops}} — ",
+    "seeWrap": "See your Wrap"
   },
   "actionHub": {
     "chatLabel": "Chat",
@@ -457,7 +460,28 @@
     "camLogFailed": "Couldn't log that",
     "camCategory": "Category",
     "camDescription": "Description",
-    "camDescPlaceholder": "Dinner at Jalan Alor"
+    "camDescPlaceholder": "Dinner at Jalan Alor",
+    "amount": "Amount",
+    "personal": "Personal",
+    "shared": "Shared",
+    "someone": "Someone",
+    "liveRate": "(live rate)",
+    "balancesTitle": "Balances",
+    "balancesSolo": "Solo trip — no balances to settle",
+    "youOwedGroup": "You're owed {amount}",
+    "theyOwedGroup": "They're owed {amount}",
+    "youOweGroup": "You owe the group {amount}",
+    "owesGroup": "Owes the group {amount}",
+    "theySettled": "They're settled up",
+    "inviteBody": "Balances kick in once another traveller joins the trip — invite your crew to start tracking who owes who.",
+    "inviteCrew": "Invite the crew",
+    "searchTransactions": "Search transactions",
+    "upcomingDay": "Upcoming day",
+    "noSpendLogged": "No spend logged",
+    "autoPrefix": "Auto: {label}",
+    "projAfterPersonal": "After this · your budget",
+    "projAfterShare": "After your share · your budget",
+    "projAfterTrip": "After this · trip budget"
   },
   "itinerary": {
     "add": "Add",

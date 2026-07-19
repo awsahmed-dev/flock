@@ -49,7 +49,13 @@ export function CrewPulse({
         </p>
       </div>
       <Link href={`/trips/${tripId}/huddle`} className="block mt-2 text-sm text-muted-foreground truncate">
-        {ticker ? `${ticker.text} →` : t("cockpit.tickerEmpty")}
+        {ticker ? (
+          <>
+            <bdi>{ticker.text}</bdi> <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
+          </>
+        ) : (
+          t("cockpit.tickerEmpty")
+        )}
       </Link>
     </section>
   );

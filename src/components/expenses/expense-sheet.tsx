@@ -79,7 +79,7 @@ export function ExpenseSheet({
   if (!expense) return <BottomSheet open={open} onClose={onClose}>{null}</BottomSheet>;
 
   const isPayer = expense.paidBy === userId;
-  const payerName = isPayer ? "You" : (expense.payer?.displayName ?? "Someone");
+  const payerName = isPayer ? t("expenses.you") : (expense.payer?.displayName ?? t("expenses.someone"));
   const canDelete = isPayer || isOwner;
 
   function handleSettle(splitId: string) {
@@ -101,10 +101,10 @@ export function ExpenseSheet({
     startTransition(async () => {
       try {
         await deleteExpense(fd);
-        toast.success("Expense deleted");
+        toast.success(t("settings.expenseDeleted"));
         onClose();
       } catch {
-        toast.error("Failed to delete");
+        toast.error(t("settings.failedToDelete"));
       }
     });
   }
@@ -115,7 +115,7 @@ export function ExpenseSheet({
       onClose={onClose}
       title={expense.title}
       subtitle={`${format(new Date(expense.expenseDate), "EEE, MMM d")} · ${
-        expense.scope === "personal" ? "Personal" : "Shared"
+        expense.scope === "personal" ? t("expenses.personal") : t("expenses.shared")
       }`}
       footer={
         canDelete ? (
@@ -134,7 +134,7 @@ export function ExpenseSheet({
       {/* Amount card */}
       <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/5 to-background p-4 mb-4">
         <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1">
-          Amount
+          {t("expenses.amount")}
         </p>
         <p className="text-2xl font-bold tabular-nums tracking-tight">
           {expense.currency} {fmt(expense.amount)}
@@ -142,7 +142,7 @@ export function ExpenseSheet({
         {baseAmount !== null && expense.currency !== baseCurrency && (
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <ArrowRightLeft className="w-3 h-3" />
-            ≈ {baseCurrency} {fmt(baseAmount)} <span className="opacity-60">(live rate)</span>
+            ≈ <bdi>{baseCurrency} {fmt(baseAmount)}</bdi> <span className="opacity-60">{t("expenses.liveRate")}</span>
           </p>
         )}
 
@@ -151,7 +151,7 @@ export function ExpenseSheet({
             {payerName.slice(0, 2).toUpperCase()}
           </div>
           <span className="text-xs text-muted-foreground">
-            Paid by <span className="font-semibold text-foreground">{payerName}</span>
+            {t("expenses.paidBy")} <span className="font-semibold text-foreground"><bdi>{payerName}</bdi></span>
           </span>
         </div>
       </div>
@@ -177,10 +177,10 @@ export function ExpenseSheet({
                   }`}
                 >
                   <div className={`w-7 h-7 rounded-full ${avatarColor(split.userId)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                    {(isMe ? "You" : split.user?.displayName ?? "?").slice(0, 2).toUpperCase()}
+                    {(isMe ? t("expenses.you") : split.user?.displayName ?? "?").slice(0, 2).toUpperCase()}
                   </div>
                   <span className={`text-sm flex-1 truncate ${split.settled ? "text-muted-foreground line-through" : "font-medium"}`}>
-                    {isMe ? "You" : split.user?.displayName ?? "?"}
+                    {isMe ? t("expenses.you") : split.user?.displayName ?? "?"}
                   </span>
                   <span className={`text-sm tabular-nums ${split.settled ? "text-muted-foreground" : "font-semibold"}`}>
                     {expense.currency} {fmt(split.amountOwed)}
@@ -233,7 +233,7 @@ export function ExpenseSheet({
       {expense.receiptUrl && (
         <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground px-3 pt-2">
-            Receipt
+            {t("expenses.receipt")}
           </p>
           <a
             href={expense.receiptUrl}
