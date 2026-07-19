@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Plus, UploadSimple as Upload, Link as LinkIcon, FileArrowUp as FileUp } from "@phosphor-icons/react/dist/ssr";
 import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/document-kind";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Props {
   tripId: string;
@@ -36,6 +37,7 @@ const ACCEPT =
  *   booking-confirmation URL. No upload, just metadata.
  */
 export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Props) {
+  const t = useT();
   const [selfOpen, setSelfOpen] = useState(false);
   const controlled = controlledOpen !== undefined;
   const open = controlled ? controlledOpen : selfOpen;
@@ -63,7 +65,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
   function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
     if (f && f.size > MAX_BYTES) {
-      toast.error(`File is too big — keep it under 20 MB`);
+      toast.error(t("docs.tooBig"));
       e.target.value = "";
       setFile(null);
       return;
@@ -74,7 +76,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
   async function handleUploadSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!file) {
-      toast.error("Pick a file first");
+      toast.error(t("docs.pickFirst"));
       return;
     }
     const fd = new FormData(e.currentTarget);
@@ -83,7 +85,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
 
     startTransition(async () => {
       try {
-        setUploadProgress("Uploading…");
+        setUploadProgress(t("docs.uploading"));
         const supabase = createClient();
         const {
           data: { user },
@@ -113,7 +115,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
 
         const isImage = file.type.startsWith("image/");
 
-        setUploadProgress("Saving…");
+        setUploadProgress(t("docs.saving"));
         const docFd = new FormData();
         docFd.set("tripId", tripId);
         docFd.set("title", title);
@@ -123,11 +125,11 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
         if (dayDate) docFd.set("dayDate", dayDate);
         await createDocument(docFd);
 
-        toast.success(isImage ? "Photo uploaded" : "File uploaded");
+        toast.success(isImage ? t("docs.photoUploaded") : t("docs.fileUploaded"));
         resetState();
         setOpen(false);
       } catch (err: any) {
-        toast.error(err?.message || "Upload failed");
+        toast.error(err?.message || t("docs.uploadFailed"));
       } finally {
         setUploadProgress(null);
       }
@@ -140,11 +142,11 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
     startTransition(async () => {
       try {
         await createDocument(formData);
-        toast.success("Link saved");
+        toast.success(t("docs.linkSaved"));
         setOpen(false);
         (e.target as HTMLFormElement).reset();
       } catch (err) {
-        toast.error((err as Error).message || "Failed to save link");
+        toast.error((err as Error).message || t("docs.saveFailed"));
       }
     });
   }
@@ -154,13 +156,13 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
       {!controlled && (
         <Button size="sm" onClick={() => setOpen(true)}>
           <Plus className="w-4 h-4 me-1" />
-          Add document
+          {t("nav.addDocument")}
         </Button>
       )}
       <BottomSheet
         open={open}
         onClose={() => { setOpen(false); resetState(); }}
-        title="Add a document"
+        title={t("docs.addTitle")}
         size="md"
       >
         {/* Upload / Link toggle */}
@@ -175,7 +177,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             }`}
           >
             <Upload className="w-3.5 h-3.5" />
-            Upload file
+            {t("docs.uploadFile")}
           </button>
           <button
             type="button"
@@ -187,14 +189,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             }`}
           >
             <LinkIcon className="w-3.5 h-3.5" />
-            Paste link
+            {t("docs.pasteLink")}
           </button>
         </div>
 
         {mode === "upload" ? (
           <form onSubmit={handleUploadSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="doc-file">PDF or image (under 20 MB)</Label>
+              <Label htmlFor="doc-file">{t("docs.fileLabel")}</Label>
               <label
                 htmlFor="doc-file"
                 className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 cursor-pointer hover:bg-muted/60 transition-colors text-center"
@@ -209,9 +211,9 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                   </p>
                 ) : (
                   <>
-                    <p className="text-sm font-medium">Click to choose a file</p>
+                    <p className="text-sm font-medium">{t("docs.clickToChoose")}</p>
                     <p className="text-xs text-muted-foreground">
-                      PDF, PNG, JPG, WEBP, or GIF
+                      {t("docs.fileTypes")}
                     </p>
                   </>
                 )}
@@ -227,27 +229,27 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-title-up">Title (optional)</Label>
+              <Label htmlFor="doc-title-up">{t("docs.titleOptional")}</Label>
               <Input
                 id="doc-title-up"
                 name="title"
-                placeholder={file?.name ?? "Booking confirmation"}
+                placeholder={file?.name ?? t("docs.titlePh")}
               />
             </div>
 
             {/* B6: optional description shows under the title in the list. */}
             <div className="space-y-1.5">
-              <Label htmlFor="doc-desc-up">Description (optional)</Label>
+              <Label htmlFor="doc-desc-up">{t("docs.descOptional")}</Label>
               <Input
                 id="doc-desc-up"
                 name="description"
-                placeholder="e.g. for Aws + Mubarak · check-in 3pm"
+                placeholder={t("docs.descPh")}
               />
             </div>
 
             {/* Sprint 5 §3a: kind picker — scan your documents by icon. */}
             <div className="space-y-1.5">
-              <Label>What is it?</Label>
+              <Label>{t("docs.whatIsIt")}</Label>
               <div className="flex flex-wrap gap-1.5">
                 {DOCUMENT_KINDS.map((k) => (
                   <button
@@ -262,14 +264,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                     }`}
                   >
                     <span aria-hidden>{k.icon}</span>
-                    {k.value.charAt(0).toUpperCase() + k.value.slice(1)}
+                    {t(k.labelKey)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-day-up">Pin to day (optional)</Label>
+              <Label htmlFor="doc-day-up">{t("docs.pinToDay")}</Label>
               <Input id="doc-day-up" name="dayDate" type="date" />
             </div>
 
@@ -280,14 +282,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                 className="flex-1"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
                 className="flex-1"
                 disabled={isPending || !file}
               >
-                {uploadProgress ?? (isPending ? "Working…" : "Upload")}
+                {uploadProgress ?? (isPending ? t("docs.working") : t("docs.upload"))}
               </Button>
             </div>
           </form>
@@ -296,17 +298,17 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             <input type="hidden" name="tripId" value={tripId} />
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-title">Title</Label>
+              <Label htmlFor="doc-title">{t("docs.titleLabel")}</Label>
               <Input
                 id="doc-title"
                 name="title"
-                placeholder="Visa requirements doc"
+                placeholder={t("docs.linkTitlePh")}
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-url">URL</Label>
+              <Label htmlFor="doc-url">{t("docs.urlLabel")}</Label>
               <Input
                 id="doc-url"
                 name="url"
@@ -317,17 +319,17 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-desc">Description (optional)</Label>
+              <Label htmlFor="doc-desc">{t("docs.descOptional")}</Label>
               <Input
                 id="doc-desc"
                 name="description"
-                placeholder="e.g. official visa rules · valid 90 days"
+                placeholder={t("docs.linkDescPh")}
               />
             </div>
 
             {/* Sprint 5 §3a: kind picker (link mode) — scan your documents by icon. */}
             <div className="space-y-1.5">
-              <Label>What is it?</Label>
+              <Label>{t("docs.whatIsIt")}</Label>
               <div className="flex flex-wrap gap-1.5">
                 {DOCUMENT_KINDS.map((k) => (
                   <button
@@ -342,14 +344,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                     }`}
                   >
                     <span aria-hidden>{k.icon}</span>
-                    {k.value.charAt(0).toUpperCase() + k.value.slice(1)}
+                    {t(k.labelKey)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-day">Pin to day (optional)</Label>
+              <Label htmlFor="doc-day">{t("docs.pinToDay")}</Label>
               <Input id="doc-day" name="dayDate" type="date" />
             </div>
             <input type="hidden" name="type" value={kind} />
@@ -361,10 +363,10 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                 className="flex-1"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" className="flex-1" disabled={isPending}>
-                {isPending ? "Saving…" : "Save link"}
+                {isPending ? t("docs.saving") : t("docs.saveLink")}
               </Button>
             </div>
           </form>

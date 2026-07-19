@@ -173,6 +173,16 @@ export function TransactionsPage({
     (d) => (txByDay.get(d.dateKey) ?? []).length > 0,
   );
 
+  // Expenses dated OUTSIDE the trip span (logged before departure, or the
+  // trip dates changed after logging) get their own buckets — otherwise
+  // they exist on the Money overview but vanish from this page entirely.
+  const outOfRangeDays = useMemo(() => {
+    const tripKeys = new Set(derived.dailyBreakdown.map((d) => d.dateKey));
+    return Array.from(txByDay.keys())
+      .filter((k) => !tripKeys.has(k))
+      .sort((a, b) => (a < b ? 1 : -1));
+  }, [txByDay, derived.dailyBreakdown]);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -181,7 +191,7 @@ export function TransactionsPage({
         subtitle={
           dailyTarget
             ? t("expenses.txSubtitle", { count: expenseList.length, target: `${currency} ${fmt(dailyTarget)}` })
-            : `${expenseList.length} transaction${expenseList.length !== 1 ? "s" : ""}`
+            : t("expenses.txCount", { count: expenseList.length })
         }
       />
 
@@ -217,24 +227,51 @@ export function TransactionsPage({
           bar lives as the section header for that day's transactions.
           Days with no transactions still render (when not searching) so
           the user sees the trip's pace at a glance. */}
-      {daysToRender.length === 0 ? (
+      {daysToRender.length === 0 && outOfRangeDays.length === 0 ? (
         isSearching ? (
           <p className="text-xs text-muted-foreground text-center py-10">
-            No matches for "{query}".
+            {t("expenses.noMatches", { query })}
           </p>
         ) : (
           <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">
             <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
               <Receipt className="w-6 h-6 text-muted-foreground/50" />
             </div>
-            <p className="text-sm font-semibold mb-1">No expenses logged yet</p>
+            <p className="text-sm font-semibold mb-1">{t("expenses.noExpensesYet")}</p>
             <p className="text-xs text-muted-foreground">
-              Log your first expense to see it here.
+              {t("expenses.logFirstExpense")}
             </p>
           </div>
         )
       ) : (
         <div className="space-y-2.5">
+          {outOfRangeDays.map((key) => (
+            <section
+              key={key}
+              className="rounded-2xl border border-border/60 bg-card overflow-hidden"
+            >
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                <p className="text-xs font-bold">
+                  {format(parseISO(key), "EEE, MMM d")}
+                </p>
+                <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground">
+                  {t("expenses.outsideTripDays")}
+                </span>
+              </div>
+              <ul className="divide-y divide-border/60 border-t border-border/40 px-2">
+                {(txByDay.get(key) ?? []).map((exp) => (
+                  <SlimRow
+                    key={exp.id}
+                    expense={exp}
+                    userId={userId}
+                    baseCurrency={currency}
+                    baseAmount={baseAmountFor(exp)}
+                    onClick={() => setOpenId(exp.id)}
+                  />
+                ))}
+              </ul>
+            </section>
+          ))}
           {daysToRender.map((d) => {
             const dayTxs = txByDay.get(d.dateKey) ?? [];
             const pct =

@@ -38,7 +38,8 @@
     "manage": "Manage",
     "clear": "Clear",
     "remove": "Remove",
-    "undo": "Undo"
+    "undo": "Undo",
+    "all": "All"
   },
   "form": {
     "pickFileFirst": "Pick a file first",
@@ -485,7 +486,12 @@
     "youOweShort": "· you owe {amount}",
     "txSubtitle": "{count, plural, one {1 transaction} other {# transactions}} · Target {target}/day",
     "dayBadge": "Day",
-    "liveBadge": "live"
+    "liveBadge": "live",
+    "txCount": "{count, plural, one {1 transaction} other {# transactions}}",
+    "noExpensesYet": "No expenses logged yet",
+    "logFirstExpense": "Log your first expense to see it here.",
+    "noMatches": "No matches for “{query}”.",
+    "outsideTripDays": "Outside trip dates"
   },
   "itinerary": {
     "add": "Add",
@@ -1168,7 +1174,41 @@
     "loadFailed": "Couldn't load this document.",
     "boardingPass": "Boarding-pass mode",
     "exitBoardingPass": "Tap to exit",
-    "pdfRenderFailed": "Couldn't render this PDF."
+    "pdfRenderFailed": "Couldn't render this PDF.",
+    "addTitle": "Add a document",
+    "uploadFile": "Upload file",
+    "pasteLink": "Paste link",
+    "fileLabel": "PDF or image (under 20 MB)",
+    "clickToChoose": "Click to choose a file",
+    "fileTypes": "PDF, PNG, JPG, WEBP, or GIF",
+    "titleOptional": "Title (optional)",
+    "titleLabel": "Title",
+    "titlePh": "Booking confirmation",
+    "linkTitlePh": "Visa requirements doc",
+    "urlLabel": "URL",
+    "descOptional": "Description (optional)",
+    "descPh": "e.g. for Aws + Mubarak · check-in 3pm",
+    "linkDescPh": "e.g. official visa rules · valid 90 days",
+    "whatIsIt": "What is it?",
+    "pinToDay": "Pin to day (optional)",
+    "upload": "Upload",
+    "working": "Working…",
+    "saving": "Saving…",
+    "uploading": "Uploading…",
+    "saveLink": "Save link",
+    "tooBig": "File is too big — keep it under 20 MB",
+    "pickFirst": "Pick a file first",
+    "photoUploaded": "Photo uploaded",
+    "fileUploaded": "File uploaded",
+    "uploadFailed": "Upload failed",
+    "linkSaved": "Link saved",
+    "saveFailed": "Failed to save link",
+    "pageTitle": "Documents",
+    "pageSubtitle": "Photos, links, bookings, and reference docs",
+    "tabPhotos": "Photos",
+    "tabFiles": "Files",
+    "removed": "Removed",
+    "removeFailed": "Failed to remove"
   },
   "cockpit": {
     "votesWaiting": "{count, plural, one {1 place is waiting for your vote} other {# places are waiting for your vote}}",
@@ -1256,7 +1296,13 @@
     "tickerPoll": "{actor} closed a poll",
     "tickerMove": "{actor} made a move",
     "tickerAPlace": "a place",
-    "tickerAStop": "a stop"
+    "tickerAStop": "a stop",
+    "shareWrap": "Share the Wrap",
+    "startNext": "Start the next one",
+    "markSettled": "Mark settled",
+    "settledToastAmt": "{amount} marked settled 🤝",
+    "settleFailed": "Couldn't mark that settled",
+    "wrapShareTitle": "{name}, wrapped"
   },
   "huddle": {
     "tabDecisions": "Decisions",
@@ -1292,7 +1338,15 @@
     "vMove": "made a move",
     "aPlace": "a place",
     "aStop": "a stop",
-    "aSuggestion": "a suggestion"
+    "aSuggestion": "a suggestion",
+    "askCrew": "Ask the crew",
+    "pollQuestionPh": "Beach day or city day?",
+    "optionN": "Option {n}",
+    "addOption": "+ Add option",
+    "postToCrew": "Post to the crew",
+    "optionsMustDiffer": "Options must be different from each other.",
+    "pollPosted": "Poll posted to the crew",
+    "pollFailed": "Couldn't create the poll"
   },
   "addItem": {
     "typeActivity": "Activity",

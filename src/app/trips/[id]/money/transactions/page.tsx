@@ -14,18 +14,20 @@ export default async function MoneyTransactionsRoute({ params }: Props) {
   const { user, trip, expenseList, fxRates, members, personalBudget } = await loadMoneyPageData(id);
 
   return (
-    <TransactionsPage
-      tripId={id}
-      userId={user.id}
-      currency={trip.currency}
-      destination={trip.destination}
-      tripBudget={effectiveTripBudget(trip.budgetTotal, (trip as { budgetType?: string }).budgetType, members.length)}
-      personalBudget={personalBudget}
-      expenses={expenseList as any}
-      members={members}
-      fxRates={fxRates}
-      startDate={trip.startDate}
-      endDate={trip.endDate}
-    />
+    <div className="px-4 pt-4 max-w-3xl mx-auto">
+        <TransactionsPage
+        tripId={id}
+        userId={user.id}
+        currency={trip.currency}
+        destination={trip.destination}
+        tripBudget={effectiveTripBudget(trip.budgetTotal, (trip as { budgetType?: string }).budgetType, members.length)}
+        personalBudget={personalBudget}
+        expenses={expenseList as any}
+        members={members}
+        fxRates={fxRates}
+        startDate={trip.startDate}
+        endDate={trip.endDate}
+      />
+    </div>
   );
 }

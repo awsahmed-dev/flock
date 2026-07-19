@@ -25,15 +25,17 @@ export default async function SettingsPage({ params }: Props) {
   if (!isOwner) redirect(`/trips/${id}`);
 
   return (
-    <TripSettingsForm
-      tripId={id}
-      name={trip.name}
-      destination={trip.destination}
-      startDate={trip.startDate}
-      endDate={trip.endDate}
-      budgetTotal={trip.budgetTotal ?? null}
-      currency={trip.currency}
-      shareToken={trip.shareToken ?? null}
-    />
+    <div className="px-4 pt-4 max-w-5xl mx-auto">
+        <TripSettingsForm
+        tripId={id}
+        name={trip.name}
+        destination={trip.destination}
+        startDate={trip.startDate}
+        endDate={trip.endDate}
+        budgetTotal={trip.budgetTotal ?? null}
+        currency={trip.currency}
+        shareToken={trip.shareToken ?? null}
+      />
+    </div>
   );
 }

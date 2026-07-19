@@ -12,13 +12,15 @@ export default async function MoneyBalancesRoute({ params }: Props) {
   const { user, trip, expenseList, fxRates, members } = await loadMoneyPageData(id);
 
   return (
-    <BalancesPage
-      tripId={id}
-      userId={user.id}
-      currency={trip.currency}
-      expenses={expenseList as any}
-      members={members}
-      fxRates={fxRates}
-    />
+    <div className="px-4 pt-4 max-w-3xl mx-auto">
+        <BalancesPage
+        tripId={id}
+        userId={user.id}
+        currency={trip.currency}
+        expenses={expenseList as any}
+        members={members}
+        fxRates={fxRates}
+      />
+    </div>
   );
 }

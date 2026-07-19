@@ -29,13 +29,15 @@ export default async function MembersPage({ params }: Props) {
     : null;
 
   return (
-    <MembersBoard
-      tripId={id}
-      tripName={trip.name}
-      userId={user.id}
-      isOwner={isOwner}
-      members={trip.members}
-      inviteUrl={inviteUrl}
-    />
+    <div className="px-4 pt-4 max-w-3xl mx-auto">
+        <MembersBoard
+        tripId={id}
+        tripName={trip.name}
+        userId={user.id}
+        isOwner={isOwner}
+        members={trip.members}
+        inviteUrl={inviteUrl}
+      />
+    </div>
   );
 }

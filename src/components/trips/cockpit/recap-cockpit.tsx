@@ -258,6 +258,7 @@ function SettlePanel({
   currency: string;
   currentUserId: string;
 }) {
+  const t = useT();
   const [settled, setSettled] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
   const nameOf = (id: string) => crew.find((m) => m.userId === id)?.displayName.split(" ")[0] ?? "Someone";
@@ -265,19 +266,20 @@ function SettlePanel({
 
   return (
     <section className="rounded-3xl bg-card border border-border p-4">
-      <p className="text-[15px] font-bold mb-2">One last thing</p>
+      <p className="text-[15px] font-bold mb-2">{t("cockpit.oneLastThing")}</p>
       {open.length === 0 ? (
-        <p className="text-[15px] text-muted-foreground">All square 🤝 — nobody owes anybody.</p>
+        <p className="text-[15px] text-muted-foreground">{t("expenses.allSquare")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {open.map((p) => {
             const key = `${p.fromUserId}:${p.toUserId}`;
+            const amountStr = `${currency} ${p.amount.toLocaleString()}`;
             const line =
               p.toUserId === currentUserId
-                ? `${nameOf(p.fromUserId)} owes you ${currency} ${p.amount.toLocaleString()}`
+                ? t("expenses.owesYouLine", { name: nameOf(p.fromUserId), amount: amountStr })
                 : p.fromUserId === currentUserId
-                  ? `You owe ${nameOf(p.toUserId)} ${currency} ${p.amount.toLocaleString()}`
-                  : `${nameOf(p.fromUserId)} owes ${nameOf(p.toUserId)} ${currency} ${p.amount.toLocaleString()}`;
+                  ? t("expenses.youOweLine", { name: nameOf(p.toUserId), amount: amountStr })
+                  : t("expenses.owesLine", { from: nameOf(p.fromUserId), to: nameOf(p.toUserId), amount: amountStr });
             return (
               <div key={key} className="flex items-center gap-3 h-14">
                 <UserAvatar name={nameOf(p.fromUserId)} avatarUrl={crew.find((m) => m.userId === p.fromUserId)?.avatarUrl ?? null} seed={p.fromUserId} size="sm" />
@@ -288,20 +290,20 @@ function SettlePanel({
                     setSettled((prev) => new Set(prev).add(key));
                     startTransition(() => {
                       markSettled({ tripId, creditorId: p.toUserId, debtorId: p.fromUserId, amount: p.amount, currency })
-                        .then(() => toast.success(`${currency} ${p.amount.toLocaleString()} marked settled 🤝`))
+                        .then(() => toast.success(t("cockpit.settledToastAmt", { amount: amountStr })))
                         .catch(() => {
                           setSettled((prev) => {
                             const next = new Set(prev);
                             next.delete(key);
                             return next;
                           });
-                          toast.error("Couldn't mark that settled");
+                          toast.error(t("cockpit.settleFailed"));
                         });
                     });
                   }}
                   className="shrink-0 h-9 px-3 rounded-full border border-border text-[13px] font-bold text-foreground"
                 >
-                  Mark settled
+                  {t("cockpit.markSettled")}
                 </button>
               </div>
             );
@@ -321,6 +323,7 @@ function SharePanel({
   stats: { days: number; stops: number; spent: number; currency: string; crew: number };
   items: CockpitShared["items"];
 }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
 
   async function share() {
@@ -330,8 +333,8 @@ function SharePanel({
       const file = new File([blob], "paxawa-wrap.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
-          title: `${tripName}, wrapped`,
-          text: "Our trip, wrapped by Paxawa ✈️",
+          title: t("cockpit.wrapShareTitle", { name: tripName }),
+          text: t("cockpit.shareText"),
           files: [file],
         });
       } else {
@@ -341,10 +344,10 @@ function SharePanel({
         a.download = "paxawa-wrap.png";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Wrap image downloaded");
+        toast.success(t("cockpit.wrapDownloaded"));
       }
     } catch (e) {
-      if ((e as Error)?.name !== "AbortError") toast.error("Couldn't build the share card");
+      if ((e as Error)?.name !== "AbortError") toast.error(t("cockpit.shareCardFailed"));
     } finally {
       setBusy(false);
     }
@@ -366,13 +369,13 @@ function SharePanel({
         disabled={busy}
         className="w-full h-13 flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-60"
       >
-        <Share2 size={18} /> Share the Wrap
+        <Share2 size={18} /> {t("cockpit.shareWrap")}
       </button>
       <Link
         href="/dashboard"
         className="w-full flex items-center justify-center rounded-2xl border border-border text-foreground font-bold text-[15px] py-3.5"
       >
-        Start the next one
+        {t("cockpit.startNext")}
       </Link>
     </section>
   );

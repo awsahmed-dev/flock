@@ -142,7 +142,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
     // inputs comically long.
     <div className="space-y-6 lg:max-w-none lg:grid lg:grid-cols-[minmax(0,640px)_360px] lg:gap-6 lg:items-start lg:space-y-0 lg:justify-center">
       <div className="space-y-6 min-w-0">
-      <PageHeader title={t("trip.settingsTitle")} subtitle={t("trip.settingsSubtitle")} />
+      <PageHeader backHref={`/trips/${tripId}`} title={t("trip.settingsTitle")} subtitle={t("trip.settingsSubtitle")} />
 
       {/* Edit form */}
       <form onSubmit={handleUpdate} className="rounded-xl border bg-card p-6 space-y-4">

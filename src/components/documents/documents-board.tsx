@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { FolderOpen, LinkSimple as Link2, ArrowSquareOut as ExternalLink, Trash as Trash2, FileText, Image as ImageIcon, Files, X } from "@phosphor-icons/react/dist/ssr";
 import { format } from "@/lib/i18n/date-fns";
 import { PageHeader } from "@/components/ui/page-header";
+import { useT } from "@/components/i18n/locale-provider";
 
 interface Document {
   id: string;
@@ -43,6 +44,7 @@ function DocumentCard({
   userId: string;
   isOwner: boolean;
 }) {
+  const t = useT();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -52,9 +54,9 @@ function DocumentCard({
     startTransition(async () => {
       try {
         await deleteDocument(fd);
-        toast.success("Removed");
+        toast.success(t("docs.removed"));
       } catch {
-        toast.error("Failed to remove");
+        toast.error(t("docs.removeFailed"));
       }
     });
   }
@@ -212,6 +214,7 @@ function Lightbox({ photo, onClose }: { photo: Document; onClose: () => void }) 
 }
 
 export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embedded }: Props) {
+  const t = useT();
   const searchParams = useSearchParams();
   const initialView =
     searchParams?.get("type") === "image" ? "photos" : "all";
@@ -229,10 +232,10 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embed
     (a, b) => new Date(a.dayDate!).getTime() - new Date(b.dayDate!).getTime(),
   );
 
-  const tabs: Array<{ id: "all" | "photos" | "files"; label: string; count: number; icon: React.ComponentType<{ className?: string }> }> = [
-    { id: "all", label: "All", count: docs.length, icon: Files },
-    { id: "photos", label: "Photos", count: photos.length, icon: ImageIcon },
-    { id: "files", label: "Files", count: files.length, icon: FileText },
+  const tabs: Array<{ id: "all" | "photos" | "files"; labelKey: string; count: number; icon: React.ComponentType<{ className?: string }> }> = [
+    { id: "all", labelKey: "common.all", count: docs.length, icon: Files },
+    { id: "photos", labelKey: "docs.tabPhotos", count: photos.length, icon: ImageIcon },
+    { id: "files", labelKey: "docs.tabFiles", count: files.length, icon: FileText },
   ];
 
   const showPhotos = view === "all" || view === "photos";
@@ -250,22 +253,22 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embed
         </div>
       ) : (
         <PageHeader
-          title="Documents"
-          subtitle="Photos, links, bookings, and reference docs"
+          title={t("docs.pageTitle")}
+          subtitle={t("docs.pageSubtitle")}
           action={<AddDocumentDialog tripId={tripId} />}
         />
       )}
 
       {/* View tabs */}
       <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-muted/60 w-fit">
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          const active = view === t.id;
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = view === tab.id;
           return (
             <button
-              key={t.id}
+              key={tab.id}
               type="button"
-              onClick={() => setView(t.id)}
+              onClick={() => setView(tab.id)}
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                 active
                   ? "bg-card text-foreground shadow-sm ring-1 ring-border/60"
@@ -273,13 +276,13 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embed
               }`}
             >
               <Icon className="w-4 h-4" />
-              {t.label}
+              {t(tab.labelKey)}
               <span
                 className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
                   active ? "bg-primary/15 text-primary" : "bg-muted-foreground/15"
                 }`}
               >
-                {t.count}
+                {tab.count}
               </span>
             </button>
           );

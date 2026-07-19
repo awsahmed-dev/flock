@@ -658,6 +658,7 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
 /* ── Poll composer ──────────────────────────────────────────────────────── */
 
 function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean; onClose: () => void }) {
+  const t = useT();
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [pending, startTransition] = useTransition();
@@ -670,7 +671,7 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
     startTransition(() => {
       createPoll(tripId, question, options)
         .then(() => {
-          toast.success("Poll posted to the crew");
+          toast.success(t("huddle.pollPosted"));
           // QA BUG-10: flushSync commits the close + reset BEFORE the
           // revalidatePath Suspense refresh repaints (B13a pattern).
           flushSync(() => {
@@ -679,19 +680,19 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
             onClose();
           });
         })
-        .catch((e) => toast.error(e?.message ?? "Couldn't create the poll"));
+        .catch((e) => toast.error(e?.message ?? t("huddle.pollFailed")));
     });
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Ask the crew" size="sm">
+    <BottomSheet open={open} onClose={onClose} title={t("huddle.askCrew")} size="sm">
       <div className="flex flex-col gap-3 pb-2">
         <div>
           <input
             value={question}
             onChange={(e) => setQuestion(e.target.value.slice(0, 200))}
             maxLength={200}
-            placeholder="Beach day or city day?"
+            placeholder={t("huddle.pollQuestionPh")}
             className="w-full h-12 rounded-2xl border border-border bg-background px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           />
           {/* QA BUG-14: live counter — cap at 200 so a pasted wall of text
@@ -705,17 +706,17 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
             key={i}
             value={o}
             onChange={(e) => setOptions((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
-            placeholder={`Option ${i + 1}`}
+            placeholder={t("huddle.optionN", { n: i + 1 })}
             className="h-11 rounded-2xl border border-border bg-background px-3 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           />
         ))}
         {options.length < 4 && (
           <button type="button" onClick={() => setOptions((p) => [...p, ""])} className="text-start text-[13px] font-semibold text-primary px-1">
-            + Add option
+            {t("huddle.addOption")}
           </button>
         )}
         {hasDuplicates && (
-          <p className="text-[12px] font-semibold text-destructive px-1">Options must be different from each other.</p>
+          <p className="text-[12px] font-semibold text-destructive px-1">{t("huddle.optionsMustDiffer")}</p>
         )}
         <button
           type="button"
@@ -723,7 +724,7 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
           disabled={pending || !question.trim() || trimmed.length < 2 || hasDuplicates}
           className="h-12 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] disabled:opacity-50"
         >
-          Post to the crew
+          {t("huddle.postToCrew")}
         </button>
       </div>
     </BottomSheet>

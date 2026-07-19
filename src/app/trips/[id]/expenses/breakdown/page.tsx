@@ -12,11 +12,13 @@ export default async function MoneyBreakdownRoute({ params }: Props) {
   const { trip, expenseList, fxRates } = await loadMoneyPageData(id);
 
   return (
-    <BreakdownPage
-      tripId={id}
-      currency={trip.currency}
-      expenses={expenseList as any}
-      fxRates={fxRates}
-    />
+    <div className="px-4 pt-4 max-w-3xl mx-auto">
+        <BreakdownPage
+        tripId={id}
+        currency={trip.currency}
+        expenses={expenseList as any}
+        fxRates={fxRates}
+      />
+    </div>
   );
 }
