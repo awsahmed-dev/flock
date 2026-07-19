@@ -16,9 +16,13 @@ const ACCENT = "var(--clr-brand)";
 export function AccountAvatarButton({
   size = 36,
   borderColor = ACCENT,
+  tripSettingsHref = null,
 }: {
   size?: number;
   borderColor?: string;
+  /** Trip context: shows a "Trip settings" row in the sheet (owner only —
+   *  the caller decides). Replaces the retired desktop dropdown's entry. */
+  tripSettingsHref?: string | null;
 }) {
   const profile = useProfile();
   const [open, setOpen] = useState(false);
@@ -53,6 +57,7 @@ export function AccountAvatarButton({
         displayName={profile?.displayName ?? ""}
         avatarUrl={profile?.avatarUrl ?? null}
         email={profile?.email ?? null}
+        tripSettingsHref={tripSettingsHref}
       />
     </>
   );

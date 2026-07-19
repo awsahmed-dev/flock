@@ -3,15 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { SquaresFour as LayoutDashboard, UserCircle, GearSix as Settings, Sun, Moon, SignOut as LogOut, CaretLeft as ChevronLeft, ChatCircle as MessageCircle } from "@phosphor-icons/react/dist/ssr";
-import { useTheme } from "next-themes";
+import { CaretLeft as ChevronLeft, ChatCircle as MessageCircle } from "@phosphor-icons/react/dist/ssr";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
@@ -57,7 +49,6 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
-  const { theme, setTheme } = useTheme();
   // Phase 7 §4: Crew sheet — header stack + the nav's left circle both open it.
   const [crewOpen, setCrewOpen] = useState(false);
   useEffect(() => {
@@ -134,12 +125,6 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
     })();
     return () => { cancelled = true; };
   }, [supabase]);
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
 
   const base = `/trips/${trip.id}`;
   // Immersive screens have no shell top bar and fill the viewport: Discover
@@ -226,46 +211,18 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
             )}
           </Link>
 
-          {/* User avatar → Account sheet. */}
-          <div className="xl:hidden shrink-0">
-            <AccountAvatarButton size={36} borderColor="var(--clr-brand)" />
-          </div>
-
-          {/* Desktop: avatar → dropdown menu. */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button className="hidden xl:flex rounded-full shrink-0 tap-target items-center justify-center" title={profile.name || "Account"}>
-                  <UserAvatar name={profile.name || "Me"} avatarUrl={profile.avatarUrl} size="md" />
-                </button>
-              }
+          {/* User avatar → Account sheet at EVERY width. The old desktop
+              dropdown (hardcoded English, no language entry) is retired —
+              the sheet is the one account surface, fully localized, with
+              the language switcher. Trip settings (its only unique item)
+              rides along as an owner-only sheet row. */}
+          <div className="shrink-0">
+            <AccountAvatarButton
+              size={36}
+              borderColor="var(--clr-brand)"
+              tripSettingsHref={isOwner ? `${base}/settings` : null}
             />
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem render={<Link href="/dashboard" />} className="gap-2">
-                <LayoutDashboard className="w-4 h-4" /> All trips
-              </DropdownMenuItem>
-              <DropdownMenuItem render={<Link href="/account/profile" />} className="gap-2">
-                <UserCircle className="w-4 h-4" /> Profile
-              </DropdownMenuItem>
-              {isOwner && (
-                <DropdownMenuItem render={<Link href={`${base}/settings`} />} className="gap-2">
-                  <Settings className="w-4 h-4" /> Trip settings
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="gap-2"
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {theme === "dark" ? "Light mode" : "Dark mode"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="gap-2 text-destructive focus:text-destructive">
-                <LogOut className="w-4 h-4" /> Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </div>
         </header>
 
         {/* Screen content. Bottom padding clears the fixed tab bar on mobile;

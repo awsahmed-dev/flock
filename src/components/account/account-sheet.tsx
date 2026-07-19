@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { SignOut as LogOut, CircleNotch as Loader2, Check, Moon, Sun, Camera, Bell, CaretRight as ChevronRight, GlobeHemisphereWest as Globe } from "@phosphor-icons/react/dist/ssr";
+import { SignOut as LogOut, CircleNotch as Loader2, Check, Moon, Sun, Camera, Bell, CaretRight as ChevronRight, GlobeHemisphereWest as Globe, GearSix as Gear } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/animate-ui/components/radix/sheet";
 import { Switch } from "@/components/animate-ui/components/radix/switch";
@@ -30,12 +30,16 @@ export function AccountSheet({
   displayName,
   avatarUrl,
   email,
+  tripSettingsHref = null,
 }: {
   open: boolean;
   onClose: () => void;
   displayName: string;
   avatarUrl: string | null;
   email: string | null;
+  /** Trip context (owner): adds a Trip settings row — the one entry the
+   *  retired desktop dropdown had that the sheet didn't. */
+  tripSettingsHref?: string | null;
 }) {
   const t = useT();
   const router = useRouter();
@@ -217,6 +221,23 @@ export function AccountSheet({
           </div>
           <ChevronRight size={18} className="text-tertiary rtl:rotate-180" />
         </Link>
+
+        {tripSettingsHref && (
+          <>
+            <div className="h-px bg-border mx-6" />
+            <Link
+              href={tripSettingsHref}
+              onClick={onClose}
+              className="flex items-center justify-between px-6 py-4 active:bg-muted/40 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Gear size={20} className="text-muted-foreground" />
+                <span className="text-[15px] text-foreground">{t("nav.tripSettings")}</span>
+              </div>
+              <ChevronRight size={18} className="text-tertiary rtl:rotate-180" />
+            </Link>
+          </>
+        )}
 
         <div className="h-px bg-border mx-6" />
 
