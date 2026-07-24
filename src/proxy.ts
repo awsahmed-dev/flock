@@ -92,6 +92,15 @@ export async function proxy(request: NextRequest) {
     // public/BingSiteAuth.xml is fetched by Bing directly at this URL;
     // if the proxy 307s, verification fails silently.
     path === "/BingSiteAuth.xml" ||
+    // PWA machinery — these are fetched by the browser, not the app, and
+    // must work before login. A 307 → login here means anonymous visitors
+    // (marketing pages, install prompts) can never register the service
+    // worker: the redirect serves HTML, registration fails on MIME type.
+    // /~offline is the fallback page sw.js caches at install time, and
+    // pdf.worker.min.mjs is loaded as a Worker script by the doc viewer.
+    path === "/sw.js" ||
+    path === "/~offline" ||
+    path === "/pdf.worker.min.mjs" ||
     path.startsWith("/share/");
   // Internal endpoints that gate themselves (cron secret, health probe).
   // These must be reachable without a session.
