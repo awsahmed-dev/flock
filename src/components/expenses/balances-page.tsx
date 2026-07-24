@@ -10,6 +10,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { settleAllBetween } from "@/lib/actions/expenses";
 import { useT } from "@/components/i18n/locale-provider";
+import { initials } from "@/lib/initials";
 
 const AVATAR_COLORS = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
@@ -277,7 +278,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full ${avatarColor(tr.from)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                    {tr.fromName.slice(0, 2).toUpperCase()}
+                    {initials(tr.fromName)}
                   </div>
                   <div className="flex-1 min-w-0 text-center">
                     <p className="text-sm font-bold">
@@ -291,7 +292,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 rtl:rotate-180" />
                   <div className={`w-8 h-8 rounded-full ${avatarColor(tr.to)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                    {tr.toName.slice(0, 2).toUpperCase()}
+                    {initials(tr.toName)}
                   </div>
                 </div>
                 {/* B20: Mark-as-paid CTA — visible only to the two parties
