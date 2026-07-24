@@ -300,6 +300,37 @@ export function AccountSheet({
 }
 
 /**
+ * The service worker's pax-pages cache keys entries by URL only, but every
+ * page's HTML/RSC is locale-dependent — anything cached before a locale
+ * switch is in the OLD language, and network-first will serve it on the next
+ * flaky fetch (observed: /trips/[id]/members in English+LTR with cookie=ar).
+ * Ask the SW to purge before reloading. Time-boxed so a missing or wedged SW
+ * can never block the switch; also drops the Pocket Day stamp so the warmer
+ * re-caches tomorrow's pages in the new locale.
+ */
+async function purgeStalePageCaches(): Promise<void> {
+  try {
+    localStorage.removeItem("paxawa-pocket-day");
+  } catch {
+    /* private mode — nothing to re-warm anyway */
+  }
+  const sw =
+    typeof navigator !== "undefined" && "serviceWorker" in navigator
+      ? navigator.serviceWorker.controller
+      : null;
+  if (!sw) return;
+  await new Promise<void>((resolve) => {
+    const timer = window.setTimeout(resolve, 1500);
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    sw.postMessage({ type: "paxawa:purge-pages" }, [channel.port2]);
+  });
+}
+
+/**
  * Arabic launch — the Language row: English | العربية as a segmented pair,
  * the active locale carries a brand checkmark. Tapping the other option
  * flips the cookie (setLocale) and reloads the page in that language.
@@ -316,6 +347,7 @@ function LanguageRow() {
     startTransition(async () => {
       try {
         await setLocale(next);
+        await purgeStalePageCaches();
         window.location.reload();
       } catch {
         setSwitching(null);

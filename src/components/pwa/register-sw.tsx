@@ -19,5 +19,21 @@ export function RegisterSW() {
       return () => window.removeEventListener("load", register);
     }
   }, []);
+
+  // Locale guard: a bfcache restore (back/forward nav) resurrects the DOM as
+  // it was BEFORE a language switch — old strings, old <html dir> — even
+  // though the paxawa_locale cookie has moved on. The cookie is intentionally
+  // not httpOnly (see setLocale), so compare it to the restored document's
+  // lang and reload on mismatch.
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      const m = document.cookie.match(/(?:^|;\s*)paxawa_locale=(en|ar)\b/);
+      if (m && m[1] !== document.documentElement.lang) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   return null;
 }

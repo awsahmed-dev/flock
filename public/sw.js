@@ -14,7 +14,7 @@
  * network actually fails.
  */
 
-const VERSION = "paxawa-sw-v1";
+const VERSION = "paxawa-sw-v2";
 const C = {
   pages: "pax-pages",
   mapbox: "pax-mapbox",
@@ -47,6 +47,29 @@ self.addEventListener("activate", (event) => {
         names.map((n) => (n.startsWith("pax-") && !keep.has(n) ? caches.delete(n) : null)),
       );
       await self.clients.claim();
+    })(),
+  );
+});
+
+// Locale switch — pages are cached by URL only, but their content is
+// locale-dependent (paxawa_locale cookie). Anything cached before a switch is
+// in the old language, and network-first will serve it on the next flaky
+// fetch. The language switcher posts this message (with a reply port) before
+// reloading; we drop the whole pages cache and re-prime the offline fallback,
+// which the server now renders in the new locale.
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "paxawa:purge-pages") return;
+  event.waitUntil(
+    (async () => {
+      await caches.delete(C.pages);
+      try {
+        const cache = await caches.open(C.pages);
+        await cache.add(new Request(OFFLINE_URL, { cache: "reload" }));
+      } catch (_) {
+        /* offline page will be re-cached on demand */
+      }
+      if (event.ports && event.ports[0]) event.ports[0].postMessage({ ok: true });
     })(),
   );
 });
