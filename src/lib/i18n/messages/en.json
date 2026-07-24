@@ -491,7 +491,13 @@
     "noExpensesYet": "No expenses logged yet",
     "logFirstExpense": "Log your first expense to see it here.",
     "noMatches": "No matches for “{query}”.",
-    "outsideTripDays": "Outside trip dates"
+    "outsideTripDays": "Outside trip dates",
+    "capUsed": "{amount} · {pct}% used",
+    "capSheetTitle": "Your personal cap",
+    "capSheetHint": "Only you see this — pocket-money cap for this trip.",
+    "capClearHint": "Leave empty to stop tracking a personal cap.",
+    "capSaved": "Personal cap saved",
+    "capSaveFailed": "Couldn't save the cap"
   },
   "itinerary": {
     "add": "Add",

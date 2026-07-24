@@ -8,6 +8,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { settleSplit, deleteExpense } from "@/lib/actions/expenses";
 import { fmtAmount as fmt } from "@/lib/numerals";
 import { useT } from "@/components/i18n/locale-provider";
+import { initials } from "@/lib/initials";
 
 interface Split {
   id: string;
@@ -148,7 +149,7 @@ export function ExpenseSheet({
 
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/40">
           <div className={`w-7 h-7 rounded-full ${avatarColor(expense.paidBy)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-            {payerName.slice(0, 2).toUpperCase()}
+            {initials(expense.payer?.displayName, payerName.slice(0, 1))}
           </div>
           <span className="text-xs text-muted-foreground">
             {t("expenses.paidBy")} <span className="font-semibold text-foreground"><bdi>{payerName}</bdi></span>
@@ -177,7 +178,7 @@ export function ExpenseSheet({
                   }`}
                 >
                   <div className={`w-7 h-7 rounded-full ${avatarColor(split.userId)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                    {(isMe ? t("expenses.you") : split.user?.displayName ?? "?").slice(0, 2).toUpperCase()}
+                    {initials(split.user?.displayName)}
                   </div>
                   <span className={`text-sm flex-1 truncate ${split.settled ? "text-muted-foreground line-through" : "font-medium"}`}>
                     {isMe ? t("expenses.you") : split.user?.displayName ?? "?"}

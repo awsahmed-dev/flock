@@ -14,6 +14,7 @@ import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { simplifySettlements } from "@/lib/settle";
 import { BalancesBlock } from "@/components/money/balances-block";
+import { PersonalCapSheet } from "./personal-cap-sheet";
 
 /* ─── Static configs ─────────────────────────────────────────────────── */
 
@@ -118,6 +119,7 @@ export function ExpensesBoard({
   settlements = [],
 }: Props) {
   const t = useT();
+  const [capOpen, setCapOpen] = useState(false);
   const isOwner = members.some((m) => m.userId === userId);
   const [openId, setOpenId] = useState<string | null>(null);
   // Phase 7 §2: the nav's left circle (clock icon) jumps to Activity.
@@ -303,7 +305,7 @@ export function ExpensesBoard({
               </div>
               <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${
+                  className={`me-auto h-full rounded-full ${
                     derived.totalSharedBase / tripBudget >= 1
                       ? "bg-red-300"
                       : derived.totalSharedBase / tripBudget >= 0.9
@@ -348,21 +350,29 @@ export function ExpensesBoard({
         />
       </div>
 
-      {/* Phase 6 §8-C: Personal cap as a real 52px row — no more 11px
-          fine print buried in the hero corner. */}
-      <Link
-        href={`/trips/${tripId}/settings`}
-        className="flex items-center gap-3 h-[52px] px-4 rounded-2xl bg-card border border-border"
+      {/* Phase 6 §8-C personal cap row. QA round: opens its own sheet —
+          linking to trip settings read as a non-sequitur. */}
+      <button
+        type="button"
+        onClick={() => setCapOpen(true)}
+        className="w-full flex items-center gap-3 h-[52px] px-4 rounded-2xl bg-card border border-border text-start"
       >
         <SlidersHorizontal size={18} className="text-primary shrink-0" />
         <span className="flex-1 text-[15px] font-medium text-foreground">{t("expenses.personalCapLabel")}</span>
         <span className="text-[13px] text-muted-foreground tabular-nums">
           {personalBudget && personalBudget > 0
-            ? `${currency} ${fmt(personalBudget)} · ${Math.round((derived.personalSpentBase / personalBudget) * 100)}% used`
+            ? t("expenses.capUsed", { amount: `${currency} ${fmt(personalBudget)}`, pct: Math.round((derived.personalSpentBase / personalBudget) * 100) })
             : t("expenses.setPersonalCap")}
         </span>
         <ChevronRight size={16} className="text-tertiary shrink-0 rtl:rotate-180" />
-      </Link>
+      </button>
+      <PersonalCapSheet
+        tripId={tripId}
+        currency={currency}
+        personalBudget={personalBudget}
+        open={capOpen}
+        onClose={() => setCapOpen(false)}
+      />
 
       {/* Phase 6 §8-A: Balances above Activity. Hidden solo / no expenses. */}
       {members.length > 1 && expenseList.length > 0 && (
@@ -463,7 +473,7 @@ export function ExpensesBoard({
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${cfg.dot}`}
+                        className={`h-full me-auto rounded-full ${cfg.dot}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -617,7 +627,7 @@ function SlimExpenseRow({
       <button
         type="button"
         onClick={onClick}
-        className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-accent/30 transition-colors -mx-2 px-2 rounded-lg"
+        className="w-full flex items-center gap-3 py-2.5 text-start hover:bg-accent/30 transition-colors -mx-2 px-2 rounded-lg"
       >
         <div className={`w-9 h-9 rounded-xl ${cat.bg} flex items-center justify-center shrink-0`}>
           <CatIcon className={`w-4 h-4 ${cat.text}`} />
@@ -628,12 +638,12 @@ function SlimExpenseRow({
             {format(new Date(expense.expenseDate), "MMM d")} · {payerName}
             {iOwe && (
               <span className="ms-1.5 text-orange-600 dark:text-orange-400 font-semibold">
-                · you owe {expense.currency} {fmt(mySplit!.amountOwed)}
+                · {t("expenses.youOweShort", { amount: `${expense.currency} ${fmt(mySplit!.amountOwed)}` })}
               </span>
             )}
           </p>
         </div>
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-sm font-bold tabular-nums">
             {expense.currency} {fmt(expense.amount)}
           </p>

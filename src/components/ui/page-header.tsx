@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
+import { useSmartBack } from "@/lib/use-smart-back";
 
 interface Props {
   /** Where the back button goes. Omit to hide the back arrow. */
@@ -30,15 +30,7 @@ export function PageHeader({ backHref, title, subtitle, action }: Props) {
   return (
     <div className="flex items-start justify-between gap-3 mb-1">
       <div className="flex items-center gap-2.5 min-w-0">
-        {backHref && (
-          <Link
-            href={backHref}
-            aria-label="Back"
-            className="shrink-0 -ms-1 w-8 h-8 rounded-lg hover:bg-accent/40 flex items-center justify-center text-foreground hover:opacity-70 transition-opacity"
-          >
-            <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
-          </Link>
-        )}
+        {backHref && <SmartBackChevron fallback={backHref} />}
         <div className="min-w-0">
           <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate leading-tight">
             {title}
@@ -52,5 +44,21 @@ export function PageHeader({ backHref, title, subtitle, action }: Props) {
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
+  );
+}
+
+/** QA round: back pops the in-app history (so Money → settings → back
+ *  returns to Money, not NOW); on a cold load it goes to the fallback. */
+function SmartBackChevron({ fallback }: { fallback: string }) {
+  const { goBack } = useSmartBack(fallback);
+  return (
+    <button
+      type="button"
+      onClick={goBack}
+      aria-label="Back"
+      className="shrink-0 -ms-1 w-8 h-8 rounded-lg hover:bg-accent/40 flex items-center justify-center text-foreground hover:opacity-70 transition-opacity"
+    >
+      <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+    </button>
   );
 }

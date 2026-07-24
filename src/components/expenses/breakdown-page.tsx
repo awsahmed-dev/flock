@@ -144,7 +144,7 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
                 </p>
 
                 <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className={`h-full rounded-full ${cfg.dot}`} style={{ width: `${pct}%` }} />
+                  <div className={`h-full me-auto rounded-full ${cfg.dot}`} style={{ width: `${pct}%` }} />
                 </div>
               </section>
             );

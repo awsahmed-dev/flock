@@ -342,7 +342,7 @@ export function TransactionsPage({
                     {dailyTarget ? (
                       <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${tone}`}
+                          className={`h-full me-auto rounded-full ${tone}`}
                           style={{ width: `${Math.min(pct, 100)}%` }}
                         />
                       </div>

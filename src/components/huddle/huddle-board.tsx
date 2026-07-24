@@ -225,7 +225,7 @@ export function HuddleBoard({
               </span>
               <span className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                 <span
-                  className="block h-full rounded-full"
+                  className="block h-full me-auto rounded-full"
                   style={{ background: "var(--clr-moss)", width: `${packing.total > 0 ? Math.round((packing.packed / packing.total) * 100) : 0}%` }}
                 />
               </span>

@@ -491,7 +491,13 @@
     "noExpensesYet": "لا مصاريف مسجّلة بعد",
     "logFirstExpense": "سجّل أول مصروف لتراه هنا.",
     "noMatches": "لا نتائج لـ«{query}».",
-    "outsideTripDays": "خارج تواريخ الرحلة"
+    "outsideTripDays": "خارج تواريخ الرحلة",
+    "capUsed": "⁨{amount}⁩ · مستخدم {pct}٪",
+    "capSheetTitle": "سقفك الشخصي",
+    "capSheetHint": "أنت وحدك من يراه — سقف مصروفك الخاص لهذه الرحلة.",
+    "capClearHint": "اتركه فارغًا لإيقاف تتبع السقف الشخصي.",
+    "capSaved": "تم حفظ السقف الشخصي",
+    "capSaveFailed": "تعذر حفظ السقف"
   },
   "itinerary": {
     "add": "أضف",

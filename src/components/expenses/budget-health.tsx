@@ -130,7 +130,7 @@ function HealthCard({
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-muted/60 overflow-hidden">
             <div
-              className={`h-full ${colors.bar} transition-all duration-500`}
+              className={`h-full me-auto ${colors.bar} transition-all duration-500`}
               style={{ width: `${Math.min(100, pct)}%` }}
             />
           </div>
@@ -317,7 +317,7 @@ function PersonalCard({
             </div>
             <div className="mt-2 h-1.5 rounded-full bg-muted/60 overflow-hidden">
               <div
-                className={`h-full ${colors.bar} transition-all duration-500`}
+                className={`h-full me-auto ${colors.bar} transition-all duration-500`}
                 style={{ width: `${Math.min(100, pct)}%` }}
               />
             </div>

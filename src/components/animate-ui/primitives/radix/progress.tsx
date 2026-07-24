@@ -34,11 +34,17 @@ function ProgressIndicator({
   ...props
 }: ProgressIndicatorProps) {
   const { value } = useProgress();
+  // RTL: the indicator slides toward the inline-start edge — in RTL that
+  // is +x (rightward), otherwise the bar fills from the wrong side.
+  const [rtl, setRtl] = React.useState(false);
+  React.useEffect(() => {
+    setRtl(document.documentElement.dir === 'rtl');
+  }, []);
 
   return (
     <MotionProgressIndicator
       data-slot="progress-indicator"
-      animate={{ x: `-${100 - (value || 0)}%` }}
+      animate={{ x: `${rtl ? '' : '-'}${100 - (value || 0)}%` }}
       transition={transition}
       {...props}
     />
