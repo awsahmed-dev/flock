@@ -30,7 +30,7 @@ export function LandingClosing() {
           <h2 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-[1.05]">
             The next trip{" "}
             <span className="text-[#8B7CFF]">starts here.</span>{" "}
-            <span className="text-white/40">Free.</span>
+            <span className="text-[#E0B252]">Sawa.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">
             Somebody in the crew has to set this up.
@@ -63,7 +63,7 @@ export function LandingClosing() {
             <Logo variant="full" size="xs" />
             <span className="text-white/20">·</span>
             <span className="text-white/40 text-xs">
-              © {new Date().getFullYear()}
+              pax + sawa <span className="text-white/25">— travelers, together</span> · © {new Date().getFullYear()}
             </span>
           </div>
           <nav className="flex items-center gap-5 text-xs text-white/40">

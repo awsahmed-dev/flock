@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/landing-hero";
-import { Scrollytelling } from "@/components/landing/scrollytelling";
+import { FeatureTabs } from "@/components/landing/feature-tabs";
+import { BlogStrip } from "@/components/landing/blog-strip";
 import { PhaseStrip } from "@/components/landing/phase-strip";
 import { PainTicker } from "@/components/landing/pain-ticker";
 import { NameStory } from "@/components/landing/name-story";
@@ -126,10 +127,11 @@ export default async function HomePage({ searchParams }: PageProps) {
       </header>
 
       <LandingHero />
+      <NameStory />
       <PhaseStrip />
       <PainTicker />
-      <Scrollytelling />
-      <NameStory />
+      <FeatureTabs />
+      <BlogStrip />
       <LandingClosing />
 
       {/* B26: structured data for rich results in Google. Organization

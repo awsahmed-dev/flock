@@ -72,7 +72,10 @@ export function LandingHero() {
           className="inline-flex items-center gap-2 text-sm text-white/60 mb-6 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 backdrop-blur"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#9BC97E] animate-pulse" />
-          Live now · Free · English + العربية
+          <span className="font-semibold text-[#B3A8FF]">pax</span>
+          <span className="text-white/40">+</span>
+          <span className="font-semibold text-[#E8CB86]">sawa&nbsp;·&nbsp;سوا</span>
+          <span className="text-white/40">— travelers, together · Free · English + العربية</span>
         </motion.p>
 
         <motion.h1
