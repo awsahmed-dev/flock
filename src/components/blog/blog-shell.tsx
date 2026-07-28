@@ -27,7 +27,7 @@ export function BlogShell({ post, children, related }: Props) {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link
             href="/"
             className="flex items-center shrink-0 text-white"
@@ -91,7 +91,7 @@ export function BlogShell({ post, children, related }: Props) {
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="relative aspect-[16/6] sm:aspect-[21/6] rounded-3xl overflow-hidden border border-white/[0.08]">
             <PostCover tag={post.tag} />
           </div>
@@ -123,7 +123,7 @@ export function BlogShell({ post, children, related }: Props) {
 
         {related.length > 0 && (
           <section className="border-t border-white/[0.06] py-20 px-6">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <p className="text-xs font-bold tracking-widest uppercase text-white/40 mb-5">
                 Keep reading
               </p>
@@ -164,7 +164,7 @@ export function BlogShell({ post, children, related }: Props) {
       </article>
 
       <footer className="border-t border-white/[0.06] py-10 px-6">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex items-center gap-3 text-white">
             <Logo variant="full" size="xs" />
             <span className="text-white/20">·</span>

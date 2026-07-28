@@ -45,7 +45,7 @@ export default function BlogIndex() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center shrink-0 text-white" aria-label="Paxawa home">
             <Logo variant="full" size="sm" />
           </Link>
@@ -76,7 +76,7 @@ export default function BlogIndex() {
         </div>
       </header>
 
-      <section className="max-w-5xl mx-auto px-6 pt-20 pb-12">
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-12">
         <p className="text-sm font-bold tracking-widest uppercase text-[#B3A8FF] mb-3">
           Paxawa Blog
         </p>
@@ -90,7 +90,7 @@ export default function BlogIndex() {
         </p>
       </section>
 
-      <section className="max-w-5xl mx-auto px-6 pb-16">
+      <section className="max-w-7xl mx-auto px-6 pb-16">
         <Link
           href={`/blog/${featured.slug}`}
           className="group grid sm:grid-cols-2 rounded-3xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
@@ -135,8 +135,8 @@ export default function BlogIndex() {
       </section>
 
       {rest.length > 0 && (
-        <section className="max-w-5xl mx-auto px-6 pb-24">
-          <div className="grid sm:grid-cols-2 gap-6">
+        <section className="max-w-7xl mx-auto px-6 pb-24">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {rest.map((p) => (
               <Link
                 key={p.slug}
@@ -173,7 +173,7 @@ export default function BlogIndex() {
       )}
 
       <footer className="border-t border-white/[0.06] py-10 px-6">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex items-center gap-3 text-white">
             <Logo variant="full" size="xs" />
             <span className="text-white/20">·</span>

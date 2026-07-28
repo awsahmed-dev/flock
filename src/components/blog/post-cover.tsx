@@ -28,6 +28,35 @@ const ICONS: Record<string, React.ComponentType<{ className?: string; weight?: "
   Arabic: Translate,
 };
 
+const PATTERNS: Record<string, React.CSSProperties> = {
+  grid: {
+    backgroundImage:
+      "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+    backgroundSize: "28px 28px",
+  },
+  dots: {
+    backgroundImage: "radial-gradient(rgba(255,255,255,0.7) 1.2px, transparent 1.2px)",
+    backgroundSize: "20px 20px",
+  },
+  diag: {
+    backgroundImage:
+      "repeating-linear-gradient(-45deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 16px)",
+  },
+  arcs: {
+    backgroundImage:
+      "repeating-radial-gradient(circle at 110% -10%, rgba(255,255,255,0.5) 0 1px, transparent 1px 34px)",
+  },
+};
+
+const TAG_PATTERN: Record<string, keyof typeof PATTERNS> = {
+  "Group travel": "dots",
+  Money: "grid",
+  AI: "arcs",
+  Product: "diag",
+  Offline: "arcs",
+  Arabic: "dots",
+};
+
 export function PostCover({
   tag,
   className = "",
@@ -49,14 +78,10 @@ export function PostCover({
           background: `radial-gradient(80% 90% at 85% 10%, ${hue}30, transparent 60%), radial-gradient(60% 70% at 15% 95%, ${hue}1c, transparent 65%)`,
         }}
       />
-      {/* blueprint grid */}
+      {/* per-tag texture — grid / dots / diagonals so covers read distinct */}
       <div
-        className="absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-        }}
+        className="absolute inset-0 opacity-[0.06]"
+        style={PATTERNS[TAG_PATTERN[tag] ?? "grid"]}
       />
       {/* oversized glyph, clipped at the corner */}
       <Icon
