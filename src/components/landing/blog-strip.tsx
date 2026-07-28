@@ -19,7 +19,7 @@ export function BlogStrip() {
         <div className="flex items-end justify-between gap-4 mb-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-3">
-              From the blog
+              04 · Go deeper
             </p>
             <h2 className="text-2xl sm:text-4xl font-semibold tracking-[-0.03em]">
               Guides for the crew&apos;s planner.

@@ -46,7 +46,7 @@ const FEATURES: Feature[] = [
     label: "Home",
     title: "A home screen that knows what week it is",
     accentWords: 3,
-    body: "Open the app, see exactly what matters today. Months out it's a cockpit — readiness, day chips, open decisions. Departure week it's a T-minus board. On the trip: today's plan, nothing else. You never dig.",
+    body: "Months out it's a planning cockpit, departure week a T-minus board, on the trip just today's plan. You open the app and it already knows what matters.",
     kills: "the 47-tab planning doc",
     cta: "Get your cockpit",
     icon: Sparkles,
@@ -57,7 +57,7 @@ const FEATURES: Feature[] = [
     label: "Plan",
     title: "One itinerary the whole crew can edit",
     accentWords: 2,
-    body: "Days on a shared map, stops in a shared order — drag a card and the whole crew sees it move. Bookings pin to their day, so the confirmation is one tap from the plan. Try the drag right here →",
+    body: "Days on a shared map, stops in a shared order — drag a card and everyone sees it move. Bookings pin to their day.",
     kills: "the shared spreadsheet",
     cta: "Build day one",
     icon: MapIcon,
@@ -68,7 +68,7 @@ const FEATURES: Feature[] = [
     label: "Decide",
     title: "Group debates end in the Huddle",
     accentWords: 2,
-    body: "Open a poll, attach the costs, let it close itself — the winner becomes the plan. Documents live where everyone finds them, and the packing list means 'who has the adapter?' gets asked exactly once. Cast a vote →",
+    body: "Polls with costs attached that close themselves — the winner becomes the plan. Documents and the packing list live here too.",
     kills: "the 400-message group chat",
     cta: "Settle a debate",
     icon: Huddle,
@@ -79,7 +79,7 @@ const FEATURES: Feature[] = [
     label: "Split",
     title: "Point the camera at the receipt",
     accentWords: 2,
-    body: "Point-and-Split reads the receipt and logs the split before you've pocketed your phone. Any currency, live rates, balances that stay honest all trip. Settling up is two taps — and nobody chases anybody.",
+    body: "Point-and-Split reads the receipt and logs the split — any currency, live rates. Settling up is two taps.",
     kills: "the awkward money math",
     cta: "Split something",
     icon: Wallet,
@@ -90,7 +90,7 @@ const FEATURES: Feature[] = [
     label: "Discover",
     title: "Places the whole crew will actually like",
     accentWords: 2,
-    body: "Real places from Google, ranked by your crew's combined taste — hearts teach it, reason chips tell you why. 'Priya's kind of place' ends the where-should-we-eat debate before it starts.",
+    body: "Real places from Google, ranked by the crew's combined taste. Reason chips tell you why — 'Priya's kind of place.'",
     kills: "four hours of tab-swapping",
     cta: "See your crew's picks",
     icon: Compass,
@@ -101,7 +101,7 @@ const FEATURES: Feature[] = [
     label: "Remember",
     title: "Every trip ends with the Wrap",
     accentWords: 2,
-    body: "Photos, stats, crew awards, and the final settle-up in one shareable recap. Your trip gets a finale — and the Wrap is what makes the crew say 'okay, where next?'",
+    body: "Photos, stats, crew awards, and the final settle-up in one shareable recap. The trip gets an ending.",
     kills: "the group chat that quietly dies",
     cta: "Earn your Wrap",
     icon: Film,
@@ -137,12 +137,14 @@ export function FeatureTabs() {
 
       <div className="relative max-w-7xl mx-auto px-6 py-24 sm:py-32">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-4">
-          What&apos;s inside
+          03 · The toolkit
         </p>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-[-0.035em] max-w-3xl leading-[1.05]">
-          Everything the crew does — <span className="text-[#E0B252]">sawa</span>
-          <span className="text-white/40">. These aren&apos;t mockups; click around.</span>
+          The right tool for every shape.
         </h2>
+        <p className="mt-4 text-white/45 text-base sm:text-lg">
+          Real screens from the real app — click around.
+        </p>
 
         {/* Tab rail */}
         <div

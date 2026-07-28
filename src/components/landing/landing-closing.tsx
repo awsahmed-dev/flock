@@ -33,15 +33,8 @@ export function LandingClosing() {
             <span className="text-[#E0B252]">Sawa.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">
-            Somebody in the crew has to set this up.
-            <span className="text-white/80 font-semibold"> Be the hero — it takes two minutes.</span>
+            One of you has to set it up. It takes two minutes.
           </p>
-          <ul className="mt-7 flex items-center justify-center gap-x-6 gap-y-2 flex-wrap text-[13px] text-white/45">
-            <li><span className="text-[#9BC97E] font-bold">✓</span> Free forever</li>
-            <li><span className="text-[#9BC97E] font-bold">✓</span> Guests join with a link</li>
-            <li><span className="text-[#9BC97E] font-bold">✓</span> Works offline</li>
-            <li><span className="text-[#9BC97E] font-bold">✓</span> English + العربية</li>
-          </ul>
           <div className="mt-10 flex items-center justify-center gap-3">
             <Link
               href="/auth/signup"

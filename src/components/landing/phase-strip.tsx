@@ -67,7 +67,7 @@ export function PhaseStrip() {
           viewport={{ once: true, margin: "-80px" }}
           className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-4"
         >
-          How it works
+          02 · The idea
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 14 }}
@@ -78,7 +78,8 @@ export function PhaseStrip() {
         >
           One app, four shapes.
           <span className="block mt-2 text-white/40 text-xl sm:text-2xl font-normal tracking-normal">
-            Paxawa knows where your trip is — and changes shape around it.
+            Every message up there has the same root cause: the trip moved on,
+            the tools didn&apos;t. Paxawa changes shape with it.
           </span>
         </motion.h2>
 

@@ -15,8 +15,12 @@ export function NameStory() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.6 }}
-        className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-center gap-x-10 gap-y-3 text-center"
+        className="max-w-7xl mx-auto px-6 py-10 text-center"
       >
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-5">
+          By the way — the name
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-x-10 gap-y-3">
         <p className="text-sm sm:text-base">
           <span className="font-bold text-[#8B7CFF]">pax</span>
           <span className="text-white/35"> /paks/ · airline-speak for </span>
@@ -33,6 +37,7 @@ export function NameStory() {
         <p className="text-sm sm:text-base font-semibold text-white">
           Paxawa<span className="text-white/40 font-normal"> — travelers, together.</span>
         </p>
+        </div>
       </motion.div>
     </section>
   );

@@ -48,6 +48,15 @@ export function LandingHero() {
     target: ref,
     offset: ["start start", "end start"],
   });
+  // Destination-strip parallax: odd columns drift up, even columns down,
+  // as the strip crosses the viewport.
+  const stripRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: stripProgress } = useScroll({
+    target: stripRef,
+    offset: ["start end", "end start"],
+  });
+  const stripUp = useTransform(stripProgress, [0, 1], [36, -36]);
+  const stripDown = useTransform(stripProgress, [0, 1], [-24, 24]);
   // Headline drifts up faster than the phone stack as user scrolls — soft
   // parallax depth without being seasick.
   const headlineY = useTransform(scrollYProgress, [0, 1], [0, -120]);
@@ -72,10 +81,7 @@ export function LandingHero() {
           className="inline-flex items-center gap-2 text-sm text-white/60 mb-6 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 backdrop-blur"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#9BC97E] animate-pulse" />
-          <span className="font-semibold text-[#B3A8FF]">pax</span>
-          <span className="text-white/40">+</span>
-          <span className="font-semibold text-[#E8CB86]">sawa&nbsp;·&nbsp;سوا</span>
-          <span className="text-white/40">— travelers, together · Free · English + العربية</span>
+          Paxawa — travelers, together · English + العربية
         </motion.p>
 
         <motion.h1
@@ -97,9 +103,8 @@ export function LandingHero() {
           transition={{ duration: 0.7, delay: 0.15 }}
           className="mt-7 text-lg sm:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed"
         >
-          One home for the whole trip — shared itinerary, group decisions,
-          multi-currency splits with receipt scan, an offline day sheet, and
-          a shareable Wrap when you're back. One link invites the crew.
+          One home for the whole trip — plan it, decide it, split it,
+          remember it. One link invites the crew.
         </motion.p>
 
         <motion.div
@@ -165,10 +170,11 @@ export function LandingHero() {
         <p className="text-center text-sm text-white/40 mb-6">
           Wherever the next one is
         </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {DESTINATIONS.map((d) => (
-            <div
+        <div ref={stripRef} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {DESTINATIONS.map((d, i) => (
+            <motion.div
               key={d.label}
+              style={{ y: i % 2 === 0 ? stripUp : stripDown }}
               className="group relative aspect-[4/5] overflow-hidden rounded-2xl"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -182,7 +188,7 @@ export function LandingHero() {
               <p className="absolute bottom-3 left-4 text-sm font-semibold tracking-wide text-white">
                 {d.label}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </motion.div>

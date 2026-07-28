@@ -127,10 +127,10 @@ export default async function HomePage({ searchParams }: PageProps) {
       </header>
 
       <LandingHero />
-      <NameStory />
-      <PhaseStrip />
       <PainTicker />
+      <PhaseStrip />
       <FeatureTabs />
+      <NameStory />
       <BlogStrip />
       <LandingClosing />
 

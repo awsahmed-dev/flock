@@ -27,15 +27,21 @@ export function PainTicker() {
   return (
     <section
       aria-label="Problems Paxawa solves"
-      className="relative border-t border-white/[0.06] py-10 overflow-hidden"
+      className="relative border-t border-white/[0.06] py-20 sm:py-24 overflow-hidden"
     >
       {/* edge fades */}
       <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-32 z-10 bg-gradient-to-r from-[#0D0D0D] to-transparent" />
       <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-32 z-10 bg-gradient-to-l from-[#0D0D0D] to-transparent" />
 
-      <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-white/35 mb-6">
-        Every group trip has these messages
-      </p>
+      <div className="max-w-7xl mx-auto px-6 mb-8">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-4">
+          01 · The problem
+        </p>
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-[-0.035em] leading-[1.05] max-w-2xl">
+          Every group trip{" "}
+          <span className="text-white/40">dies in the group chat.</span>
+        </h2>
+      </div>
 
       <div className="group/ticker flex overflow-hidden">
         <div className="flex shrink-0 items-center gap-3 pe-3 animate-[pain-scroll_46s_linear_infinite] group-hover/ticker:[animation-play-state:paused] motion-reduce:animate-none">
