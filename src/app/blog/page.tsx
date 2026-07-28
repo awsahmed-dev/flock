@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Calendar, Clock } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
-import { BLOG_POSTS } from "@/lib/blog/posts";
+import { BLOG_POSTS, TAGS } from "@/lib/blog/posts";
+import { PostCover } from "@/components/blog/post-cover";
 
 export const metadata: Metadata = {
   title: "Blog · Group travel planning, expenses, AI itineraries",
   description:
-    "Long-form guides on planning group trips, splitting expenses, and using AI to draft itineraries — written by the Paxawa team.",
+    "Long-form guides on planning group trips, splitting expenses, offline travel, and Arabic-first trip planning — written by the Paxawa team.",
   alternates: { canonical: "/blog" },
   openGraph: {
     type: "website",
@@ -18,11 +19,22 @@ export const metadata: Metadata = {
   },
 };
 
+function TagChip({ tag }: { tag: keyof typeof TAGS }) {
+  const hue = TAGS[tag].hue;
+  return (
+    <span
+      className="inline-block rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase"
+      style={{ color: hue, borderColor: `${hue}40`, background: `${hue}12` }}
+    >
+      {tag}
+    </span>
+  );
+}
+
 /**
- * B26: blog index. Sorted newest-first. The featured (first) post takes
- * a wider card; the rest sit in a 2-column grid. Card hover slightly
- * scales the hero image — same micro-interaction we use elsewhere so the
- * marketing surface feels cohesive.
+ * B26 → Blog v2: same chrome as the landing (nav links, brand CTA,
+ * charcoal canvas), generated on-system covers instead of stock photos,
+ * hue-coded tag chips. Featured (newest) post takes the wide card.
  */
 export default function BlogIndex() {
   const sorted = [...BLOG_POSTS].sort(
@@ -31,12 +43,21 @@ export default function BlogIndex() {
   const [featured, ...rest] = sorted;
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-black/70 border-b border-white/[0.06]">
+    <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center shrink-0 text-white" aria-label="Paxawa home">
             <Logo variant="full" size="sm" />
           </Link>
+          <nav className="hidden md:flex items-center gap-1 text-sm">
+            <Link href="/#features" className="text-white/60 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
+              Features
+            </Link>
+            <Link href="/#phases" className="text-white/60 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
+              How it works
+            </Link>
+            <span className="text-white px-3 py-1.5 rounded-full bg-white/[0.06] text-sm">Blog</span>
+          </nav>
           <nav className="flex items-center gap-3 text-sm">
             <Link
               href="/auth/login"
@@ -46,9 +67,9 @@ export default function BlogIndex() {
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 font-bold transition-colors"
             >
-              Try Paxawa
+              Start a trip
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </nav>
@@ -72,24 +93,16 @@ export default function BlogIndex() {
       <section className="max-w-5xl mx-auto px-6 pb-16">
         <Link
           href={`/blog/${featured.slug}`}
-          className="group grid sm:grid-cols-2 gap-6 rounded-3xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
+          className="group grid sm:grid-cols-2 rounded-3xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
         >
-          <div className="relative aspect-[16/10] sm:aspect-auto overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={featured.heroImage}
-              alt={featured.heroAlt}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-              loading="eager"
-            />
+          <div className="relative aspect-[16/10] sm:aspect-auto sm:min-h-[280px] overflow-hidden">
+            <PostCover tag={featured.tag} className="transition-transform duration-500 group-hover:scale-[1.02]" />
           </div>
           <div className="p-6 sm:p-8 flex flex-col justify-center">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-[#B3A8FF]">
-                {featured.tag}
-              </span>
+            <div className="flex items-center gap-3 mb-4">
+              <TagChip tag={featured.tag} />
               <span className="text-[10px] font-bold tracking-widest uppercase text-white/30">
-                · Featured
+                Featured
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] leading-tight">
@@ -113,6 +126,9 @@ export default function BlogIndex() {
                 <Clock className="w-3.5 h-3.5" />
                 {featured.readMinutes} min read
               </span>
+              <span className="ms-auto inline-flex items-center gap-1 font-semibold text-[#B3A8FF]">
+                Read it <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
             </div>
           </div>
         </Link>
@@ -127,20 +143,12 @@ export default function BlogIndex() {
                 href={`/blog/${p.slug}`}
                 className="group rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
               >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.heroImage}
-                    alt={p.heroAlt}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                    loading="lazy"
-                  />
+                <div className="relative aspect-[16/8] overflow-hidden">
+                  <PostCover tag={p.tag} className="transition-transform duration-500 group-hover:scale-[1.02]" />
                 </div>
                 <div className="p-6">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-[#B3A8FF]">
-                    {p.tag}
-                  </span>
-                  <h3 className="text-lg font-semibold mt-2 leading-snug">
+                  <TagChip tag={p.tag} />
+                  <h3 className="text-lg font-semibold mt-3 leading-snug">
                     {p.title}
                   </h3>
                   <p className="text-sm text-white/60 mt-2 line-clamp-2">

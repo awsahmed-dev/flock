@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, ArrowLeft, Calendar, Clock } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
-import type { BlogPostMeta } from "@/lib/blog/posts";
+import { TAGS, type BlogPostMeta } from "@/lib/blog/posts";
+import { PostCover } from "@/components/blog/post-cover";
 
 const SITE = "https://paxawa.com";
 
@@ -45,7 +46,7 @@ export function BlogShell({ post, children, related }: Props) {
               href="/auth/signup"
               className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 font-medium transition-colors"
             >
-              Try Paxawa
+              Start a trip
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </nav>
@@ -56,12 +57,19 @@ export function BlogShell({ post, children, related }: Props) {
         <div className="max-w-3xl mx-auto px-6 pt-12 pb-8">
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white mb-6 transition-colors"
+            className="flex w-fit items-center gap-1.5 text-xs text-white/50 hover:text-white mb-6 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to all posts
           </Link>
-          <span className="inline-block text-[11px] font-bold tracking-widest uppercase text-[#B3A8FF] mb-4">
+          <span
+            className="inline-block rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase mb-4"
+            style={{
+              color: TAGS[post.tag].hue,
+              borderColor: `${TAGS[post.tag].hue}40`,
+              background: `${TAGS[post.tag].hue}12`,
+            }}
+          >
             {post.tag}
           </span>
           <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1]">
@@ -84,22 +92,8 @@ export function BlogShell({ post, children, related }: Props) {
         </div>
 
         <div className="max-w-5xl mx-auto px-6">
-          <div className="relative aspect-[16/9] sm:aspect-[21/9] rounded-3xl overflow-hidden border border-white/[0.08]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.heroImage}
-              alt={post.heroAlt}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="eager"
-            />
-            <a
-              href={post.heroCreditLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-3 right-4 text-[10px] text-white/60 hover:text-white/90 backdrop-blur px-2 py-0.5 rounded-full bg-black/30"
-            >
-              Photo · {post.heroCredit} / Unsplash
-            </a>
+          <div className="relative aspect-[16/6] sm:aspect-[21/6] rounded-3xl overflow-hidden border border-white/[0.08]">
+            <PostCover tag={post.tag} />
           </div>
         </div>
 
@@ -110,17 +104,18 @@ export function BlogShell({ post, children, related }: Props) {
         <section className="border-t border-white/[0.06] py-20 px-6">
           <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-gradient-to-br from-[#8B7CFF]/15 via-[#8B7CFF]/5 to-[#E0B252]/10 p-8 sm:p-10 text-center">
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">
-              Plan your next group trip on Paxawa
+              Stop reading about group trips. Take one.
             </h2>
             <p className="mt-3 text-white/65 max-w-xl mx-auto">
-              Shared itinerary, voting, multi-currency expenses, packing — all
-              in one place. Free to start.
+              One home for the whole trip — shared itinerary, Huddle decisions,
+              receipt-scan expense splits, an offline day sheet, and the Wrap
+              at the end. Free, in English and Arabic.
             </p>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-5 py-3 mt-6 text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-5 py-3 mt-6 text-sm font-bold transition-colors"
             >
-              Start for free
+              Start your trip — free
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -139,17 +134,18 @@ export function BlogShell({ post, children, related }: Props) {
                     href={`/blog/${r.slug}`}
                     className="group rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
                   >
-                    <div className="relative aspect-[16/9] overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={r.heroImage}
-                        alt={r.heroAlt}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
+                    <div className="relative aspect-[16/7] overflow-hidden">
+                      <PostCover tag={r.tag} className="transition-transform duration-500 group-hover:scale-[1.02]" />
                     </div>
                     <div className="p-5">
-                      <span className="text-[10px] font-bold tracking-widest uppercase text-[#B3A8FF]">
+                      <span
+                        className="inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+                        style={{
+                          color: TAGS[r.tag].hue,
+                          borderColor: `${TAGS[r.tag].hue}40`,
+                          background: `${TAGS[r.tag].hue}12`,
+                        }}
+                      >
                         {r.tag}
                       </span>
                       <h3 className="font-semibold mt-2 leading-snug">

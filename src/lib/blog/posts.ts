@@ -7,7 +7,24 @@
  *
  * Adding a post: create src/app/blog/<slug>/page.tsx + append an
  * entry here. Sitemap + index pick it up automatically.
+ *
+ * Blog v2: tags map to the app's semantic hues (see TAGS) and covers
+ * are generated in-system (components/blog/post-cover.tsx) instead of
+ * stock photos. `heroImage` remains for OG/social cards only.
  */
+
+/** Tag → the app's semantic hue it renders in. */
+export const TAGS = {
+  "Group travel": { hue: "#8B7CFF" },
+  Money: { hue: "#9BC97E" },
+  AI: { hue: "#3EC5B7" },
+  Product: { hue: "#FF8A5C" },
+  Offline: { hue: "#E0B252" },
+  Arabic: { hue: "#3EC5B7" },
+} as const;
+
+export type BlogTag = keyof typeof TAGS;
+
 export interface BlogPostMeta {
   slug: string;
   title: string;
@@ -19,18 +36,15 @@ export interface BlogPostMeta {
   author: string;
   /** Estimated read time in minutes. */
   readMinutes: number;
-  /** Topic tag — shown as a chip on the index page. */
-  tag: string;
-  /** Unsplash photo URL — hero + OG image source. Must be unsplash.com so
-   *  the `?w=1600&auto=format` query keeps it lightweight + sharp. */
+  /** Topic tag — hue-coded chip + generated cover. */
+  tag: BlogTag;
+  /** OG/social image only — the visual cover is generated from the tag. */
   heroImage: string;
-  /** Short alt for the hero image. Required for a11y + crawlers. */
+  /** Short alt for the OG image. */
   heroAlt: string;
-  /** Photographer name for the Unsplash attribution line. */
-  heroCredit: string;
-  /** Photographer Unsplash profile URL for the attribution line. */
-  heroCreditLink: string;
 }
+
+const OG_FALLBACK = "https://paxawa.com/icons/icon-512x512.png";
 
 export const BLOG_POSTS: BlogPostMeta[] = [
   {
@@ -47,8 +61,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       "https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=1600&auto=format&fit=crop&q=80",
     heroAlt:
       "Four friends walking through a sunlit narrow alleyway on a group trip",
-    heroCredit: "Helena Lopes",
-    heroCreditLink: "https://unsplash.com/@wildlittlethingsphoto",
   },
   {
     slug: "split-expenses-with-friends-on-vacation",
@@ -64,8 +76,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&auto=format&fit=crop&q=80",
     heroAlt:
       "Hands counting cash and using a phone calculator at a restaurant table",
-    heroCredit: "Jp Valery",
-    heroCreditLink: "https://unsplash.com/@jpvalery",
   },
   {
     slug: "ai-itinerary-planning-guide",
@@ -79,9 +89,47 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     tag: "AI",
     heroImage:
       "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1600&auto=format&fit=crop&q=80",
-    heroAlt: "Open notebook, map, and camera on a wooden table during trip planning",
-    heroCredit: "Sylwia Bartyzel",
-    heroCreditLink: "https://unsplash.com/@sylwiabartyzel",
+    heroAlt:
+      "Open notebook, map, and camera on a wooden table during trip planning",
+  },
+  {
+    slug: "four-phases-of-a-group-trip",
+    title:
+      "The four phases of a group trip — and why your travel app should change shape",
+    description:
+      "Planning, departure week, the trip itself, and the after. Each phase needs a different screen — so why does every travel app show you the same one? Inside the thinking behind Paxawa's phase engine.",
+    publishedAt: "2026-07-22",
+    author: "The Paxawa Team",
+    readMinutes: 8,
+    tag: "Product",
+    heroImage: OG_FALLBACK,
+    heroAlt: "Paxawa logo",
+  },
+  {
+    slug: "offline-travel-itinerary",
+    title:
+      "Your itinerary is useless without signal — how to travel with an offline day plan",
+    description:
+      "No eSIM, dead zones, metro tunnels, roaming bills: the case for planning tools that work with zero bars, and a checklist for making any trip survive airplane mode.",
+    publishedAt: "2026-07-25",
+    author: "The Paxawa Team",
+    readMinutes: 7,
+    tag: "Offline",
+    heroImage: OG_FALLBACK,
+    heroAlt: "Paxawa logo",
+  },
+  {
+    slug: "planning-group-trips-in-arabic",
+    title:
+      "Planning a group trip in Arabic: what a truly RTL-first travel app looks like",
+    description:
+      "Most travel apps bolt Arabic on as an afterthought — flipped icons, broken numbers, English creeping in. Here's what actually breaks, and how we built Paxawa to plan trips natively in Arabic.",
+    publishedAt: "2026-07-28",
+    author: "The Paxawa Team",
+    readMinutes: 8,
+    tag: "Arabic",
+    heroImage: OG_FALLBACK,
+    heroAlt: "Paxawa logo",
   },
 ];
 
