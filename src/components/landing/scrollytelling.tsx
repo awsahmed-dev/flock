@@ -1,122 +1,123 @@
 "use client";
 
 /**
- * Scrollytelling v2 — Framer-style.
+ * Scrollytelling v3 — the app's own design system on the marketing page.
  *
- * Pattern per the user's reference screenshots:
- *   - One <FeatureSection/> per feature.
- *   - Each section is min-h-screen tall.
- *   - Inside, a 2-column grid: title+copy on the left, demo card on the right.
- *   - The left column uses `lg:sticky lg:top-1/3` so the title hangs in
- *     place while the right column scrolls past — pure CSS, no progress
- *     math, no overlapping content.
+ * Six sections, one per real pillar of the current product, each carrying
+ * the SAME semantic hue that feature wears inside the app:
  *
- * Right-column cards are flat 2D mockups (the same SVG screens we already
- * authored), no phone bezel, no notch, no shadow gimmick. Just a sharp
- * card with a thin white border.
+ *   NOW cockpit  → brand   #8B7CFF
+ *   Itinerary    → wayfind #3EC5B7 (the route line's color)
+ *   Huddle       → horizon #FF8A5C (live/social)
+ *   Money        → moss    #9BC97E (money/progress)
+ *   Discover     → wayfind #3EC5B7
+ *   The Wrap     → dune    #E0B252 (prep/recap gold)
  *
- * Mobile (under lg): single column, sticky disabled, normal vertical flow.
+ * No rainbow gradient text — one hue per section, used exactly once in
+ * the headline tail + eyebrow + glow. Layout keeps the proven sticky
+ * two-column pattern; sections alternate sides.
  */
 
 import { motion } from "motion/react";
-import { Calendar, CheckSquareOffset as Vote, Wallet, Backpack, Sparkle as Sparkles } from "@phosphor-icons/react/dist/ssr";
+import {
+  Compass,
+  MapTrifold as MapIcon,
+  ChatsCircle as Huddle,
+  Wallet,
+  Sparkle as Sparkles,
+  FilmSlate as Film,
+} from "@phosphor-icons/react/dist/ssr";
 import { SectionGlow } from "./aurora";
-import { ChatDemo } from "./demos/chat-demo";
 import { VoteDemo } from "./demos/vote-demo";
 import { ExpenseDemo } from "./demos/expense-demo";
 import { ItineraryDemo } from "./demos/itinerary-demo";
-import { PackingDemo } from "./demos/packing-demo";
+import { NowDemo } from "./demos/now-demo";
+import { DiscoverDemo } from "./demos/discover-demo";
+import { WrapDemo } from "./demos/wrap-demo";
 
-type DemoKey = "chat" | "vote" | "expense" | "plan" | "pack" | "static";
+type DemoKey = "now" | "plan" | "huddle" | "expense" | "discover" | "wrap";
 
 interface Feature {
   key: string;
   eyebrow: string;
   title: string;
+  /** How many trailing words of the title get the hue. */
+  accentWords: number;
   body: string;
-  /** Which interactive demo renders on the right side. `static` falls back
-   *  to the SVG mockup at `screen`. */
   demo: DemoKey;
-  /** SVG screen used as fallback when `demo === "static"`. */
-  screen: string;
   icon: React.ComponentType<{ className?: string }>;
-  iconColor: string;
-  /** Tailwind bg class used by the SectionGlow blob behind this feature. */
+  /** The feature's in-app semantic hue. */
+  hue: string;
+  /** Tailwind bg class for the SectionGlow blob. */
   glow: string;
-  /** Gradient-text class applied to the title's accent span. */
-  accent: string;
 }
 
 const FEATURES: Feature[] = [
   {
-    key: "chat",
-    eyebrow: "Talk",
-    title: "AI-aware group chat that turns talk into the plan",
-    body:
-      "Type a message — Claude reads it and offers one-tap chips. 'We should go to El Vilsito tomorrow' becomes a calendar entry. 'I paid €120 for dinner' becomes a split expense. Try it on the right →",
-    demo: "chat",
-    screen: "/screens/chat.svg",
+    key: "now",
+    eyebrow: "Home",
+    title: "A home screen that knows what week it is",
+    accentWords: 3,
+    body: "Months out, NOW is a cockpit — readiness, day chips, open decisions. Departure week it becomes a T-minus board. On the trip it shows today only. No digging, ever.",
+    demo: "now",
     icon: Sparkles,
-    iconColor: "text-fuchsia-400",
-    glow: "bg-fuchsia-500",
-    accent:
-      "bg-gradient-to-br from-fuchsia-300 via-pink-300 to-rose-300 bg-clip-text text-transparent",
-  },
-  {
-    key: "vote",
-    eyebrow: "Decide",
-    title: "Settle the group debate in one screen",
-    body:
-      "Open a vote on any decision — hotel, restaurant, day plan. Attach cost estimates. The winning option becomes the plan, the rest archive. Cast one on the right →",
-    demo: "vote",
-    screen: "/screens/vote.svg",
-    icon: Vote,
-    iconColor: "text-violet-400",
-    glow: "bg-violet-500",
-    accent:
-      "bg-gradient-to-br from-violet-300 via-purple-300 to-fuchsia-300 bg-clip-text text-transparent",
-  },
-  {
-    key: "pay",
-    eyebrow: "Split",
-    title: "Multi-currency expenses, accurate balances",
-    body:
-      "Log spend as it happens in any currency. Equal-split or custom. Live balances tell you who owes whom. Change the amount or payer on the right →",
-    demo: "expense",
-    screen: "/screens/pay.svg",
-    icon: Wallet,
-    iconColor: "text-emerald-400",
-    glow: "bg-emerald-500",
-    accent:
-      "bg-gradient-to-br from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent",
+    hue: "#8B7CFF",
+    glow: "bg-[#8B7CFF]",
   },
   {
     key: "plan",
     eyebrow: "Plan",
     title: "One itinerary the whole crew can edit",
-    body:
-      "AI drafts the whole trip in seconds. Drag any card on the right to reorder — every member sees the change live.",
+    accentWords: 2,
+    body: "Days on a shared map, stops in a shared order. Drag any card to reorder — everyone sees it move. Bookings pin to their day, so the confirmation is always one tap from the plan.",
     demo: "plan",
-    screen: "/screens/plan.svg",
-    icon: Calendar,
-    iconColor: "text-blue-400",
-    glow: "bg-blue-500",
-    accent:
-      "bg-gradient-to-br from-blue-300 via-indigo-300 to-blue-200 bg-clip-text text-transparent",
+    icon: MapIcon,
+    hue: "#3EC5B7",
+    glow: "bg-[#3EC5B7]",
   },
   {
-    key: "pack",
-    eyebrow: "Prepare",
-    title: "Packing that's shared and personal at the same time",
-    body:
-      "Group items everyone can check off. Personal items only you can toggle. Crew view shows who's lagging. Toggle a few items on the right →",
-    demo: "pack",
-    screen: "/screens/pack.svg",
-    icon: Backpack,
-    iconColor: "text-amber-400",
-    glow: "bg-amber-500",
-    accent:
-      "bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent",
+    key: "huddle",
+    eyebrow: "Decide",
+    title: "Group debates end in the Huddle",
+    accentWords: 2,
+    body: "Polls that close themselves, documents where everyone finds them, a pulse feed of what the crew just did — and the packing list, so 'who has the adapter?' is asked exactly once.",
+    demo: "huddle",
+    icon: Huddle,
+    hue: "#FF8A5C",
+    glow: "bg-[#FF8A5C]",
+  },
+  {
+    key: "money",
+    eyebrow: "Split",
+    title: "Point the camera at the receipt",
+    accentWords: 2,
+    body: "Point-and-Split reads the receipt and logs the expense; any currency converts at live rates. Balances stay honest the whole trip, and settling up is two taps — not a spreadsheet.",
+    demo: "expense",
+    icon: Wallet,
+    hue: "#9BC97E",
+    glow: "bg-[#9BC97E]",
+  },
+  {
+    key: "discover",
+    eyebrow: "Discover",
+    title: "Places the whole crew will actually like",
+    accentWords: 2,
+    body: "Real places from Google, ranked by the crew's combined taste. Hearts teach it. Reason chips tell you why — 'Priya's kind of place' beats four hours of tab-swapping.",
+    demo: "discover",
+    icon: Compass,
+    hue: "#3EC5B7",
+    glow: "bg-[#3EC5B7]",
+  },
+  {
+    key: "wrap",
+    eyebrow: "Remember",
+    title: "Every trip ends with the Wrap",
+    accentWords: 2,
+    body: "Photos, stats, crew awards, and the final settle-up in one shareable recap. The trip gets an ending — not a group chat that quietly dies.",
+    demo: "wrap",
+    icon: Film,
+    hue: "#E0B252",
+    glow: "bg-[#E0B252]",
   },
 ];
 
@@ -124,8 +125,10 @@ export function Scrollytelling() {
   return (
     <div id="features" className="relative scroll-mt-20">
       {/* Section heading lead-in */}
-      <div id="try-it" className="max-w-7xl mx-auto px-6 pt-24 pb-12 sm:pt-32 scroll-mt-20">
-        <p className="text-sm text-white/40 mb-3">Try it · No signup needed</p>
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-12 sm:pt-32">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-4">
+          What&apos;s inside
+        </p>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-[-0.035em] max-w-2xl leading-[1.05]">
           Real screens. Real interactions.{" "}
           <span className="text-white/40">Click around.</span>
@@ -133,7 +136,11 @@ export function Scrollytelling() {
       </div>
 
       {FEATURES.map((f, i) => (
-        <FeatureSection key={f.key} feature={f} side={i % 2 === 0 ? "left" : "right"} />
+        <FeatureSection
+          key={f.key}
+          feature={f}
+          side={i % 2 === 0 ? "left" : "right"}
+        />
       ))}
     </div>
   );
@@ -149,22 +156,25 @@ function FeatureSection({
   side: "left" | "right";
 }) {
   const Icon = f.icon;
-  // Split the title at its last word so we can gradient the final clause —
-  // adds a moment of color without painting the whole headline.
   const words = f.title.split(" ");
-  const lead = words.slice(0, words.length - 2).join(" ");
-  const accentTail = words.slice(-2).join(" ");
+  const lead = words.slice(0, words.length - f.accentWords).join(" ");
+  const accentTail = words.slice(-f.accentWords).join(" ");
 
   return (
     <section className="relative border-t border-white/[0.06]">
       <SectionGlow color={f.glow} side={side} />
-      <div className="relative max-w-7xl mx-auto px-6 py-20 sm:py-32 grid lg:grid-cols-2 gap-12 lg:gap-16">
+      <div className="relative max-w-7xl mx-auto px-6 py-20 sm:py-32 grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
         {/* Left — sticky title + copy */}
         <div className="lg:sticky lg:top-32 lg:self-start">
           <div
-            className={`inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] mb-5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 ${f.iconColor}`}
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] mb-5 rounded-full border px-2.5 py-1"
+            style={{
+              color: f.hue,
+              borderColor: `${f.hue}40`,
+              background: `${f.hue}14`,
+            }}
           >
-            <Icon className={`w-3.5 h-3.5 ${f.iconColor}`} />
+            <Icon className="w-3.5 h-3.5" />
             {f.eyebrow}
           </div>
           <motion.h3
@@ -175,7 +185,7 @@ function FeatureSection({
             className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] max-w-lg"
           >
             {lead && <>{lead} </>}
-            <span className={f.accent}>{accentTail}</span>
+            <span style={{ color: f.hue }}>{accentTail}</span>
           </motion.h3>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -188,7 +198,7 @@ function FeatureSection({
           </motion.p>
         </div>
 
-        {/* Right — interactive demo (or static screenshot fallback) */}
+        {/* Right — demo */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -196,47 +206,18 @@ function FeatureSection({
           transition={{ duration: 0.8 }}
           className="lg:ps-8"
         >
-          <FeatureDemo demo={f.demo} screen={f.screen} title={f.title} />
+          <FeatureDemo demo={f.demo} />
         </motion.div>
       </div>
     </section>
   );
 }
 
-function FeatureDemo({
-  demo,
-  screen,
-  title,
-}: {
-  demo: DemoKey;
-  screen: string;
-  title: string;
-}) {
-  if (demo === "chat") return <ChatDemo />;
-  if (demo === "vote") return <VoteDemo />;
-  if (demo === "expense") return <ExpenseDemo />;
+function FeatureDemo({ demo }: { demo: DemoKey }) {
+  if (demo === "now") return <NowDemo />;
   if (demo === "plan") return <ItineraryDemo />;
-  if (demo === "pack") return <PackingDemo />;
-  // static fallback for features whose interactive demo isn't built yet.
-  // Matches the new (smaller, height-capped) DemoFrame dimensions so the
-  // section doesn't tower over the title.
-  return (
-    <div
-      className="relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.02] mx-auto"
-      style={{
-        width: "100%",
-        maxWidth: 360,
-        aspectRatio: "9 / 13",
-        maxHeight: 560,
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={screen}
-        alt={`${title} screen`}
-        loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-    </div>
-  );
+  if (demo === "huddle") return <VoteDemo />;
+  if (demo === "expense") return <ExpenseDemo />;
+  if (demo === "discover") return <DiscoverDemo />;
+  return <WrapDemo />;
 }

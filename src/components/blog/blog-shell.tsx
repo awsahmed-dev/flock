@@ -24,8 +24,8 @@ export function BlogShell({ post, children, related }: Props) {
     day: "numeric",
   });
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-black/70 border-b border-white/[0.06]">
+    <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link
             href="/"
@@ -43,7 +43,7 @@ export function BlogShell({ post, children, related }: Props) {
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-4 py-2 font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 font-medium transition-colors"
             >
               Try Paxawa
               <ArrowRight className="w-3.5 h-3.5" />
@@ -61,7 +61,7 @@ export function BlogShell({ post, children, related }: Props) {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to all posts
           </Link>
-          <span className="inline-block text-[11px] font-bold tracking-widest uppercase text-fuchsia-300 mb-4">
+          <span className="inline-block text-[11px] font-bold tracking-widest uppercase text-[#B3A8FF] mb-4">
             {post.tag}
           </span>
           <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1]">
@@ -108,7 +108,7 @@ export function BlogShell({ post, children, related }: Props) {
         </div>
 
         <section className="border-t border-white/[0.06] py-20 px-6">
-          <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/15 via-fuchsia-500/10 to-amber-500/10 p-8 sm:p-10 text-center">
+          <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-gradient-to-br from-[#8B7CFF]/15 via-[#8B7CFF]/5 to-[#E0B252]/10 p-8 sm:p-10 text-center">
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">
               Plan your next group trip on Paxawa
             </h2>
@@ -118,7 +118,7 @@ export function BlogShell({ post, children, related }: Props) {
             </p>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-5 py-3 mt-6 text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-5 py-3 mt-6 text-sm font-semibold transition-colors"
             >
               Start for free
               <ArrowRight className="w-4 h-4" />
@@ -149,7 +149,7 @@ export function BlogShell({ post, children, related }: Props) {
                       />
                     </div>
                     <div className="p-5">
-                      <span className="text-[10px] font-bold tracking-widest uppercase text-fuchsia-300">
+                      <span className="text-[10px] font-bold tracking-widest uppercase text-[#B3A8FF]">
                         {r.tag}
                       </span>
                       <h3 className="font-semibold mt-2 leading-snug">

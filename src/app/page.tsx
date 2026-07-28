@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { Scrollytelling } from "@/components/landing/scrollytelling";
+import { PhaseStrip } from "@/components/landing/phase-strip";
 import { LandingClosing } from "@/components/landing/landing-closing";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
@@ -76,11 +77,11 @@ export default async function HomePage({ searchParams }: PageProps) {
   if (signedIn) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
       {/* Top nav — slim, glass on scroll. Anchor links jump to landing
           sections; smooth scroll comes from html { scroll-behavior: smooth }
           set in globals.css (Tailwind v4 default). */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-black/70 border-b border-white/[0.06]">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link
             href="/"
@@ -95,14 +96,13 @@ export default async function HomePage({ searchParams }: PageProps) {
               an internal link from the homepage to the blog hub). */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             <NavAnchor href="#features">Features</NavAnchor>
-            <NavAnchor href="#destinations">Destinations</NavAnchor>
+            <NavAnchor href="#phases">How it works</NavAnchor>
             <Link
               href="/blog"
               className="text-sm text-white/60 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors"
             >
               Blog
             </Link>
-            <NavAnchor href="#pricing">Get started</NavAnchor>
           </nav>
 
           <nav className="flex items-center gap-1 shrink-0">
@@ -114,9 +114,9 @@ export default async function HomePage({ searchParams }: PageProps) {
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-4 py-2 text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 text-sm font-bold transition-colors"
             >
-              Sign up
+              Start a trip
               <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </Link>
           </nav>
@@ -124,6 +124,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       </header>
 
       <LandingHero />
+      <PhaseStrip />
       <Scrollytelling />
       <LandingClosing />
 
@@ -170,7 +171,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                 applicationCategory: "TravelApplication",
                 operatingSystem: "Web, iOS, Android",
                 description:
-                  "Plan group trips together: shared itinerary, voting, multi-currency expense splitting, packing lists, and AI-assisted planning.",
+                  "One home for the whole group trip: phase-aware planning, shared itinerary, group decisions, multi-currency expense splitting with receipt scanning, offline day sheets, and a shareable trip recap. Fully available in English and Arabic.",
                 offers: {
                   "@type": "Offer",
                   price: "0",
@@ -178,11 +179,13 @@ export default async function HomePage({ searchParams }: PageProps) {
                   availability: "https://schema.org/InStock",
                 },
                 featureList: [
-                  "Shared itinerary planning",
-                  "Group voting on options",
-                  "Multi-currency expense splitting",
-                  "Shared + personal packing lists",
-                  "AI itinerary suggestions",
+                  "Phase-aware home screen (plan, depart, live, recap)",
+                  "Shared itinerary on a live map",
+                  "Huddle: group polls, documents, packing",
+                  "Multi-currency expense splitting + receipt scan",
+                  "Offline Pocket Day",
+                  "The Wrap: shareable trip recap",
+                  "Full Arabic (RTL) support",
                   "One-link invite for the crew",
                 ],
               },

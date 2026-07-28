@@ -26,7 +26,7 @@ const DESTINATIONS: { src: string; alt: string; label: string }[] = [
     label: "Tokyo",
   },
   {
-    src: "https://images.unsplash.com/photo-1539020140153-e479b8c5ee35?w=1200&auto=format&fit=crop&q=80",
+    src: "https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=1200&auto=format&fit=crop&q=80",
     alt: "Marrakech blue alleyway",
     label: "Marrakech",
   },
@@ -71,22 +71,21 @@ export function LandingHero() {
           transition={{ duration: 0.5 }}
           className="inline-flex items-center gap-2 text-sm text-white/60 mb-6 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 backdrop-blur"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-400 animate-pulse" />
-          Group travel, finally calm · Free to start
+          <span className="w-1.5 h-1.5 rounded-full bg-[#9BC97E] animate-pulse" />
+          Live now · Free · English + العربية
         </motion.p>
 
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.05 }}
-          className="text-[44px] leading-[1] sm:text-7xl lg:text-8xl font-semibold tracking-[-0.045em] text-white"
+          className="text-[40px] leading-[1.02] sm:text-6xl lg:text-7xl font-semibold tracking-[-0.045em] text-white"
         >
-          Plan the{" "}
-          <span className="bg-gradient-to-br from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">
-            trip.
-          </span>
+          Plan <span className="text-[#8B7CFF]">together.</span>
           <br />
-          <span className="text-white/40">Not the group chat.</span>
+          Travel <span className="text-[#FF8A5C]">live.</span>
+          <br />
+          Remember <span className="text-[#E0B252]">it.</span>
         </motion.h1>
 
         <motion.p
@@ -95,8 +94,9 @@ export function LandingHero() {
           transition={{ duration: 0.7, delay: 0.15 }}
           className="mt-7 text-lg sm:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed"
         >
-          Itinerary, voting, multi-currency expenses, packing list — and an AI
-          that turns talk into the plan. One link to invite the crew.
+          One home for the whole trip — shared itinerary, group decisions,
+          multi-currency splits with receipt scan, an offline day sheet, and
+          a shareable Wrap when you're back. One link invites the crew.
         </motion.p>
 
         <motion.div
@@ -107,20 +107,20 @@ export function LandingHero() {
         >
           <Link
             href="/auth/signup"
-            className="group relative inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-5 py-3 text-sm font-semibold transition-colors"
+            className="group relative inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-5 py-3 text-sm font-bold transition-colors"
           >
             <span
               aria-hidden
-              className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 opacity-0 group-hover:opacity-60 blur-md transition-opacity -z-10"
+              className="absolute -inset-0.5 rounded-full bg-[#8B7CFF] opacity-0 group-hover:opacity-40 blur-md transition-opacity -z-10"
             />
-            Start for free
+            Start a trip
             <ArrowRight className="w-4 h-4 rtl:rotate-180" />
           </Link>
           <a
-            href="#features"
+            href="#phases"
             className="inline-flex items-center rounded-full border border-white/15 hover:bg-white/[0.04] px-5 py-3 text-sm font-medium transition-colors"
           >
-            See it work
+            See how it works
           </a>
         </motion.div>
       </motion.div>
@@ -143,7 +143,7 @@ export function LandingHero() {
         className="mt-24 sm:mt-32 max-w-7xl mx-auto scroll-mt-20"
       >
         <p className="text-center text-sm text-white/40 mb-6">
-          Whatever the next one looks like
+          Wherever the next one is
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {DESTINATIONS.map((d) => (

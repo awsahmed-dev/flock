@@ -38,12 +38,12 @@ export function VoteDemo() {
   const winnerId = tallies.reduce((a, b) => (a.votes >= b.votes ? a : b)).id;
 
   return (
-    <DemoFrame toneClass="from-violet-500/[0.07] to-blue-500/[0.04]">
+    <DemoFrame toneClass="from-[#FF8A5C]/[0.07] to-[#3EC5B7]/[0.04]">
       <DemoHeader title="Tokyo trip · open vote" subtitle="Closes in 2 days" />
 
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
         <div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/15 border border-violet-500/30 px-2 py-0.5 text-[10px] font-bold text-violet-300 mb-3">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FF8A5C]/15 border border-[#FF8A5C]/30 px-2 py-0.5 text-[10px] font-bold text-[#FFAB88] mb-3">
             📊 OPEN VOTE
           </div>
           <h4 className="text-lg font-semibold tracking-tight leading-snug text-white">
@@ -66,7 +66,7 @@ export function VoteDemo() {
                 onClick={() => setChosen(o.id === chosen ? null : o.id)}
                 className={`relative w-full text-left rounded-xl border overflow-hidden p-3 transition-colors ${
                   isMine
-                    ? "border-violet-400/60 bg-violet-500/10"
+                    ? "border-[#FF8A5C]/60 bg-[#FF8A5C]/10"
                     : "border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.05]"
                 }`}
               >
@@ -74,7 +74,7 @@ export function VoteDemo() {
                 <motion.div
                   className={`absolute inset-y-0 left-0 ${
                     isWinner
-                      ? "bg-gradient-to-r from-emerald-500/15 to-emerald-500/5"
+                      ? "bg-gradient-to-r from-[#9BC97E]/15 to-[#9BC97E]/5"
                       : "bg-white/[0.04]"
                   }`}
                   initial={false}
@@ -86,7 +86,7 @@ export function VoteDemo() {
                     <div
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                         isMine
-                          ? "border-violet-300 bg-violet-400"
+                          ? "border-[#FFAB88] bg-[#FF8A5C]"
                           : "border-white/30"
                       }`}
                     >
@@ -98,7 +98,7 @@ export function VoteDemo() {
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {isWinner && o.votes > 0 && (
-                      <Trophy className="w-3.5 h-3.5 text-amber-300" />
+                      <Trophy className="w-3.5 h-3.5 text-[#E0B252]" />
                     )}
                     <span className="text-xs font-bold text-white/80 tabular-nums">
                       {o.votes}
@@ -130,7 +130,7 @@ export function VoteDemo() {
               exit={{ opacity: 0, y: 4 }}
               className="text-center"
             >
-              <p className="text-xs text-violet-300">
+              <p className="text-xs text-[#FFAB88]">
                 ↑ Cast your vote — see the bars move
               </p>
             </motion.div>

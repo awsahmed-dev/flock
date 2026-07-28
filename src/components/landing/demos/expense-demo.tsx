@@ -16,7 +16,7 @@ import { DemoFrame, DemoHeader } from "./demo-frame";
 
 const CREW = [
   { id: "you", name: "You", color: "from-indigo-500 to-violet-600" },
-  { id: "maya", name: "Maya", color: "from-emerald-500 to-teal-600" },
+  { id: "maya", name: "Maya", color: "from-[#9BC97E] to-teal-600" },
   { id: "alex", name: "Alex", color: "from-amber-500 to-orange-600" },
   { id: "sam", name: "Sam", color: "from-rose-500 to-pink-600" },
 ];
@@ -47,7 +47,7 @@ export function ExpenseDemo() {
   );
 
   return (
-    <DemoFrame toneClass="from-emerald-500/[0.07] to-teal-500/[0.04]">
+    <DemoFrame toneClass="from-[#9BC97E]/[0.07] to-[#3EC5B7]/[0.04]">
       <DemoHeader title="Tokyo trip · expenses" subtitle="Log a new spend" />
 
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
@@ -55,28 +55,28 @@ export function ExpenseDemo() {
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-3">
             <div className="flex items-center gap-1.5 text-[10px] tracking-wider text-white/40 font-bold uppercase mb-1">
-              <ArrowUpRight className="w-3 h-3 text-emerald-400" />
+              <ArrowUpRight className="w-3 h-3 text-[#9BC97E]" />
               You paid
             </div>
             <motion.p
               key={youPaid}
               initial={{ scale: 0.95, opacity: 0.6 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-xl font-bold tabular-nums text-emerald-300"
+              className="text-xl font-bold tabular-nums text-[#B8DBA1]"
             >
               {currency} {youPaid.toFixed(0)}
             </motion.p>
           </div>
           <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-3">
             <div className="flex items-center gap-1.5 text-[10px] tracking-wider text-white/40 font-bold uppercase mb-1">
-              <ArrowDownRight className="w-3 h-3 text-orange-400" />
+              <ArrowDownRight className="w-3 h-3 text-[#FF8A5C]" />
               You owe
             </div>
             <motion.p
               key={youOwe}
               initial={{ scale: 0.95, opacity: 0.6 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-xl font-bold tabular-nums text-orange-300"
+              className="text-xl font-bold tabular-nums text-[#FF8A5C]"
             >
               {currency} {youOwe.toFixed(0)}
             </motion.p>
@@ -86,7 +86,7 @@ export function ExpenseDemo() {
         {/* Inline form */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-3">
           <div className="flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-emerald-400" />
+            <Receipt className="w-4 h-4 text-[#9BC97E]" />
             <p className="text-xs font-bold text-white/70 uppercase tracking-wider">
               New expense
             </p>
@@ -96,7 +96,7 @@ export function ExpenseDemo() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What for?"
-            className="w-full bg-transparent text-sm font-semibold text-white placeholder:text-white/30 outline-none border-b border-white/[0.06] focus:border-emerald-400/40 transition-colors pb-1.5"
+            className="w-full bg-transparent text-sm font-semibold text-white placeholder:text-white/30 outline-none border-b border-white/[0.06] focus:border-[#9BC97E]/40 transition-colors pb-1.5"
           />
           <div className="flex gap-2">
             <input
@@ -160,7 +160,7 @@ export function ExpenseDemo() {
                   </div>
                   <span className="text-sm text-white/90">{m.name}</span>
                   {paidBy === m.id && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/15 rounded-full px-1.5 py-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#B8DBA1] bg-[#9BC97E]/15 rounded-full px-1.5 py-0.5">
                       paid
                     </span>
                   )}
@@ -178,7 +178,7 @@ export function ExpenseDemo() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-emerald-300">
+        <p className="text-center text-xs text-[#B8DBA1]">
           ↑ Try changing the amount or payer
         </p>
       </div>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
-import { WaitlistForm } from "./waitlist-form";
 
 /**
  * Closing block + footer. Pure black, centered, flat. Matches the hero's
@@ -13,13 +12,13 @@ import { WaitlistForm } from "./waitlist-form";
 export function LandingClosing() {
   return (
     <>
-      <section id="pricing" className="relative border-t border-white/[0.06] py-32 px-6 overflow-hidden scroll-mt-20">
+      <section className="relative border-t border-white/[0.06] py-32 px-6 overflow-hidden">
         {/* Soft warm aurora to close warmer than the cool indigo hero */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(60%_60%_at_50%_50%,black_40%,transparent_80%)]"
         >
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[50rem] rounded-full bg-gradient-to-br from-amber-500/20 via-fuchsia-500/15 to-indigo-500/20 blur-[120px]" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[50rem] rounded-full bg-[#8B7CFF]/15 blur-[120px]" />
         </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -29,27 +28,23 @@ export function LandingClosing() {
           className="relative max-w-3xl mx-auto text-center"
         >
           <h2 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-[1.05]">
-            Plan your{" "}
-            <span className="bg-gradient-to-br from-amber-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent">
-              first trip.
-            </span>{" "}
-            <span className="text-white/40">It's free.</span>
+            The next trip{" "}
+            <span className="text-[#8B7CFF]">starts here.</span>{" "}
+            <span className="text-white/40">Free.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">
-            Invite your crew with one link. No accounts needed for guests.
-            Multi-currency built in.
+            One link invites the crew. Multi-currency built in. Fully
+            available in English and Arabic — right-to-left and all.
           </p>
           <div className="mt-10 flex items-center justify-center gap-3">
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-6 py-3.5 text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-6 py-3.5 text-sm font-bold transition-colors"
             >
-              Start for free
+              Start a trip
               <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
           </div>
-
-          <WaitlistForm />
         </motion.div>
       </section>
 

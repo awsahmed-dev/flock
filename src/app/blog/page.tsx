@@ -46,7 +46,7 @@ export default function BlogIndex() {
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-white/90 px-4 py-2 font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 font-medium transition-colors"
             >
               Try Paxawa
               <ArrowRight className="w-3.5 h-3.5" />
@@ -56,7 +56,7 @@ export default function BlogIndex() {
       </header>
 
       <section className="max-w-5xl mx-auto px-6 pt-20 pb-12">
-        <p className="text-sm font-bold tracking-widest uppercase text-fuchsia-300 mb-3">
+        <p className="text-sm font-bold tracking-widest uppercase text-[#B3A8FF] mb-3">
           Paxawa Blog
         </p>
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] max-w-3xl">
@@ -85,7 +85,7 @@ export default function BlogIndex() {
           </div>
           <div className="p-6 sm:p-8 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-fuchsia-300">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-[#B3A8FF]">
                 {featured.tag}
               </span>
               <span className="text-[10px] font-bold tracking-widest uppercase text-white/30">
@@ -137,7 +137,7 @@ export default function BlogIndex() {
                   />
                 </div>
                 <div className="p-6">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-fuchsia-300">
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-[#B3A8FF]">
                     {p.tag}
                   </span>
                   <h3 className="text-lg font-semibold mt-2 leading-snug">

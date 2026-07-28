@@ -17,7 +17,7 @@ export function HeroAurora() {
       className="absolute inset-0 overflow-hidden pointer-events-none [mask-image:radial-gradient(80%_60%_at_50%_30%,black_30%,transparent_80%)]"
     >
       <motion.div
-        className="absolute -top-32 left-1/4 w-[42rem] h-[42rem] rounded-full bg-indigo-500/30 blur-[120px]"
+        className="absolute -top-32 left-1/4 w-[42rem] h-[42rem] rounded-full bg-[#8B7CFF]/25 blur-[120px]"
         animate={{
           x: [0, 60, -40, 0],
           y: [0, 30, -20, 0],
@@ -25,7 +25,7 @@ export function HeroAurora() {
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute -top-8 right-1/4 w-[36rem] h-[36rem] rounded-full bg-fuchsia-500/25 blur-[110px]"
+        className="absolute -top-8 right-1/4 w-[36rem] h-[36rem] rounded-full bg-[#3EC5B7]/20 blur-[110px]"
         animate={{
           x: [0, -50, 30, 0],
           y: [0, 40, 0, 0],
@@ -33,7 +33,7 @@ export function HeroAurora() {
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute top-32 left-1/2 w-[32rem] h-[32rem] -translate-x-1/2 rounded-full bg-emerald-500/15 blur-[100px]"
+        className="absolute top-32 left-1/2 w-[32rem] h-[32rem] -translate-x-1/2 rounded-full bg-[#E0B252]/12 blur-[100px]"
         animate={{
           x: [0, 40, -40, 0],
           scale: [1, 1.1, 0.95, 1],

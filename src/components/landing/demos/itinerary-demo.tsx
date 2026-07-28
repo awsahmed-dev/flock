@@ -52,7 +52,7 @@ const INITIAL: Item[] = [
     location: "Shibuya",
     cost: "~$8/pp",
     icon: Coffee,
-    iconColor: "text-amber-300",
+    iconColor: "text-[#E0B252]",
   },
   {
     id: "temple",
@@ -60,7 +60,7 @@ const INITIAL: Item[] = [
     location: "Asakusa",
     cost: "Free",
     icon: MapPin,
-    iconColor: "text-fuchsia-300",
+    iconColor: "text-[#8B7CFF]",
   },
   {
     id: "lunch",
@@ -68,7 +68,7 @@ const INITIAL: Item[] = [
     location: "Aoyama",
     cost: "~$22/pp",
     icon: Utensils,
-    iconColor: "text-emerald-300",
+    iconColor: "text-[#9BC97E]",
   },
   {
     id: "karaoke",
@@ -76,7 +76,7 @@ const INITIAL: Item[] = [
     location: "Shinjuku",
     cost: "~$15/pp",
     icon: Music,
-    iconColor: "text-violet-300",
+    iconColor: "text-[#B3A8FF]",
   },
 ];
 
@@ -100,7 +100,7 @@ export function ItineraryDemo() {
   }
 
   return (
-    <DemoFrame toneClass="from-blue-500/[0.07] to-indigo-500/[0.04]">
+    <DemoFrame toneClass="from-blue-500/[0.07] to-[#3EC5B7]/[0.04]">
       <DemoHeader title="Tokyo trip · day 3" subtitle="Mon, Mar 16" />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -108,7 +108,7 @@ export function ItineraryDemo() {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
-          className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-300 bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5"
+          className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#7BDCD1] bg-[#3EC5B7]/15 border border-[#3EC5B7]/30 rounded-full px-2 py-0.5"
         >
           <Sparkles className="w-2.5 h-2.5" />
           AI drafted · drag to reorder
@@ -128,7 +128,7 @@ export function ItineraryDemo() {
           </SortableContext>
         </DndContext>
 
-        <p className="text-center text-xs text-blue-300/80 pt-2">
+        <p className="text-center text-xs text-[#7BDCD1]/80 pt-2">
           ↑ Try dragging a card by its grip handle
         </p>
       </div>
@@ -161,7 +161,7 @@ function SortableRow({ item, slot }: { item: Item; slot: Slot }) {
       }}
       className={`flex items-center gap-2.5 rounded-xl border bg-white/[0.04] p-2.5 ${
         isDragging
-          ? "border-blue-400/60 shadow-2xl shadow-blue-500/20"
+          ? "border-[#3EC5B7]/60 shadow-2xl shadow-blue-500/20"
           : "border-white/[0.08]"
       } transition-shadow`}
     >
@@ -186,7 +186,7 @@ function SortableRow({ item, slot }: { item: Item; slot: Slot }) {
         <div className="flex items-center gap-2 mt-0.5">
           <p className="text-[10px] text-white/40">{item.location}</p>
           <span className="text-white/15">·</span>
-          <p className="text-[10px] font-semibold text-emerald-300/80">
+          <p className="text-[10px] font-semibold text-[#9BC97E]/80">
             {item.cost}
           </p>
         </div>
@@ -196,7 +196,7 @@ function SortableRow({ item, slot }: { item: Item; slot: Slot }) {
       <button
         type="button"
         className={`shrink-0 p-1 rounded-md text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-colors cursor-grab active:cursor-grabbing ${
-          isDragging ? "text-blue-300" : ""
+          isDragging ? "text-[#7BDCD1]" : ""
         }`}
         {...attributes}
         {...listeners}
