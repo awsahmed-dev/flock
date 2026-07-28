@@ -123,6 +123,23 @@ export function LandingHero() {
             See how it works
           </a>
         </motion.div>
+
+        <motion.ul
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          className="mt-7 flex items-center justify-center gap-x-5 gap-y-2 flex-wrap text-[13px] text-white/45"
+        >
+          <li className="flex items-center gap-1.5">
+            <span className="text-[#9BC97E] font-bold">✓</span> Free — no card, ever
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span className="text-[#9BC97E] font-bold">✓</span> Set up in 2 minutes
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span className="text-[#9BC97E] font-bold">✓</span> Crew joins with one link — no accounts
+          </li>
+        </motion.ul>
       </motion.div>
 
       {/* Phone composition with floating cards */}

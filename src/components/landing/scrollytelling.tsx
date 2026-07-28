@@ -18,8 +18,10 @@
  * two-column pattern; sections alternate sides.
  */
 
+import Link from "next/link";
 import { motion } from "motion/react";
 import {
+  ArrowRight,
   Compass,
   MapTrifold as MapIcon,
   ChatsCircle as Huddle,
@@ -44,6 +46,10 @@ interface Feature {
   /** How many trailing words of the title get the hue. */
   accentWords: number;
   body: string;
+  /** The thing this feature makes obsolete — rendered struck through. */
+  kills: string;
+  /** Per-section conversion link label. */
+  cta: string;
   demo: DemoKey;
   icon: React.ComponentType<{ className?: string }>;
   /** The feature's in-app semantic hue. */
@@ -58,7 +64,9 @@ const FEATURES: Feature[] = [
     eyebrow: "Home",
     title: "A home screen that knows what week it is",
     accentWords: 3,
-    body: "Months out, NOW is a cockpit — readiness, day chips, open decisions. Departure week it becomes a T-minus board. On the trip it shows today only. No digging, ever.",
+    body: "Open the app, see exactly what matters today. Months out it's a cockpit — readiness, day chips, open decisions. Departure week it's a T-minus board. On the trip: today's plan, nothing else. You never dig.",
+    kills: "the 47-tab planning doc",
+    cta: "Get your cockpit",
     demo: "now",
     icon: Sparkles,
     hue: "#8B7CFF",
@@ -69,7 +77,9 @@ const FEATURES: Feature[] = [
     eyebrow: "Plan",
     title: "One itinerary the whole crew can edit",
     accentWords: 2,
-    body: "Days on a shared map, stops in a shared order. Drag any card to reorder — everyone sees it move. Bookings pin to their day, so the confirmation is always one tap from the plan.",
+    body: "Days on a shared map, stops in a shared order — drag a card and the whole crew sees it move. Bookings pin to their day, so the confirmation is one tap from the plan. Try the drag right here →",
+    kills: "the shared spreadsheet",
+    cta: "Build day one",
     demo: "plan",
     icon: MapIcon,
     hue: "#3EC5B7",
@@ -80,7 +90,9 @@ const FEATURES: Feature[] = [
     eyebrow: "Decide",
     title: "Group debates end in the Huddle",
     accentWords: 2,
-    body: "Polls that close themselves, documents where everyone finds them, a pulse feed of what the crew just did — and the packing list, so 'who has the adapter?' is asked exactly once.",
+    body: "Open a poll, attach the costs, let it close itself — the winner becomes the plan. Documents live where everyone finds them, and the packing list means 'who has the adapter?' gets asked exactly once. Cast a vote →",
+    kills: "the 400-message group chat",
+    cta: "Settle a debate",
     demo: "huddle",
     icon: Huddle,
     hue: "#FF8A5C",
@@ -91,7 +103,9 @@ const FEATURES: Feature[] = [
     eyebrow: "Split",
     title: "Point the camera at the receipt",
     accentWords: 2,
-    body: "Point-and-Split reads the receipt and logs the expense; any currency converts at live rates. Balances stay honest the whole trip, and settling up is two taps — not a spreadsheet.",
+    body: "Point-and-Split reads the receipt and logs the split before you've pocketed your phone. Any currency, live rates, balances that stay honest all trip. Settling up is two taps — and nobody chases anybody.",
+    kills: "the awkward money math",
+    cta: "Split something",
     demo: "expense",
     icon: Wallet,
     hue: "#9BC97E",
@@ -102,7 +116,9 @@ const FEATURES: Feature[] = [
     eyebrow: "Discover",
     title: "Places the whole crew will actually like",
     accentWords: 2,
-    body: "Real places from Google, ranked by the crew's combined taste. Hearts teach it. Reason chips tell you why — 'Priya's kind of place' beats four hours of tab-swapping.",
+    body: "Real places from Google, ranked by your crew's combined taste — hearts teach it, reason chips tell you why. 'Priya's kind of place' ends the where-should-we-eat debate before it starts.",
+    kills: "four hours of tab-swapping",
+    cta: "See your crew's picks",
     demo: "discover",
     icon: Compass,
     hue: "#3EC5B7",
@@ -113,7 +129,9 @@ const FEATURES: Feature[] = [
     eyebrow: "Remember",
     title: "Every trip ends with the Wrap",
     accentWords: 2,
-    body: "Photos, stats, crew awards, and the final settle-up in one shareable recap. The trip gets an ending — not a group chat that quietly dies.",
+    body: "Photos, stats, crew awards, and the final settle-up in one shareable recap. Your trip gets a finale — and the Wrap is what makes the crew say 'okay, where next?'",
+    kills: "the group chat that quietly dies",
+    cta: "Earn your Wrap",
     demo: "wrap",
     icon: Film,
     hue: "#E0B252",
@@ -130,8 +148,8 @@ export function Scrollytelling() {
           What&apos;s inside
         </p>
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-[-0.035em] max-w-2xl leading-[1.05]">
-          Real screens. Real interactions.{" "}
-          <span className="text-white/40">Click around.</span>
+          These aren&apos;t mockups.{" "}
+          <span className="text-white/40">Click around — it&apos;s the real app.</span>
         </h2>
       </div>
 
@@ -196,6 +214,32 @@ function FeatureSection({
           >
             {f.body}
           </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="mt-4 text-sm text-white/35"
+          >
+            Replaces:{" "}
+            <span className="line-through decoration-white/30">{f.kills}</span>
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-7"
+          >
+            <Link
+              href="/auth/signup"
+              className="group inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition-colors"
+              style={{ color: f.hue, borderColor: `${f.hue}45`, background: `${f.hue}10` }}
+            >
+              {f.cta}
+              <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </motion.div>
         </div>
 
         {/* Right — demo */}

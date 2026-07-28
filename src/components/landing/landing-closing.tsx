@@ -33,18 +33,27 @@ export function LandingClosing() {
             <span className="text-white/40">Free.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">
-            One link invites the crew. Multi-currency built in. Fully
-            available in English and Arabic — right-to-left and all.
+            Somebody in the crew has to set this up.
+            <span className="text-white/80 font-semibold"> Be the hero — it takes two minutes.</span>
           </p>
+          <ul className="mt-7 flex items-center justify-center gap-x-6 gap-y-2 flex-wrap text-[13px] text-white/45">
+            <li><span className="text-[#9BC97E] font-bold">✓</span> Free forever</li>
+            <li><span className="text-[#9BC97E] font-bold">✓</span> Guests join with a link</li>
+            <li><span className="text-[#9BC97E] font-bold">✓</span> Works offline</li>
+            <li><span className="text-[#9BC97E] font-bold">✓</span> English + العربية</li>
+          </ul>
           <div className="mt-10 flex items-center justify-center gap-3">
             <Link
               href="/auth/signup"
               className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-6 py-3.5 text-sm font-bold transition-colors"
             >
-              Start a trip
+              Start your trip — free
               <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
           </div>
+          <p className="mt-4 text-xs text-white/30">
+            Your crew is going to plan this trip somewhere. Make it here.
+          </p>
         </motion.div>
       </section>
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { Scrollytelling } from "@/components/landing/scrollytelling";
 import { PhaseStrip } from "@/components/landing/phase-strip";
+import { PainTicker } from "@/components/landing/pain-ticker";
 import { LandingClosing } from "@/components/landing/landing-closing";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
@@ -125,6 +126,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       <LandingHero />
       <PhaseStrip />
+      <PainTicker />
       <Scrollytelling />
       <LandingClosing />
 
