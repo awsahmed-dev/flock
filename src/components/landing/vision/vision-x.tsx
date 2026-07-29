@@ -308,6 +308,72 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
   );
 }
 
+/* ── hero split-flap departures board ────────────────────────────────── */
+const FLAP_DESTS = ["TOKYO", "LISBON", "SEOUL", "BALI", "AMMAN"];
+const FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ·";
+const FLAP_LEN = 6;
+
+function FlapBoard() {
+  const [display, setDisplay] = useState(FLAP_DESTS[0].padEnd(FLAP_LEN, " "));
+  useEffect(() => {
+    let idx = 0;
+    let sweep: ReturnType<typeof setInterval> | null = null;
+    const cycle = setInterval(() => {
+      idx = (idx + 1) % FLAP_DESTS.length;
+      const target = FLAP_DESTS[idx].padEnd(FLAP_LEN, " ");
+      let tick = 0;
+      if (sweep) clearInterval(sweep);
+      // each cell rattles through the alphabet, settling left to right
+      sweep = setInterval(() => {
+        tick++;
+        setDisplay((prev) =>
+          prev
+            .split("")
+            .map((c, i) => (tick > i * 2 + 3 ? target[i] : FLAP_CHARS[(tick * 7 + i * 5) % FLAP_CHARS.length]))
+            .join(""),
+        );
+        if (tick > FLAP_LEN * 2 + 4 && sweep) {
+          clearInterval(sweep);
+          sweep = null;
+        }
+      }, 50);
+    }, 2800);
+    return () => {
+      clearInterval(cycle);
+      if (sweep) clearInterval(sweep);
+    };
+  }, []);
+
+  return (
+    <div className="mt-9 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+      <span className="text-[10px] font-black tracking-[0.26em] uppercase text-[#141414]/45">
+        Now boarding
+      </span>
+      <span className="flex gap-[3px]">
+        {display.split("").map((ch, i) => (
+          <span
+            key={i}
+            className="w-7 h-9 sm:w-8 sm:h-10 rounded-[5px] flex items-center justify-center font-mono text-[15px] sm:text-[17px] font-black select-none"
+            style={{
+              color: "#F5E9C8",
+              background: "linear-gradient(#20242E 48%, #14161d 48%, #191C24 52%, #20242E 52%)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 6px rgba(10,14,24,0.35)",
+            }}
+          >
+            {ch}
+          </span>
+        ))}
+      </span>
+      <span
+        className="rounded-full border px-2.5 py-1 text-[10px] font-black tracking-[0.16em] uppercase"
+        style={{ color: "#0C7A6F", borderColor: "rgba(12,122,111,0.4)", background: "rgba(12,122,111,0.08)" }}
+      >
+        Gate SAWA · On time
+      </span>
+    </div>
+  );
+}
+
 /* ── overlay segments driven by quantized progress ───────────────────── */
 const CYCLE_WORDS = ["the flight plan.", "the fuel money.", "the memories.", "سوا."];
 
@@ -485,20 +551,29 @@ export function VisionX() {
           <p className="text-[11px] font-black tracking-[0.3em] uppercase mb-6" style={{ color: faint }}>
             Scroll to fly · نروح سوا
           </p>
-          <h1
-            className="font-black tracking-[-0.04em] leading-[0.9] text-[#141414]"
-            style={{ fontSize: "clamp(64px, 12vw, 170px)" }}
+          <div
+            style={{
+              transform: `translate(${rig.current.mx * -9}px, ${rig.current.my * -6}px)`,
+              transition: "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)",
+              willChange: "transform",
+            }}
           >
-            PACK
-            <br />
-            <span className="text-[#6D5AE6]">SAWA.</span>
-          </h1>
+            <h1
+              className="font-black tracking-[-0.04em] leading-[0.9] text-[#141414]"
+              style={{ fontSize: "clamp(64px, 12vw, 170px)" }}
+            >
+              PACK
+              <br />
+              <span className="text-[#6D5AE6]">SAWA.</span>
+            </h1>
+          </div>
           <p className="mt-8 text-xl sm:text-2xl font-semibold text-[#141414]/70">
             One home for{" "}
             <span className="inline-block min-w-[16ch] text-start font-black text-[#6D5AE6]">
               {CYCLE_WORDS[word]}
             </span>
           </p>
+          <FlapBoard />
         </div>
 
         {/* PHASE STATIONS — the plane docks, the app shows itself */}
@@ -508,17 +583,33 @@ export function VisionX() {
               @keyframes vx-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
               @keyframes vx-spin { to { transform: rotate(360deg); } }
               @keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+              /* light-mode skin for the shared demos, scoped to this concept */
+              .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
+              .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }
+              .vx-light [class*="bg-[#1A1A1A]"] { background: #FFFFFF !important; }
+              .vx-light [class*="bg-white/"] { background: rgba(20,20,20,0.05) !important; }
+              .vx-light [class~="text-white"] { color: #141414 !important; }
+              .vx-light [class*="text-white/8"], .vx-light [class*="text-white/7"] { color: rgba(20,20,20,0.75) !important; }
+              .vx-light [class*="text-white/6"], .vx-light [class*="text-white/5"] { color: rgba(20,20,20,0.58) !important; }
+              .vx-light [class*="text-white/4"], .vx-light [class*="text-white/3"] { color: rgba(20,20,20,0.45) !important; }
+              .vx-light [class*="text-[#B3A8FF]"] { color: #6D5AE6 !important; }
+              .vx-light [class*="text-[#9BC97E]"], .vx-light [class*="text-[#B8DBA1]"] { color: #4C7A2F !important; }
+              .vx-light [class*="text-[#3EC5B7]"] { color: #0C7A6F !important; }
+              .vx-light [class*="text-[#E8CB86]"], .vx-light [class*="text-[#E0B252]"] { color: #8F6400 !important; }
+              .vx-light [class*="text-[#FFAB88]"], .vx-light [class*="text-[#FF8A5C]"] { color: #B4441B !important; }
+              .vx-light [class*="text-[#8B7CFF]"] { color: #6D5AE6 !important; }
             `}</style>
 
-            {/* giant outlined word — backdrop for the whole station */}
+            {/* giant outlined word — anchored to the side away from the mockup */}
             <p
               aria-hidden
-              className="absolute inset-x-0 bottom-[4vh] text-center font-black tracking-[-0.03em] leading-none select-none"
+              className="absolute inset-x-0 bottom-[4vh] font-black tracking-[-0.03em] leading-none select-none px-[4vw]"
               style={{
-                fontSize: "clamp(80px, 16vw, 230px)",
+                fontSize: "clamp(64px, 11vw, 170px)",
+                textAlign: station % 2 === 1 ? "right" : "left",
                 color: "transparent",
                 WebkitTextStroke: `2px ${ink}`,
-                opacity: 0.3,
+                opacity: 0.35,
                 animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) both",
               }}
             >
@@ -595,9 +686,9 @@ export function VisionX() {
                 </div>
               </div>
 
-              {/* the app, exactly as it is */}
+              {/* the app, exactly as it is — reskinned light for daylight */}
               <div
-                className="mx-auto w-full max-w-[280px] sm:max-w-[340px]"
+                className="vx-light mx-auto w-full max-w-[280px] sm:max-w-[340px]"
                 style={{
                   animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.12s both",
                   transform: `rotate(${station % 2 === 1 ? -1.5 : 1.5}deg)`,
