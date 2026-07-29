@@ -31,8 +31,8 @@ import { ArrowRight, AirplaneTakeoff } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import { HeroAurora } from "../aurora";
 import { NowDemo } from "../demos/now-demo";
-import { VoteDemo } from "../demos/vote-demo";
-import { ExpenseDemo } from "../demos/expense-demo";
+import { DepartureDemo } from "../demos/departure-demo";
+import { LiveDemo } from "../demos/live-demo";
 import { WrapDemo } from "../demos/wrap-demo";
 
 const PHASES = [
@@ -83,38 +83,38 @@ interface Chapter {
 const CHAPTERS: Chapter[] = [
   {
     phase: PHASES[0],
-    title: "The trip is a pile of open questions.",
-    accent: "open questions.",
-    body: "The cockpit closes them — readiness, day chips, decisions that decide themselves.",
+    title: "Right now it's a big beautiful maybe.",
+    accent: "maybe.",
+    body: "The cockpit turns maybes into a plan — watch readiness fill up, day chips light on, and suddenly: you're going.",
     pain: "“So are we actually doing this?”",
-    fix: "Decided",
+    fix: "Yes. Decided.",
     demo: <NowDemo />,
   },
   {
     phase: PHASES[1],
-    title: "Seven days out, it's a checklist.",
-    accent: "a checklist.",
-    body: "Documents pinned, weather in, packing gaps named. Polls have already closed.",
+    title: "One week out — usually panic o'clock.",
+    accent: "panic o'clock.",
+    body: "Not this time. Docs pinned, weather pulled in, packing gaps called out by name (looking at you, Tariq).",
     pain: "“Can someone resend the Airbnb link?”",
-    fix: "Pinned",
-    demo: <VoteDemo />,
+    fix: "Pinned to day 1",
+    demo: <DepartureDemo />,
   },
   {
     phase: PHASES[2],
-    title: "On the ground, it's just today.",
-    accent: "just today.",
-    body: "Today's stops, receipt-scan splits — and it all works with zero bars.",
+    title: "You're there. Look up from the phone.",
+    accent: "the phone.",
+    body: "Today's stops on one card, the lunch bill split before dessert — even with zero bars in the metro.",
     pain: "“Who paid for the taxi?”",
-    fix: "Logged",
-    demo: <ExpenseDemo />,
+    fix: "Logged, ¥3,100 each",
+    demo: <LiveDemo />,
   },
   {
     phase: PHASES[3],
-    title: "And then — it gets an ending.",
-    accent: "an ending.",
-    body: "Photos, awards, the final settle-up. One recap the crew actually shares.",
+    title: "Don't let it end in “send pics pls”.",
+    accent: "“send pics pls”.",
+    body: "Photos, crew awards, the last settle-up — one Wrap so good the group chat's final message is “where next?”",
     pain: "“Send me the photos!!”",
-    fix: "In the Wrap",
+    fix: "All in the Wrap",
     demo: <WrapDemo />,
   },
 ];
@@ -136,7 +136,17 @@ export function VisionLanding() {
   const active = PHASES[activeIdx];
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
+    <div className="relative min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
+      {/* film grain — premium texture, fixed so it never scrolls */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-[5] opacity-[0.05] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+      <style>{`@keyframes vision-shimmer { from { background-position: 200% 0; } to { background-position: -50% 0; } }`}</style>
       {/* ── nav ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
@@ -160,15 +170,19 @@ export function VisionLanding() {
       <section className="relative overflow-hidden px-6 pt-24 sm:pt-32 pb-16 text-center">
         <HeroAurora />
         <div className="relative max-w-4xl mx-auto">
-          <TicketStamp clock="PAX 04" label="Boarding" hue="#8B7CFF" />
+          <TicketStamp clock="PAX 04" label="Now boarding" hue="#8B7CFF" />
           <h1 className="mt-8 text-[44px] sm:text-7xl font-semibold tracking-[-0.045em] leading-[1.02]">
-            Every trip lives{" "}
-            <span className="text-[#8B7CFF]">four lives</span>.
+            Pack <span className="text-[#E0B252]">sawa</span>
+            <span className="text-white/40">.</span>
             <br />
-            <span className="text-white/40">One app lives them with you.</span>
+            <span className="text-white/40">Travel</span>{" "}
+            <span className="text-[#8B7CFF]">every phase</span>{" "}
+            <span className="text-white/40">of it together.</span>
           </h1>
           <p className="mt-6 text-lg text-white/55 max-w-xl mx-auto">
-            Scroll — the page goes where your trip goes.
+            <span className="text-[#E8CB86] font-semibold">sawa · سوا</span>
+            <span className="text-white/40"> means together — </span>
+            and a trip lives four lives. Scroll; the page travels with you.
           </p>
           <div className="mt-9 flex items-center justify-center gap-3">
             <Link
@@ -222,8 +236,21 @@ export function VisionLanding() {
           return (
             <section
               key={c.phase.key}
-              className="relative border-t border-white/[0.06] overflow-hidden"
+              className="relative overflow-hidden"
             >
+              {/* flight-path connector from the previous chapter */}
+              <div aria-hidden className="relative flex flex-col items-center pt-2">
+                <div
+                  className="w-px h-14"
+                  style={{
+                    backgroundImage: `repeating-linear-gradient(${""}to bottom, ${c.phase.hue}66 0 6px, transparent 6px 12px)`,
+                  }}
+                />
+                <AirplaneTakeoff
+                  className="mt-1 w-4 h-4 rotate-90"
+                  style={{ color: c.phase.hue, opacity: 0.7 }}
+                />
+              </div>
               {/* phase-tinted zone */}
               <div
                 aria-hidden
@@ -290,6 +317,8 @@ export function VisionLanding() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-80px" }}
                   transition={{ duration: 0.7 }}
+                  className="rounded-[24px]"
+                  style={{ boxShadow: `0 40px 140px -50px ${c.phase.hue}66` }}
                 >
                   {c.demo}
                 </motion.div>
@@ -307,6 +336,17 @@ export function VisionLanding() {
           </p>
           <Link href="/auth/signup" className="group block">
             <div className="relative rounded-3xl border border-[#8B7CFF]/40 bg-[#161616] overflow-hidden transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_20px_60px_-20px_rgba(139,124,255,0.45)]">
+              {/* holographic shimmer sweep */}
+              <div
+                aria-hidden
+                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 40%, rgba(139,124,255,0.14) 46%, rgba(62,197,183,0.12) 52%, rgba(224,178,82,0.12) 58%, transparent 64%)",
+                  backgroundSize: "250% 100%",
+                  animation: "vision-shimmer 2.4s linear infinite",
+                }}
+              />
               {/* notches on the seam */}
               <div aria-hidden className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-6 rounded-full bg-[#0D0D0D] border border-[#8B7CFF]/40" />
               <div aria-hidden className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 rounded-full bg-[#0D0D0D] border border-[#8B7CFF]/40" />
@@ -319,8 +359,8 @@ export function VisionLanding() {
                       Paxawa · pax + sawa سوا
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/30">
-                    travelers, together
+                  <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#E8CB86]/80">
+                    Pack sawa · نروح سوا
                   </span>
                 </div>
                 <div className="mt-7 grid grid-cols-3 gap-4 text-start">
@@ -370,7 +410,7 @@ export function VisionLanding() {
 
       <footer className="border-t border-white/[0.06] py-10 px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 text-xs text-white/40">
-          <span>© {new Date().getFullYear()} Paxawa — travelers, together</span>
+          <span>© {new Date().getFullYear()} Paxawa — Pack sawa · نروح سوا</span>
           <Link href="/" className="hover:text-white transition-colors">
             ← Current landing
           </Link>
