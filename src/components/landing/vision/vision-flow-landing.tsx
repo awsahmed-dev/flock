@@ -102,43 +102,8 @@ export function VisionFlowLanding() {
         </div>
       </header>
 
-      {/* compact hero */}
-      <section className="relative overflow-hidden px-6 pt-20 sm:pt-28 pb-14 text-center">
-        <div aria-hidden className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute -top-40 left-1/4 w-[40rem] h-[40rem] rounded-full blur-[130px]"
-            style={{ background: light ? "rgba(109,90,230,0.14)" : "rgba(139,124,255,0.22)" }}
-          />
-          <div
-            className="absolute top-10 right-1/4 w-[32rem] h-[32rem] rounded-full blur-[120px]"
-            style={{ background: light ? "rgba(224,178,82,0.16)" : "rgba(224,178,82,0.12)" }}
-          />
-        </div>
-        <div className="relative max-w-4xl mx-auto">
-          <TicketStamp clock="PAX 04" label="Now boarding" hue={light ? "#6D5AE6" : "#8B7CFF"} t={t} />
-          <h1 className="mt-8 text-[42px] sm:text-6xl font-semibold tracking-[-0.045em] leading-[1.02]">
-            Pack <span style={{ color: light ? "#8F6400" : "#E0B252" }}>sawa</span>
-            <span style={{ color: t.faint }}>.</span>{" "}
-            <span style={{ color: t.faint }}>Watch the trip</span>{" "}
-            <span style={{ color: light ? "#6D5AE6" : "#8B7CFF" }}>play out.</span>
-          </h1>
-          <p className="mt-5 text-lg max-w-xl mx-auto" style={{ color: t.sub }}>
-            Four phases, four little movies. They play as you pass.
-          </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
-            <Link
-              href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#6D5AE6] text-white hover:bg-[#5B4BD9] px-5 py-3 text-sm font-bold transition-colors"
-            >
-              Start a trip
-              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-            </Link>
-            <span className="text-[13px]" style={{ color: t.faint }}>
-              Free · English + العربية
-            </span>
-          </div>
-        </div>
-      </section>
+      {/* ── trailer hero: the whole trip plays on loop ─────────────── */}
+      <HeroTrailer t={t} light={light} />
 
       {/* journey — normal height, autoplaying chapters */}
       <div ref={journeyRef} className="relative">
@@ -360,6 +325,149 @@ function AutoChapter({
         >
           {demo}
         </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+/**
+ * The hero is the trailer: a live phone that auto-cycles through all
+ * four phases — each demo plays its frames, the stamp flips
+ * T−89 → T−7 → DAY 3 → HOME, and the glow shifts hue. Background
+ * glows lean toward the cursor for depth.
+ */
+function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
+  const [idx, setIdx] = useState(0);
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const CYCLE = 5200;
+    const SWEEP = 3800;
+    let phase = 0;
+    let startedAt = performance.now();
+    const timer = setInterval(() => {
+      const el = performance.now() - startedAt;
+      if (el >= CYCLE) {
+        phase = (phase + 1) % PHASES.length;
+        startedAt = performance.now();
+        setIdx(phase);
+        setP(0);
+        return;
+      }
+      setP(Math.round(Math.min(1, el / SWEEP) * 50) / 50);
+    }, 40);
+    return () => clearInterval(timer);
+  }, []);
+
+  // cursor-reactive glows (plain listeners — no rAF dependency)
+  const [cur, setCur] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      setCur({
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
+      });
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
+
+  const phase = PHASES[idx];
+  const hue = light ? phase.hue : phase.hueDark;
+  const demo =
+    phase.key === "planning" ? (
+      <NowDemo progress={p} />
+    ) : phase.key === "departure" ? (
+      <DepartureDemo progress={p} />
+    ) : phase.key === "live" ? (
+      <LiveDemo progress={p} />
+    ) : (
+      <WrapDemo progress={p} />
+    );
+
+  return (
+    <section className="relative overflow-hidden px-6 pt-16 sm:pt-24 pb-16">
+      {/* cursor-reactive hue field, tinted by the playing phase */}
+      <div aria-hidden className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute -top-40 left-1/4 w-[42rem] h-[42rem] rounded-full blur-[130px] transition-[background] duration-700"
+          style={{
+            background: `${hue}${light ? "24" : "30"}`,
+            transform: `translate(${cur.x * 60}px, ${cur.y * 40}px)`,
+            transition: "transform 0.6s cubic-bezier(0.22,1,0.36,1), background 0.7s",
+          }}
+        />
+        <div
+          className="absolute top-16 right-[12%] w-[34rem] h-[34rem] rounded-full blur-[120px]"
+          style={{
+            background: light ? "rgba(224,178,82,0.18)" : "rgba(224,178,82,0.12)",
+            transform: `translate(${cur.x * -35}px, ${cur.y * -24}px)`,
+            transition: "transform 0.8s cubic-bezier(0.22,1,0.36,1)",
+          }}
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        {/* left — the claim */}
+        <div className="text-center lg:text-start">
+          <TicketStamp clock="PAX 04" label="Now boarding" hue={light ? "#6D5AE6" : "#8B7CFF"} t={t} />
+          <h1 className="mt-7 text-[42px] sm:text-6xl xl:text-7xl font-semibold tracking-[-0.045em] leading-[1.02]">
+            Pack <span style={{ color: light ? "#8F6400" : "#E0B252" }}>sawa</span>
+            <span style={{ color: t.faint }}>.</span>
+            <br />
+            <span style={{ color: t.faint }}>The whole trip,</span>
+            <br />
+            <span style={{ color: light ? "#6D5AE6" : "#8B7CFF" }}>one home.</span>
+          </h1>
+          <p className="mt-6 text-lg max-w-md mx-auto lg:mx-0" style={{ color: t.sub }}>
+            <span className="font-semibold" style={{ color: light ? "#8F6400" : "#E8CB86" }}>
+              sawa · سوا
+            </span>{" "}
+            means together — watch a trip play out on the right.
+          </p>
+          <div className="mt-9 flex items-center justify-center lg:justify-start gap-3 flex-wrap">
+            <Link
+              href="/auth/signup"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#6D5AE6] text-white hover:bg-[#5B4BD9] px-6 py-3.5 text-base font-bold transition-all hover:-translate-y-0.5"
+              style={{ boxShadow: light ? "0 14px 40px -14px rgba(109,90,230,0.55)" : "0 14px 40px -14px rgba(139,124,255,0.45)" }}
+            >
+              Start a trip
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+            </Link>
+            <span className="text-[13px]" style={{ color: t.faint }}>
+              Free · English + العربية
+            </span>
+          </div>
+        </div>
+
+        {/* right — the trailer phone */}
+        <div className="relative mx-auto w-full max-w-[380px]">
+          {/* phase stamp above the phone, flipping with the loop */}
+          <div className="mb-4 flex items-center justify-between">
+            <TicketStamp clock={phase.clock} label={phase.label} hue={hue} t={t} />
+            <div className="flex items-center gap-1.5">
+              {PHASES.map((ph, n) => (
+                <span
+                  key={ph.key}
+                  className="h-1.5 rounded-full transition-all duration-400"
+                  style={{
+                    width: n === idx ? 20 : 6,
+                    background: n === idx ? hue : t.line,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div
+            className="rounded-[24px] transition-shadow duration-700"
+            style={{ boxShadow: `0 50px 140px -50px ${hue}${light ? "80" : "70"}` }}
+          >
+            {demo}
+          </div>
+          <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: t.faint }}>
+            The trip, playing · scroll for the story
+          </p>
+        </div>
       </div>
     </section>
   );
