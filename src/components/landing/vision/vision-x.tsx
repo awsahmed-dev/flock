@@ -39,28 +39,28 @@ const STATIONS = [
   {
     lead: "File the flight plan, ",
     accent: "sawa.",
-    body: "Votes land on the radar, a heading locks, four seats fill — the trip stops being a maybe.",
+    body: "Votes land, day chips fill, readiness climbs — the trip stops being a maybe.",
     rx: "“so… are we actually going??”",
     tx: "CLEARED ✈",
   },
   {
     lead: "Every switch flips ",
     accent: "green.",
-    body: "Docs pinned, stays confirmed — and the panel calls out the one bag still unpacked, by name.",
+    body: "Docs pinned to day one, weather in — and the board calls out the one bag still unpacked, by name.",
     rx: "“can someone resend the airbnb link?”",
     tx: "PINNED · ROW 1",
   },
   {
     lead: "Burn the fuel ",
     accent: "evenly.",
-    body: "One tank per traveler. Tonight's ¥12,400 splits itself before the change hits the tray.",
+    body: "Tonight's ¥12,400 splits itself four ways before the change hits the tray — even offline.",
     rx: "“who paid for the taxi?”",
     tx: "EVEN BURN · ¥3,100",
   },
   {
     lead: "Play back the ",
     accent: "whole flight.",
-    body: "Five days decoded into one reel — settled, stamped, and already asking where next.",
+    body: "Five days become one reel — settled, shared, and already asking where next.",
     rx: "“send pics pls”",
     tx: "REEL SHARED ✦",
   },
@@ -304,327 +304,360 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
   );
 }
 
-/* ── cockpit instruments — the product, shown as flight hardware ─────── */
+/* ── real app screens, light mode — what a user actually sees ────────── */
 
-/** shared glass panel chrome for every instrument */
-function Instrument({
+const CREW = [
+  { ch: "A", hue: "#6D5AE6" },
+  { ch: "S", hue: "#0C7A6F" },
+  { ch: "T", hue: "#D06A3A" },
+  { ch: "P", hue: "#8F6400" },
+];
+
+const SHOT = {
+  canvas: "#F6F5F1",
+  card: "#FFFFFF",
+  ink: "#141414",
+  sub: "rgba(20,20,20,0.55)",
+  faint: "rgba(20,20,20,0.38)",
+  line: "rgba(20,20,20,0.08)",
+};
+
+/** light-mode phone chrome shared by all four screens */
+function AppShot({
+  header,
   title,
-  tag,
+  chip,
   hue,
   children,
 }: {
+  header: string;
   title: string;
-  tag: string;
+  chip: string;
   hue: string;
   children: React.ReactNode;
 }) {
   return (
     <div
-      className="rounded-[22px] border backdrop-blur-xl overflow-hidden"
+      className="rounded-[26px] border overflow-hidden"
       style={{
-        background: "linear-gradient(165deg, rgba(9,13,24,0.82), rgba(9,13,24,0.68))",
-        borderColor: "rgba(255,255,255,0.14)",
-        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.12), 0 44px 130px -40px ${hue}99`,
+        background: SHOT.canvas,
+        borderColor: "rgba(20,20,20,0.12)",
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.8), 0 44px 130px -40px ${hue}88`,
       }}
     >
-      <div
-        className="flex items-center justify-between px-4 py-2.5 border-b"
-        style={{ borderColor: "rgba(255,255,255,0.09)" }}
-      >
-        <span className="text-[10px] font-black tracking-[0.22em] uppercase text-white/55">{title}</span>
-        <span
-          className="rounded px-1.5 py-0.5 text-[9px] font-black tracking-[0.16em] uppercase"
-          style={{ color: hue === "#0C7A6F" ? "#3EC5B7" : hue === "#B4441B" ? "#FF8A5C" : hue === "#6D5AE6" ? "#8B7CFF" : hue, background: "rgba(255,255,255,0.07)" }}
-        >
-          {tag}
+      {/* status bar */}
+      <div className="flex items-center justify-between px-5 pt-2.5">
+        <span className="text-[9px] font-bold tabular-nums" style={{ color: SHOT.faint }}>
+          9:41
+        </span>
+        <span className="flex items-end gap-[2px]">
+          {[3, 5, 7].map((h) => (
+            <span key={h} className="w-[3px] rounded-sm" style={{ height: h, background: SHOT.faint }} />
+          ))}
         </span>
       </div>
-      <div className="p-4">{children}</div>
+      {/* app header */}
+      <div className="flex items-center justify-between px-4 pt-2 pb-2.5">
+        <div>
+          <p className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: SHOT.faint }}>
+            {header}
+          </p>
+          <p className="text-[14px] font-bold leading-tight" style={{ color: SHOT.ink }}>
+            {title}
+          </p>
+        </div>
+        <span
+          className="rounded-full px-2.5 py-1 text-[10px] font-bold"
+          style={{ color: hue, background: `${hue}14`, border: `1px solid ${hue}33` }}
+        >
+          {chip}
+        </span>
+      </div>
+      <div className="px-3 pb-3 flex flex-col gap-2">{children}</div>
     </div>
   );
 }
 
-const CREW = [
-  { ch: "A", hue: "#8B7CFF" },
-  { ch: "S", hue: "#3EC5B7" },
-  { ch: "T", hue: "#FF8A5C" },
-  { ch: "P", hue: "#E0B252" },
-];
-
-/** PLAN — destination votes land on a radar; a heading locks */
-function RadarInstrument({ p }: { p: number }) {
-  const votes = [
-    { label: "Tokyo", n: 3, x: 62, y: 34, at: 0.18, hue: "#8B7CFF" },
-    { label: "Bali", n: 1, x: 28, y: 62, at: 0.34, hue: "#3EC5B7" },
-    { label: "Seoul", n: 0, x: 74, y: 70, at: 0.48, hue: "#FF8A5C" },
-  ];
-  const locked = p >= 0.72;
+/** small white module card inside a shot */
+function ShotCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <Instrument title="Flight plan" tag="PAX 04" hue="#6D5AE6">
-      <div className="relative aspect-square rounded-full border border-white/15 mx-auto max-w-[240px]">
-        {/* rings + crosshair */}
-        <div className="absolute inset-[18%] rounded-full border border-white/10" />
-        <div className="absolute inset-[36%] rounded-full border border-white/10" />
-        <div className="absolute inset-y-0 left-1/2 w-px bg-white/[0.07]" />
-        <div className="absolute inset-x-0 top-1/2 h-px bg-white/[0.07]" />
-        {/* sweep */}
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: "conic-gradient(from 0deg, rgba(139,124,255,0.32), transparent 24%)",
-            animation: "vx-spin 4.2s linear infinite",
-          }}
-        />
-        {/* vote blips */}
-        {votes.map((v) => (
-          <div
-            key={v.label}
-            className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500"
-            style={{ left: `${v.x}%`, top: `${v.y}%`, opacity: p >= v.at ? 1 : 0, transform: `translate(-50%,-50%) scale(${p >= v.at ? 1 : 0.5})` }}
-          >
-            <span className="relative flex w-2.5 h-2.5">
-              <span className="absolute inline-flex w-full h-full rounded-full animate-ping" style={{ background: `${v.hue}66` }} />
-              <span className="relative inline-flex w-2.5 h-2.5 rounded-full" style={{ background: v.hue }} />
-            </span>
-            <span className="absolute start-3.5 top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-bold text-white/85">
-              {v.label} <span className="text-white/45">· {v.n} {v.n === 1 ? "vote" : "votes"}</span>
-            </span>
-          </div>
-        ))}
-        {/* locked stamp */}
-        <div
-          className="absolute inset-0 flex items-center justify-center transition-all duration-500"
-          style={{ opacity: locked ? 1 : 0, transform: `rotate(-8deg) scale(${locked ? 1 : 1.4})` }}
-        >
-          <span
-            className="rounded-md border-2 px-3 py-1 text-[13px] font-black tracking-[0.18em] uppercase backdrop-blur-sm"
-            style={{ color: "#8B7CFF", borderColor: "#8B7CFF", background: "rgba(9,13,24,0.55)" }}
-          >
-            HDG 092° · Tokyo
-          </span>
-        </div>
-      </div>
-      {/* crew manifest */}
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Souls on board</span>
-        <div className="flex -space-x-1.5">
-          {CREW.map((c, i) => (
-            <span
-              key={c.ch}
-              className="w-6 h-6 rounded-full border border-white/25 flex items-center justify-center text-[10px] font-black text-white transition-all duration-400"
-              style={{
-                background: c.hue,
-                opacity: p >= 0.1 + i * 0.13 ? 1 : 0,
-                transform: p >= 0.1 + i * 0.13 ? "translateY(0)" : "translateY(8px)",
-              }}
-            >
-              {c.ch}
-            </span>
-          ))}
-        </div>
-      </div>
-    </Instrument>
+    <div
+      className="rounded-2xl border p-3 transition-all duration-500"
+      style={{ background: SHOT.card, borderColor: SHOT.line, ...style }}
+    >
+      {children}
+    </div>
   );
 }
 
-/** PACK — overhead switch panel; the last switch is somebody's bag */
-function PreflightInstrument({ p }: { p: number }) {
-  const rows = [
-    { label: "Docs pinned to day 1", at: 0.18 },
-    { label: "Stays confirmed · 2/2", at: 0.38 },
-    { label: "Offline pack downloaded", at: 0.58 },
-  ];
-  const bagOn = p >= 0.86;
+const appear = (p: number, at: number): React.CSSProperties => ({
+  opacity: p >= at ? 1 : 0,
+  transform: p >= at ? "translateY(0)" : "translateY(10px)",
+});
+
+/** PLAN — the NOW planning cockpit */
+function PlanShot({ p }: { p: number }) {
+  const readiness = Math.round(Math.max(0, Math.min(1, (p - 0.15) / 0.5)) * 57);
   return (
-    <Instrument title="Pre-flight checks" tag="T−7" hue="#0C7A6F">
-      <div className="flex flex-col gap-2.5">
-        {rows.map((r) => {
-          const on = p >= r.at;
-          return (
-            <div
-              key={r.label}
-              className="flex items-center justify-between rounded-xl border px-3 py-2.5"
-              style={{ borderColor: "rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.04)" }}
-            >
-              <span className="text-[12px] font-semibold" style={{ color: on ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)" }}>
-                {r.label}
-              </span>
-              <span
-                className="relative w-9 h-5 rounded-full transition-colors duration-300"
-                style={{ background: on ? "#3EC5B7" : "rgba(255,255,255,0.14)" }}
-              >
-                <span
-                  className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300"
-                  style={{ insetInlineStart: on ? 18 : 2 }}
-                />
-              </span>
-            </div>
-          );
-        })}
-        {/* the Tariq row */}
-        <div
-          className="flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors duration-300"
-          style={{
-            borderColor: bagOn ? "rgba(62,197,183,0.4)" : "rgba(224,178,82,0.45)",
-            background: bagOn ? "rgba(62,197,183,0.08)" : "rgba(224,178,82,0.09)",
-          }}
-        >
-          <span className="text-[12px] font-semibold text-white/90 flex items-center gap-2">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ background: bagOn ? "#3EC5B7" : "#E0B252", animation: bagOn ? "none" : "vx-blink 0.9s ease-in-out infinite" }}
-            />
-            Tariq&apos;s bag 🦖
-          </span>
-          <span
-            className="text-[10px] font-black tracking-[0.14em] uppercase"
-            style={{ color: bagOn ? "#3EC5B7" : "#E0B252" }}
-          >
-            {bagOn ? "Packed" : "Nagging…"}
-          </span>
+    <AppShot header="Now · Planning" title="Tokyo 🗼" chip="In 106 days" hue="#6D5AE6">
+      <ShotCard style={appear(p, 0.08)}>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[11px] font-bold" style={{ color: SHOT.ink }}>
+            Trip readiness
+          </p>
+          <p className="text-[11px] font-black tabular-nums" style={{ color: "#4C7A2F" }}>
+            {readiness}%
+          </p>
         </div>
-        <p
-          className="text-center text-[10px] font-black tracking-[0.22em] uppercase pt-1 transition-opacity duration-500"
-          style={{ color: "#3EC5B7", opacity: p >= 0.92 ? 1 : 0 }}
-        >
-          All systems sawa
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(20,20,20,0.08)" }}>
+          <div
+            className="h-full me-auto rounded-full transition-[width] duration-200"
+            style={{ width: `${readiness}%`, background: "#4C7A2F" }}
+          />
+        </div>
+        <p className="mt-1.5 text-[9.5px]" style={{ color: SHOT.sub }}>
+          Dates ✓ · Crew ✓ · Stays ✓ · Packing 5%
         </p>
-      </div>
-    </Instrument>
-  );
-}
+      </ShotCard>
 
-/** SPLIT — one receipt burns evenly into four tanks */
-function FuelInstrument({ p }: { p: number }) {
-  const fill = Math.max(0, Math.min(1, (p - 0.4) / 0.4));
-  return (
-    <Instrument title="Fuel · trip money" tag="DAY 3" hue="#B4441B">
-      {/* the receipt drops in */}
-      <div
-        className="rounded-xl border px-3 py-2.5 flex items-center justify-between transition-all duration-500"
-        style={{
-          borderColor: "rgba(255,255,255,0.11)",
-          background: "rgba(255,255,255,0.05)",
-          opacity: p >= 0.15 ? 1 : 0,
-          transform: p >= 0.15 ? "translateY(0) rotate(0deg)" : "translateY(-14px) rotate(2deg)",
-        }}
-      >
-        <div>
-          <p className="text-[12px] font-bold text-white/90">Izakaya, round two 🏮</p>
-          <p className="text-[10px] text-white/45">scanned from a crumpled receipt</p>
-        </div>
-        <span className="text-[15px] font-black tabular-nums" style={{ color: "#FF8A5C" }}>
-          ¥12,400
-        </span>
-      </div>
-
-      {/* split manifold */}
-      <div className="my-2.5 flex justify-center">
-        <span className="text-white/35 text-[11px]" style={{ opacity: p >= 0.35 ? 1 : 0 }}>
-          ▼ even burn ▼
-        </span>
-      </div>
-
-      {/* four tanks */}
-      <div className="grid grid-cols-4 gap-2">
-        {CREW.map((c) => (
-          <div key={c.ch} className="flex flex-col items-center gap-1.5">
-            <div
-              className="relative w-full h-16 rounded-lg border overflow-hidden"
-              style={{ borderColor: "rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)" }}
-            >
-              <div
-                className="absolute inset-x-0 bottom-0 transition-[height] duration-200"
-                style={{ height: `${Math.round(fill * 62)}%`, background: `${c.hue}B3` }}
-              />
-              <span className="absolute inset-x-0 top-1.5 text-center text-[10px] font-black text-white/85">{c.ch}</span>
-            </div>
-            <span className="text-[9px] font-bold tabular-nums text-white/60">
-              {fill >= 1 ? "¥3,100" : "…"}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <p
-        className="mt-3 text-center text-[10px] font-black tracking-[0.22em] uppercase transition-opacity duration-500"
-        style={{ color: "#FF8A5C", opacity: p >= 0.9 ? 1 : 0 }}
-      >
-        Settled · zero IOUs aboard
-      </p>
-    </Instrument>
-  );
-}
-
-/** WRAP — the black box plays the trip back as a starred tape */
-function BlackBoxInstrument({ p }: { p: number }) {
-  const days = ["D1", "D2", "D3", "D4", "D5"];
-  const stars = [
-    { d: 0, note: "wheels up 🛫" },
-    { d: 1, note: "alley ramen 🍜" },
-    { d: 2, note: "teamLab ✨" },
-    { d: 4, note: "0 IOUs" },
-  ];
-  const head = Math.min(1, p / 0.8);
-  return (
-    <Instrument title="Flight recorder" tag="HOME" hue="#E0B252">
-      {/* tape with playhead */}
-      <div className="relative h-24 rounded-xl border overflow-hidden" style={{ borderColor: "rgba(255,255,255,0.11)", background: "rgba(255,255,255,0.03)" }}>
-        {/* waveform */}
-        <div className="absolute inset-x-3 bottom-2 flex items-end gap-[3px] h-8">
-          {Array.from({ length: 34 }, (_, i) => (
+      <ShotCard style={appear(p, 0.32)}>
+        <p className="text-[9px] font-black tracking-[0.16em] uppercase mb-2" style={{ color: SHOT.faint }}>
+          Plan days
+        </p>
+        <div className="flex gap-1.5">
+          {[
+            { d: "Sun 8", n: 3, hue: "#D06A3A" },
+            { d: "Mon 9", n: 2, hue: "#0C7A6F" },
+            { d: "Tue 10", n: 2, hue: "#6D5AE6" },
+          ].map((c, i) => (
             <span
-              key={i}
-              className="flex-1 rounded-sm transition-colors duration-300"
-              style={{
-                height: `${25 + ((i * 37) % 60)}%`,
-                background: i / 34 <= head ? "#E0B25299" : "rgba(255,255,255,0.10)",
-              }}
-            />
+              key={c.d}
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all duration-400"
+              style={{ borderColor: SHOT.line, color: SHOT.ink, ...appear(p, 0.36 + i * 0.09) }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.hue }} />
+              {c.d} <span style={{ color: SHOT.faint }}>· {c.n}</span>
+            </span>
           ))}
         </div>
-        {/* star pins pop as the head passes their day */}
-        {stars.map((s) => (
-          <div
-            key={s.d}
-            className="absolute top-2 -translate-x-1/2 flex flex-col items-center transition-all duration-400"
-            style={{
-              left: `${10 + s.d * 20}%`,
-              opacity: head >= (s.d + 0.5) / 5 ? 1 : 0,
-              transform: `translateX(-50%) scale(${head >= (s.d + 0.5) / 5 ? 1 : 0.4})`,
-            }}
-          >
-            <span style={{ color: "#E0B252" }}>✦</span>
-            <span className="mt-0.5 text-[8.5px] whitespace-nowrap text-white/65">{s.note}</span>
+      </ShotCard>
+
+      <ShotCard style={appear(p, 0.66)}>
+        <div className="flex items-center justify-between">
+          <div className="flex -space-x-1.5">
+            {CREW.map((c, i) => (
+              <span
+                key={c.ch}
+                className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-black text-white transition-all duration-400"
+                style={{ background: c.hue, ...appear(p, 0.7 + i * 0.06) }}
+              >
+                {c.ch}
+              </span>
+            ))}
           </div>
-        ))}
-        {/* playhead */}
-        <div className="absolute inset-y-0 w-px bg-[#E0B252] transition-[left] duration-200" style={{ left: `${6 + head * 88}%` }} />
-      </div>
-      {/* day ticks */}
-      <div className="mt-2 flex justify-between px-1">
-        {days.map((d, i) => (
-          <span key={d} className="text-[9px] font-black tracking-wider" style={{ color: head >= i / 5 ? "#E0B252" : "rgba(255,255,255,0.3)" }}>
-            {d}
+          <span className="text-[10.5px] font-bold" style={{ color: SHOT.sub, ...appear(p, 0.9) }}>
+            4 going — it&apos;s real ✈
           </span>
-        ))}
-      </div>
-      {/* verdict */}
-      <div
-        className="mt-3 rounded-xl border px-3 py-2.5 flex items-center justify-between transition-all duration-500"
+        </div>
+      </ShotCard>
+    </AppShot>
+  );
+}
+
+/** PACK — the departure board */
+function PackShot({ p }: { p: number }) {
+  const packed = p >= 0.84;
+  return (
+    <AppShot header="Departure board" title="Tokyo 🗼" chip="T−7" hue="#0C7A6F">
+      <ShotCard style={appear(p, 0.08)}>
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-bold" style={{ color: SHOT.ink }}>
+            Saturday · landing day
+          </p>
+          <p className="text-[11px] font-bold" style={{ color: SHOT.sub }}>
+            21° ⛅
+          </p>
+        </div>
+        <p className="mt-0.5 text-[9.5px]" style={{ color: SHOT.sub }}>
+          perfect walking weather, pack light
+        </p>
+      </ShotCard>
+
+      {[
+        { label: "Airbnb check-in", note: "pinned to Day 1", at: 0.3 },
+        { label: "JR passes", note: "in the doc wallet", at: 0.48 },
+      ].map((r) => (
+        <ShotCard key={r.label} style={appear(p, r.at)}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold" style={{ color: SHOT.ink }}>
+                {r.label}
+              </p>
+              <p className="text-[9.5px]" style={{ color: SHOT.sub }}>
+                {r.note}
+              </p>
+            </div>
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white"
+              style={{ background: "#0C7A6F" }}
+            >
+              ✓
+            </span>
+          </div>
+        </ShotCard>
+      ))}
+
+      <ShotCard
         style={{
-          borderColor: "rgba(224,178,82,0.4)",
-          background: "rgba(224,178,82,0.08)",
-          opacity: p >= 0.88 ? 1 : 0,
-          transform: p >= 0.88 ? "translateY(0)" : "translateY(10px)",
+          ...appear(p, 0.62),
+          borderColor: packed ? "rgba(12,122,111,0.35)" : "rgba(143,100,0,0.35)",
+          background: packed ? "rgba(12,122,111,0.06)" : "rgba(224,178,82,0.10)",
         }}
       >
-        <span className="text-[11px] font-bold text-white/90">Flight complete — came home as one.</span>
-        <span className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: "#E0B252" }}>
-          Next: <span style={{ animation: "vx-blink 1.1s step-end infinite" }}>_?</span>
-        </span>
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-bold" style={{ color: SHOT.ink }}>
+            Tariq&apos;s bag 🦖
+          </p>
+          <span
+            className="text-[9px] font-black tracking-[0.14em] uppercase"
+            style={{ color: packed ? "#0C7A6F" : "#8F6400" }}
+          >
+            {packed ? "Packed ✓" : "3 items left…"}
+          </span>
+        </div>
+        <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(20,20,20,0.08)" }}>
+          <div
+            className="h-full me-auto rounded-full transition-[width] duration-300"
+            style={{
+              width: `${Math.round(Math.max(0.05, Math.min(1, (p - 0.62) / 0.26)) * 100)}%`,
+              background: packed ? "#0C7A6F" : "#E0B252",
+            }}
+          />
+        </div>
+      </ShotCard>
+    </AppShot>
+  );
+}
+
+/** SPLIT — the money screen */
+function SplitShot({ p }: { p: number }) {
+  const split = p >= 0.55;
+  return (
+    <AppShot header="Money" title="Day 3 · Tokyo" chip="Live" hue="#D06A3A">
+      <ShotCard style={appear(p, 0.08)}>
+        <p className="text-[9px] font-black tracking-[0.16em] uppercase" style={{ color: SHOT.faint }}>
+          Your balance
+        </p>
+        <p className="mt-0.5 text-[19px] font-black tabular-nums" style={{ color: "#0C7A6F" }}>
+          +¥3,100
+        </p>
+        <p className="text-[9.5px]" style={{ color: SHOT.sub }}>
+          you&apos;re owed — no chasing needed
+        </p>
+      </ShotCard>
+
+      <ShotCard style={appear(p, 0.3)}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold" style={{ color: SHOT.ink }}>
+              Izakaya, round two 🏮
+            </p>
+            <p className="text-[9.5px]" style={{ color: SHOT.sub }}>
+              scanned from a crumpled receipt
+            </p>
+          </div>
+          <span className="text-[14px] font-black tabular-nums" style={{ color: "#D06A3A" }}>
+            ¥12,400
+          </span>
+        </div>
+        {/* the split happens */}
+        <div className="mt-2.5 grid grid-cols-4 gap-1.5">
+          {CREW.map((c, i) => (
+            <div
+              key={c.ch}
+              className="rounded-lg border px-1 py-1.5 text-center transition-all duration-400"
+              style={{ borderColor: SHOT.line, ...appear(p, 0.55 + i * 0.07) }}
+            >
+              <span
+                className="mx-auto mb-1 w-4.5 h-4.5 rounded-full flex items-center justify-center text-[8px] font-black text-white"
+                style={{ background: c.hue, width: 18, height: 18 }}
+              >
+                {c.ch}
+              </span>
+              <span className="block text-[8.5px] font-bold tabular-nums" style={{ color: split ? SHOT.ink : SHOT.faint }}>
+                ¥3,100
+              </span>
+            </div>
+          ))}
+        </div>
+      </ShotCard>
+
+      <div
+        className="rounded-full border px-3 py-1.5 text-center text-[10px] font-black tracking-[0.12em] uppercase transition-all duration-500"
+        style={{
+          borderColor: "rgba(12,122,111,0.35)",
+          background: "rgba(12,122,111,0.08)",
+          color: "#0C7A6F",
+          ...appear(p, 0.9),
+        }}
+      >
+        Settled before dessert · zero IOUs
       </div>
-    </Instrument>
+    </AppShot>
+  );
+}
+
+/** WRAP — the recap */
+function WrapShot({ p }: { p: number }) {
+  const tiles = ["#6D5AE6", "#D06A3A", "#0C7A6F", "#E0B252", "#8F6400", "#B4441B"];
+  return (
+    <AppShot header="The Wrap" title="Tokyo, together" chip="Home" hue="#8F6400">
+      <ShotCard style={appear(p, 0.08)}>
+        <div className="grid grid-cols-3 gap-1.5">
+          {tiles.map((hue, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-lg transition-all duration-400"
+              style={{
+                background: `linear-gradient(135deg, ${hue}55, ${hue}22)`,
+                border: `1px solid ${hue}33`,
+                ...appear(p, 0.12 + i * 0.08),
+              }}
+            >
+              <span className="flex items-center justify-center h-full text-[11px]">
+                {["🛫", "🍜", "🗼", "✨", "🏮", "🫶"][i]}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ShotCard>
+
+      <ShotCard style={appear(p, 0.66)}>
+        <div className="flex items-center justify-between text-center">
+          {[
+            { n: "5", l: "days" },
+            { n: "23", l: "memories" },
+            { n: "¥0", l: "owed" },
+          ].map((s) => (
+            <div key={s.l} className="flex-1">
+              <p className="text-[15px] font-black tabular-nums" style={{ color: SHOT.ink }}>
+                {s.n}
+              </p>
+              <p className="text-[8.5px] font-bold uppercase tracking-[0.14em]" style={{ color: SHOT.faint }}>
+                {s.l}
+              </p>
+            </div>
+          ))}
+        </div>
+      </ShotCard>
+
+      <div
+        className="rounded-full px-3 py-2 text-center text-[10.5px] font-black transition-all duration-500"
+        style={{ background: "#141414", color: "#FFFFFF", ...appear(p, 0.88) }}
+      >
+        Where next? Start the sequel ✈
+      </div>
+    </AppShot>
   );
 }
 
@@ -924,13 +957,13 @@ export function VisionX() {
                 }}
               >
                 {station === 0 ? (
-                  <RadarInstrument p={demoP} />
+                  <PlanShot p={demoP} />
                 ) : station === 1 ? (
-                  <PreflightInstrument p={demoP} />
+                  <PackShot p={demoP} />
                 ) : station === 2 ? (
-                  <FuelInstrument p={demoP} />
+                  <SplitShot p={demoP} />
                 ) : (
-                  <BlackBoxInstrument p={demoP} />
+                  <WrapShot p={demoP} />
                 )}
               </div>
             </div>
