@@ -9,6 +9,7 @@ import {
   CheckCircle,
 } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
+import { frame, seg } from "./frame";
 
 /**
  * Departure-board demo — mirrors the Departure chapter beat for beat:
@@ -42,7 +43,8 @@ const ROWS = [
   },
 ];
 
-export function DepartureDemo() {
+export function DepartureDemo({ progress }: { progress?: number }) {
+  const crew = seg(progress, 0.7, 0.95);
   return (
     <DemoFrame toneClass="from-[#3EC5B7]/[0.08] to-transparent">
       <DemoHeader title="Departure · T−7" subtitle="Nothing left to a 2am panic" />
@@ -53,10 +55,7 @@ export function DepartureDemo() {
           return (
             <motion.div
               key={r.title}
-              initial={{ opacity: 0, x: 14 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.1 }}
+              {...frame(progress, 0.08 + i * 0.16, { opacity: 0, x: 14 }, { opacity: 1, x: 0 }, 0.1 + i * 0.1)}
               className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 ${
                 r.ok
                   ? "border-white/[0.06] bg-[#1A1A1A]"
@@ -96,10 +95,7 @@ export function DepartureDemo() {
 
         {/* crew readiness */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.55 }}
+          {...frame(progress, 0.72, { opacity: 0, y: 10 }, { opacity: 1, y: 0 }, 0.55)}
           className="mt-auto rounded-2xl bg-[#1A1A1A] border border-white/[0.06] px-3.5 py-3"
         >
           <div className="flex items-center justify-between mb-2">
@@ -107,13 +103,20 @@ export function DepartureDemo() {
             <p className="text-[12px] font-bold text-[#3EC5B7] tabular-nums">3 / 4</p>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: "75%" }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.65 }}
-              className="h-full me-auto rounded-full bg-[#3EC5B7]"
-            />
+            {progress === undefined ? (
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: "75%" }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.65 }}
+                className="h-full me-auto rounded-full bg-[#3EC5B7]"
+              />
+            ) : (
+              <div
+                className="h-full me-auto rounded-full bg-[#3EC5B7] transition-[width] duration-150"
+                style={{ width: `${Math.round(crew * 75)}%` }}
+              />
+            )}
           </div>
           <p className="mt-2 text-[11px] text-white/40">
             Tariq 🦖 still hasn&apos;t packed. Classic Tariq.

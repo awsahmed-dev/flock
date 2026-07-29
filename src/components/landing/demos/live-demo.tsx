@@ -8,6 +8,7 @@ import {
   CheckCircle,
 } from "@phosphor-icons/react/dist/ssr";
 import { DemoFrame, DemoHeader } from "./demo-frame";
+import { frame } from "./frame";
 
 /**
  * Live-day demo — mirrors the "on the trip" chapter beat for beat:
@@ -21,7 +22,7 @@ const STOPS = [
   { time: "19:30", name: "Omoide Yokocho", state: "next" as const },
 ];
 
-export function LiveDemo() {
+export function LiveDemo({ progress }: { progress?: number }) {
   return (
     <DemoFrame toneClass="from-[#FF8A5C]/[0.08] to-transparent">
       <DemoHeader title="Now · Day 3" subtitle="Tokyo — today, only" />
@@ -29,9 +30,7 @@ export function LiveDemo() {
       <div className="flex-1 px-4 py-4 flex flex-col gap-3 overflow-hidden">
         {/* offline banner — the Pocket Day promise, front and center */}
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...frame(progress, 0.05, { opacity: 0, y: -8 }, { opacity: 1, y: 0 })}
           className="flex items-center gap-2.5 rounded-2xl border border-[#E0B252]/30 bg-[#E0B252]/[0.08] px-3.5 py-2.5"
         >
           <CellSignalSlash className="w-4 h-4 shrink-0" style={{ color: "#E0B252" }} />
@@ -45,10 +44,7 @@ export function LiveDemo() {
           {STOPS.map((s, i) => (
             <motion.div
               key={s.name}
-              initial={{ opacity: 0, x: 12 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.15 + i * 0.1 }}
+              {...frame(progress, 0.22 + i * 0.18, { opacity: 0, x: 12 }, { opacity: 1, x: 0 }, 0.15 + i * 0.1)}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
                 s.state === "now" ? "bg-[#FF8A5C]/[0.1] border border-[#FF8A5C]/25" : ""
               }`}
@@ -86,10 +82,7 @@ export function LiveDemo() {
 
         {/* receipt just logged */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
+          {...frame(progress, 0.78, { opacity: 0, y: 12 }, { opacity: 1, y: 0 }, 0.5)}
           className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] px-3.5 py-3"
         >
           <div className="flex items-center gap-2.5">
@@ -110,9 +103,12 @@ export function LiveDemo() {
           </div>
         </motion.div>
 
-        <p className="mt-auto text-center text-[10px] text-white/30">
+        <motion.p
+          {...frame(progress, 0.94, { opacity: 0 }, { opacity: 1 })}
+          className="mt-auto text-center text-[10px] text-white/30"
+        >
           Nobody asked &ldquo;what&apos;s the plan?&rdquo; today. Nobody had to.
-        </p>
+        </motion.p>
       </div>
     </DemoFrame>
   );

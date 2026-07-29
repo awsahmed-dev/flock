@@ -170,7 +170,7 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans overflow-x-hidden max-w-full">
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans overflow-x-clip max-w-full">
         <LocaleProvider locale={locale} dict={dict}>
           <Providers>
             {children}

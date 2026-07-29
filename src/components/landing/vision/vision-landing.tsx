@@ -14,15 +14,9 @@
  *   real type scale, taller barcode.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  motion,
-  useScroll,
-  useSpring,
-  useTransform,
-  useMotionValueEvent,
-} from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import {
   ArrowRight,
   AirplaneTakeoff,
@@ -166,18 +160,28 @@ export function VisionLanding() {
   const heroY = useTransform(heroProgress, [0, 1], [0, -90]);
   const heroOpacity = useTransform(heroProgress, [0, 0.75], [1, 0.25]);
 
-  // ── trip clock: progress measured at viewport center ──
+  // ── trip clock: plain scroll listener (survives rAF throttling, works
+  //    from any load position) measuring progress at viewport center ──
   const journeyRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: journeyRef,
-    offset: ["start 0.5", "end 0.5"],
-  });
-  const fill = useSpring(scrollYProgress, { stiffness: 70, damping: 22 });
-  const fillPct = useTransform(fill, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
-  const [activeIdx, setActiveIdx] = useState(0);
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    setActiveIdx(Math.min(3, Math.max(0, Math.floor(v * 4 + 0.15))));
-  });
+  const [journeyP, setJourneyP] = useState(0);
+  useEffect(() => {
+    const el = journeyRef.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const center = window.innerHeight / 2;
+      const v = (center - r.top) / r.height;
+      setJourneyP(Math.min(1, Math.max(0, v)));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+  const activeIdx = Math.min(3, Math.max(0, Math.floor(journeyP * 4 + 0.12)));
   const active = PHASES[activeIdx];
   const activeHue = hueOf(active);
 
@@ -290,9 +294,9 @@ export function VisionLanding() {
               className="relative w-px h-64 overflow-hidden rounded-full"
               style={{ background: t.line }}
             >
-              <motion.div
-                className="absolute top-0 inset-x-0 w-full transition-colors duration-500"
-                style={{ height: fillPct, background: activeHue }}
+              <div
+                className="absolute top-0 inset-x-0 w-full transition-[height,background-color] duration-300 ease-out"
+                style={{ height: `${Math.round(journeyP * 100)}%`, background: activeHue }}
               />
             </div>
             <div className="mt-3 flex flex-col gap-2.5">
@@ -310,97 +314,16 @@ export function VisionLanding() {
           </div>
         </div>
 
-        {CHAPTERS.map((c, i) => {
-          const hue = hueOf(c.phase);
-          const lead = c.title.slice(0, c.title.length - c.accent.length);
-          return (
-            <section key={c.phase.key} className="relative overflow-hidden">
-              {/* flight-path connector */}
-              <div aria-hidden className="relative flex flex-col items-center pt-2">
-                <div
-                  className="w-px h-14"
-                  style={{
-                    backgroundImage: `repeating-linear-gradient(to bottom, ${hue}77 0 6px, transparent 6px 12px)`,
-                  }}
-                />
-                <AirplaneTakeoff className="mt-1 w-4 h-4 rotate-90" style={{ color: hue, opacity: 0.75 }} />
-              </div>
-              {/* phase-tinted zone */}
-              <div
-                aria-hidden
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `radial-gradient(70% 60% at ${i % 2 === 0 ? "15%" : "85%"} 50%, ${hue}${light ? "14" : "12"}, transparent 70%)`,
-                }}
-              />
-              <div
-                className={`relative max-w-7xl mx-auto px-6 py-16 sm:py-24 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center ${
-                  i % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
-                }`}
-              >
-                <div>
-                  <motion.div
-                    initial={{ opacity: 0, x: i % 2 === 0 ? -14 : 14 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <TicketStamp clock={c.phase.clock} label={c.phase.label} hue={hue} t={t} />
-                  </motion.div>
-                  <motion.h2
-                    initial={{ opacity: 0, y: 14 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.6, delay: 0.05 }}
-                    className="mt-6 text-3xl sm:text-5xl font-semibold tracking-[-0.04em] leading-[1.05] max-w-md"
-                  >
-                    {lead}
-                    <span style={{ color: hue }}>{c.accent}</span>
-                  </motion.h2>
-                  <motion.p
-                    initial={{ opacity: 0, y: 12 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.6, delay: 0.12 }}
-                    className="mt-5 text-base sm:text-lg leading-relaxed max-w-md"
-                    style={{ color: t.sub }}
-                  >
-                    {c.body}
-                  </motion.p>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="mt-6 inline-flex items-center gap-2.5 rounded-full border ps-4 pe-1.5 py-1.5"
-                    style={{ borderColor: t.line, background: t.card }}
-                  >
-                    <span className="text-[13px] line-through" style={{ color: t.faint }}>
-                      {c.pain}
-                    </span>
-                    <span
-                      className="rounded-full px-2.5 py-1 text-[11px] font-bold"
-                      style={{ color: hue, background: `${hue}14`, border: `1px solid ${hue}40` }}
-                    >
-                      {c.fix}
-                    </span>
-                  </motion.div>
-                </div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.7 }}
-                  className="rounded-[24px]"
-                  style={{ boxShadow: `0 40px 120px -45px ${hue}${light ? "70" : "66"}` }}
-                >
-                  {c.demo}
-                </motion.div>
-              </div>
-            </section>
-          );
-        })}
+        {CHAPTERS.map((c, i) => (
+          <ChapterScene
+            key={c.phase.key}
+            c={c}
+            i={i}
+            t={t}
+            light={light}
+            hue={light ? c.phase.hue : c.phase.hueDark}
+          />
+        ))}
       </div>
 
       {/* ── boarding pass ───────────────────────────────────────────── */}
@@ -560,6 +483,150 @@ export function VisionLanding() {
           </Link>
         </div>
       </footer>
+    </div>
+  );
+}
+
+
+/**
+ * Apple-style pinned scene: the chapter locks to the viewport for
+ * ~2.6 screen-heights while scroll scrubs the demo through its frames,
+ * then releases and the next chapter pushes in.
+ */
+function ChapterScene({
+  c,
+  i,
+  t,
+  light,
+  hue,
+}: {
+  c: Chapter;
+  i: number;
+  t: Theme;
+  light: boolean;
+  hue: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      const v = total <= 0 ? 0 : -r.top / total;
+      // quantize to 2.5% steps → ~40 renders per scene, not per pixel
+      setP(Math.round(Math.min(1, Math.max(0, v)) * 40) / 40);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+  // demo frames run from 10% → 88% of the pin; copy leads, pain chip lands last
+  const demoP = Math.min(1, Math.max(0, (p - 0.08) / 0.78));
+  const lead = c.title.slice(0, c.title.length - c.accent.length);
+
+  const demo =
+    c.phase.key === "planning" ? (
+      <NowDemo progress={demoP} />
+    ) : c.phase.key === "departure" ? (
+      <DepartureDemo progress={demoP} />
+    ) : c.phase.key === "live" ? (
+      <LiveDemo progress={demoP} />
+    ) : (
+      <WrapDemo progress={demoP} />
+    );
+
+  return (
+    <div ref={ref} className="relative h-[260vh]">
+      <div className="sticky top-0 h-screen flex items-center overflow-hidden">
+        {/* phase-tinted zone */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+          style={{
+            opacity: p > 0.02 ? 1 : 0,
+            background: `radial-gradient(70% 60% at ${i % 2 === 0 ? "15%" : "85%"} 50%, ${hue}${light ? "16" : "12"}, transparent 70%)`,
+          }}
+        />
+        <div
+          className={`relative w-full max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-10 lg:gap-20 items-center ${
+            i % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
+          }`}
+        >
+          <div>
+            <motion.div
+              initial={false}
+              animate={p > 0.02 ? { opacity: 1, x: 0 } : { opacity: 0, x: i % 2 === 0 ? -14 : 14 }}
+              transition={{ duration: 0.4 }}
+            >
+              <TicketStamp clock={c.phase.clock} label={c.phase.label} hue={hue} t={t} />
+            </motion.div>
+            <motion.h2
+              initial={false}
+              animate={p > 0.04 ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+              transition={{ duration: 0.45 }}
+              className="mt-6 text-3xl sm:text-5xl font-semibold tracking-[-0.04em] leading-[1.05] max-w-md"
+            >
+              {lead}
+              <span style={{ color: hue }}>{c.accent}</span>
+            </motion.h2>
+            <motion.p
+              initial={false}
+              animate={p > 0.08 ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+              transition={{ duration: 0.45 }}
+              className="mt-5 text-base sm:text-lg leading-relaxed max-w-md"
+              style={{ color: t.sub }}
+            >
+              {c.body}
+            </motion.p>
+            <motion.div
+              initial={false}
+              animate={p > 0.82 ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+              transition={{ duration: 0.35 }}
+              className="mt-6 inline-flex items-center gap-2.5 rounded-full border ps-4 pe-1.5 py-1.5"
+              style={{ borderColor: t.line, background: t.card }}
+            >
+              <span className="text-[13px] line-through" style={{ color: t.faint }}>
+                {c.pain}
+              </span>
+              <span
+                className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+                style={{ color: hue, background: `${hue}14`, border: `1px solid ${hue}40` }}
+              >
+                {c.fix}
+              </span>
+            </motion.div>
+            {/* scene progress ticks — tells the visitor the scene scrubs */}
+            <div className="mt-8 flex items-center gap-1.5">
+              {[0, 1, 2, 3].map((n) => (
+                <span
+                  key={n}
+                  className="h-1 rounded-full transition-all duration-300"
+                  style={{
+                    width: demoP >= (n + 1) / 4 ? 22 : 10,
+                    background: demoP >= (n + 1) / 4 ? hue : t.line,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <motion.div
+            initial={false}
+            animate={p > 0.03 ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.97 }}
+            transition={{ duration: 0.5 }}
+            className="rounded-[24px]"
+            style={{ boxShadow: `0 40px 120px -45px ${hue}${light ? "70" : "66"}` }}
+          >
+            {demo}
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
