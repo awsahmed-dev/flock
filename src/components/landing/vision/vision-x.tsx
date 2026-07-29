@@ -24,6 +24,11 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
+import { CHAPTERS } from "./vision-landing";
+import { NowDemo } from "../demos/now-demo";
+import { DepartureDemo } from "../demos/departure-demo";
+import { LiveDemo } from "../demos/live-demo";
+import { WrapDemo } from "../demos/wrap-demo";
 
 /* ── the day cycle: one atmosphere per phase ─────────────────────────── */
 const ATMOS = [
@@ -323,6 +328,11 @@ export function VisionX() {
     };
   }, []);
 
+  // demo movie: when the plane docks at a station, sweep its mockup
+  // 0→1 over 3.5s (setInterval — keeps playing even if rAF throttles)
+  const [demoP, setDemoP] = useState(0);
+  const playedStation = useRef(-1);
+
   // which phase station are we at?
   const station =
     prog < 0.13 ? -1
@@ -335,7 +345,24 @@ export function VisionX() {
     : prog < 0.9 ? 3
     : 4;
   const atmos = station >= 0 && station < 4 ? ATMOS[station as 0 | 1 | 2 | 3] : null;
+  const chapter = station >= 0 && station < 4 ? CHAPTERS[station] : null;
   const nightish = prog > 0.7 && prog < 0.92;
+
+  useEffect(() => {
+    if (station < 0 || station > 3 || playedStation.current === station) {
+      if (station < 0 || station > 3) playedStation.current = -1;
+      return;
+    }
+    playedStation.current = station;
+    setDemoP(0);
+    const startedAt = performance.now();
+    const timer = setInterval(() => {
+      const v = Math.min(1, (performance.now() - startedAt) / 3500);
+      setDemoP(Math.round(v * 50) / 50);
+      if (v >= 1) clearInterval(timer);
+    }, 40);
+    return () => clearInterval(timer);
+  }, [station]);
   const ink = nightish ? "#F5F0E4" : "#141414";
   const faint = nightish ? "rgba(245,240,228,0.5)" : "rgba(20,20,20,0.45)";
 
@@ -443,29 +470,119 @@ export function VisionX() {
           </p>
         </div>
 
-        {/* PHASE STATIONS */}
-        {atmos && (
-          <div
-            key={atmos.word}
-            className="absolute inset-x-0 bottom-[12vh] flex flex-col items-center text-center transition-all duration-500 px-6"
-          >
-            <span
-              className="rounded-full border px-3 py-1.5 text-[11px] font-black tracking-[0.2em] uppercase mb-4 backdrop-blur-sm"
-              style={{ color: ink, borderColor: faint, background: "rgba(255,255,255,0.25)" }}
-            >
-              {atmos.clock} · {atmos.label}
-            </span>
+        {/* PHASE STATIONS — the plane docks, the app shows itself */}
+        {atmos && chapter && (
+          <div key={atmos.word} className="absolute inset-0 flex items-center justify-center px-6">
+            <style>{`@keyframes vx-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+
+            {/* giant outlined word — backdrop for the whole station */}
             <p
-              className="font-black tracking-[-0.03em] leading-none select-none"
+              aria-hidden
+              className="absolute inset-x-0 bottom-[4vh] text-center font-black tracking-[-0.03em] leading-none select-none"
               style={{
                 fontSize: "clamp(80px, 16vw, 230px)",
                 color: "transparent",
-                WebkitTextStroke: `2.5px ${ink}`,
-                opacity: 0.9,
+                WebkitTextStroke: `2px ${ink}`,
+                opacity: 0.3,
+                animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) both",
               }}
             >
               {atmos.word}
             </p>
+
+            <div
+              className={`relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16 items-center ${
+                station % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
+              }`}
+            >
+              {/* the words */}
+              <div
+                className="text-center lg:text-start"
+                style={{ animation: "vx-in 0.6s cubic-bezier(0.22,1,0.36,1) 0.05s both" }}
+              >
+                <span
+                  className="inline-flex rounded-full border px-3 py-1.5 text-[11px] font-black tracking-[0.2em] uppercase backdrop-blur-sm"
+                  style={{
+                    color: ink,
+                    borderColor: faint,
+                    background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
+                  }}
+                >
+                  {atmos.clock} · {atmos.label}
+                </span>
+                <h2
+                  className="mt-4 text-2xl sm:text-4xl font-black tracking-[-0.03em] leading-[1.05] lg:max-w-md"
+                  style={{ color: ink }}
+                >
+                  {chapter.title.slice(0, chapter.title.length - chapter.accent.length)}
+                  <span style={{ color: atmos.hue === "#B4441B" && nightish ? ink : atmos.hue }}>
+                    {chapter.accent}
+                  </span>
+                </h2>
+                <p
+                  className="mt-3 text-sm sm:text-base leading-relaxed lg:max-w-md hidden sm:block"
+                  style={{ color: nightish ? "rgba(245,240,228,0.72)" : "rgba(20,20,20,0.66)" }}
+                >
+                  {chapter.body}
+                </p>
+
+                {/* pain → fixed, lands when the movie ends */}
+                <div
+                  className="mt-4 inline-flex items-center gap-2.5 rounded-full border ps-4 pe-1.5 py-1.5 backdrop-blur-sm transition-all duration-500"
+                  style={{
+                    borderColor: faint,
+                    background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
+                    opacity: demoP >= 0.96 ? 1 : 0,
+                    transform: demoP >= 0.96 ? "translateY(0)" : "translateY(10px)",
+                  }}
+                >
+                  <span className="text-[13px] line-through" style={{ color: faint }}>
+                    {chapter.pain}
+                  </span>
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+                    style={{
+                      color: nightish ? atmos.hue : "#FFFFFF",
+                      background: nightish ? `${atmos.hue}22` : atmos.hue,
+                    }}
+                  >
+                    {chapter.fix}
+                  </span>
+                </div>
+
+                {/* movie progress */}
+                <div
+                  className="mt-5 mx-auto lg:mx-0 relative w-28 h-1 rounded-full overflow-hidden"
+                  style={{ background: nightish ? "rgba(245,240,228,0.18)" : "rgba(20,20,20,0.15)" }}
+                >
+                  <div
+                    className="absolute inset-y-0 start-0 rounded-full transition-[width] duration-100"
+                    style={{ width: `${Math.round(demoP * 100)}%`, background: atmos.hue }}
+                  />
+                </div>
+              </div>
+
+              {/* the app, actually */}
+              <div
+                className="mx-auto w-full max-w-[240px] sm:max-w-[330px]"
+                style={{
+                  animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.12s both",
+                  transform: `rotate(${station % 2 === 1 ? -1.5 : 1.5}deg)`,
+                  boxShadow: `0 44px 130px -40px ${atmos.hue}99`,
+                  borderRadius: 24,
+                }}
+              >
+                {station === 0 ? (
+                  <NowDemo progress={demoP} />
+                ) : station === 1 ? (
+                  <DepartureDemo progress={demoP} />
+                ) : station === 2 ? (
+                  <LiveDemo progress={demoP} />
+                ) : (
+                  <WrapDemo progress={demoP} />
+                )}
+              </div>
+            </div>
           </div>
         )}
 
