@@ -421,6 +421,8 @@ const STATIONS_AR = [
 const UI = {
   en: {
     start: "Start today",
+    loading: "Preparing the trip",
+    cleared: "CLEARED ✈",
     kicker: "Scroll to fly · نروح سوا",
     h1a: "PACK",
     h1b: "SAWA.",
@@ -438,6 +440,8 @@ const UI = {
   },
   ar: {
     start: "ابدأ اليوم",
+    loading: "جارٍ تجهيز الرحلة",
+    cleared: "مصرَّح بالإقلاع ✈",
     kicker: "مرّر لتطير · Pack sawa",
     h1a: "نروح",
     h1b: "سوا.",
@@ -463,6 +467,39 @@ export function VisionX() {
   const [webgl, setWebgl] = useState(true);
   const [arMode, setArMode] = useState(true);
   const t = UI[arMode ? "ar" : "en"];
+
+  // ── boarding preloader: the app boots inside a phone, then takes off ──
+  const [loadPct, setLoadPct] = useState(0);
+  const [boarded, setBoarded] = useState(false); // overlay removed from DOM
+  const departing = loadPct >= 100;
+
+  useEffect(() => {
+    // 0→100 with a believable rhythm: quick climb, hesitation, final burst
+    const timer = setInterval(() => {
+      setLoadPct((p) => {
+        if (p >= 100) return 100;
+        const step = p < 55 ? 2 : p < 82 ? 1 : p < 96 ? 2 : 1;
+        return Math.min(100, p + step);
+      });
+    }, 34);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!departing) return;
+    const done = setTimeout(() => setBoarded(true), 1700);
+    return () => clearTimeout(done);
+  }, [departing]);
+
+  // hold the page still while boarding
+  useEffect(() => {
+    if (boarded) return;
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prev;
+    };
+  }, [boarded]);
 
   useEffect(() => {
     try {
@@ -574,6 +611,27 @@ export function VisionX() {
           : undefined,
       }}
     >
+      <style>{`
+        @keyframes vx-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes vx-spin { to { transform: rotate(360deg); } }
+        @keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+        @keyframes vx-bob { 0% { transform: translateY(-5px) rotate(-0.6deg); } 100% { transform: translateY(5px) rotate(0.6deg); } }
+        /* light-mode skin for the shared demos, scoped to this concept */
+        .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
+        .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }
+        .vx-light [class*="bg-[#1A1A1A]"] { background: #FFFFFF !important; }
+        .vx-light [class*="bg-white/"] { background: rgba(20,20,20,0.05) !important; }
+        .vx-light [class~="text-white"] { color: #141414 !important; }
+        .vx-light [class*="text-white/8"], .vx-light [class*="text-white/7"] { color: rgba(20,20,20,0.75) !important; }
+        .vx-light [class*="text-white/6"], .vx-light [class*="text-white/5"] { color: rgba(20,20,20,0.58) !important; }
+        .vx-light [class*="text-white/4"], .vx-light [class*="text-white/3"] { color: rgba(20,20,20,0.45) !important; }
+        .vx-light [class*="text-[#B3A8FF]"] { color: #6D5AE6 !important; }
+        .vx-light [class*="text-[#9BC97E]"], .vx-light [class*="text-[#B8DBA1]"] { color: #4C7A2F !important; }
+        .vx-light [class*="text-[#3EC5B7]"] { color: #0C7A6F !important; }
+        .vx-light [class*="text-[#E8CB86]"], .vx-light [class*="text-[#E0B252]"] { color: #8F6400 !important; }
+        .vx-light [class*="text-[#FFAB88]"], .vx-light [class*="text-[#FF8A5C]"] { color: #B4441B !important; }
+        .vx-light [class*="text-[#8B7CFF]"] { color: #6D5AE6 !important; }
+      `}</style>
       {/* ── 3D world ── */}
       <div className="fixed inset-0">
         <Canvas
@@ -694,27 +752,6 @@ export function VisionX() {
         {/* PHASE STATIONS — the plane docks, the app shows itself */}
         {atmos && chapter && (
           <div key={atmos.word} className="absolute inset-0 flex items-center justify-center px-6">
-            <style>{`
-              @keyframes vx-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
-              @keyframes vx-spin { to { transform: rotate(360deg); } }
-              @keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-              /* light-mode skin for the shared demos, scoped to this concept */
-              .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
-              .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }
-              .vx-light [class*="bg-[#1A1A1A]"] { background: #FFFFFF !important; }
-              .vx-light [class*="bg-white/"] { background: rgba(20,20,20,0.05) !important; }
-              .vx-light [class~="text-white"] { color: #141414 !important; }
-              .vx-light [class*="text-white/8"], .vx-light [class*="text-white/7"] { color: rgba(20,20,20,0.75) !important; }
-              .vx-light [class*="text-white/6"], .vx-light [class*="text-white/5"] { color: rgba(20,20,20,0.58) !important; }
-              .vx-light [class*="text-white/4"], .vx-light [class*="text-white/3"] { color: rgba(20,20,20,0.45) !important; }
-              .vx-light [class*="text-[#B3A8FF]"] { color: #6D5AE6 !important; }
-              .vx-light [class*="text-[#9BC97E]"], .vx-light [class*="text-[#B8DBA1]"] { color: #4C7A2F !important; }
-              .vx-light [class*="text-[#3EC5B7]"] { color: #0C7A6F !important; }
-              .vx-light [class*="text-[#E8CB86]"], .vx-light [class*="text-[#E0B252]"] { color: #8F6400 !important; }
-              .vx-light [class*="text-[#FFAB88]"], .vx-light [class*="text-[#FF8A5C]"] { color: #B4441B !important; }
-              .vx-light [class*="text-[#8B7CFF]"] { color: #6D5AE6 !important; }
-            `}</style>
-
             {/* giant outlined word — anchored to the side away from the mockup */}
             <p
               aria-hidden
@@ -861,6 +898,90 @@ export function VisionX() {
           <p className="mt-5 text-sm text-[#2E2005]/60 font-semibold">{t.fsub}</p>
         </div>
       </div>
+
+      {/* ── boarding preloader (umano-style: one object, one number) ── */}
+      {!boarded && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden"
+          style={{
+            background: "#BFD9EC",
+            transform: departing ? "translateY(-100%)" : "translateY(0)",
+            transition: "transform 0.9s cubic-bezier(0.76, 0, 0.24, 1) 0.65s",
+          }}
+        >
+          {/* faint runway grid */}
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.05]"
+            style={{
+              backgroundImage:
+                "linear-gradient(#141414 1px, transparent 1px), linear-gradient(90deg, #141414 1px, transparent 1px)",
+              backgroundSize: "56px 56px",
+            }}
+          />
+
+          {/* the phone: our app booting up — then it takes off */}
+          <div
+            style={{
+              transform: departing
+                ? `translate(${arMode ? "-46vw" : "46vw"}, -58vh) rotate(${arMode ? "-13deg" : "13deg"}) scale(0.55)`
+                : "none",
+              opacity: departing ? 0 : 1,
+              transition: "transform 0.85s cubic-bezier(0.6, -0.1, 0.8, 0.4) 0.12s, opacity 0.5s ease 0.4s",
+            }}
+          >
+            <div style={{ animation: departing ? "none" : "vx-bob 2.6s ease-in-out infinite alternate" }}>
+              <div
+                dir="ltr"
+                className="vx-light w-[228px] sm:w-[252px] rounded-[34px] border-[6px] border-[#141414] overflow-hidden bg-[#141414]"
+                style={{ boxShadow: "0 50px 110px -30px rgba(20,20,20,0.45)" }}
+              >
+                <NowDemo progress={loadPct / 100} />
+              </div>
+            </div>
+          </div>
+
+          {/* cleared stamp slams when boarding completes */}
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{
+              opacity: departing ? 1 : 0,
+              transform: `rotate(-9deg) scale(${departing ? 1 : 1.6})`,
+              transition: "opacity 0.18s ease, transform 0.24s cubic-bezier(0.2, 1.6, 0.4, 1)",
+            }}
+          >
+            <span
+              className="rounded-lg border-4 px-5 py-2 text-xl sm:text-2xl font-black uppercase backdrop-blur-[2px]"
+              style={{ color: "#6D5AE6", borderColor: "#6D5AE6", background: "rgba(255,255,255,0.35)", letterSpacing: arMode ? "0" : "0.14em" }}
+            >
+              {t.cleared}
+            </span>
+          </div>
+
+          {/* umano corner: giant counter + status line */}
+          <div className="absolute bottom-6 start-6 sm:bottom-8 sm:start-10">
+            <p className="text-[11px] font-black uppercase mb-1 text-[#141414]/50" style={{ letterSpacing: arMode ? "0.06em" : "0.22em" }}>
+              {t.loading}
+              <span style={{ animation: "vx-blink 1s step-end infinite" }}>…</span>
+            </p>
+            <p
+              className="font-black tabular-nums leading-none text-[#141414]"
+              style={{ fontSize: "clamp(72px, 14vw, 190px)", letterSpacing: "-0.04em" }}
+              dir="ltr"
+            >
+              {loadPct}
+              <span className="text-[0.35em] align-top">%</span>
+            </p>
+          </div>
+
+          {/* top brand line */}
+          <div className="absolute top-6 inset-x-0 flex justify-center">
+            <span className="text-[10px] font-black tracking-[0.3em] uppercase text-[#141414]/40">
+              PAXAWA · {arMode ? "وضع الطيران" : "Flight mode"}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* scroll runway hint */}
       <div
