@@ -352,6 +352,19 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
+  // ascent: how far we've scrolled up through the cloud deck (0..1)
+  const skyRef = useRef<HTMLElement>(null);
+  const [ascent, setAscent] = useState(0);
+  useEffect(() => {
+    const update = () => {
+      const h = skyRef.current?.offsetHeight ?? window.innerHeight;
+      setAscent(Math.min(1, Math.max(0, window.scrollY / (h * 0.9))));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
   /** cursor parallax + tilt, tuned per artifact depth */
   const drift = (fx: number, fy: number, rot = 0): React.CSSProperties => ({
     transform: `translate(${cur.x * fx}px, ${cur.y * fy}px) rotate(${cur.x * rot}deg)`,
@@ -368,7 +381,17 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
   });
 
   return (
-    <section className="relative overflow-hidden px-6 pt-16 sm:pt-20 pb-24">
+    <section ref={skyRef} className="relative overflow-hidden px-6 pt-16 sm:pt-20 pb-24">
+      {/* the sky */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none transition-colors duration-700"
+        style={{
+          background: light
+            ? "linear-gradient(180deg, #D6E7F2 0%, #E8F0F1 46%, #F6F5F1 100%)"
+            : "linear-gradient(180deg, #0A1020 0%, #0C0F18 55%, #0D0D0D 100%)",
+        }}
+      />
       <style>{`
         @keyframes vf-f1 { 0% { transform: translateY(-9px) rotate(2deg); } 100% { transform: translateY(9px) rotate(4.5deg); } }
         @keyframes vf-f2 { 0% { transform: translateY(7px) rotate(6.5deg); } 100% { transform: translateY(-11px) rotate(4deg); } }
@@ -387,6 +410,9 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
           style={{ background: light ? "rgba(224,178,82,0.18)" : "rgba(224,178,82,0.12)", ...drift(-28, -20) }}
         />
       </div>
+
+      {/* the cloud deck — artifacts float above it */}
+      <SkyDeck light={light} cur={cur} ascent={ascent} />
 
       <div className="relative max-w-6xl mx-auto min-h-[560px] sm:min-h-[620px] flex items-center justify-center">
         {/* flight path behind everything, corner to corner */}
@@ -440,7 +466,7 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
             <span className="font-semibold" style={{ color: light ? "#8F6400" : "#E8CB86" }}>
               sawa · سوا
             </span>{" "}
-            means together — the plan, the money, the memories.
+            means together — and together, the whole trip is light as a cloud.
           </p>
           <div className="mt-9 flex items-center justify-center gap-3 flex-wrap">
             <Link
@@ -570,5 +596,82 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
         </motion.div>
       </div>
     </section>
+  );
+}
+
+
+/** A soft 3-lobe cloud built from box-shadow lobes + blur. Zero assets. */
+function CloudPuff({ w, light }: { w: number; light: boolean }) {
+  const c = light ? "255,255,255" : "225,232,255";
+  return (
+    <div
+      style={{
+        width: w,
+        height: w * 0.34,
+        borderRadius: 9999,
+        background: `rgba(${c},1)`,
+        boxShadow: `${w * 0.24}px ${-w * 0.1}px 0 ${w * 0.04}px rgba(${c},0.95), ${-w * 0.26}px ${-w * 0.06}px 0 ${-w * 0.01}px rgba(${c},0.9), ${w * 0.04}px ${-w * 0.16}px 0 ${w * 0.06}px rgba(${c},0.98)`,
+        filter: `blur(${Math.max(6, w * 0.055)}px)`,
+      }}
+    />
+  );
+}
+
+interface CloudSpec {
+  x: string;      // left %
+  y: string;      // top %
+  w: number;      // lobe width px
+  depth: number;  // 0 far … 1 near — scroll/cursor factor
+  o: number;      // opacity
+  dur: number;    // idle drift seconds
+  dir: 1 | -1;    // drift direction
+}
+
+const HERO_CLOUDS: CloudSpec[] = [
+  { x: "-4%", y: "16%", w: 300, depth: 0.25, o: 0.8, dur: 90, dir: 1 },
+  { x: "72%", y: "8%",  w: 240, depth: 0.35, o: 0.75, dur: 74, dir: -1 },
+  { x: "30%", y: "-2%", w: 190, depth: 0.2, o: 0.6, dur: 110, dir: 1 },
+  { x: "84%", y: "58%", w: 330, depth: 0.7, o: 0.9, dur: 60, dir: -1 },
+  { x: "-8%", y: "66%", w: 380, depth: 0.85, o: 0.95, dur: 52, dir: 1 },
+  { x: "38%", y: "84%", w: 280, depth: 1, o: 0.9, dur: 46, dir: -1 },
+  { x: "58%", y: "34%", w: 150, depth: 0.5, o: 0.5, dur: 84, dir: 1 },
+];
+
+/**
+ * The cloud deck. Idle horizontal drift per cloud; scrolling the hero
+ * pushes near clouds down and outward faster than far ones — you climb
+ * up through the deck. Cursor adds a light lean by depth.
+ */
+function SkyDeck({
+  light,
+  cur,
+  ascent,
+}: {
+  light: boolean;
+  cur: { x: number; y: number };
+  ascent: number; // 0..1 scroll progress through the hero
+}) {
+  return (
+    <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
+      <style>{`@keyframes vf-cloud { from { margin-left: 0px; } to { margin-left: 46px; } }`}</style>
+      {HERO_CLOUDS.map((c, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            left: c.x,
+            top: c.y,
+            opacity: (light ? c.o : c.o * 0.14) * (1 - ascent * c.depth * 0.5),
+            transform: `translate(${cur.x * c.depth * 26 + (c.dir === 1 ? 1 : -1) * ascent * c.depth * 140}px, ${cur.y * c.depth * 14 + ascent * c.depth * 320}px)`,
+            transition: "transform 1s cubic-bezier(0.16,1,0.3,1), opacity 0.6s",
+            willChange: "transform",
+          }}
+        >
+          <div style={{ animation: `vf-cloud ${c.dur}s ease-in-out infinite alternate${c.dir === -1 ? " reverse" : ""}` }}>
+            <CloudPuff w={c.w} light={light} />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
