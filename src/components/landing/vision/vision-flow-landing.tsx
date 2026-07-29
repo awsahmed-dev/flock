@@ -332,34 +332,14 @@ function AutoChapter({
 
 
 /**
- * The hero is the trailer: a live phone that auto-cycles through all
- * four phases — each demo plays its frames, the stamp flips
- * T−89 → T−7 → DAY 3 → HOME, and the glow shifts hue. Background
- * glows lean toward the cursor for depth.
+ * The hero is made of trip ARTIFACTS — things a trip leaves behind:
+ * a luggage tag, a polaroid, a receipt, the group-chat sticky note
+ * finally stamped YES. They float with the cursor and bob idly,
+ * threaded by a dashed flight path with a plane flying it. No app
+ * screens up here — those belong to the chapters below.
  */
 function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
-  const [idx, setIdx] = useState(0);
-  const [p, setP] = useState(0);
-  useEffect(() => {
-    const CYCLE = 5200;
-    const SWEEP = 3800;
-    let phase = 0;
-    let startedAt = performance.now();
-    const timer = setInterval(() => {
-      const el = performance.now() - startedAt;
-      if (el >= CYCLE) {
-        phase = (phase + 1) % PHASES.length;
-        startedAt = performance.now();
-        setIdx(phase);
-        setP(0);
-        return;
-      }
-      setP(Math.round(Math.min(1, el / SWEEP) * 50) / 50);
-    }, 40);
-    return () => clearInterval(timer);
-  }, []);
-
-  // cursor-reactive glows (plain listeners — no rAF dependency)
+  // cursor parallax (plain listeners; artifacts move at different depths)
   const [cur, setCur] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -372,43 +352,32 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
-  const phase = PHASES[idx];
-  const hue = light ? phase.hue : phase.hueDark;
-  const demo =
-    phase.key === "planning" ? (
-      <NowDemo progress={p} />
-    ) : phase.key === "departure" ? (
-      <DepartureDemo progress={p} />
-    ) : phase.key === "live" ? (
-      <LiveDemo progress={p} />
-    ) : (
-      <WrapDemo progress={p} />
-    );
+  const drift = (fx: number, fy: number): React.CSSProperties => ({
+    transform: `translate(${cur.x * fx}px, ${cur.y * fy}px)`,
+    transition: "transform 0.7s cubic-bezier(0.22,1,0.36,1)",
+  });
+  const ink = light ? "#141414" : "#F5F5F7";
 
   return (
-    <section className="relative overflow-hidden px-6 pt-16 sm:pt-24 pb-16">
-      {/* cursor-reactive hue field, tinted by the playing phase */}
+    <section className="relative overflow-hidden px-6 pt-16 sm:pt-24 pb-20">
+      <style>{`
+        @keyframes vf-bob { from { translate: 0 -7px; } to { translate: 0 7px; } }
+        @keyframes vf-bob2 { from { translate: 0 5px; } to { translate: 0 -9px; } }
+      `}</style>
+      {/* soft hue field */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute -top-40 left-1/4 w-[42rem] h-[42rem] rounded-full blur-[130px] transition-[background] duration-700"
-          style={{
-            background: `${hue}${light ? "24" : "30"}`,
-            transform: `translate(${cur.x * 60}px, ${cur.y * 40}px)`,
-            transition: "transform 0.6s cubic-bezier(0.22,1,0.36,1), background 0.7s",
-          }}
+          className="absolute -top-40 left-[18%] w-[42rem] h-[42rem] rounded-full blur-[130px]"
+          style={{ background: light ? "rgba(109,90,230,0.16)" : "rgba(139,124,255,0.24)", ...drift(50, 34) }}
         />
         <div
-          className="absolute top-16 right-[12%] w-[34rem] h-[34rem] rounded-full blur-[120px]"
-          style={{
-            background: light ? "rgba(224,178,82,0.18)" : "rgba(224,178,82,0.12)",
-            transform: `translate(${cur.x * -35}px, ${cur.y * -24}px)`,
-            transition: "transform 0.8s cubic-bezier(0.22,1,0.36,1)",
-          }}
+          className="absolute top-10 right-[10%] w-[34rem] h-[34rem] rounded-full blur-[120px]"
+          style={{ background: light ? "rgba(224,178,82,0.20)" : "rgba(224,178,82,0.13)", ...drift(-30, -22) }}
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        {/* left — the claim */}
+      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-2 gap-14 lg:gap-10 items-center">
+        {/* ── left: the claim ── */}
         <div className="text-center lg:text-start">
           <TicketStamp clock="PAX 04" label="Now boarding" hue={light ? "#6D5AE6" : "#8B7CFF"} t={t} />
           <h1 className="mt-7 text-[42px] sm:text-6xl xl:text-7xl font-semibold tracking-[-0.045em] leading-[1.02]">
@@ -423,7 +392,7 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
             <span className="font-semibold" style={{ color: light ? "#8F6400" : "#E8CB86" }}>
               sawa · سوا
             </span>{" "}
-            means together — watch a trip play out on the right.
+            means together — the plan, the money, the memories.
           </p>
           <div className="mt-9 flex items-center justify-center lg:justify-start gap-3 flex-wrap">
             <Link
@@ -440,33 +409,124 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
           </div>
         </div>
 
-        {/* right — the trailer phone */}
-        <div className="relative mx-auto w-full max-w-[380px]">
-          {/* phase stamp above the phone, flipping with the loop */}
-          <div className="mb-4 flex items-center justify-between">
-            <TicketStamp clock={phase.clock} label={phase.label} hue={hue} t={t} />
-            <div className="flex items-center gap-1.5">
-              {PHASES.map((ph, n) => (
-                <span
-                  key={ph.key}
-                  className="h-1.5 rounded-full transition-all duration-400"
-                  style={{
-                    width: n === idx ? 20 : 6,
-                    background: n === idx ? hue : t.line,
-                  }}
-                />
-              ))}
+        {/* ── right: the artifact constellation ── */}
+        <div className="relative h-[440px] sm:h-[500px] select-none" aria-hidden>
+          {/* dashed flight path + flying plane (SMIL, zero JS) */}
+          <svg viewBox="0 0 480 500" fill="none" className="absolute inset-0 w-full h-full">
+            <path
+              id="vf-route"
+              d="M40 420 C 120 300, 150 160, 265 120 S 440 130, 445 60"
+              stroke={light ? "#6D5AE6" : "#8B7CFF"}
+              strokeOpacity="0.4"
+              strokeWidth="1.6"
+              strokeDasharray="7 9"
+            />
+            {[
+              { x: 40, y: 420, c: light ? "#6D5AE6" : "#8B7CFF" },
+              { x: 152, y: 224, c: light ? "#0C7A6F" : "#3EC5B7" },
+              { x: 300, y: 116, c: light ? "#D06A3A" : "#FF8A5C" },
+              { x: 445, y: 60, c: light ? "#8F6400" : "#E0B252" },
+            ].map((w, i) => (
+              <circle key={i} cx={w.x} cy={w.y} r="5" fill={w.c} opacity="0.9" />
+            ))}
+            <g>
+              <path
+                d="M0 -7 L2 -1.5 L8 0 L2 1.5 L0 7 L1 1 L-4 0 L1 -1 Z"
+                fill={light ? "#6D5AE6" : "#8B7CFF"}
+                transform="scale(1.7)"
+              />
+              <animateMotion dur="9s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#vf-route" />
+              </animateMotion>
+            </g>
+          </svg>
+
+          {/* luggage tag */}
+          <div
+            className="absolute left-[2%] top-[52%] w-[190px]"
+            style={{ ...drift(26, 18), animation: "vf-bob 5.2s ease-in-out infinite alternate" }}
+          >
+            <div
+              className="rounded-2xl border-2 p-4 -rotate-8 shadow-xl"
+              style={{
+                background: t.card,
+                borderColor: light ? "#6D5AE6" : "#8B7CFF",
+                boxShadow: `0 24px 60px -24px ${light ? "rgba(109,90,230,0.5)" : "rgba(139,124,255,0.4)"}`,
+              }}
+            >
+              <div className="w-4 h-4 rounded-full border-2 mb-2" style={{ borderColor: light ? "#6D5AE6" : "#8B7CFF" }} />
+              <p className="text-2xl font-semibold tracking-[-0.02em]" style={{ color: ink }}>
+                PAX·04
+              </p>
+              <p className="mt-1 text-[12px] font-bold" style={{ color: light ? "#8F6400" : "#E0B252" }}>
+                نروح سوا ✈
+              </p>
+              <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: t.faint }}>
+                Handle together
+              </p>
             </div>
           </div>
+
+          {/* polaroid */}
           <div
-            className="rounded-[24px] transition-shadow duration-700"
-            style={{ boxShadow: `0 50px 140px -50px ${hue}${light ? "80" : "70"}` }}
+            className="absolute right-[4%] top-[2%] w-[200px]"
+            style={{ ...drift(-34, -20), animation: "vf-bob2 6.4s ease-in-out infinite alternate" }}
           >
-            {demo}
+            <div className="rounded-lg p-2.5 pb-3 rotate-6 shadow-xl" style={{ background: light ? "#FFFFFF" : "#ECECEC" }}>
+              <div
+                className="h-[130px] rounded-sm"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #2A2547 0%, #6D5AE6 38%, #FF8A5C 72%, #E0B252 100%)",
+                }}
+              />
+              <p className="mt-2.5 text-center text-[13px] italic" style={{ color: "#3A3A3A", fontFamily: "cursive" }}>
+                Tokyo, day 3 🗼
+              </p>
+            </div>
           </div>
-          <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: t.faint }}>
-            The trip, playing · scroll for the story
-          </p>
+
+          {/* receipt */}
+          <div
+            className="absolute right-[16%] bottom-[4%] w-[170px]"
+            style={{ ...drift(22, -14), animation: "vf-bob 7.1s ease-in-out infinite alternate" }}
+          >
+            <div
+              className="p-3.5 -rotate-3 shadow-lg font-mono text-[10px] leading-relaxed"
+              style={{
+                background: light ? "#FFFDF6" : "#F2EFE6",
+                color: "#4A4438",
+                clipPath:
+                  "polygon(0 0, 100% 0, 100% 92%, 92% 100%, 84% 93%, 74% 100%, 64% 93%, 54% 100%, 44% 93%, 34% 100%, 24% 93%, 14% 100%, 6% 93%, 0 100%)",
+              }}
+            >
+              <p className="font-bold tracking-widest">IZAKAYA ★ TOKYO</p>
+              <p className="mt-1.5 flex justify-between"><span>DINNER ×4</span><span>¥12,400</span></p>
+              <p className="flex justify-between"><span>SPLIT 4 WAYS</span><span>¥3,100</span></p>
+              <p className="mt-1.5 font-bold" style={{ color: "#4E7A34" }}>✓ SETTLED · سوا</p>
+            </div>
+          </div>
+
+          {/* the sticky note — the group chat's question, finally answered */}
+          <div
+            className="absolute left-[26%] top-[6%] w-[185px]"
+            style={{ ...drift(-18, 26), animation: "vf-bob2 5.8s ease-in-out infinite alternate" }}
+          >
+            <div
+              className="p-4 rotate-3 shadow-lg"
+              style={{ background: light ? "#F7E8B5" : "#EAD79A", color: "#4A4020" }}
+            >
+              <p className="text-[15px] leading-snug" style={{ fontFamily: "cursive" }}>
+                so… are we actually doing this?? 😅
+              </p>
+              <div
+                className="mt-2.5 inline-block border-[2.5px] px-2 py-0.5 -rotate-6 text-[16px] font-black tracking-[0.14em]"
+                style={{ borderColor: light ? "#6D5AE6" : "#5B4BD9", color: light ? "#6D5AE6" : "#5B4BD9" }}
+              >
+                YES ✈
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
