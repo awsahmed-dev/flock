@@ -31,14 +31,14 @@ import { DepartureDemo } from "../demos/departure-demo";
 import { LiveDemo } from "../demos/live-demo";
 import { WrapDemo } from "../demos/wrap-demo";
 
-const PHASES = [
+export const PHASES = [
   { key: "planning", clock: "T−89", label: "Planning", hue: "#6D5AE6", hueDark: "#8B7CFF" },
   { key: "departure", clock: "T−7", label: "Departure", hue: "#0C7A6F", hueDark: "#3EC5B7" },
   { key: "live", clock: "DAY 3", label: "On the trip", hue: "#D06A3A", hueDark: "#FF8A5C" },
   { key: "wrap", clock: "HOME", label: "The Wrap", hue: "#8F6400", hueDark: "#E0B252" },
 ] as const;
 
-interface Theme {
+export interface Theme {
   canvas: string;
   text: string;
   sub: string;
@@ -48,7 +48,7 @@ interface Theme {
   nav: string;
 }
 
-const LIGHT: Theme = {
+export const LIGHT: Theme = {
   canvas: "#F6F5F1",
   text: "#141414",
   sub: "rgba(20,20,20,0.60)",
@@ -58,7 +58,7 @@ const LIGHT: Theme = {
   nav: "rgba(246,245,241,0.82)",
 };
 
-const DARK: Theme = {
+export const DARK: Theme = {
   canvas: "#0D0D0D",
   text: "#F5F5F7",
   sub: "rgba(255,255,255,0.58)",
@@ -68,7 +68,7 @@ const DARK: Theme = {
   nav: "rgba(13,13,13,0.78)",
 };
 
-function TicketStamp({
+export function TicketStamp({
   clock,
   label,
   hue,
@@ -97,7 +97,7 @@ function TicketStamp({
   );
 }
 
-interface Chapter {
+export interface Chapter {
   phase: (typeof PHASES)[number];
   title: string;
   accent: string;
@@ -107,7 +107,7 @@ interface Chapter {
   demo: React.ReactNode;
 }
 
-const CHAPTERS: Chapter[] = [
+export const CHAPTERS: Chapter[] = [
   {
     phase: PHASES[0],
     title: "Right now it's a big beautiful maybe.",
@@ -326,154 +326,7 @@ export function VisionLanding() {
         ))}
       </div>
 
-      {/* ── boarding pass ───────────────────────────────────────────── */}
-      <section className="relative py-24 sm:py-32 px-6">
-        <div className="max-w-2xl mx-auto">
-          <p
-            className="text-center text-xs font-bold uppercase tracking-[0.2em] mb-8"
-            style={{ color: t.faint }}
-          >
-            Your boarding pass
-          </p>
-          <Link href="/auth/signup" className="group block">
-            <div
-              className="relative rounded-[28px] border overflow-hidden transition-all duration-300 group-hover:-translate-y-1.5"
-              style={{
-                background: t.card,
-                borderColor: light ? "rgba(109,90,230,0.35)" : "rgba(139,124,255,0.4)",
-                boxShadow: light
-                  ? "0 12px 40px -12px rgba(20,20,20,0.18), 0 30px 80px -30px rgba(109,90,230,0.35)"
-                  : "0 20px 60px -20px rgba(139,124,255,0.35)",
-              }}
-            >
-              {/* holographic shimmer */}
-              <div
-                aria-hidden
-                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  background:
-                    "linear-gradient(105deg, transparent 40%, rgba(109,90,230,0.10) 46%, rgba(12,122,111,0.09) 52%, rgba(224,178,82,0.10) 58%, transparent 64%)",
-                  backgroundSize: "250% 100%",
-                  animation: "vision-shimmer 2.4s linear infinite",
-                }}
-              />
-              {/* seam notches */}
-              <div
-                aria-hidden
-                className="absolute top-[62%] -translate-y-1/2 -left-3.5 w-7 h-7 rounded-full border"
-                style={{ background: t.canvas, borderColor: light ? "rgba(109,90,230,0.35)" : "rgba(139,124,255,0.4)" }}
-              />
-              <div
-                aria-hidden
-                className="absolute top-[62%] -translate-y-1/2 -right-3.5 w-7 h-7 rounded-full border"
-                style={{ background: t.canvas, borderColor: light ? "rgba(109,90,230,0.35)" : "rgba(139,124,255,0.4)" }}
-              />
-
-              <div className="p-7 sm:p-10">
-                {/* airline header */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2" style={{ color: light ? "#6D5AE6" : "#B3A8FF" }}>
-                    <AirplaneTakeoff className="w-5 h-5" />
-                    <span className="text-[12px] font-bold tracking-[0.22em] uppercase">
-                      Paxawa Air
-                    </span>
-                  </div>
-                  <span
-                    className="text-[12px] font-bold tracking-[0.18em] uppercase"
-                    style={{ color: light ? "#8F6400" : "#E8CB86" }}
-                  >
-                    Pack sawa · نروح سوا
-                  </span>
-                </div>
-
-                {/* route board: SOLO → SAWA */}
-                <div className="mt-8 flex items-center justify-between gap-4">
-                  <div className="text-start">
-                    <p className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-none">
-                      SOLO
-                    </p>
-                    <p className="mt-2 text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: t.faint }}>
-                      Planning alone
-                    </p>
-                  </div>
-                  <div className="flex-1 relative h-px mx-2" style={{ background: "transparent" }}>
-                    <div
-                      aria-hidden
-                      className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-px"
-                      style={{
-                        backgroundImage: `repeating-linear-gradient(to right, ${light ? "#6D5AE6" : "#8B7CFF"}66 0 8px, transparent 8px 16px)`,
-                      }}
-                    />
-                    <Airplane
-                      weight="fill"
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rotate-90 transition-transform duration-500 group-hover:translate-x-2"
-                      style={{ color: light ? "#6D5AE6" : "#8B7CFF" }}
-                    />
-                  </div>
-                  <div className="text-end">
-                    <p
-                      className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-none"
-                      style={{ color: light ? "#8F6400" : "#E0B252" }}
-                    >
-                      SAWA
-                    </p>
-                    <p className="mt-2 text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: t.faint }}>
-                      Together · سوا
-                    </p>
-                  </div>
-                </div>
-
-                {/* fields */}
-                <div className="mt-9 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-5 text-start">
-                  {[
-                    { k: "Pax", v: "You + crew" },
-                    { k: "Fare", v: "Free" },
-                    { k: "Gate", v: "paxawa.com" },
-                    { k: "Departs", v: "Anytime" },
-                  ].map((f) => (
-                    <div key={f.k}>
-                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: t.faint }}>
-                        {f.k}
-                      </p>
-                      <p className="mt-1.5 text-base sm:text-lg font-bold" style={{ color: t.text }}>
-                        {f.v}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* dashed seam + stub */}
-              <div
-                className="border-t border-dashed px-7 sm:px-10 py-6 flex items-center justify-between gap-6"
-                style={{ borderColor: light ? "rgba(109,90,230,0.3)" : "rgba(139,124,255,0.35)" }}
-              >
-                <div aria-hidden className="flex items-end gap-[3px] h-11 opacity-80">
-                  {[2, 5, 3, 7, 2, 4, 6, 2, 3, 8, 2, 5, 3, 2, 6, 4, 2, 7, 3, 5, 2, 4, 8, 2, 3, 6, 2, 4].map(
-                    (w, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          width: w >= 5 ? 3 : 1.5,
-                          height: "100%",
-                          background: light ? "rgba(20,20,20,0.75)" : "rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    ),
-                  )}
-                </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#6D5AE6] text-white px-6 py-3 text-base font-bold transition-colors group-hover:bg-[#5B4BD9]">
-                  Board now
-                  <ArrowRight style={{ width: 18, height: 18 }} className="rtl:rotate-180 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </div>
-            </div>
-          </Link>
-          <p className="mt-6 text-center text-[13px]" style={{ color: t.faint }}>
-            Two-minute setup · the crew joins with one link
-          </p>
-        </div>
-      </section>
+      <BoardingPass t={t} light={light} />
 
       <footer className="border-t py-10 px-6" style={{ borderColor: t.line }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 text-xs" style={{ color: t.faint }}>
@@ -628,5 +481,163 @@ function ChapterScene({
         </div>
       </div>
     </div>
+  );
+}
+
+
+/** The SOLO → SAWA boarding-pass CTA — shared by the vision variants. */
+export function BoardingPass({ t, light }: { t: Theme; light: boolean }) {
+  return (
+    <>
+      {/* ── boarding pass ───────────────────────────────────────────── */}
+      <section className="relative py-24 sm:py-32 px-6">
+        <div className="max-w-2xl mx-auto">
+          <p
+            className="text-center text-xs font-bold uppercase tracking-[0.2em] mb-8"
+            style={{ color: t.faint }}
+          >
+            Your boarding pass
+          </p>
+          <Link href="/auth/signup" className="group block">
+            <div
+              className="relative rounded-[28px] border overflow-hidden transition-all duration-300 group-hover:-translate-y-1.5"
+              style={{
+                background: t.card,
+                borderColor: light ? "rgba(109,90,230,0.35)" : "rgba(139,124,255,0.4)",
+                boxShadow: light
+                  ? "0 12px 40px -12px rgba(20,20,20,0.18), 0 30px 80px -30px rgba(109,90,230,0.35)"
+                  : "0 20px 60px -20px rgba(139,124,255,0.35)",
+              }}
+            >
+              {/* holographic shimmer */}
+              <div
+                aria-hidden
+                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 40%, rgba(109,90,230,0.10) 46%, rgba(12,122,111,0.09) 52%, rgba(224,178,82,0.10) 58%, transparent 64%)",
+                  backgroundSize: "250% 100%",
+                  animation: "vision-shimmer 2.4s linear infinite",
+                }}
+              />
+              {/* seam notches */}
+              <div
+                aria-hidden
+                className="absolute top-[62%] -translate-y-1/2 -left-3.5 w-7 h-7 rounded-full border"
+                style={{ background: t.canvas, borderColor: light ? "rgba(109,90,230,0.35)" : "rgba(139,124,255,0.4)" }}
+              />
+              <div
+                aria-hidden
+                className="absolute top-[62%] -translate-y-1/2 -right-3.5 w-7 h-7 rounded-full border"
+                style={{ background: t.canvas, borderColor: light ? "rgba(109,90,230,0.35)" : "rgba(139,124,255,0.4)" }}
+              />
+
+              <div className="p-7 sm:p-10">
+                {/* airline header */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2" style={{ color: light ? "#6D5AE6" : "#B3A8FF" }}>
+                    <AirplaneTakeoff className="w-5 h-5" />
+                    <span className="text-[12px] font-bold tracking-[0.22em] uppercase">
+                      Paxawa Air
+                    </span>
+                  </div>
+                  <span
+                    className="text-[12px] font-bold tracking-[0.18em] uppercase"
+                    style={{ color: light ? "#8F6400" : "#E8CB86" }}
+                  >
+                    Pack sawa · نروح سوا
+                  </span>
+                </div>
+
+                {/* route board: SOLO → SAWA */}
+                <div className="mt-8 flex items-center justify-between gap-4">
+                  <div className="text-start">
+                    <p className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-none">
+                      SOLO
+                    </p>
+                    <p className="mt-2 text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: t.faint }}>
+                      Planning alone
+                    </p>
+                  </div>
+                  <div className="flex-1 relative h-px mx-2" style={{ background: "transparent" }}>
+                    <div
+                      aria-hidden
+                      className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-px"
+                      style={{
+                        backgroundImage: `repeating-linear-gradient(to right, ${light ? "#6D5AE6" : "#8B7CFF"}66 0 8px, transparent 8px 16px)`,
+                      }}
+                    />
+                    <Airplane
+                      weight="fill"
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rotate-90 transition-transform duration-500 group-hover:translate-x-2"
+                      style={{ color: light ? "#6D5AE6" : "#8B7CFF" }}
+                    />
+                  </div>
+                  <div className="text-end">
+                    <p
+                      className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-none"
+                      style={{ color: light ? "#8F6400" : "#E0B252" }}
+                    >
+                      SAWA
+                    </p>
+                    <p className="mt-2 text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: t.faint }}>
+                      Together · سوا
+                    </p>
+                  </div>
+                </div>
+
+                {/* fields */}
+                <div className="mt-9 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-5 text-start">
+                  {[
+                    { k: "Pax", v: "You + crew" },
+                    { k: "Fare", v: "Free" },
+                    { k: "Gate", v: "paxawa.com" },
+                    { k: "Departs", v: "Anytime" },
+                  ].map((f) => (
+                    <div key={f.k}>
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: t.faint }}>
+                        {f.k}
+                      </p>
+                      <p className="mt-1.5 text-base sm:text-lg font-bold" style={{ color: t.text }}>
+                        {f.v}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* dashed seam + stub */}
+              <div
+                className="border-t border-dashed px-7 sm:px-10 py-6 flex items-center justify-between gap-6"
+                style={{ borderColor: light ? "rgba(109,90,230,0.3)" : "rgba(139,124,255,0.35)" }}
+              >
+                <div aria-hidden className="flex items-end gap-[3px] h-11 opacity-80">
+                  {[2, 5, 3, 7, 2, 4, 6, 2, 3, 8, 2, 5, 3, 2, 6, 4, 2, 7, 3, 5, 2, 4, 8, 2, 3, 6, 2, 4].map(
+                    (w, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          width: w >= 5 ? 3 : 1.5,
+                          height: "100%",
+                          background: light ? "rgba(20,20,20,0.75)" : "rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    ),
+                  )}
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#6D5AE6] text-white px-6 py-3 text-base font-bold transition-colors group-hover:bg-[#5B4BD9]">
+                  Board now
+                  <ArrowRight style={{ width: 18, height: 18 }} className="rtl:rotate-180 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
+            </div>
+          </Link>
+          <p className="mt-6 text-center text-[13px]" style={{ color: t.faint }}>
+            Two-minute setup · the crew joins with one link
+          </p>
+        </div>
+      </section>
+
+    </>
   );
 }
