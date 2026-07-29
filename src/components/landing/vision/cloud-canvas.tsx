@@ -34,7 +34,6 @@ uniform vec2  uMouse;
 uniform vec3  uCloud;
 uniform vec3  uShadow;
 uniform float uOpacity;
-uniform float uFront;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -70,7 +69,7 @@ void main() {
 
   float t = uTime * 0.018;
   vec2 par = uMouse * 0.045;
-  float sink = -uScroll * 0.65;                // scroll rolls the deck UP over the hero
+  float sink = uScroll * 1.35;                 // scrolling ascends through one continuous sky
 
   // back stratum — broad, slow
   vec2 q1 = p * 1.15 + vec2(t * 0.55, sink * 0.6) + par * 0.6;
@@ -82,22 +81,11 @@ void main() {
 
   float field = n1 * 0.62 + n2 * 0.48;
 
-  // BACK deck: bold, steady scenery. FRONT deck: rolls in from the
-  // bottom on scroll and whites out the whole viewport.
-  float lo = mix(0.40, 0.55 - uScroll * 0.72, uFront);
-  float hi = mix(0.64, 0.76 - uScroll * 0.50, uFront);
-  float cov = smoothstep(lo, hi, field + uFront * uScroll * 0.18);
+  // one steady deck — bold but with natural clearings so content reads
+  float cov = smoothstep(0.44, 0.70, field);
 
-  // vertical shaping: back = fuller up top; front = surges up from below
-  float bandBack = smoothstep(-0.15, 0.30, uv.y);
-  float bandFront = smoothstep(uScroll * 2.0 - 1.15, uScroll * 2.0 - 0.25, 1.0 - uv.y);
-  cov *= mix(bandBack, max(bandFront, smoothstep(0.6, 0.95, uScroll)), uFront);
-
-  // readability well — back layer only; the front deck covers everything
-  vec2 c = uv - vec2(0.5, 0.52);
-  c.x *= uRes.x / uRes.y * 0.72;
-  float well = mix(0.30, 1.0, smoothstep(0.16, 0.5, length(c)));
-  cov *= mix(well, 1.0, uFront);
+  // gentle thinning as you go deeper into the page (higher altitude)
+  cov *= 1.0 - uScroll * 0.35;
 
   // lighting: density just above → bright tops, shaded bellies
   float above = fbm(q1 + vec2(0.0, 0.09)) * 0.62 + fbm(q2 + vec2(0.0, 0.16) + n1 * 0.45) * 0.48;
@@ -107,8 +95,7 @@ void main() {
   float rim = smoothstep(0.47, 0.5, field) * (1.0 - smoothstep(0.5, 0.62, field));
   vec3 col = mix(uShadow, uCloud, lit) + rim * 0.18;
 
-  float gate = mix(1.0, smoothstep(0.02, 0.4, uScroll), uFront);
-  float alpha = cov * clamp(uOpacity + uScroll * 0.5 * uFront, 0.0, 1.0) * gate;
+  float alpha = cov * uOpacity;
   gl_FragColor = vec4(col * alpha, alpha);     // premultiplied
 }
 `;
@@ -118,7 +105,7 @@ attribute vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
-export function CloudCanvas({ light, front = false }: { light: boolean; front?: boolean }) {
+export function CloudCanvas({ light }: { light: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lightRef = useRef(light);
   lightRef.current = light;
@@ -160,7 +147,6 @@ export function CloudCanvas({ light, front = false }: { light: boolean; front?: 
       cloud: gl.getUniformLocation(prog, "uCloud"),
       shadow: gl.getUniformLocation(prog, "uShadow"),
       opacity: gl.getUniformLocation(prog, "uOpacity"),
-      front: gl.getUniformLocation(prog, "uFront"),
     };
 
     gl.enable(gl.BLEND);
@@ -171,14 +157,9 @@ export function CloudCanvas({ light, front = false }: { light: boolean; front?: 
     let mouse = { x: 0, y: 0 };
     const smoothMouse = { x: 0, y: 0 };
     const onScroll = () => {
-      const h = canvas.parentElement?.offsetHeight ?? window.innerHeight;
-      scrollV = Math.min(1, Math.max(0, window.scrollY / (h * 0.9)));
-      if (front) {
-        // once you've punched through the deck, release the viewport
-        const fade = Math.min(1, Math.max(0, (window.scrollY - h * 1.02) / (h * 0.3)));
-        canvas.style.opacity = String(1 - fade);
-        canvas.style.display = fade >= 1 ? "none" : "block";
-      }
+      // continuous ascent over the whole document
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      scrollV = Math.min(1, Math.max(0, window.scrollY / max));
     };
     const onMove = (e: PointerEvent) => {
       mouse = {
@@ -223,7 +204,6 @@ export function CloudCanvas({ light, front = false }: { light: boolean; front?: 
         gl.uniform3f(U.shadow, 0.1, 0.12, 0.2);
         gl.uniform1f(U.opacity, 0.65);
       }
-      gl.uniform1f(U.front, front ? 1.0 : 0.0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
 
@@ -260,18 +240,13 @@ export function CloudCanvas({ light, front = false }: { light: boolean; front?: 
       window.removeEventListener("resize", resize);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [front]);
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
       aria-hidden
-      className={
-        front
-          ? "fixed inset-0 w-full h-full pointer-events-none z-40"
-          : "absolute inset-0 w-full h-full pointer-events-none"
-      }
+      className="fixed inset-0 w-full h-full pointer-events-none"
     />
   );
 }
@@ -418,7 +393,7 @@ export function StarCanvas() {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="fixed inset-0 w-full h-full pointer-events-none"
     />
   );
 }

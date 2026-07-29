@@ -70,6 +70,19 @@ export function VisionFlowLanding() {
     >
       <style>{`@keyframes vision-shimmer { from { background-position: 200% 0; } to { background-position: -50% 0; } }`}</style>
 
+      {/* ── ONE continuous sky behind the whole page ────────────────── */}
+      <div
+        aria-hidden
+        className="fixed inset-0 pointer-events-none transition-colors duration-700"
+        style={{
+          background: light
+            ? "linear-gradient(180deg, #CFE3F0 0%, #E4EEF0 55%, #F2F1EC 100%)"
+            : "linear-gradient(180deg, #080D1B 0%, #0B0E16 60%, #0D0D0D 100%)",
+        }}
+      />
+      {!light && <StarCanvas />}
+      <CloudCanvas light={light} />
+
       {/* nav */}
       <header
         className="sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-500"
@@ -232,14 +245,6 @@ function AutoChapter({
   return (
     <section ref={ref} className="relative overflow-hidden">
       <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-        style={{
-          opacity: p > 0 ? 1 : 0,
-          background: `radial-gradient(70% 60% at ${i % 2 === 0 ? "15%" : "85%"} 50%, ${hue}${light ? "16" : "12"}, transparent 70%)`,
-        }}
-      />
-      <div
         className={`relative max-w-7xl mx-auto px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 lg:gap-20 items-center ${
           i % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
         }`}
@@ -353,15 +358,6 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
-  // ascent: the deck rolls in and the hero content sinks into it
-  const [ascent, setAscent] = useState(0);
-  useEffect(() => {
-    const update = () =>
-      setAscent(Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.85))));
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, []);
 
 
   /** cursor parallax + tilt, tuned per artifact depth */
@@ -381,16 +377,6 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
 
   return (
     <section className="relative overflow-hidden px-6 pt-16 sm:pt-20 pb-24">
-      {/* the sky */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none transition-colors duration-700"
-        style={{
-          background: light
-            ? "linear-gradient(180deg, #D6E7F2 0%, #E8F0F1 46%, #F6F5F1 100%)"
-            : "linear-gradient(180deg, #0A1020 0%, #0C0F18 55%, #0D0D0D 100%)",
-        }}
-      />
       <style>{`
         @keyframes vf-f1 { 0% { transform: translateY(-9px) rotate(2deg); } 100% { transform: translateY(9px) rotate(4.5deg); } }
         @keyframes vf-f2 { 0% { transform: translateY(7px) rotate(6.5deg); } 100% { transform: translateY(-11px) rotate(4deg); } }
@@ -398,34 +384,7 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
         @keyframes vf-f4 { 0% { transform: translateY(8px) rotate(-2deg); } 100% { transform: translateY(-8px) rotate(-4.5deg); } }
       `}</style>
 
-      {/* hue field, cursor-reactive */}
-      <div aria-hidden className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute -top-44 left-[22%] w-[44rem] h-[44rem] rounded-full blur-[140px]"
-          style={{ background: light ? "rgba(109,90,230,0.15)" : "rgba(139,124,255,0.22)", ...drift(46, 30) }}
-        />
-        <div
-          className="absolute top-24 right-[14%] w-[36rem] h-[36rem] rounded-full blur-[130px]"
-          style={{ background: light ? "rgba(224,178,82,0.18)" : "rgba(224,178,82,0.12)", ...drift(-28, -20) }}
-        />
-      </div>
-
-      {/* night flight: starfield behind the deck */}
-      {!light && <StarCanvas />}
-      {/* back deck — scenery behind the content */}
-      <CloudCanvas light={light} />
-      {/* front deck — screen-fixed, rolls in over EVERYTHING on scroll,
-          releases the viewport once you've punched through */}
-      <CloudCanvas light={light} front />
-
-      <div
-        className="relative max-w-6xl mx-auto min-h-[560px] sm:min-h-[620px] flex items-center justify-center"
-        style={{
-          opacity: 1 - ascent * 0.95,
-          transform: `translateY(${-ascent * 70}px) scale(${1 - ascent * 0.04})`,
-          transition: "transform 0.4s ease-out, opacity 0.4s ease-out",
-        }}
-      >
+      <div className="relative max-w-6xl mx-auto min-h-[560px] sm:min-h-[620px] flex items-center justify-center">
         {/* flight path behind everything, corner to corner */}
         <svg
           viewBox="0 0 1200 640"
