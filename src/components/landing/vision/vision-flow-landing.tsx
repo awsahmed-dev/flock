@@ -353,6 +353,16 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
+  // ascent: the deck rolls in and the hero content sinks into it
+  const [ascent, setAscent] = useState(0);
+  useEffect(() => {
+    const update = () =>
+      setAscent(Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.85))));
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
 
   /** cursor parallax + tilt, tuned per artifact depth */
   const drift = (fx: number, fy: number, rot = 0): React.CSSProperties => ({
@@ -403,7 +413,14 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
       {/* the cloud field — WebGL FBM shader; artifacts float above it */}
       <CloudCanvas light={light} />
 
-      <div className="relative max-w-6xl mx-auto min-h-[560px] sm:min-h-[620px] flex items-center justify-center">
+      <div
+        className="relative max-w-6xl mx-auto min-h-[560px] sm:min-h-[620px] flex items-center justify-center"
+        style={{
+          opacity: 1 - ascent * 0.95,
+          transform: `translateY(${-ascent * 70}px) scale(${1 - ascent * 0.04})`,
+          transition: "transform 0.4s ease-out, opacity 0.4s ease-out",
+        }}
+      >
         {/* flight path behind everything, corner to corner */}
         <svg
           viewBox="0 0 1200 640"

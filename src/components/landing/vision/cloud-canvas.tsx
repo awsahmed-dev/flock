@@ -69,7 +69,7 @@ void main() {
 
   float t = uTime * 0.018;
   vec2 par = uMouse * 0.045;
-  float sink = uScroll * 0.85;                 // ascent pushes clouds down
+  float sink = -uScroll * 0.65;                // scroll rolls the deck UP over the hero
 
   // back stratum — broad, slow
   vec2 q1 = p * 1.15 + vec2(t * 0.55, sink * 0.6) + par * 0.6;
@@ -81,16 +81,21 @@ void main() {
 
   float field = n1 * 0.62 + n2 * 0.48;
 
-  // coverage: soft threshold, thinning as you ascend
-  float cov = smoothstep(0.47, 0.78, field - uScroll * 0.08);
+  // coverage: bold at rest, and the threshold collapses as you scroll —
+  // the deck thickens until it swallows the hero
+  float lo = 0.40 - uScroll * 0.34;
+  float hi = 0.64 - uScroll * 0.22;
+  float cov = smoothstep(lo, hi, field + uScroll * 0.10);
 
-  // vertical band: fuller sky up top, clearing toward the fold
-  cov *= smoothstep(-0.15, 0.35, uv.y);
+  // vertical band: fuller sky up top, clearing toward the fold — and the
+  // clearing closes as the deck rolls in
+  cov *= smoothstep(-0.15 - uScroll * 0.6, 0.30 - uScroll * 0.45, uv.y);
 
-  // readability well around the headline (center, slightly above middle)
+  // readability well around the headline — dissolves as clouds take over
   vec2 c = uv - vec2(0.5, 0.52);
   c.x *= uRes.x / uRes.y * 0.72;
-  cov *= mix(0.38, 1.0, smoothstep(0.18, 0.52, length(c)));
+  float well = mix(0.30, 1.0, smoothstep(0.16, 0.5, length(c)));
+  cov *= mix(well, 1.0, smoothstep(0.15, 0.75, uScroll));
 
   // lighting: density just above → bright tops, shaded bellies
   float above = fbm(q1 + vec2(0.0, 0.09)) * 0.62 + fbm(q2 + vec2(0.0, 0.16) + n1 * 0.45) * 0.48;
@@ -100,7 +105,7 @@ void main() {
   float rim = smoothstep(0.47, 0.5, field) * (1.0 - smoothstep(0.5, 0.62, field));
   vec3 col = mix(uShadow, uCloud, lit) + rim * 0.18;
 
-  float alpha = cov * uOpacity * (1.0 - uScroll * 0.45);
+  float alpha = cov * clamp(uOpacity + uScroll * 0.5, 0.0, 1.0);
   gl_FragColor = vec4(col * alpha, alpha);     // premultiplied
 }
 `;
@@ -201,12 +206,12 @@ export function CloudCanvas({ light }: { light: boolean }) {
       gl.uniform2f(U.mouse, smoothMouse.x, smoothMouse.y);
       if (isLight) {
         gl.uniform3f(U.cloud, 1.0, 1.0, 1.0);
-        gl.uniform3f(U.shadow, 0.72, 0.78, 0.88);
-        gl.uniform1f(U.opacity, 0.92);
+        gl.uniform3f(U.shadow, 0.66, 0.72, 0.85);
+        gl.uniform1f(U.opacity, 1.0);
       } else {
-        gl.uniform3f(U.cloud, 0.5, 0.55, 0.72);
-        gl.uniform3f(U.shadow, 0.12, 0.14, 0.22);
-        gl.uniform1f(U.opacity, 0.5);
+        gl.uniform3f(U.cloud, 0.55, 0.6, 0.78);
+        gl.uniform3f(U.shadow, 0.1, 0.12, 0.2);
+        gl.uniform1f(U.opacity, 0.65);
       }
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
