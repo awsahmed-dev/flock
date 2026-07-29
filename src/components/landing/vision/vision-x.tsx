@@ -313,7 +313,7 @@ const FLAP_DESTS = ["TOKYO", "LISBON", "SEOUL", "BALI", "AMMAN"];
 const FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ·";
 const FLAP_LEN = 6;
 
-function FlapBoard() {
+function FlapBoard({ boarding, gate }: { boarding: string; gate: string }) {
   const [display, setDisplay] = useState(FLAP_DESTS[0].padEnd(FLAP_LEN, " "));
   useEffect(() => {
     let idx = 0;
@@ -346,10 +346,10 @@ function FlapBoard() {
 
   return (
     <div className="mt-9 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-      <span className="text-[10px] font-black tracking-[0.26em] uppercase text-[#141414]/45">
-        Now boarding
+      <span className="text-[10px] font-black tracking-[0.12em] uppercase text-[#141414]/45">
+        {boarding}
       </span>
-      <span className="flex gap-[3px]">
+      <span className="flex gap-[3px]" dir="ltr">
         {display.split("").map((ch, i) => (
           <span
             key={i}
@@ -365,10 +365,10 @@ function FlapBoard() {
         ))}
       </span>
       <span
-        className="rounded-full border px-2.5 py-1 text-[10px] font-black tracking-[0.16em] uppercase"
+        className="rounded-full border px-2.5 py-1 text-[10px] font-black tracking-[0.06em] uppercase"
         style={{ color: "#0C7A6F", borderColor: "rgba(12,122,111,0.4)", background: "rgba(12,122,111,0.08)" }}
       >
-        Gate SAWA · On time
+        {gate}
       </span>
     </div>
   );
@@ -376,6 +376,84 @@ function FlapBoard() {
 
 /* ── overlay segments driven by quantized progress ───────────────────── */
 const CYCLE_WORDS = ["the flight plan.", "the fuel money.", "the memories.", "سوا."];
+const CYCLE_WORDS_AR = ["خطة الرحلة.", "مصاريف الرحلة.", "الذكريات.", "سوا."];
+
+/* ── Arabic layer — same flight, بالعربي ─────────────────────────────── */
+const ATMOS_AR = [
+  { label: "خطة الرحلة", clock: "T−89", word: "خطّط" },
+  { label: "قبل الإقلاع", clock: "T−7", word: "احزم" },
+  { label: "أثناء الطيران", clock: "اليوم 3", word: "اقسم" },
+  { label: "الصندوق الأسود", clock: "العودة", word: "الختام" },
+  { label: "سوا", clock: "التالي", word: "سوا" },
+] as const;
+
+const STATIONS_AR = [
+  {
+    lead: "قدّموا خطة الطيران، ",
+    accent: "سوا.",
+    body: "الأصوات تحطّ، أيام الخطة تمتلئ، والجاهزية ترتفع — الرحلة لم تعد «ربما».",
+    rx: "«طيب… هل نحن ذاهبون فعلًا؟؟»",
+    tx: "مصرَّح بالإقلاع ✈",
+  },
+  {
+    lead: "كل مفتاح يقلب إلى ",
+    accent: "أخضر.",
+    body: "المستندات مثبّتة على اليوم الأول، والطقس حاضر — واللوحة تنادي بالاسم على الحقيبة التي لم تُحزم بعد.",
+    rx: "«من يعيد إرسال رابط السكن؟»",
+    tx: "مثبّت · اليوم 1",
+  },
+  {
+    lead: "احرقوا الوقود ",
+    accent: "بالتساوي.",
+    body: "فاتورة الليلة ¥12,400 تقسم نفسها على أربعة قبل وصول الباقي — حتى من دون إنترنت.",
+    rx: "«من دفع أجرة التاكسي؟»",
+    tx: "قسمة عادلة · ¥3,100",
+  },
+  {
+    lead: "شغّلوا تسجيل ",
+    accent: "الرحلة كاملة.",
+    body: "خمسة أيام تصبح شريطًا واحدًا — مُسدَّدة، مُشارَكة، وتسأل: إلى أين بعد؟",
+    rx: "«أرسلوا الصور 🙏»",
+    tx: "الشريط مُشارك ✦",
+  },
+] as const;
+
+const UI = {
+  en: {
+    start: "Start today",
+    kicker: "Scroll to fly · نروح سوا",
+    h1a: "PACK",
+    h1b: "SAWA.",
+    homeFor: "One home for",
+    boarding: "Now boarding",
+    gate: "Gate SAWA · On time",
+    altitude: "Altitude",
+    ft: "FT",
+    throttle: "Throttle",
+    fkick: "Wheels down · Where next?",
+    f1: "FLY IT",
+    f2: "SAWA.",
+    board: "Board now",
+    fsub: "Free · two-minute setup · English + العربية",
+  },
+  ar: {
+    start: "ابدأ اليوم",
+    kicker: "مرّر لتطير · Pack sawa",
+    h1a: "نروح",
+    h1b: "سوا.",
+    homeFor: "بيت واحد لـ",
+    boarding: "الصعود الآن",
+    gate: "بوابة سوا · في الموعد",
+    altitude: "الارتفاع",
+    ft: "قدم",
+    throttle: "مرّر",
+    fkick: "هبطنا · إلى أين بعد؟",
+    f1: "طيروها",
+    f2: "سوا.",
+    board: "اصعد الآن",
+    fsub: "مجاني · إعداد في دقيقتين · العربية + English",
+  },
+} as const;
 
 export function VisionX() {
   const rig = useRef<Rig>({ p: 0, target: 0, mx: 0, my: 0 });
@@ -383,6 +461,8 @@ export function VisionX() {
   const [word, setWord] = useState(0);
   const [cursor, setCursor] = useState({ x: -100, y: -100 });
   const [webgl, setWebgl] = useState(true);
+  const [arMode, setArMode] = useState(true);
+  const t = UI[arMode ? "ar" : "en"];
 
   useEffect(() => {
     try {
@@ -442,7 +522,14 @@ export function VisionX() {
     : prog < 0.9 ? 3
     : 4;
   const atmos = station >= 0 && station < 4 ? ATMOS[station as 0 | 1 | 2 | 3] : null;
-  const chapter = station >= 0 && station < 4 ? STATIONS[station as 0 | 1 | 2 | 3] : null;
+  const atmosLoc =
+    station >= 0 && station < 4
+      ? (arMode ? ATMOS_AR : ATMOS)[station as 0 | 1 | 2 | 3]
+      : null;
+  const chapter =
+    station >= 0 && station < 4
+      ? (arMode ? STATIONS_AR : STATIONS)[station as 0 | 1 | 2 | 3]
+      : null;
   const nightish = prog > 0.7 && prog < 0.92;
 
   useEffect(() => {
@@ -476,7 +563,17 @@ export function VisionX() {
   }
 
   return (
-    <div className="relative h-[700vh]" style={{ cursor: "none" }}>
+    <div
+      className="relative h-[700vh]"
+      dir={arMode ? "rtl" : "ltr"}
+      lang={arMode ? "ar" : "en"}
+      style={{
+        cursor: "none",
+        fontFamily: arMode
+          ? "var(--font-arabic-x), var(--font-sans), system-ui, sans-serif"
+          : undefined,
+      }}
+    >
       {/* ── 3D world ── */}
       <div className="fixed inset-0">
         <Canvas
@@ -516,19 +613,30 @@ export function VisionX() {
           <span className="text-[10px] font-black tracking-[0.22em] uppercase opacity-40">
             Concept D · Flight mode
           </span>
+          <button
+            type="button"
+            onClick={() => setArMode((v) => !v)}
+            className="rounded-full border border-[#141414]/15 px-2.5 py-1 text-[11px] font-black hover:bg-[#141414]/5 transition-colors"
+            aria-label={arMode ? "Switch to English" : "التبديل إلى العربية"}
+          >
+            {arMode ? "EN" : "ع"}
+          </button>
           <Link
             href="/auth/signup"
             className="rounded-full bg-[#141414] text-white px-4 py-1.5 text-sm font-bold hover:bg-[#6D5AE6] transition-colors"
           >
-            Start today
+            {t.start}
           </Link>
         </div>
       </header>
 
       {/* ── altimeter (left rail) ── */}
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center gap-3 pointer-events-none">
-        <span className="text-[10px] font-black tracking-[0.2em] rotate-180 [writing-mode:vertical-rl]" style={{ color: faint }}>
-          ALTITUDE
+        <span
+          className={`text-[10px] font-black ${arMode ? "" : "tracking-[0.2em] rotate-180 [writing-mode:vertical-rl]"}`}
+          style={{ color: faint }}
+        >
+          {t.altitude}
         </span>
         <div className="w-px h-40 relative overflow-hidden rounded-full" style={{ background: faint }}>
           <div
@@ -537,7 +645,7 @@ export function VisionX() {
           />
         </div>
         <span className="text-[11px] font-black tabular-nums" style={{ color: ink }}>
-          {Math.round(2000 + prog * 36000).toLocaleString()} FT
+          {Math.round(2000 + prog * 36000).toLocaleString()} {t.ft}
         </span>
       </div>
 
@@ -548,8 +656,11 @@ export function VisionX() {
           className="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-500 px-6"
           style={{ opacity: station === -1 ? 1 : 0, transform: `translateY(${station === -1 ? 0 : -40}px)` }}
         >
-          <p className="text-[11px] font-black tracking-[0.3em] uppercase mb-6" style={{ color: faint }}>
-            Scroll to fly · نروح سوا
+          <p
+            className="text-[11px] font-black uppercase mb-6"
+            style={{ color: faint, letterSpacing: arMode ? "0.08em" : "0.3em" }}
+          >
+            {t.kicker}
           </p>
           <div
             style={{
@@ -559,21 +670,25 @@ export function VisionX() {
             }}
           >
             <h1
-              className="font-black tracking-[-0.04em] leading-[0.9] text-[#141414]"
-              style={{ fontSize: "clamp(64px, 12vw, 170px)" }}
+              className="font-black leading-[1.02] text-[#141414]"
+              style={{
+                fontSize: arMode ? "clamp(56px, 10vw, 150px)" : "clamp(64px, 12vw, 170px)",
+                letterSpacing: arMode ? "0" : "-0.04em",
+                lineHeight: arMode ? 1.15 : 0.9,
+              }}
             >
-              PACK
+              {t.h1a}
               <br />
-              <span className="text-[#6D5AE6]">SAWA.</span>
+              <span className="text-[#6D5AE6]">{t.h1b}</span>
             </h1>
           </div>
           <p className="mt-8 text-xl sm:text-2xl font-semibold text-[#141414]/70">
-            One home for{" "}
-            <span className="inline-block min-w-[16ch] text-start font-black text-[#6D5AE6]">
-              {CYCLE_WORDS[word]}
+            {t.homeFor}{" "}
+            <span className="inline-block min-w-[13ch] text-start font-black text-[#6D5AE6]">
+              {arMode ? CYCLE_WORDS_AR[word] : CYCLE_WORDS[word]}
             </span>
           </p>
-          <FlapBoard />
+          <FlapBoard boarding={t.boarding} gate={t.gate} />
         </div>
 
         {/* PHASE STATIONS — the plane docks, the app shows itself */}
@@ -603,17 +718,18 @@ export function VisionX() {
             {/* giant outlined word — anchored to the side away from the mockup */}
             <p
               aria-hidden
-              className="absolute inset-x-0 bottom-[4vh] font-black tracking-[-0.03em] leading-none select-none px-[4vw]"
+              className="absolute inset-x-0 bottom-[4vh] font-black leading-none select-none px-[4vw]"
               style={{
-                fontSize: "clamp(64px, 11vw, 170px)",
-                textAlign: station % 2 === 1 ? "right" : "left",
+                fontSize: arMode ? "clamp(56px, 10vw, 150px)" : "clamp(64px, 11vw, 170px)",
+                letterSpacing: arMode ? "0" : "-0.03em",
+                textAlign: station % 2 === 1 ? "end" : "start",
                 color: "transparent",
                 WebkitTextStroke: `2px ${ink}`,
                 opacity: 0.35,
                 animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) both",
               }}
             >
-              {atmos.word}
+              {atmosLoc?.word}
             </p>
 
             <div
@@ -634,11 +750,11 @@ export function VisionX() {
                     background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
                   }}
                 >
-                  {atmos.clock} · {atmos.label}
+                  {atmosLoc?.clock} · {atmosLoc?.label}
                 </span>
                 <h2
-                  className="mt-4 text-2xl sm:text-4xl font-black tracking-[-0.03em] leading-[1.05] lg:max-w-md"
-                  style={{ color: ink }}
+                  className="mt-4 text-2xl sm:text-4xl font-black leading-[1.15] lg:max-w-md"
+                  style={{ color: ink, letterSpacing: arMode ? "0" : "-0.03em" }}
                 >
                   {chapter.lead}
                   <span style={{ color: atmos.hue }}>{chapter.accent}</span>
@@ -688,6 +804,7 @@ export function VisionX() {
 
               {/* the app, exactly as it is — reskinned light for daylight */}
               <div
+                dir="ltr"
                 className="vx-light mx-auto w-full max-w-[280px] sm:max-w-[340px]"
                 style={{
                   animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.12s both",
@@ -715,28 +832,33 @@ export function VisionX() {
           className="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-700 px-6"
           style={{ opacity: station === 4 ? 1 : 0, pointerEvents: station === 4 ? "auto" : "none" }}
         >
-          <p className="text-[11px] font-black tracking-[0.3em] uppercase mb-5 text-[#2E2005]/60">
-            Wheels down · Where next?
+          <p
+            className="text-[11px] font-black uppercase mb-5 text-[#2E2005]/60"
+            style={{ letterSpacing: arMode ? "0.06em" : "0.3em" }}
+          >
+            {t.fkick}
           </p>
           <h2
-            className="font-black tracking-[-0.04em] leading-[0.9] text-[#2E2005]"
-            style={{ fontSize: "clamp(56px, 10vw, 140px)" }}
+            className="font-black text-[#2E2005]"
+            style={{
+              fontSize: arMode ? "clamp(48px, 9vw, 130px)" : "clamp(56px, 10vw, 140px)",
+              letterSpacing: arMode ? "0" : "-0.04em",
+              lineHeight: arMode ? 1.15 : 0.9,
+            }}
           >
-            FLY IT
+            {t.f1}
             <br />
-            <span style={{ WebkitTextStroke: "2.5px #2E2005", color: "transparent" }}>SAWA.</span>
+            <span style={{ WebkitTextStroke: "2.5px #2E2005", color: "transparent" }}>{t.f2}</span>
           </h2>
           <Link
             href="/auth/signup"
             className="mt-10 inline-flex items-center gap-2 rounded-full bg-[#141414] text-white px-8 py-4 text-lg font-black hover:bg-[#6D5AE6] hover:scale-105 transition-all"
             style={{ cursor: "none" }}
           >
-            Board now
+            {t.board}
             <ArrowRight className="w-5 h-5 rtl:rotate-180" />
           </Link>
-          <p className="mt-5 text-sm text-[#2E2005]/60 font-semibold">
-            Free · two-minute setup · English + العربية
-          </p>
+          <p className="mt-5 text-sm text-[#2E2005]/60 font-semibold">{t.fsub}</p>
         </div>
       </div>
 
@@ -746,7 +868,12 @@ export function VisionX() {
         style={{ opacity: prog < 0.02 ? 1 : 0 }}
       >
         <div className="flex flex-col items-center gap-1.5" style={{ color: faint }}>
-          <span className="text-[10px] font-black tracking-[0.25em] uppercase">Throttle</span>
+          <span
+            className="text-[10px] font-black uppercase"
+            style={{ letterSpacing: arMode ? "0.06em" : "0.25em" }}
+          >
+            {t.throttle}
+          </span>
           <span className="block w-px h-8 animate-pulse" style={{ background: faint }} />
         </div>
       </div>
