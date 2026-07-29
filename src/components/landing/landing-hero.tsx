@@ -103,8 +103,7 @@ export function LandingHero() {
           transition={{ duration: 0.7, delay: 0.15 }}
           className="mt-7 text-lg sm:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed"
         >
-          One home for the whole trip — plan it, decide it, split it,
-          remember it. One link invites the crew.
+          One home for the whole trip. One link invites the crew.
         </motion.p>
 
         <motion.div
@@ -139,13 +138,13 @@ export function LandingHero() {
           className="mt-7 flex items-center justify-center gap-x-5 gap-y-2 flex-wrap text-[13px] text-white/45"
         >
           <li className="flex items-center gap-1.5">
-            <span className="text-[#9BC97E] font-bold">✓</span> Free — no card, ever
+            <span className="text-[#9BC97E] font-bold">✓</span> Free
           </li>
           <li className="flex items-center gap-1.5">
-            <span className="text-[#9BC97E] font-bold">✓</span> Set up in 2 minutes
+            <span className="text-[#9BC97E] font-bold">✓</span> 2-minute setup
           </li>
           <li className="flex items-center gap-1.5">
-            <span className="text-[#9BC97E] font-bold">✓</span> Crew joins with one link — no accounts
+            <span className="text-[#9BC97E] font-bold">✓</span> Crew joins with a link
           </li>
         </motion.ul>
       </motion.div>

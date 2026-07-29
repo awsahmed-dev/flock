@@ -24,7 +24,7 @@ const PHASES: {
     key: "planning",
     label: "Planning",
     title: "The cockpit",
-    body: "Readiness bar, day chips, open decisions. The home screen is a to-do list that empties itself.",
+    body: "Readiness, day chips, open decisions — a to-do list that empties itself.",
     hue: "#8B7CFF",
     dim: "rgba(139,124,255,0.14)",
   },
@@ -32,7 +32,7 @@ const PHASES: {
     key: "departure",
     label: "Departure",
     title: "T-minus board",
-    body: "Documents pinned, weather pulled in, packing gaps called out. Nothing left to a 2am panic.",
+    body: "Documents, weather, packing gaps. No 2am panic.",
     hue: "#3EC5B7",
     dim: "rgba(62,197,183,0.14)",
   },
@@ -40,7 +40,7 @@ const PHASES: {
     key: "live",
     label: "On the trip",
     title: "Today, only",
-    body: "The day's stops up top, spend logged as it happens — and Pocket Day keeps it all working offline.",
+    body: "Today's stops, spend logged live — works with zero bars.",
     hue: "#FF8A5C",
     dim: "rgba(255,138,92,0.14)",
   },
@@ -48,7 +48,7 @@ const PHASES: {
     key: "recap",
     label: "After",
     title: "The Wrap",
-    body: "Photos, awards, one last settle-up — a shareable recap instead of a dead group chat.",
+    body: "Photos, awards, one last settle-up — a recap worth sharing.",
     hue: "#E0B252",
     dim: "rgba(224,178,82,0.14)",
   },
@@ -78,8 +78,7 @@ export function PhaseStrip() {
         >
           One app, four shapes.
           <span className="block mt-2 text-white/40 text-xl sm:text-2xl font-normal tracking-normal">
-            Every message up there has the same root cause: the trip moved on,
-            the tools didn&apos;t. Paxawa changes shape with it.
+            The trip moves on; the tools don&apos;t. Paxawa changes shape with it.
           </span>
         </motion.h2>
 

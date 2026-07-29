@@ -33,7 +33,7 @@ export function LandingClosing() {
             <span className="text-[#E0B252]">Sawa.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/55 max-w-md mx-auto leading-relaxed">
-            One of you has to set it up. It takes two minutes.
+            Your crew will plan this trip somewhere. Make it here — two minutes.
           </p>
           <div className="mt-10 flex items-center justify-center gap-3">
             <Link
@@ -44,9 +44,7 @@ export function LandingClosing() {
               <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
           </div>
-          <p className="mt-4 text-xs text-white/30">
-            Your crew is going to plan this trip somewhere. Make it here.
-          </p>
+
         </motion.div>
       </section>
 

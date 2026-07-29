@@ -46,7 +46,7 @@ const FEATURES: Feature[] = [
     label: "Home",
     title: "A home screen that knows what week it is",
     accentWords: 3,
-    body: "Months out it's a planning cockpit, departure week a T-minus board, on the trip just today's plan. You open the app and it already knows what matters.",
+    body: "A cockpit months out, a T-minus board in departure week, just today's plan on the trip.",
     kills: "the 47-tab planning doc",
     cta: "Get your cockpit",
     icon: Sparkles,
@@ -57,7 +57,7 @@ const FEATURES: Feature[] = [
     label: "Plan",
     title: "One itinerary the whole crew can edit",
     accentWords: 2,
-    body: "Days on a shared map, stops in a shared order — drag a card and everyone sees it move. Bookings pin to their day.",
+    body: "Drag a card and everyone sees it move. Bookings pin to their day.",
     kills: "the shared spreadsheet",
     cta: "Build day one",
     icon: MapIcon,
@@ -68,7 +68,7 @@ const FEATURES: Feature[] = [
     label: "Decide",
     title: "Group debates end in the Huddle",
     accentWords: 2,
-    body: "Polls with costs attached that close themselves — the winner becomes the plan. Documents and the packing list live here too.",
+    body: "Polls that close themselves — the winner becomes the plan.",
     kills: "the 400-message group chat",
     cta: "Settle a debate",
     icon: Huddle,
@@ -79,7 +79,7 @@ const FEATURES: Feature[] = [
     label: "Split",
     title: "Point the camera at the receipt",
     accentWords: 2,
-    body: "Point-and-Split reads the receipt and logs the split — any currency, live rates. Settling up is two taps.",
+    body: "Point the camera, the split is logged — any currency, live rates, two-tap settle.",
     kills: "the awkward money math",
     cta: "Split something",
     icon: Wallet,
@@ -90,7 +90,7 @@ const FEATURES: Feature[] = [
     label: "Discover",
     title: "Places the whole crew will actually like",
     accentWords: 2,
-    body: "Real places from Google, ranked by the crew's combined taste. Reason chips tell you why — 'Priya's kind of place.'",
+    body: "Google places ranked by the crew's taste — 'Priya's kind of place.'",
     kills: "four hours of tab-swapping",
     cta: "See your crew's picks",
     icon: Compass,
@@ -101,7 +101,7 @@ const FEATURES: Feature[] = [
     label: "Remember",
     title: "Every trip ends with the Wrap",
     accentWords: 2,
-    body: "Photos, stats, crew awards, and the final settle-up in one shareable recap. The trip gets an ending.",
+    body: "Photos, awards, and the final settle-up — the trip gets an ending.",
     kills: "the group chat that quietly dies",
     cta: "Earn your Wrap",
     icon: Film,
@@ -143,7 +143,7 @@ export function FeatureTabs() {
           The right tool for every shape.
         </h2>
         <p className="mt-4 text-white/45 text-base sm:text-lg">
-          Real screens from the real app — click around.
+          Real screens — click around.
         </p>
 
         {/* Tab rail */}

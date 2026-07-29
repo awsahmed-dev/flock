@@ -18,19 +18,19 @@ export function NameStory() {
         className="max-w-7xl mx-auto px-6 py-10 text-center"
       >
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-5">
-          By the way — the name
+          The name
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-x-10 gap-y-3">
         <p className="text-sm sm:text-base">
           <span className="font-bold text-[#8B7CFF]">pax</span>
-          <span className="text-white/35"> /paks/ · airline-speak for </span>
+          <span className="text-white/35"> · </span>
           <span className="text-white/80 font-semibold">travelers</span>
         </p>
         <span className="hidden sm:block text-white/20 text-xl font-light">+</span>
         <p className="text-sm sm:text-base">
           <span className="font-bold text-[#E0B252]">sawa</span>
           <span className="text-[#E0B252] font-semibold"> سوا</span>
-          <span className="text-white/35"> · Arabic for </span>
+          <span className="text-white/35"> · </span>
           <span className="text-white/80 font-semibold">together</span>
         </p>
         <span className="hidden sm:block text-white/20 text-xl font-light">=</span>
