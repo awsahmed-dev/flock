@@ -34,6 +34,7 @@ uniform vec2  uMouse;
 uniform vec3  uCloud;
 uniform vec3  uShadow;
 uniform float uOpacity;
+uniform float uFront;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -81,21 +82,22 @@ void main() {
 
   float field = n1 * 0.62 + n2 * 0.48;
 
-  // coverage: bold at rest, and the threshold collapses as you scroll —
-  // the deck thickens until it swallows the hero
-  float lo = 0.40 - uScroll * 0.34;
-  float hi = 0.64 - uScroll * 0.22;
-  float cov = smoothstep(lo, hi, field + uScroll * 0.10);
+  // BACK deck: bold, steady scenery. FRONT deck: rolls in from the
+  // bottom on scroll and whites out the whole viewport.
+  float lo = mix(0.40, 0.55 - uScroll * 0.72, uFront);
+  float hi = mix(0.64, 0.76 - uScroll * 0.50, uFront);
+  float cov = smoothstep(lo, hi, field + uFront * uScroll * 0.18);
 
-  // vertical band: fuller sky up top, clearing toward the fold — and the
-  // clearing closes as the deck rolls in
-  cov *= smoothstep(-0.15 - uScroll * 0.6, 0.30 - uScroll * 0.45, uv.y);
+  // vertical shaping: back = fuller up top; front = surges up from below
+  float bandBack = smoothstep(-0.15, 0.30, uv.y);
+  float bandFront = smoothstep(uScroll * 2.0 - 1.15, uScroll * 2.0 - 0.25, 1.0 - uv.y);
+  cov *= mix(bandBack, max(bandFront, smoothstep(0.6, 0.95, uScroll)), uFront);
 
-  // readability well around the headline — dissolves as clouds take over
+  // readability well — back layer only; the front deck covers everything
   vec2 c = uv - vec2(0.5, 0.52);
   c.x *= uRes.x / uRes.y * 0.72;
   float well = mix(0.30, 1.0, smoothstep(0.16, 0.5, length(c)));
-  cov *= mix(well, 1.0, smoothstep(0.15, 0.75, uScroll));
+  cov *= mix(well, 1.0, uFront);
 
   // lighting: density just above → bright tops, shaded bellies
   float above = fbm(q1 + vec2(0.0, 0.09)) * 0.62 + fbm(q2 + vec2(0.0, 0.16) + n1 * 0.45) * 0.48;
@@ -105,7 +107,8 @@ void main() {
   float rim = smoothstep(0.47, 0.5, field) * (1.0 - smoothstep(0.5, 0.62, field));
   vec3 col = mix(uShadow, uCloud, lit) + rim * 0.18;
 
-  float alpha = cov * clamp(uOpacity + uScroll * 0.5, 0.0, 1.0);
+  float gate = mix(1.0, smoothstep(0.02, 0.4, uScroll), uFront);
+  float alpha = cov * clamp(uOpacity + uScroll * 0.5 * uFront, 0.0, 1.0) * gate;
   gl_FragColor = vec4(col * alpha, alpha);     // premultiplied
 }
 `;
@@ -115,7 +118,7 @@ attribute vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
-export function CloudCanvas({ light }: { light: boolean }) {
+export function CloudCanvas({ light, front = false }: { light: boolean; front?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lightRef = useRef(light);
   lightRef.current = light;
@@ -157,6 +160,7 @@ export function CloudCanvas({ light }: { light: boolean }) {
       cloud: gl.getUniformLocation(prog, "uCloud"),
       shadow: gl.getUniformLocation(prog, "uShadow"),
       opacity: gl.getUniformLocation(prog, "uOpacity"),
+      front: gl.getUniformLocation(prog, "uFront"),
     };
 
     gl.enable(gl.BLEND);
@@ -168,7 +172,13 @@ export function CloudCanvas({ light }: { light: boolean }) {
     const smoothMouse = { x: 0, y: 0 };
     const onScroll = () => {
       const h = canvas.parentElement?.offsetHeight ?? window.innerHeight;
-      scrollV = Math.min(1, Math.max(0, window.scrollY / (h * 0.95)));
+      scrollV = Math.min(1, Math.max(0, window.scrollY / (h * 0.9)));
+      if (front) {
+        // once you've punched through the deck, release the viewport
+        const fade = Math.min(1, Math.max(0, (window.scrollY - h * 1.02) / (h * 0.3)));
+        canvas.style.opacity = String(1 - fade);
+        canvas.style.display = fade >= 1 ? "none" : "block";
+      }
     };
     const onMove = (e: PointerEvent) => {
       mouse = {
@@ -213,6 +223,7 @@ export function CloudCanvas({ light }: { light: boolean }) {
         gl.uniform3f(U.shadow, 0.1, 0.12, 0.2);
         gl.uniform1f(U.opacity, 0.65);
       }
+      gl.uniform1f(U.front, front ? 1.0 : 0.0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
 
@@ -246,6 +257,158 @@ export function CloudCanvas({ light }: { light: boolean }) {
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("resize", resize);
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [front]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden
+      className={
+        front
+          ? "fixed inset-0 w-full h-full pointer-events-none z-40"
+          : "absolute inset-0 w-full h-full pointer-events-none"
+      }
+    />
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────── */
+
+const STAR_FRAG = `
+precision highp float;
+uniform vec2  uRes;
+uniform float uTime;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes.xy;
+  vec2 p = uv * vec2(uRes.x / uRes.y, 1.0);
+
+  vec3 col = vec3(0.0);
+
+  // two star layers, different densities
+  for (int layer = 0; layer < 2; layer++) {
+    float grid = layer == 0 ? 42.0 : 90.0;
+    vec2 g = floor(p * grid);
+    vec2 f = fract(p * grid) - 0.5;
+    float h = hash(g + float(layer) * 17.3);
+    if (h > 0.93) {
+      vec2 off = vec2(hash(g + 1.1), hash(g + 2.7)) - 0.5;
+      float d = length(f - off * 0.7);
+      float tw = 0.55 + 0.45 * sin(uTime * (0.6 + h * 2.4) + h * 40.0);
+      float star = smoothstep(0.09, 0.0, d) * tw * (layer == 0 ? 1.0 : 0.55);
+      col += vec3(0.85, 0.9, 1.0) * star * smoothstep(0.35, 0.9, uv.y + h * 0.3);
+    }
+  }
+
+  // a shooting star every ~9s, diagonal streak with a fading tail
+  float cycle = 9.0;
+  float ct = mod(uTime, cycle) / cycle;
+  float active = smoothstep(0.0, 0.02, ct) * (1.0 - smoothstep(0.1, 0.14, ct));
+  float seed = floor(uTime / cycle);
+  vec2 s0 = vec2(0.15 + hash(vec2(seed, 1.0)) * 0.6, 0.95 - hash(vec2(seed, 2.0)) * 0.25);
+  vec2 dir = normalize(vec2(0.75, -0.35));
+  vec2 head = s0 + dir * ct * 7.0 * (uRes.x / uRes.y) * 0.22;
+  vec2 rel = (uv * vec2(uRes.x / uRes.y, 1.0)) - head * vec2(uRes.x / uRes.y, 1.0);
+  float along = dot(rel, -dir);
+  float across = abs(dot(rel, vec2(-dir.y, dir.x)));
+  float tail = smoothstep(0.16, 0.0, along) * step(0.0, along) * smoothstep(0.006, 0.0, across);
+  col += vec3(0.9, 0.94, 1.0) * tail * active;
+
+  float a = clamp(max(max(col.r, col.g), col.b), 0.0, 1.0);
+  gl_FragColor = vec4(col * 0.9, a * 0.9);
+}
+`;
+
+/** Night-flight starfield — twinkling stars + a shooting star every ~9s. */
+export function StarCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true });
+    if (!gl) return;
+
+    const compile = (type: number, src: string) => {
+      const sh = gl.createShader(type)!;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      return sh;
+    };
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, STAR_FRAG));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "aPos");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const uRes = gl.getUniformLocation(prog, "uRes");
+    const uTime = gl.getUniformLocation(prog, "uTime");
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    const resize = () => {
+      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      const w = canvas.clientWidth * dpr;
+      const h = canvas.clientHeight * dpr;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    };
+    window.addEventListener("resize", resize, { passive: true });
+
+    const draw = (t: number) => {
+      resize();
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, t / 1000);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+    draw(0);
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    let running = !reduced;
+    const loop = (t: number) => {
+      if (!running) return;
+      draw(t);
+      raf = requestAnimationFrame(loop);
+    };
+    if (running) raf = requestAnimationFrame(loop);
+    const onVis = () => {
+      if (document.hidden) {
+        running = false;
+        cancelAnimationFrame(raf);
+      } else if (!reduced) {
+        running = true;
+        raf = requestAnimationFrame(loop);
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("resize", resize);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };

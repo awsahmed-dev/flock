@@ -26,7 +26,7 @@ import {
   CHAPTERS,
   BoardingPass,
 } from "./vision-landing";
-import { CloudCanvas } from "./cloud-canvas";
+import { CloudCanvas, StarCanvas } from "./cloud-canvas";
 import { NowDemo } from "../demos/now-demo";
 import { DepartureDemo } from "../demos/departure-demo";
 import { LiveDemo } from "../demos/live-demo";
@@ -410,8 +410,13 @@ function HeroTrailer({ t, light }: { t: Theme; light: boolean }) {
         />
       </div>
 
-      {/* the cloud field — WebGL FBM shader; artifacts float above it */}
+      {/* night flight: starfield behind the deck */}
+      {!light && <StarCanvas />}
+      {/* back deck — scenery behind the content */}
       <CloudCanvas light={light} />
+      {/* front deck — screen-fixed, rolls in over EVERYTHING on scroll,
+          releases the viewport once you've punched through */}
+      <CloudCanvas light={light} front />
 
       <div
         className="relative max-w-6xl mx-auto min-h-[560px] sm:min-h-[620px] flex items-center justify-center"
