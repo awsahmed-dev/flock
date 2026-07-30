@@ -716,9 +716,11 @@ export function VisionX() {
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
-          filter: drop-shadow(0 22px 40px rgba(10, 14, 24, 0.28))
-            drop-shadow(0 1px 8px rgba(255, 255, 255, 0.22));
+          /* outer glow instead of stroke — follows the silhouette only,
+             so the letterforms stay perfectly clean in both scripts */
+          filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.55))
+            drop-shadow(0 0 14px rgba(255, 255, 255, 0.35))
+            drop-shadow(0 22px 40px rgba(10, 14, 24, 0.28));
         }
         /* light-mode skin for the shared demos, scoped to this concept */
         .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
