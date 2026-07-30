@@ -861,9 +861,12 @@ export function VisionX() {
           <Link href="/" aria-label="Paxawa home" className="flex items-center">
             <Logo variant="full" size="xs" />
           </Link>
-          <span className="text-[10px] font-black tracking-[0.22em] uppercase opacity-40">
-            Concept D · Flight mode
-          </span>
+          <Link
+            href="/blog"
+            className="text-[11px] font-black tracking-[0.14em] uppercase opacity-45 hover:opacity-100 transition-opacity"
+          >
+            {arMode ? "المدوّنة" : "Blog"}
+          </Link>
           <button
             type="button"
             onClick={() => setArMode((v) => !v)}
