@@ -579,9 +579,15 @@ export function VisionX() {
   const departing = loadPct >= 100;
 
   useEffect(() => {
-    // reduced motion: skip the show, board immediately
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // returning visitors this session (and reduced-motion users) skip
+    // the boarding show — it plays once, then the sky is just there
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("vx-boarded") === "1";
+    } catch {}
+    if (seen || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setLoadPct(100);
+      setBoarded(true);
       return;
     }
     // 0→100 with a believable rhythm: quick climb, hesitation, final burst
@@ -597,6 +603,9 @@ export function VisionX() {
 
   useEffect(() => {
     if (!departing) return;
+    try {
+      sessionStorage.setItem("vx-boarded", "1");
+    } catch {}
     const done = setTimeout(() => setBoarded(true), 1700);
     return () => clearTimeout(done);
   }, [departing]);

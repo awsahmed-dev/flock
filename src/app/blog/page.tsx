@@ -50,13 +50,10 @@ export default function BlogIndex() {
             <Logo variant="full" size="sm" />
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm">
-            <Link href="/#features" className="text-[#1a1720]/65 hover:text-[#1a1720] px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
-              Features
+            <Link href="/" className="text-[#1a1720]/65 hover:text-[#1a1720] px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
+              Home
             </Link>
-            <Link href="/#phases" className="text-[#1a1720]/65 hover:text-[#1a1720] px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
-              How it works
-            </Link>
-            <span className="text-[#1a1720] px-3 py-1.5 rounded-full bg-white/[0.06] text-sm">Blog</span>
+            <span className="text-[#1a1720] px-3 py-1.5 rounded-full bg-black/[0.05] text-sm font-medium">Blog</span>
           </nav>
           <nav className="flex items-center gap-3 text-sm">
             <Link
