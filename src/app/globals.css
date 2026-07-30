@@ -460,3 +460,29 @@ button, a, [role="button"] {
 html[dir="rtl"] body {
   font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
 }
+
+/* Flight-mode ship: blog reads light now — .blog-light rescopes the
+   dark prose palette above without touching the rules themselves. */
+.blog-light .blog-content { color: rgba(26, 23, 32, 0.78); }
+.blog-light .blog-content h2,
+.blog-light .blog-content h3,
+.blog-light .blog-content strong { color: #1a1720; }
+.blog-light .blog-content a {
+  color: #5B4BD9;
+  border-bottom-color: rgba(91, 75, 217, 0.35);
+}
+.blog-light .blog-content a:hover {
+  color: #4A3BC9;
+  border-bottom-color: rgba(91, 75, 217, 0.7);
+}
+.blog-light .blog-content li::marker { color: rgba(26, 23, 32, 0.4); }
+.blog-light .blog-content blockquote {
+  border-left-color: rgba(91, 75, 217, 0.45);
+  color: rgba(26, 23, 32, 0.85);
+}
+.blog-light .blog-content figcaption { color: rgba(26, 23, 32, 0.5); }
+.blog-light .blog-content .callout {
+  border-color: rgba(26, 23, 32, 0.12);
+  background: #ffffff;
+}
+.blog-light .blog-content .callout strong { color: #5B4BD9; }

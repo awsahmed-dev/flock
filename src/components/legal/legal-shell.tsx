@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
+import { MARKETING_LIGHT_VARS } from "@/components/landing/marketing-light";
 
 /**
  * Shared chrome for /terms and /privacy. Slim top bar (just the wordmark
@@ -19,8 +20,14 @@ export function LegalShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/50 sticky top-0 bg-background/95 backdrop-blur z-10">
+    <div
+      className="min-h-screen text-foreground"
+      style={{
+        ...MARKETING_LIGHT_VARS,
+        background: "linear-gradient(180deg, #DCE8EF 0%, #F6F5F1 340px)",
+      }}
+    >
+      <header className="border-b border-black/[0.08] sticky top-0 bg-[#F6F5F1]/85 backdrop-blur z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link
             href="/"
@@ -40,6 +47,9 @@ export function LegalShell({
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <p className="text-[10px] font-black tracking-[0.22em] uppercase text-[#5B4BD9] mb-2">
+          Paxawa · Ground control
+        </p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
           {title}
         </h1>
@@ -54,7 +64,7 @@ export function LegalShell({
         </div>
       </main>
 
-      <footer className="border-t border-border/50 mt-16 py-8">
+      <footer className="border-t border-black/[0.08] mt-16 py-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Paxawa</p>
           <nav className="flex items-center gap-5">

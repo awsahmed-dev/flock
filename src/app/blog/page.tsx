@@ -43,31 +43,31 @@ export default function BlogIndex() {
   const [featured, ...rest] = sorted;
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#8B7CFF] selection:text-[#0D0D0D]">
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0D0D0D]/75 border-b border-white/[0.06]">
+    <div className="min-h-screen blog-light bg-[#F6F5F1] text-[#1a1720] selection:bg-[#5B4BD9] selection:text-[#1a1720]">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#F6F5F1]/85 border-b border-black/[0.08]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center shrink-0 text-white" aria-label="Paxawa home">
+          <Link href="/" className="flex items-center shrink-0 text-[#1a1720]" aria-label="Paxawa home">
             <Logo variant="full" size="sm" />
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm">
-            <Link href="/#features" className="text-white/60 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
+            <Link href="/#features" className="text-[#1a1720]/65 hover:text-[#1a1720] px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
               Features
             </Link>
-            <Link href="/#phases" className="text-white/60 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
+            <Link href="/#phases" className="text-[#1a1720]/65 hover:text-[#1a1720] px-3 py-1.5 rounded-full hover:bg-white/[0.04] transition-colors">
               How it works
             </Link>
-            <span className="text-white px-3 py-1.5 rounded-full bg-white/[0.06] text-sm">Blog</span>
+            <span className="text-[#1a1720] px-3 py-1.5 rounded-full bg-white/[0.06] text-sm">Blog</span>
           </nav>
           <nav className="flex items-center gap-3 text-sm">
             <Link
               href="/auth/login"
-              className="hidden sm:inline text-white/60 hover:text-white px-3 py-1.5 transition-colors"
+              className="hidden sm:inline text-[#1a1720]/65 hover:text-[#1a1720] px-3 py-1.5 transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#8B7CFF] text-[#0D0D0D] hover:bg-[#9C8FFF] px-4 py-2 font-bold transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#5B4BD9] text-white hover:bg-[#4A3BC9] px-4 py-2 font-bold transition-colors"
             >
               Start a trip
               <ArrowRight className="w-3.5 h-3.5" />
@@ -82,9 +82,9 @@ export default function BlogIndex() {
         </p>
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] max-w-3xl">
           Group travel, money, and AI itineraries —{" "}
-          <span className="text-white/40">no fluff.</span>
+          <span className="text-[#1a1720]/50">no fluff.</span>
         </h1>
-        <p className="mt-5 text-lg text-white/60 max-w-2xl">
+        <p className="mt-5 text-lg text-[#1a1720]/65 max-w-2xl">
           Practical guides for travelers who actually want to take the trip,
           not just spend three weeks debating it in the group chat.
         </p>
@@ -93,7 +93,7 @@ export default function BlogIndex() {
       <section className="max-w-7xl mx-auto px-6 pb-16">
         <Link
           href={`/blog/${featured.slug}`}
-          className="group grid sm:grid-cols-2 rounded-3xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
+          className="group grid sm:grid-cols-2 rounded-3xl border border-black/10 bg-white overflow-hidden hover:border-black/25 transition-colors"
         >
           <div className="relative aspect-[16/10] sm:aspect-auto sm:min-h-[280px] overflow-hidden">
             <PostCover tag={featured.tag} className="transition-transform duration-500 group-hover:scale-[1.02]" />
@@ -101,17 +101,17 @@ export default function BlogIndex() {
           <div className="p-6 sm:p-8 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-4">
               <TagChip tag={featured.tag} />
-              <span className="text-[10px] font-bold tracking-widest uppercase text-white/30">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-[#1a1720]/40">
                 Featured
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] leading-tight">
               {featured.title}
             </h2>
-            <p className="mt-4 text-white/65 leading-relaxed line-clamp-3">
+            <p className="mt-4 text-[#1a1720]/70 leading-relaxed line-clamp-3">
               {featured.description}
             </p>
-            <div className="flex items-center gap-4 mt-5 text-xs text-white/45">
+            <div className="flex items-center gap-4 mt-5 text-xs text-[#1a1720]/55">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" />
                 <time dateTime={featured.publishedAt}>
@@ -141,7 +141,7 @@ export default function BlogIndex() {
               <Link
                 key={p.slug}
                 href={`/blog/${p.slug}`}
-                className="group rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/25 transition-colors"
+                className="group rounded-2xl border border-black/10 bg-white overflow-hidden hover:border-black/25 transition-colors"
               >
                 <div className="relative aspect-[16/8] overflow-hidden">
                   <PostCover tag={p.tag} className="transition-transform duration-500 group-hover:scale-[1.02]" />
@@ -151,10 +151,10 @@ export default function BlogIndex() {
                   <h3 className="text-lg font-semibold mt-3 leading-snug">
                     {p.title}
                   </h3>
-                  <p className="text-sm text-white/60 mt-2 line-clamp-2">
+                  <p className="text-sm text-[#1a1720]/65 mt-2 line-clamp-2">
                     {p.description}
                   </p>
-                  <div className="flex items-center gap-3 mt-4 text-[11px] text-white/40">
+                  <div className="flex items-center gap-3 mt-4 text-[11px] text-[#1a1720]/50">
                     <time dateTime={p.publishedAt}>
                       {new Date(p.publishedAt).toLocaleDateString("en-US", {
                         year: "numeric",
@@ -172,23 +172,23 @@ export default function BlogIndex() {
         </section>
       )}
 
-      <footer className="border-t border-white/[0.06] py-10 px-6">
+      <footer className="border-t border-black/[0.08] py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-3 text-white">
+          <div className="flex items-center gap-3 text-[#1a1720]">
             <Logo variant="full" size="xs" />
-            <span className="text-white/20">·</span>
-            <span className="text-white/40 text-xs">
+            <span className="text-[#1a1720]/25">·</span>
+            <span className="text-[#1a1720]/50 text-xs">
               © {new Date().getFullYear()}
             </span>
           </div>
-          <nav className="flex items-center gap-5 text-xs text-white/40">
-            <Link href="/" className="hover:text-white transition-colors">
+          <nav className="flex items-center gap-5 text-xs text-[#1a1720]/50">
+            <Link href="/" className="hover:text-[#1a1720] transition-colors">
               Home
             </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
+            <Link href="/terms" className="hover:text-[#1a1720] transition-colors">
               Terms
             </Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">
+            <Link href="/privacy" className="hover:text-[#1a1720] transition-colors">
               Privacy
             </Link>
           </nav>
