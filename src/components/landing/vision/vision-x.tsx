@@ -190,12 +190,32 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
   const gates = useMemo(
     () =>
       [0.2, 0.42, 0.64, 0.86].map((t, i) => ({
+        t,
         pos: curve.getPointAt(t),
         tan: curve.getTangentAt(t),
         hue: ["#8B7CFF", "#3EC5B7", "#FF8A5C", "#E0B252"][i],
       })),
     [curve],
   );
+  const gateRefs = useRef<(THREE.Group | null)[]>([]);
+  const cloudsRef = useRef<THREE.Points>(null);
+
+  // wingtip contrails — two ribbons of the plane's last moments
+  const TRAIL_N = 64;
+  const trails = useMemo(() => {
+    const make = () => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 3), 3));
+      const line = new THREE.Line(
+        g,
+        new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.32 }),
+      );
+      line.frustumCulled = false;
+      return line;
+    };
+    return { l: make(), r: make() };
+  }, []);
+  const trailInit = useRef(false);
 
   const tmp = useMemo(
     () => ({
@@ -204,6 +224,8 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
       up: new THREE.Vector3(0, 1, 0),
       look: new THREE.Vector3(),
       cam: new THREE.Vector3(),
+      tipL: new THREE.Vector3(),
+      tipR: new THREE.Vector3(),
     }),
     [],
   );
@@ -244,6 +266,55 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
       plane.quaternion.setFromRotationMatrix(tmp.m);
       plane.rotateZ(-bank);
       plane.rotateX(bob * 0.05);
+
+      // wingtip contrails — shift the ribbon, append this frame's tips
+      plane.updateMatrixWorld();
+      tmp.tipL.set(-2.45, 0.22, 1.95);
+      tmp.tipR.set(2.45, 0.22, 1.95);
+      plane.localToWorld(tmp.tipL);
+      plane.localToWorld(tmp.tipR);
+      const write = (line: THREE.Line, tip: THREE.Vector3) => {
+        const attr = line.geometry.attributes.position as THREE.BufferAttribute;
+        const arr = attr.array as Float32Array;
+        if (!trailInit.current) {
+          for (let i = 0; i < arr.length; i += 3) {
+            arr[i] = tip.x;
+            arr[i + 1] = tip.y;
+            arr[i + 2] = tip.z;
+          }
+        } else {
+          arr.copyWithin(0, 3);
+          arr[arr.length - 3] = tip.x;
+          arr[arr.length - 2] = tip.y;
+          arr[arr.length - 1] = tip.z;
+        }
+        attr.needsUpdate = true;
+      };
+      write(trails.l, tmp.tipL);
+      write(trails.r, tmp.tipR);
+      trailInit.current = true;
+      // contrails read strongest at cruise, faint while parked at the hero
+      const trailOpacity = 0.1 + Math.min(1, Math.abs(r.target - r.p) * 260) * 0.3;
+      (trails.l.material as THREE.LineBasicMaterial).opacity = trailOpacity;
+      (trails.r.material as THREE.LineBasicMaterial).opacity = trailOpacity;
+    }
+
+    // gates flare as the plane threads them
+    gates.forEach((g, i) => {
+      const grp = gateRefs.current[i];
+      if (!grp) return;
+      const pulse = Math.exp(-(((p - g.t) * 55) ** 2));
+      grp.scale.setScalar(1 + pulse * 0.4);
+      const ring = grp.children[0] as THREE.Mesh | undefined;
+      if (ring) {
+        (ring.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.85 + pulse * 2.6;
+      }
+    });
+
+    // the cloud deck breathes
+    if (cloudsRef.current) {
+      cloudsRef.current.position.x = Math.sin(state.clock.elapsedTime * 0.04) * 3;
+      cloudsRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.023) * 1.2;
     }
 
     // chase camera with pointer sway
@@ -255,6 +326,8 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
     );
     camera.position.lerp(tmp.cam, 0.12);
     camera.lookAt(pos.x, pos.y + 0.6, pos.z - 4);
+    // lean into the turn with the plane — subtle, but sells the flight
+    camera.rotateZ(-bank * 0.22);
   });
 
   return (
@@ -275,9 +348,20 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
         />
       </mesh>
 
+      {/* wingtip contrails */}
+      <primitive object={trails.l} />
+      <primitive object={trails.r} />
+
       {/* phase gates */}
       {gates.map((g, i) => (
-        <group key={i} position={g.pos.toArray()} quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), g.tan)}>
+        <group
+          key={i}
+          ref={(el: THREE.Group | null) => {
+            gateRefs.current[i] = el;
+          }}
+          position={g.pos.toArray()}
+          quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), g.tan)}
+        >
           <mesh>
             <torusGeometry args={[7.5, 0.28, 12, 64]} />
             <meshStandardMaterial color={g.hue} emissive={g.hue} emissiveIntensity={0.85} roughness={0.3} />
@@ -287,7 +371,7 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
       ))}
 
       {/* cloud deck */}
-      <points geometry={cloudGeo}>
+      <points ref={cloudsRef} geometry={cloudGeo}>
         <pointsMaterial
           ref={cloudMatRef}
           map={cloudTex}
@@ -437,6 +521,7 @@ const UI = {
     f2: "SAWA.",
     board: "Board now",
     fsub: "Free · two-minute setup · English + العربية",
+    replay: "Replay the flight ↺",
   },
   ar: {
     start: "ابدأ اليوم",
@@ -456,6 +541,7 @@ const UI = {
     f2: "سوا.",
     board: "اصعد الآن",
     fsub: "مجاني · إعداد في دقيقتين · العربية + English",
+    replay: "أعد الرحلة ↺",
   },
 } as const;
 
@@ -616,6 +702,7 @@ export function VisionX() {
         @keyframes vx-spin { to { transform: rotate(360deg); } }
         @keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
         @keyframes vx-bob { 0% { transform: translateY(-5px) rotate(-0.6deg); } 100% { transform: translateY(5px) rotate(0.6deg); } }
+        @keyframes vx-word { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         /* light-mode skin for the shared demos, scoped to this concept */
         .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
         .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }
@@ -696,11 +783,24 @@ export function VisionX() {
         >
           {t.altitude}
         </span>
-        <div className="w-px h-40 relative overflow-hidden rounded-full" style={{ background: faint }}>
+        <div className="w-px h-40 relative rounded-full" style={{ background: faint }}>
           <div
             className="absolute bottom-0 inset-x-0 transition-[height] duration-200"
             style={{ height: `${Math.round(prog * 100)}%`, background: ink }}
           />
+          {/* phase waypoints on the rail */}
+          {[0.22, 0.44, 0.66, 0.84].map((pos, i) => (
+            <span
+              key={i}
+              className="absolute left-1/2 -translate-x-1/2 translate-y-1/2 w-[7px] h-[7px] rounded-full border transition-all duration-300"
+              style={{
+                bottom: `${pos * 100}%`,
+                background: prog >= pos - 0.06 ? ["#6D5AE6", "#0C7A6F", "#B4441B", "#E0B252"][i] : "transparent",
+                borderColor: ["#6D5AE6", "#0C7A6F", "#B4441B", "#E0B252"][i],
+                transform: `translate(-50%, 50%) scale(${Math.abs(prog - pos) < 0.07 ? 1.5 : 1})`,
+              }}
+            />
+          ))}
         </div>
         <span className="text-[11px] font-black tabular-nums" style={{ color: ink }}>
           {Math.round(2000 + prog * 36000).toLocaleString()} {t.ft}
@@ -743,7 +843,9 @@ export function VisionX() {
           <p className="mt-8 text-xl sm:text-2xl font-semibold text-[#141414]/70">
             {t.homeFor}{" "}
             <span className="inline-block min-w-[13ch] text-start font-black text-[#6D5AE6]">
-              {arMode ? CYCLE_WORDS_AR[word] : CYCLE_WORDS[word]}
+              <span key={word} className="inline-block" style={{ animation: "vx-word 0.45s cubic-bezier(0.22,1,0.36,1) both" }}>
+                {arMode ? CYCLE_WORDS_AR[word] : CYCLE_WORDS[word]}
+              </span>
             </span>
           </p>
           <FlapBoard boarding={t.boarding} gate={t.gate} />
@@ -896,6 +998,14 @@ export function VisionX() {
             <ArrowRight className="w-5 h-5 rtl:rotate-180" />
           </Link>
           <p className="mt-5 text-sm text-[#2E2005]/60 font-semibold">{t.fsub}</p>
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="mt-8 text-[11px] font-black tracking-[0.08em] uppercase text-[#2E2005]/50 hover:text-[#2E2005] transition-colors"
+            style={{ cursor: "none" }}
+          >
+            {t.replay}
+          </button>
         </div>
       </div>
 
