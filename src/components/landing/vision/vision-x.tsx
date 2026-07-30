@@ -703,6 +703,23 @@ export function VisionX() {
         @keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
         @keyframes vx-bob { 0% { transform: translateY(-5px) rotate(-0.6deg); } 100% { transform: translateY(5px) rotate(0.6deg); } }
         @keyframes vx-word { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* glass letters: gradient pane clipped to the glyph silhouette —
+           fill-based, so Arabic joins stay clean (no contour strokes) */
+        .vx-glass {
+          background: linear-gradient(
+            160deg,
+            rgba(255, 255, 255, 0.62) 0%,
+            rgba(255, 255, 255, 0.16) 46%,
+            rgba(255, 255, 255, 0.05) 62%,
+            rgba(255, 255, 255, 0.38) 100%
+          );
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+          filter: drop-shadow(0 22px 40px rgba(10, 14, 24, 0.28))
+            drop-shadow(0 1px 8px rgba(255, 255, 255, 0.22));
+        }
         /* light-mode skin for the shared demos, scoped to this concept */
         .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
         .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }
@@ -854,17 +871,15 @@ export function VisionX() {
         {/* PHASE STATIONS — the plane docks, the app shows itself */}
         {atmos && chapter && (
           <div key={atmos.word} className="absolute inset-0 flex items-center justify-center px-6">
-            {/* giant outlined word — anchored to the side away from the mockup */}
+            {/* giant glass word — a frosted pane floating over the sky,
+                anchored to the side away from the mockup */}
             <p
               aria-hidden
-              className="absolute inset-x-0 bottom-[4vh] font-black leading-none select-none px-[4vw]"
+              className="vx-glass absolute inset-x-0 bottom-[4vh] font-black leading-none select-none px-[4vw]"
               style={{
                 fontSize: arMode ? "clamp(56px, 10vw, 150px)" : "clamp(64px, 11vw, 170px)",
                 letterSpacing: arMode ? "0" : "-0.03em",
                 textAlign: station % 2 === 1 ? "end" : "start",
-                color: "transparent",
-                WebkitTextStroke: `2px ${ink}`,
-                opacity: 0.35,
                 animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) both",
               }}
             >
@@ -987,7 +1002,7 @@ export function VisionX() {
           >
             {t.f1}
             <br />
-            <span style={{ WebkitTextStroke: "2.5px #2E2005", color: "transparent" }}>{t.f2}</span>
+            <span className="vx-glass">{t.f2}</span>
           </h2>
           <Link
             href="/auth/signup"
