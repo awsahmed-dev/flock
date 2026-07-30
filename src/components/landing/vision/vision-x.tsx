@@ -146,6 +146,7 @@ interface Rig {
   target: number;   // raw scroll progress
   mx: number;
   my: number;
+  barrel: number;   // timestamp of the last barrel-roll request
 }
 
 function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
@@ -266,6 +267,13 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
       plane.quaternion.setFromRotationMatrix(tmp.m);
       plane.rotateZ(-bank);
       plane.rotateX(bob * 0.05);
+
+      // barrel roll (the "س" key) — one full ease-in-out rotation
+      const bt = (performance.now() - r.barrel) / 1100;
+      if (bt >= 0 && bt < 1) {
+        const ease = bt < 0.5 ? 4 * bt ** 3 : 1 - (-2 * bt + 2) ** 3 / 2;
+        plane.rotateZ(ease * Math.PI * 2);
+      }
 
       // wingtip contrails — shift the ribbon, append this frame's tips
       plane.updateMatrixWorld();
@@ -546,7 +554,7 @@ const UI = {
 } as const;
 
 export function VisionX() {
-  const rig = useRef<Rig>({ p: 0, target: 0, mx: 0, my: 0 });
+  const rig = useRef<Rig>({ p: 0, target: 0, mx: 0, my: 0, barrel: -1e9 });
   const [prog, setProg] = useState(0); // quantized for overlay
   const [word, setWord] = useState(0);
   const [cursor, setCursor] = useState({ x: -100, y: -100 });
@@ -560,6 +568,11 @@ export function VisionX() {
   const departing = loadPct >= 100;
 
   useEffect(() => {
+    // reduced motion: skip the show, board immediately
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setLoadPct(100);
+      return;
+    }
     // 0→100 with a believable rhythm: quick climb, hesitation, final burst
     const timer = setInterval(() => {
       setLoadPct((p) => {
@@ -654,6 +667,54 @@ export function VisionX() {
       ? (arMode ? STATIONS_AR : STATIONS)[station as 0 | 1 | 2 | 3]
       : null;
   const nightish = prog > 0.7 && prog < 0.92;
+
+  // the browser tab flies along with you
+  useEffect(() => {
+    const loc = station >= 0 && station < 4 ? (arMode ? ATMOS_AR : ATMOS)[station as 0 | 1 | 2 | 3] : null;
+    document.title = loc
+      ? `${loc.clock} · ${loc.label} — Paxawa`
+      : station === 4
+        ? arMode
+          ? "إلى أين بعد؟ — Paxawa"
+          : "Where next? — Paxawa"
+        : arMode
+          ? "نروح سوا — Paxawa"
+          : "Pack Sawa — Paxawa";
+  }, [station, arMode]);
+
+  // keyboard flight: arrows/space hop between stations, s/س barrel-rolls
+  useEffect(() => {
+    if (!boarded) return;
+    const stops = [0, 0.22, 0.44, 0.66, 0.84, 0.97];
+    const onKey = (e: KeyboardEvent) => {
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const cur = rig.current.target;
+      if (e.key === "s" || e.key === "S" || e.key === "س") {
+        rig.current.barrel = performance.now();
+        return;
+      }
+      let dir = 0;
+      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") dir = 1;
+      else if (e.key === "ArrowUp" || e.key === "PageUp") dir = -1;
+      else if (e.key === "Home") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        window.scrollTo({ top: max, behavior: "smooth" });
+        return;
+      } else return;
+      e.preventDefault();
+      const next =
+        dir > 0
+          ? (stops.find((s) => s > cur + 0.02) ?? 1)
+          : ([...stops].reverse().find((s) => s < cur - 0.02) ?? 0);
+      window.scrollTo({ top: Math.round(next * max), behavior: "smooth" });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [boarded]);
 
   useEffect(() => {
     if (station < 0 || station > 3 || playedStation.current === station) {
