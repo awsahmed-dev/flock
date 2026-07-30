@@ -784,31 +784,9 @@ export function VisionX() {
           : undefined,
       }}
     >
+      {/* keyframes + .vx-glass live in globals.css (shared with the sky
+          pages); only the demo reskin stays scoped here */}
       <style>{`
-        @keyframes vx-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes vx-spin { to { transform: rotate(360deg); } }
-        @keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-        @keyframes vx-bob { 0% { transform: translateY(-5px) rotate(-0.6deg); } 100% { transform: translateY(5px) rotate(0.6deg); } }
-        @keyframes vx-word { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* glass letters: gradient pane clipped to the glyph silhouette —
-           fill-based, so Arabic joins stay clean (no contour strokes) */
-        .vx-glass {
-          background: linear-gradient(
-            160deg,
-            rgba(255, 255, 255, 0.62) 0%,
-            rgba(255, 255, 255, 0.16) 46%,
-            rgba(255, 255, 255, 0.05) 62%,
-            rgba(255, 255, 255, 0.38) 100%
-          );
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          /* outer glow instead of stroke — follows the silhouette only,
-             so the letterforms stay perfectly clean in both scripts */
-          filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.55))
-            drop-shadow(0 0 14px rgba(255, 255, 255, 0.35))
-            drop-shadow(0 22px 40px rgba(10, 14, 24, 0.28));
-        }
         /* light-mode skin for the shared demos, scoped to this concept */
         .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
         .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }

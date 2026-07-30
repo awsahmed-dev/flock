@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, ArrowLeft, Calendar, Clock } from "@phosphor-icons/react/dist/ssr";
-import { Logo } from "@/components/ui/logo";
+import { ArrowUpRight, ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { TAGS, type BlogPostMeta } from "@/lib/blog/posts";
 import { PostCover } from "@/components/blog/post-cover";
+import { SkyShell, GateChip, Barcode } from "@/components/landing/sky-shell";
 
 const SITE = "https://paxawa.com";
 
@@ -12,184 +12,157 @@ interface Props {
   related: BlogPostMeta[];
 }
 
+const dateShort = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
 /**
- * B26: shared chrome for blog posts. Header + footer + hero + related
- * strip live here so the post pages stay focused on prose. Keeps the
- * marketing surface dark like the landing — different from the in-app
- * light theme, intentionally.
+ * Post chrome in the flight-mode world: the giant glass tag word floats
+ * behind the sky, the hero reads like a gate announcement, the article
+ * itself is a white paper card drifting on the sky, and the closing CTA
+ * is a boarding pass. Prose styling stays in .blog-content (.blog-light
+ * overrides in globals.css).
  */
 export function BlogShell({ post, children, related }: Props) {
+  const hue = TAGS[post.tag].hue;
   const publishedLong = new Date(post.publishedAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  return (
-    <div className="min-h-screen blog-light bg-[#F6F5F1] text-[#1a1720] selection:bg-[#5B4BD9] selection:text-[#1a1720]">
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#F6F5F1]/85 border-b border-black/[0.08]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="flex items-center shrink-0 text-[#1a1720]"
-            aria-label="Paxawa home"
-          >
-            <Logo variant="full" size="sm" />
-          </Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <Link
-              href="/blog"
-              className="text-[#1a1720]/65 hover:text-[#1a1720] transition-colors hidden sm:inline"
-            >
-              All posts
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#5B4BD9] text-white hover:bg-[#4A3BC9] px-4 py-2 font-medium transition-colors"
-            >
-              Start a trip
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </nav>
-        </div>
-      </header>
 
-      <article>
-        <div className="max-w-3xl mx-auto px-6 pt-12 pb-8">
+  return (
+    <SkyShell word={post.tag.toUpperCase()} active="blog">
+      <article className="blog-light px-6">
+        {/* gate announcement */}
+        <div className="max-w-3xl mx-auto pt-36 pb-10">
           <Link
             href="/blog"
-            className="flex w-fit items-center gap-1.5 text-xs text-[#1a1720]/55 hover:text-[#1a1720] mb-6 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white/55 backdrop-blur-sm px-3.5 py-1.5 text-[11px] font-black tracking-[0.12em] uppercase text-[#141414]/55 hover:text-[#141414] transition-colors"
+            style={{ animation: "vx-in 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to all posts
+            All flights
           </Link>
-          <span
-            className="inline-block rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase mb-4"
-            style={{
-              color: TAGS[post.tag].hue,
-              borderColor: `${TAGS[post.tag].hue}40`,
-              background: `${TAGS[post.tag].hue}12`,
-            }}
+
+          <div
+            className="mt-6 flex flex-wrap items-center gap-3"
+            style={{ animation: "vx-in 0.6s cubic-bezier(0.22,1,0.36,1) 0.05s both" }}
           >
-            {post.tag}
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1]">
+            <GateChip hue={hue}>Gate {post.tag}</GateChip>
+            <GateChip hue="#0C7A6F">T−{post.readMinutes} min read</GateChip>
+          </div>
+
+          <h1
+            className="mt-5 font-black tracking-[-0.025em] leading-[1.05]"
+            style={{ fontSize: "clamp(34px, 5.5vw, 60px)", animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s both" }}
+          >
             {post.title}
           </h1>
-          <p className="mt-5 text-lg sm:text-xl text-[#1a1720]/70 leading-relaxed">
+          <p
+            className="mt-5 text-lg sm:text-xl text-[#141414]/60 leading-relaxed"
+            style={{ animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.16s both" }}
+          >
             {post.description}
           </p>
-          <div className="flex flex-wrap items-center gap-4 mt-7 text-xs text-[#1a1720]/55">
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              <time dateTime={post.publishedAt}>{publishedLong}</time>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              {post.readMinutes} min read
-            </span>
+          <div
+            className="flex flex-wrap items-center gap-4 mt-6 text-[11px] font-black tracking-[0.14em] uppercase text-[#141414]/45"
+            style={{ animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s both" }}
+          >
+            <time dateTime={post.publishedAt}>{publishedLong}</time>
             <span>By {post.author}</span>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="relative aspect-[16/6] sm:aspect-[21/6] rounded-3xl overflow-hidden border border-black/[0.08]">
-            <PostCover tag={post.tag} />
+        {/* cover in a glass frame */}
+        <div
+          className="max-w-5xl mx-auto"
+          style={{ animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.24s both" }}
+        >
+          <div className="rounded-[32px] p-2.5 bg-white/60 backdrop-blur-sm border border-white/80 shadow-[0_44px_110px_-40px_rgba(10,14,24,0.4)]">
+            <div className="relative aspect-[16/6] sm:aspect-[21/6] rounded-[24px] overflow-hidden">
+              <PostCover tag={post.tag} />
+            </div>
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-6 py-14 blog-content">
-          {children}
+        {/* the article — a paper card on the sky */}
+        <div className="max-w-3xl mx-auto mt-10">
+          <div className="bg-white rounded-[28px] border border-black/[0.08] shadow-[0_36px_90px_-44px_rgba(10,14,24,0.35)] px-6 py-10 sm:px-12 sm:py-14 blog-content">
+            {children}
+          </div>
         </div>
 
-        <section className="border-t border-black/[0.08] py-20 px-6">
-          <div className="max-w-3xl mx-auto rounded-3xl border border-black/10 bg-gradient-to-br from-[#5B4BD9]/12 via-white to-[#8F6400]/10 p-8 sm:p-10 text-center">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">
-              Stop reading about group trips. Take one.
-            </h2>
-            <p className="mt-3 text-[#1a1720]/70 max-w-xl mx-auto">
-              One home for the whole trip — shared itinerary, Huddle decisions,
-              receipt-scan expense splits, an offline day sheet, and the Wrap
-              at the end. Free, in English and Arabic.
-            </p>
-            <Link
-              href="/auth/signup"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#5B4BD9] text-white hover:bg-[#4A3BC9] px-5 py-3 mt-6 text-sm font-bold transition-colors"
-            >
-              Start your trip — free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+        {/* boarding-pass CTA */}
+        <section className="max-w-3xl mx-auto mt-14">
+          <div className="bg-white rounded-[28px] border border-black/10 overflow-hidden shadow-[0_36px_90px_-44px_rgba(10,14,24,0.35)]">
+            <div className="p-8 sm:p-10 text-center">
+              <div className="flex justify-center">
+                <GateChip hue="#5B4BD9">Now boarding · الصعود الآن</GateChip>
+              </div>
+              <h2 className="mt-4 text-2xl sm:text-4xl font-black tracking-[-0.02em]">
+                Stop reading about trips.
+                <br />
+                <span className="text-[#5B4BD9]">اجمع سوا.</span>
+              </h2>
+              <p className="mt-4 text-[#141414]/60 max-w-md mx-auto">
+                One home for the whole trip — the plan, the money, the
+                memories. Free, in English and Arabic.
+              </p>
+              <Link
+                href="/auth/signup"
+                className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#141414] text-white px-7 py-3.5 font-bold hover:bg-[#5B4BD9] transition-colors"
+              >
+                Board now
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="border-t border-dashed border-black/15 px-8 py-4 flex items-center justify-center gap-4">
+              <Barcode className="w-36" />
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-[#141414]/40">
+                Gate SAWA · Free forever
+              </span>
+            </div>
           </div>
         </section>
 
+        {/* connecting flights */}
         {related.length > 0 && (
-          <section className="border-t border-black/[0.08] py-20 px-6">
-            <div className="max-w-7xl mx-auto">
-              <p className="text-xs font-bold tracking-widest uppercase text-[#1a1720]/50 mb-5">
-                Keep reading
-              </p>
-              <div className="grid sm:grid-cols-2 gap-5">
-                {related.map((r) => (
+          <section className="max-w-3xl mx-auto mt-14">
+            <p className="text-[12px] font-black tracking-[0.22em] uppercase text-[#141414]/50 mb-4 px-2">
+              Connecting flights · تابع القراءة
+            </p>
+            <div className="bg-white/85 backdrop-blur-md rounded-[26px] border border-black/10 overflow-hidden">
+              {related.map((r) => {
+                const rHue = TAGS[r.tag].hue;
+                return (
                   <Link
                     key={r.slug}
                     href={`/blog/${r.slug}`}
-                    className="group rounded-2xl border border-black/10 bg-white overflow-hidden hover:border-black/25 transition-colors"
+                    className="group flex items-center gap-4 px-6 sm:px-8 py-5 border-t first:border-t-0 border-black/[0.06] hover:bg-black/[0.025] transition-colors"
                   >
-                    <div className="relative aspect-[16/7] overflow-hidden">
-                      <PostCover tag={r.tag} className="transition-transform duration-500 group-hover:scale-[1.02]" />
-                    </div>
-                    <div className="p-5">
-                      <span
-                        className="inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-                        style={{
-                          color: TAGS[r.tag].hue,
-                          borderColor: `${TAGS[r.tag].hue}40`,
-                          background: `${TAGS[r.tag].hue}12`,
-                        }}
-                      >
-                        {r.tag}
-                      </span>
-                      <h3 className="font-semibold mt-2 leading-snug">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: rHue }} />
+                    <span className="flex-1">
+                      <span className="block font-bold leading-snug group-hover:text-[#5B4BD9] transition-colors">
                         {r.title}
-                      </h3>
-                      <p className="text-sm text-[#1a1720]/65 mt-2 line-clamp-2">
+                      </span>
+                      <span className="block text-sm text-[#141414]/50 mt-0.5 line-clamp-1">
                         {r.description}
-                      </p>
-                    </div>
+                      </span>
+                    </span>
+                    <span className="text-[10px] font-black tracking-[0.1em] uppercase text-[#141414]/40 shrink-0">
+                      {dateShort(r.publishedAt)} · T−{r.readMinutes} min
+                    </span>
+                    <ArrowUpRight className="w-4 h-4 text-[#141414]/35 group-hover:text-[#141414] transition-colors shrink-0" />
                   </Link>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </section>
         )}
       </article>
 
-      <footer className="border-t border-black/[0.08] py-10 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-3 text-[#1a1720]">
-            <Logo variant="full" size="xs" />
-            <span className="text-[#1a1720]/25">·</span>
-            <span className="text-[#1a1720]/50 text-xs">
-              © {new Date().getFullYear()}
-            </span>
-          </div>
-          <nav className="flex items-center gap-5 text-xs text-[#1a1720]/50">
-            <Link href="/blog" className="hover:text-[#1a1720] transition-colors">
-              Blog
-            </Link>
-            <Link href="/terms" className="hover:text-[#1a1720] transition-colors">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-[#1a1720] transition-colors">
-              Privacy
-            </Link>
-          </nav>
-        </div>
-      </footer>
-
-      {/* B26-r2: BreadcrumbList JSON-LD. Tells Google how the URL nests
-          (Home › Blog › Post Title) so the SERP shows a clean breadcrumb
-          trail instead of the raw URL. Rendered once per post by the
-          shared shell so every post inherits it automatically. */}
+      {/* B26-r2: BreadcrumbList JSON-LD — Home › Blog › Post so the SERP
+          shows a clean breadcrumb trail instead of the raw URL. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -209,6 +182,6 @@ export function BlogShell({ post, children, related }: Props) {
           }),
         }}
       />
-    </div>
+    </SkyShell>
   );
 }

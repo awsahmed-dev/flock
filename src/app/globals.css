@@ -486,3 +486,27 @@ html[dir="rtl"] body {
   background: #ffffff;
 }
 .blog-light .blog-content .callout strong { color: #5B4BD9; }
+
+/* Flight-mode vocabulary — extracted from vision-x so every marketing
+   page (blog, legal, auth) speaks the same visual language. */
+@keyframes vx-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vx-spin { to { transform: rotate(360deg); } }
+@keyframes vx-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes vx-bob { 0% { transform: translateY(-5px) rotate(-0.6deg); } 100% { transform: translateY(5px) rotate(0.6deg); } }
+@keyframes vx-word { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vx-drift { 0% { transform: translateX(-3%) translateY(0); } 100% { transform: translateX(3%) translateY(-8px); } }
+.vx-glass {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 46%,
+    rgba(255, 255, 255, 0.05) 62%,
+    rgba(255, 255, 255, 0.38) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.55))
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.35))
+    drop-shadow(0 22px 40px rgba(10, 14, 24, 0.28));
+}
