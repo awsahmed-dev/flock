@@ -227,6 +227,7 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
       cam: new THREE.Vector3(),
       tipL: new THREE.Vector3(),
       tipR: new THREE.Vector3(),
+      bankS: 0, // smoothed bank angle — raw tangent deltas snap at S-turns
     }),
     [],
   );
@@ -256,8 +257,13 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
     // plane on the spline, banking through turns
     const pos = curve.getPointAt(p);
     const tan = curve.getTangentAt(p);
-    const ahead = curve.getTangentAt(Math.min(0.999, p + 0.012));
-    const bank = THREE.MathUtils.clamp((ahead.x - tan.x) * 38, -0.9, 0.9);
+    // wider lookahead + exponential smoothing: the raw value flips sign in
+    // one frame at S-turns (PLAN→PACK, the PACK gate, SPLIT→finale) and
+    // made the plane snap — the filter turns those into gradual rolls
+    const ahead = curve.getTangentAt(Math.min(0.999, p + 0.022));
+    const bankRaw = THREE.MathUtils.clamp((ahead.x - tan.x) * 30, -0.8, 0.8);
+    tmp.bankS += (bankRaw - tmp.bankS) * 0.055;
+    const bank = tmp.bankS;
     const plane = planeRef.current;
     if (plane) {
       const bob = Math.sin(state.clock.elapsedTime * 1.6) * 0.35;
@@ -530,6 +536,8 @@ const UI = {
     board: "Board now",
     fsub: "Free · two-minute setup · English + العربية",
     replay: "Replay the flight ↺",
+    keysNav: "fly between stops",
+    keysRoll: "barrel roll",
   },
   ar: {
     start: "ابدأ اليوم",
@@ -550,6 +558,8 @@ const UI = {
     board: "اصعد الآن",
     fsub: "مجاني · إعداد في دقيقتين · العربية + English",
     replay: "أعد الرحلة ↺",
+    keysNav: "تنقّل بين المحطات",
+    keysRoll: "دحرجة!",
   },
 } as const;
 
@@ -629,6 +639,11 @@ export function VisionX() {
       rig.current.my = (e.clientY / window.innerHeight - 0.5) * 2;
       setCursor({ x: e.clientX, y: e.clientY });
     };
+    // double-click anywhere = barrel roll (touch and trackpad pilots too)
+    const onDbl = () => {
+      rig.current.barrel = performance.now();
+    };
+    window.addEventListener("dblclick", onDbl);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pointermove", onMove, { passive: true });
@@ -636,6 +651,7 @@ export function VisionX() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("dblclick", onDbl);
       clearInterval(wordTimer);
       clearInterval(sync);
     };
@@ -868,13 +884,22 @@ export function VisionX() {
             className="absolute bottom-0 inset-x-0 transition-[height] duration-200"
             style={{ height: `${Math.round(prog * 100)}%`, background: ink }}
           />
-          {/* phase waypoints on the rail */}
+          {/* phase waypoints on the rail — click one to fly there */}
           {[0.22, 0.44, 0.66, 0.84].map((pos, i) => (
-            <span
+            <button
               key={i}
-              className="absolute left-1/2 -translate-x-1/2 translate-y-1/2 w-[7px] h-[7px] rounded-full border transition-all duration-300"
+              type="button"
+              aria-label={(arMode ? ATMOS_AR : ATMOS)[i].label}
+              onClick={() =>
+                window.scrollTo({
+                  top: Math.round(pos * (document.documentElement.scrollHeight - window.innerHeight)),
+                  behavior: "smooth",
+                })
+              }
+              className="absolute left-1/2 pointer-events-auto w-[7px] h-[7px] rounded-full border transition-all duration-300 hover:scale-[1.8]"
               style={{
                 bottom: `${pos * 100}%`,
+                cursor: "none",
                 background: prog >= pos - 0.06 ? ["#6D5AE6", "#0C7A6F", "#B4441B", "#E0B252"][i] : "transparent",
                 borderColor: ["#6D5AE6", "#0C7A6F", "#B4441B", "#E0B252"][i],
                 transform: `translate(-50%, 50%) scale(${Math.abs(prog - pos) < 0.07 ? 1.5 : 1})`,
@@ -1170,6 +1195,35 @@ export function VisionX() {
           </div>
         </div>
       )}
+
+      {/* keyboard hint — desktop pilots get controls */}
+      <div
+        className="fixed bottom-6 end-6 z-40 hidden md:flex items-center gap-3 pointer-events-none transition-opacity duration-700"
+        style={{ opacity: boarded ? 1 : 0 }}
+      >
+        <span className="flex items-center gap-1.5">
+          <kbd
+            className="rounded-md border px-1.5 py-0.5 text-[10px] font-black"
+            style={{ color: ink, borderColor: faint, background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.4)" }}
+          >
+            ↑↓
+          </kbd>
+          <span className="text-[10px] font-bold" style={{ color: faint }}>
+            {t.keysNav}
+          </span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <kbd
+            className="rounded-md border px-1.5 py-0.5 text-[10px] font-black"
+            style={{ color: ink, borderColor: faint, background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.4)" }}
+          >
+            {arMode ? "س" : "S"}
+          </kbd>
+          <span className="text-[10px] font-bold" style={{ color: faint }}>
+            {t.keysRoll}
+          </span>
+        </span>
+      </div>
 
       {/* scroll runway hint */}
       <div
