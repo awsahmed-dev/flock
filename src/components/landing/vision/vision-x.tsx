@@ -473,8 +473,9 @@ function FlapBoard({ boarding, gate }: { boarding: string; gate: string }) {
 }
 
 /* ── overlay segments driven by quantized progress ───────────────────── */
-const CYCLE_WORDS = ["the flight plan.", "the fuel money.", "the memories.", "سوا."];
-const CYCLE_WORDS_AR = ["خطة الرحلة.", "مصاريف الرحلة.", "الذكريات.", "سوا."];
+// the second line of the hero brand cycles through what you pack
+const CYCLE_WORDS = ["SAWA.", "THE PLAN.", "THE CREW.", "THE MONEY.", "THE MEMORIES."];
+const CYCLE_WORDS_AR = ["سوا.", "الرِفقة.", "الخطة.", "المصاريف.", "الذكريات."];
 
 /* ── Arabic layer — same flight, بالعربي ─────────────────────────────── */
 const ATMOS_AR = [
@@ -521,10 +522,10 @@ const UI = {
     start: "Start today",
     loading: "Preparing the trip",
     cleared: "CLEARED ✈",
-    kicker: "Scroll to fly · نروح سوا",
+    kicker: "Scroll to fly ✈",
+    eyebrow: "نروح سوا",
     h1a: "PACK",
-    h1b: "SAWA.",
-    homeFor: "One home for",
+    tagline: "The whole trip, one home.",
     boarding: "Now boarding",
     gate: "Gate SAWA · On time",
     altitude: "Altitude",
@@ -543,10 +544,10 @@ const UI = {
     start: "ابدأ اليوم",
     loading: "جارٍ تجهيز الرحلة",
     cleared: "مصرَّح بالإقلاع ✈",
-    kicker: "مرّر لتطير · Pack sawa",
-    h1a: "نروح",
-    h1b: "سوا.",
-    homeFor: "بيت واحد لـ",
+    kicker: "مرّر لتطير ✈",
+    eyebrow: "Pack sawa · نروح سوا",
+    h1a: "اجمع",
+    tagline: "كل الرحلة في بيت واحد.",
     boarding: "الصعود الآن",
     gate: "بوابة سوا · في الموعد",
     altitude: "الارتفاع",
@@ -647,7 +648,7 @@ export function VisionX() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pointermove", onMove, { passive: true });
-    const wordTimer = setInterval(() => setWord((w) => (w + 1) % CYCLE_WORDS.length), 1500);
+    const wordTimer = setInterval(() => setWord((w) => (w + 1) % CYCLE_WORDS.length), 2000);
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onMove);
@@ -932,27 +933,33 @@ export function VisionX() {
               willChange: "transform",
             }}
           >
+            {/* the brand, readable in the other script */}
+            <p
+              className="mb-3 text-[14px] sm:text-[16px] font-bold text-[#141414]/55"
+              style={{ letterSpacing: arMode ? "0.02em" : "0.04em" }}
+            >
+              {t.eyebrow}
+            </p>
             <h1
-              className="font-black leading-[1.02] text-[#141414]"
+              className="font-black text-[#141414]"
               style={{
-                fontSize: arMode ? "clamp(56px, 10vw, 150px)" : "clamp(64px, 12vw, 170px)",
+                fontSize: arMode ? "clamp(56px, 10vw, 150px)" : "clamp(60px, 11vw, 160px)",
                 letterSpacing: arMode ? "0" : "-0.04em",
-                lineHeight: arMode ? 1.15 : 0.9,
+                lineHeight: arMode ? 1.18 : 0.92,
               }}
             >
               {t.h1a}
               <br />
-              <span className="text-[#6D5AE6]">{t.h1b}</span>
-            </h1>
-          </div>
-          <p className="mt-8 text-xl sm:text-2xl font-semibold text-[#141414]/70">
-            {t.homeFor}{" "}
-            <span className="inline-block min-w-[13ch] text-start font-black text-[#6D5AE6]">
-              <span key={word} className="inline-block" style={{ animation: "vx-word 0.45s cubic-bezier(0.22,1,0.36,1) both" }}>
+              <span
+                key={word}
+                className="inline-block whitespace-nowrap text-[#6D5AE6]"
+                style={{ animation: "vx-word 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
+              >
                 {arMode ? CYCLE_WORDS_AR[word] : CYCLE_WORDS[word]}
               </span>
-            </span>
-          </p>
+            </h1>
+          </div>
+          <p className="mt-7 text-xl sm:text-2xl font-semibold text-[#141414]/70">{t.tagline}</p>
           <FlapBoard boarding={t.boarding} gate={t.gate} />
         </div>
 
@@ -963,10 +970,16 @@ export function VisionX() {
                 anchored to the side away from the mockup */}
             <p
               aria-hidden
-              className="vx-glass absolute inset-x-0 bottom-[4vh] font-black leading-none select-none px-[4vw]"
+              className="vx-glass absolute inset-x-0 bottom-[4vh] font-black select-none px-[4vw]"
               style={{
-                fontSize: arMode ? "clamp(56px, 10vw, 150px)" : "clamp(64px, 11vw, 170px)",
+                fontSize: arMode ? "clamp(52px, 9vw, 140px)" : "clamp(64px, 11vw, 170px)",
                 letterSpacing: arMode ? "0" : "-0.03em",
+                // Arabic descenders paint below a tight line box — and
+                // background-clip:text only fills inside the box, which
+                // decapitated them. Taller line + padding keeps the
+                // gradient under every tail.
+                lineHeight: arMode ? 1.35 : 1,
+                paddingBottom: "0.12em",
                 textAlign: station % 2 === 1 ? "end" : "start",
                 animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) both",
               }}
@@ -1198,28 +1211,38 @@ export function VisionX() {
 
       {/* keyboard hint — desktop pilots get controls */}
       <div
-        className="fixed bottom-6 end-6 z-40 hidden md:flex items-center gap-3 pointer-events-none transition-opacity duration-700"
+        className="fixed bottom-7 end-7 z-40 hidden md:flex items-center gap-5 pointer-events-none transition-opacity duration-700"
         style={{ opacity: boarded ? 1 : 0 }}
       >
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2.5">
           <kbd
-            className="rounded-md border px-1.5 py-0.5 text-[10px] font-black"
-            style={{ color: ink, borderColor: faint, background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.4)" }}
+            className="rounded-xl border-2 px-3 text-[17px] font-black backdrop-blur-sm inline-flex items-center justify-center"
+            style={{
+              color: ink,
+              borderColor: faint,
+              minHeight: 32,
+              background: nightish ? "rgba(13,13,13,0.4)" : "rgba(255,255,255,0.5)",
+            }}
           >
             ↑↓
           </kbd>
-          <span className="text-[10px] font-bold" style={{ color: faint }}>
+          <span className="text-[14px] font-bold" style={{ color: nightish ? "rgba(245,240,228,0.75)" : "rgba(20,20,20,0.6)" }}>
             {t.keysNav}
           </span>
         </span>
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2.5">
           <kbd
-            className="rounded-md border px-1.5 py-0.5 text-[10px] font-black"
-            style={{ color: ink, borderColor: faint, background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.4)" }}
+            className="rounded-xl border-2 px-3.5 text-[17px] font-black backdrop-blur-sm inline-flex items-center justify-center"
+            style={{
+              color: ink,
+              borderColor: faint,
+              minHeight: 32,
+              background: nightish ? "rgba(13,13,13,0.4)" : "rgba(255,255,255,0.5)",
+            }}
           >
             {arMode ? "س" : "S"}
           </kbd>
-          <span className="text-[10px] font-bold" style={{ color: faint }}>
+          <span className="text-[14px] font-bold" style={{ color: nightish ? "rgba(245,240,228,0.75)" : "rgba(20,20,20,0.6)" }}>
             {t.keysRoll}
           </span>
         </span>
