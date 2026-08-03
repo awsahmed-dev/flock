@@ -4,153 +4,124 @@ import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { checkLimit } from "@/lib/rate-limit";
 import { getLocale } from "@/lib/i18n";
+import { textSearch, photoMediaUrl, PlacesNotConfiguredError } from "@/lib/places/google";
+import type { Place } from "@/lib/places/types";
+import { isOverCap } from "@/lib/places/meter";
+import { db } from "@/lib/db";
+import { tasteProfiles } from "@/lib/db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-export interface PlannedActivity {
-  day: number;
-  title: string;
-  type: "activity" | "accommodation" | "transport" | "meal";
-  startTime?: string;
-  locationName?: string;
-  costEstimate?: number;
+/**
+ * AI planner v2 — grounded, per the v2-discovery spec: the model never
+ * invents a place. Two modes:
+ *
+ *  mode="route"    → propose EDITABLE city legs (nights + travel hops).
+ *                    The user adjusts them in the wizard before anything
+ *                    else runs — fixes the "8 nights in one city, 1 in
+ *                    the next" problem by making allocation a decision
+ *                    the crew can see and change.
+ *
+ *  mode="assemble" → for ONE leg: Haiku writes Google search intents →
+ *                    Places textSearch returns real candidates (photo,
+ *                    rating, coords, localized names) → Sonnet assembles
+ *                    days ONLY from those candidates. Output is real
+ *                    place cards with Google Maps links.
+ *
+ * All user-visible text (why/notes/summary) is generated in the app
+ * locale. Search queries stay Latin-script for recall; display names
+ * come back from Google in the user's language.
+ */
+
+/* ── shared shapes ─────────────────────────────────────────────────── */
+
+export interface RouteLeg {
+  /** Latin-script city name as Google knows it — used for search. */
+  city: string;
+  /** Localized display name (= city when locale is en). */
+  cityLabel: string;
+  nights: number;
+  /** one localized sentence: why this many nights here */
+  why: string;
+  /** how you get here from the previous leg (null for the first) */
+  travel: { mode: "flight" | "train" | "bus" | "car" | "ferry" | "walk"; note: string } | null;
 }
 
-export interface AiPlannerResult {
-  summary: string;
-  tips: string[];
-  activities: PlannedActivity[];
+export interface PlannedPlace {
+  placeId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  priceLevel: number | null;
+  photoUrl: string | null;
+  address: string | null;
+  category: string | null;
+  placeTypes: string[];
+  mapsUrl: string;
 }
+
+export interface AssembledItem {
+  day: number; // 1-indexed trip day
+  type: "activity" | "meal" | "transport" | "accommodation";
+  startTime: string | null;
+  note: string; // localized one-liner: why this pick
+  place: PlannedPlace;
+  /** a real alternative for the same slot — drives a Huddle vote */
+  alt: PlannedPlace | null;
+}
+
+/* ── helpers ───────────────────────────────────────────────────────── */
 
 function daysBetween(start: string, end: string): number {
-  const s = new Date(start);
-  const e = new Date(end);
-  return Math.ceil((e.getTime() - s.getTime()) / 86_400_000) + 1;
+  return Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1;
 }
 
-// Parse pipe-delimited lines: DAY|TYPE|TIME|COST|TITLE|PLACE
-function parseLines(prefix: string, raw: string): PlannedActivity[] {
-  const lines = (prefix + raw)
-    .trim()
-    .split("\n")
-    .filter((l) => l.includes("|"));
-
-  return lines
-    .map((line) => {
-      const p = line.split("|");
-      const day = parseInt(p[0]);
-      const type = (p[1]?.trim().toLowerCase() as PlannedActivity["type"]) ?? "activity";
-      const time = p[2]?.trim();
-      const cost = parseFloat(p[3]) || 0;
-      const title = p[4]?.trim();
-      const place = p[5]?.trim();
-      if (!day || !title) return null;
-      return {
-        day,
-        title,
-        type: ["activity", "accommodation", "transport", "meal"].includes(type)
-          ? type
-          : "activity",
-        startTime: time || undefined,
-        locationName: place || undefined,
-        costEstimate: cost > 0 ? cost : undefined,
-      } as PlannedActivity;
-    })
-    .filter((a): a is PlannedActivity => a !== null);
+function mapsUrl(name: string, placeId: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${encodeURIComponent(placeId)}`;
 }
 
-interface CityLeg {
-  city: string;
-  days: number[]; // 1-indexed trip days
+function toPlanned(p: Place): PlannedPlace {
+  return {
+    placeId: p.placeId,
+    name: p.name,
+    lng: p.coords[0],
+    lat: p.coords[1],
+    rating: p.rating,
+    userRatingsTotal: p.userRatingsTotal,
+    priceLevel: p.priceLevel,
+    photoUrl: p.photoRef ? photoMediaUrl(p.photoRef, 480) : null,
+    address: p.address,
+    category: p.category,
+    placeTypes: p.placeTypes ?? [],
+    mapsUrl: mapsUrl(p.name, p.placeId),
+  };
 }
 
-/**
- * B18: ask the model to plan the city sequence first. For single-city
- * trips this is trivial (every day in that one city); for multi-city
- * trips this is where logic matters most — geographically continuous
- * routing with no zigzag backtracks. We do this as a tiny upfront call
- * so the day-expansion calls below can be locked to one city per day.
- */
-async function planCityRoute(
+/** Force a tool call and return its input. */
+async function callTool<T>(
   client: Anthropic,
   args: {
-    destination: string;
-    numDays: number;
-    travelStyle: string;
-    pace: string;
-    interests: string;
-    mustSee: string;
+    model: string;
+    maxTokens: number;
+    prompt: string;
+    toolName: string;
+    schema: Anthropic.Tool.InputSchema;
   },
-): Promise<CityLeg[]> {
-  const isMultiCity = args.destination.includes(",") ||
-    args.destination.toLowerCase().includes(" and ") ||
-    /\bmulti\b/i.test(args.destination);
-  if (!isMultiCity) {
-    // Single city — no routing logic needed
-    return [
-      {
-        city: args.destination.trim(),
-        days: Array.from({ length: args.numDays }, (_, i) => i + 1),
-      },
-    ];
-  }
-
+): Promise<T> {
   const res = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 250,
-    messages: [
-      {
-        role: "user",
-        content:
-          `Plan the city sequence for a ${args.numDays}-day trip to ${args.destination}. ` +
-          `Style: ${args.travelStyle}. Pace: ${args.pace}.` +
-          (args.mustSee ? ` Must-see: ${args.mustSee}.` : "") +
-          (args.interests ? ` Interests: ${args.interests}.` : "") +
-          ` Rules: (1) Each city must be a contiguous block of days — no zigzagging. ` +
-          `(2) Order cities so total travel distance is minimized — group geographic neighbors. ` +
-          `(3) Allocate 2-4 nights per city based on what each offers. ` +
-          `(4) Start and end in the same gateway city when it's the only international airport. ` +
-          `Output format: one line per leg as CITY|FIRST_DAY|LAST_DAY (1-indexed). ` +
-          `No commentary, no extra text.`,
-      },
-      { role: "assistant", content: "" },
-    ],
+    model: args.model,
+    max_tokens: args.maxTokens,
+    messages: [{ role: "user", content: args.prompt }],
+    tools: [{ name: args.toolName, description: "Emit the result.", input_schema: args.schema }],
+    tool_choice: { type: "tool", name: args.toolName },
   });
-
-  const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
-  const legs: CityLeg[] = raw
-    .trim()
-    .split("\n")
-    .map((line) => {
-      const p = line.split("|").map((s) => s.trim());
-      const city = p[0];
-      const first = parseInt(p[1]);
-      const last = parseInt(p[2]);
-      if (!city || isNaN(first) || isNaN(last) || first > last) return null;
-      const days = Array.from({ length: last - first + 1 }, (_, i) => first + i);
-      return { city, days };
-    })
-    .filter((l): l is CityLeg => l !== null)
-    .filter((l) => l.days.every((d) => d >= 1 && d <= args.numDays));
-
-  // Sanity check: every trip day must be assigned. If the model didn't
-  // cover all days, fall back to single-city (gateway-only) assignment.
-  const covered = new Set<number>();
-  legs.forEach((l) => l.days.forEach((d) => covered.add(d)));
-  const allCovered =
-    Array.from({ length: args.numDays }, (_, i) => i + 1).every((d) =>
-      covered.has(d),
-    );
-  if (!allCovered || legs.length === 0) {
-    return [
-      {
-        city: args.destination.split(",")[0].trim(),
-        days: Array.from({ length: args.numDays }, (_, i) => i + 1),
-      },
-    ];
-  }
-  return legs;
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("Model returned no structured output");
+  return block.input as T;
 }
 
 const STYLE_DESC: Record<string, string> = {
@@ -162,17 +133,325 @@ const STYLE_DESC: Record<string, string> = {
   luxury: "fine dining, premium experiences, private tours",
 };
 
+const PACE_ITEMS: Record<string, string> = {
+  chill: "2-3 items per day with real downtime",
+  balanced: "3-4 items per day",
+  packed: "5-6 items per day, early starts",
+};
+
+interface Prefs {
+  travelStyle: string;
+  pace: string;
+  dailyBudget: string;
+  dietary: string[];
+  interests: string;
+  mustSee: string;
+  avoid: string;
+}
+
+function prefsFromBody(body: Record<string, unknown>): Prefs {
+  return {
+    travelStyle: String(body.travelStyle ?? "cultural"),
+    pace: String(body.pace ?? "balanced"),
+    dailyBudget: String(body.dailyBudget ?? "mid"),
+    dietary: Array.isArray(body.dietary) ? body.dietary.map(String) : [],
+    interests: String(body.interests ?? ""),
+    mustSee: String(body.mustSee ?? ""),
+    avoid: String(body.avoid ?? ""),
+  };
+}
+
+function prefsLines(p: Prefs, memberCount: number): string {
+  return [
+    `Group: ${memberCount} people`,
+    `Style: ${p.travelStyle} (${STYLE_DESC[p.travelStyle] ?? "general sightseeing"})`,
+    `Pace: ${p.pace} (${PACE_ITEMS[p.pace] ?? PACE_ITEMS.balanced})`,
+    `Budget vibe: ${p.dailyBudget}`,
+    p.dietary.length ? `Dietary (HARD requirement for every food pick): ${p.dietary.join(", ")}` : null,
+    p.mustSee ? `Must-see: ${p.mustSee}` : null,
+    p.avoid ? `Avoid: ${p.avoid}` : null,
+    p.interests ? `Interests: ${p.interests}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Crew taste vector (aggregate row, userId NULL) — best-effort flavor. */
+async function crewTasteLine(tripId: string): Promise<string | null> {
+  try {
+    const row = await db.query.tasteProfiles.findFirst({
+      where: and(eq(tasteProfiles.tripId, tripId), isNull(tasteProfiles.userId)),
+    });
+    const vec = row?.vector as Record<string, number> | null;
+    if (!vec) return null;
+    const top = Object.entries(vec)
+      .filter(([, w]) => typeof w === "number" && w > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([tag, w]) => `${tag} (${w.toFixed(2)})`);
+    return top.length ? `Crew taste signals (learned from their in-app activity): ${top.join(", ")}` : null;
+  } catch {
+    return null;
+  }
+}
+
+const localeRule = (locale: string) =>
+  locale === "ar"
+    ? "Every user-visible string you emit (why, note, summary, travel notes, cityLabel) MUST be in Modern Standard Arabic — warm and concise, Western digits."
+    : "Every user-visible string you emit must be in natural, concise English.";
+
+/* ── mode: route ───────────────────────────────────────────────────── */
+
+async function handleRoute(
+  client: Anthropic,
+  trip: { destination: string | null },
+  numDays: number,
+  memberCount: number,
+  prefs: Prefs,
+  locale: string,
+) {
+  const schema: Anthropic.Tool.InputSchema = {
+    type: "object",
+    properties: {
+      legs: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            city: { type: "string", description: "Latin-script city name as on Google Maps" },
+            cityLabel: { type: "string", description: "City name in the user's language" },
+            nights: { type: "integer", minimum: 1 },
+            why: { type: "string", description: "One short localized sentence: why this allocation" },
+            travelMode: { type: "string", enum: ["flight", "train", "bus", "car", "ferry", "walk", "none"] },
+            travelNote: { type: "string", description: "Localized: how you get here from the previous city + rough duration. Empty for the first leg." },
+          },
+          required: ["city", "cityLabel", "nights", "why", "travelMode", "travelNote"],
+        },
+      },
+    },
+    required: ["legs"],
+  };
+
+  const out = await callTool<{
+    legs: { city: string; cityLabel: string; nights: number; why: string; travelMode: string; travelNote: string }[];
+  }>(client, {
+    model: "claude-haiku-4-5",
+    maxTokens: 1200,
+    toolName: "emit_route",
+    schema,
+    prompt:
+      `Propose the city route for a ${numDays}-day trip to "${trip.destination}".\n` +
+      `${prefsLines(prefs, memberCount)}\n` +
+      `Rules:\n` +
+      `- Nights across all legs MUST sum to exactly ${numDays}.\n` +
+      `- BALANCE the allocation to each city's actual depth of things to do for this group's style — never dump most nights in one city while starving another unless it truly deserves it; justify in 'why'.\n` +
+      `- Contiguous blocks only, geographic order that minimizes backtracking.\n` +
+      `- Single-city destination → exactly one leg with all ${numDays} nights.\n` +
+      `- travelMode/travelNote: the realistic way to reach each city from the previous one with a rough duration. First leg: travelMode "none", empty note.\n` +
+      `${localeRule(locale)}`,
+  });
+
+  // Normalize + hard-enforce the nights budget.
+  let legs = (out.legs ?? [])
+    .filter((l) => l.city && l.nights >= 1)
+    .map<RouteLeg>((l) => ({
+      city: l.city.trim(),
+      cityLabel: (l.cityLabel || l.city).trim(),
+      nights: Math.max(1, Math.round(l.nights)),
+      why: l.why ?? "",
+      travel:
+        l.travelMode && l.travelMode !== "none"
+          ? { mode: l.travelMode as NonNullable<RouteLeg["travel"]>["mode"], note: l.travelNote ?? "" }
+          : null,
+    }));
+
+  if (legs.length === 0) {
+    const fallback = (trip.destination ?? "").split(",")[0].trim();
+    legs = [{ city: fallback, cityLabel: fallback, nights: numDays, why: "", travel: null }];
+  }
+  // Clamp total nights to numDays (trim from the end / pad the last leg).
+  let total = legs.reduce((s, l) => s + l.nights, 0);
+  while (total > numDays && legs.length) {
+    const last = legs[legs.length - 1];
+    const over = total - numDays;
+    if (last.nights > over) {
+      last.nights -= over;
+      total = numDays;
+    } else {
+      total -= last.nights;
+      legs.pop();
+    }
+  }
+  if (total < numDays && legs.length) {
+    legs[legs.length - 1].nights += numDays - total;
+  }
+
+  return NextResponse.json({ legs, numDays });
+}
+
+/* ── mode: assemble (one leg) ──────────────────────────────────────── */
+
+async function handleAssemble(
+  client: Anthropic,
+  args: {
+    tripId: string;
+    destination: string;
+    leg: { city: string; days: number[] };
+    prefs: Prefs;
+    memberCount: number;
+    locale: string;
+  },
+) {
+  const { leg, prefs, locale } = args;
+  if (!leg?.city || !Array.isArray(leg.days) || leg.days.length === 0) {
+    return NextResponse.json({ error: "Bad leg" }, { status: 400 });
+  }
+  if (await isOverCap()) {
+    return NextResponse.json(
+      { error: "Place discovery hit today's usage cap — try again tomorrow." },
+      { status: 429 },
+    );
+  }
+
+  const taste = await crewTasteLine(args.tripId);
+
+  // 1) Haiku turns prefs into concrete Google search intents.
+  const intentSchema: Anthropic.Tool.InputSchema = {
+    type: "object",
+    properties: {
+      intents: {
+        type: "array",
+        items: { type: "string" },
+        description: "5-8 Google Maps text searches, English/Latin script, each ending with the city name",
+      },
+    },
+    required: ["intents"],
+  };
+  const { intents } = await callTool<{ intents: string[] }>(client, {
+    model: "claude-haiku-4-5",
+    maxTokens: 500,
+    toolName: "emit_intents",
+    schema: intentSchema,
+    prompt:
+      `Write Google Maps search queries to find real places for ${leg.days.length} day(s) in ${leg.city}.\n` +
+      `${prefsLines(prefs, args.memberCount)}\n` +
+      (taste ? `${taste}\n` : "") +
+      `Cover: signature sights for this style, food matching the dietary rules, one local-gem query, one relaxing/evening option. ` +
+      `Be SPECIFIC (dish names, neighborhoods, "best X") — vague queries return chains. 5-8 queries, each must include "${leg.city}".`,
+  });
+
+  // 2) Real candidates from Google Places.
+  const queries = (intents ?? []).filter(Boolean).slice(0, 8);
+  if (queries.length === 0) return NextResponse.json({ error: "No search intents" }, { status: 502 });
+
+  const settled = await Promise.allSettled(
+    queries.map((q) => textSearch(q, { max: 5, languageCode: locale === "ar" ? "ar" : "en" })),
+  );
+  const seen = new Set<string>();
+  const candidates: Place[] = [];
+  for (const s of settled) {
+    if (s.status !== "fulfilled") continue;
+    for (const p of s.value) {
+      if (seen.has(p.placeId)) continue;
+      seen.add(p.placeId);
+      candidates.push(p);
+    }
+  }
+  if (candidates.length < 3) {
+    return NextResponse.json(
+      { error: "Couldn't find enough real places for this leg — try adjusting interests." },
+      { status: 502 },
+    );
+  }
+  const short = candidates.slice(0, 40);
+  const catalog = short
+    .map(
+      (p, i) =>
+        `${i}| ${p.name} | ${p.category ?? p.placeTypes?.[0] ?? "?"} | ★${p.rating ?? "?"} (${p.userRatingsTotal ?? 0}) | price ${p.priceLevel ?? "?"} | ${p.address ?? ""}`,
+    )
+    .join("\n");
+
+  // 3) Sonnet assembles days ONLY from the catalog.
+  const assembleSchema: Anthropic.Tool.InputSchema = {
+    type: "object",
+    properties: {
+      summary: { type: "string", description: "2 localized sentences selling this leg's plan" },
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            c: { type: "integer", description: "candidate index from the catalog" },
+            day: { type: "integer", description: `one of: ${leg.days.join(", ")}` },
+            type: { type: "string", enum: ["activity", "meal"] },
+            startTime: { type: "string", description: "HH:MM 24h" },
+            note: { type: "string", description: "One short localized line: why this pick for THIS crew" },
+            alt: { type: "integer", description: "OPTIONAL: a genuinely competing candidate index for the same slot — only when the crew should vote" },
+          },
+          required: ["c", "day", "type", "startTime", "note"],
+        },
+      },
+    },
+    required: ["summary", "items"],
+  };
+
+  const out = await callTool<{
+    summary: string;
+    items: { c: number; day: number; type: string; startTime: string; note: string; alt?: number }[];
+  }>(client, {
+    model: "claude-sonnet-5",
+    maxTokens: 2500,
+    toolName: "emit_days",
+    schema: assembleSchema,
+    prompt:
+      `Assemble a day-by-day plan for ${leg.city} using ONLY the real places below (reference by index). Days to fill: ${leg.days.join(", ")}.\n` +
+      `${prefsLines(prefs, args.memberCount)}\n` +
+      (taste ? `${taste}\n` : "") +
+      `CATALOG (index| name | category | rating (reviews) | price | address):\n${catalog}\n` +
+      `Rules:\n` +
+      `- ${PACE_ITEMS[prefs.pace] ?? PACE_ITEMS.balanced}; include lunch AND dinner each day from meal-appropriate candidates.\n` +
+      `- Prefer high ratings with meaningful review counts; a hidden gem (fewer reviews) is welcome when it clearly fits the crew — say so in the note.\n` +
+      `- Cluster each day geographically (use the addresses).\n` +
+      `- Use 'alt' sparingly: only when two candidates genuinely compete for the same slot and the crew should decide.\n` +
+      `- Never invent a place; if the catalog is thin for a slot, leave the slot out.\n` +
+      `${localeRule(locale)}`,
+  });
+
+  const items: AssembledItem[] = (out.items ?? [])
+    .filter((it) => short[it.c] && leg.days.includes(it.day))
+    .map((it) => ({
+      day: it.day,
+      type: it.type === "meal" ? "meal" : "activity",
+      startTime: /^\d{1,2}:\d{2}$/.test(it.startTime) ? it.startTime : null,
+      note: it.note ?? "",
+      place: toPlanned(short[it.c]),
+      alt: it.alt != null && short[it.alt] && it.alt !== it.c ? toPlanned(short[it.alt]) : null,
+    }));
+
+  if (items.length === 0) {
+    return NextResponse.json({ error: "The model produced no usable items — try again." }, { status: 502 });
+  }
+
+  return NextResponse.json({ summary: out.summary ?? "", items });
+}
+
+/* ── entry ─────────────────────────────────────────────────────────── */
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Plan generation is expensive (multiple Haiku calls). Cap at ~3
-    // generations every 5 minutes per user — plenty for legit re-runs,
-    // hard ceiling for scripted abuse.
-    const limit = checkLimit(`ai:plan:${user.id}`, {
-      capacity: 3,
-      refillPerSec: 1 / 100, // ~1 token every 100s → full bucket in 5 min
+    const body = (await request.json()) as Record<string, unknown>;
+    const mode = body.mode === "assemble" ? "assemble" : "route";
+    const tripId = String(body.tripId ?? "");
+    if (!tripId) return NextResponse.json({ error: "Missing tripId" }, { status: 400 });
+
+    // Route proposals are cheap; assembly runs once per leg — budget for
+    // a multi-leg trip plus retries without opening the door to abuse.
+    const limit = checkLimit(`ai:plan:${mode}:${user.id}`, {
+      capacity: mode === "route" ? 4 : 14,
+      refillPerSec: mode === "route" ? 1 / 75 : 1 / 45,
     });
     if (!limit.ok) {
       return NextResponse.json(
@@ -181,207 +460,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const {
-      tripId,
-      travelStyle = "cultural",
-      interests = "",
-      notes = "",
-      // B3-b: questionnaire fields. All optional — the planner gracefully
-      // degrades to the legacy 3-field flow when these are missing.
-      pace = "balanced",          // "chill" | "balanced" | "packed"
-      dailyBudget = "mid",         // "shoestring" | "mid" | "splurge"
-      dietary = [] as string[],   // ["vegetarian", "halal", ...]
-      mustSee = "",
-      avoid = "",
-    } = body;
-
-    if (!tripId) return NextResponse.json({ error: "Missing tripId" }, { status: 400 });
-
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "AI planner is not configured. Set ANTHROPIC_API_KEY." },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
     const trip = await getTripWithMembership(tripId, user.id);
     if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
-    // B15-d: read locale from the cookie so the LLM responds in the
-    // user's UI language.
     const locale = await getLocale();
-
     const numDays = daysBetween(trip.startDate, trip.endDate);
-    const memberCount = trip.members.length;
-    const styleHint = STYLE_DESC[travelStyle] ?? "general sightseeing";
-    const PACE_DESC: Record<string, string> = {
-      chill: "2-3 activities/day, plenty of downtime, late mornings",
-      balanced: "3-4 activities/day, mix of effort and rest",
-      packed: "5+ activities/day, dawn-to-dusk, no idle time",
-    };
-    const BUDGET_DESC: Record<string, string> = {
-      shoestring: "cheapest options: street food, free attractions, public transit",
-      mid: "moderate: casual restaurants, paid attractions OK, ride-shares fine",
-      splurge: "premium: fine dining, private experiences, taxis welcome",
-    };
-
-    // B15-d: locale-aware output. If the viewer's UI is Arabic the
-    // LLM should respond in Modern Standard Arabic so the day cards
-    // don't read like a half-translated brochure. We instruct the
-    // model rather than translate output post-hoc — cheaper and gives
-    // better names ("معبد كيوميزو" vs. transliterated "Kiyomizu-dera").
-    // The PLACE column feeds a geocoder (Nominatim/Mapbox) and must use
-    // the place's local-language Latin-script form even when the rest of
-    // the line is Arabic — otherwise the pin can't be found on the map.
-    // E.g. write "Jalan Alor" not "جالان علور".
-    const localeInstruction =
-      locale === "ar"
-        ? "Respond in Modern Standard Arabic (MSA) for TITLE. Use Western digits and ISO currency codes. CRITICAL: PLACE must always be the venue's real Latin-script name as it appears on Google Maps (e.g. 'Petronas Twin Towers', 'Jalan Alor', 'Batu Caves'), never an Arabic transliteration — it is used for map lookup, not display."
-        : "Respond in English. PLACE must be the venue's real name as it appears on Google Maps.";
-
-    const context = [
-      `${numDays}-day trip to ${trip.destination}`,
-      `${memberCount} people`,
-      `Style: ${travelStyle} (${styleHint})`,
-      `Pace: ${pace} (${PACE_DESC[pace] ?? "balanced rhythm"})`,
-      `Daily budget vibe: ${dailyBudget} (${BUDGET_DESC[dailyBudget] ?? "moderate"})`,
-      trip.budgetTotal
-        ? `Total budget: $${trip.budgetTotal} (~$${Math.round(trip.budgetTotal / memberCount)}/person)`
-        : null,
-      Array.isArray(dietary) && dietary.length
-        ? `Dietary needs: ${dietary.join(", ")} — ALL meal picks must respect these`
-        : null,
-      mustSee ? `Must-see / must-do: ${mustSee}` : null,
-      avoid ? `Avoid: ${avoid}` : null,
-      interests ? `Interests: ${interests}` : null,
-      notes ? `Notes: ${notes}` : null,
-      localeInstruction,
-    ]
-      .filter(Boolean)
-      .join(". ");
-
+    const prefs = prefsFromBody(body);
     const client = new Anthropic({ apiKey });
 
-    // B18: TripArchitect-Pro flow — first plan the city route, then
-    // expand each city leg into structured day-by-day items. This kills
-    // the old "jumps between cities mid-trip" bug because each leg is a
-    // contiguous block of days locked to one city.
-    const legs = await planCityRoute(client, {
-      destination: trip.destination,
-      numDays,
-      travelStyle,
-      pace,
-      interests: interests || "",
-      mustSee: mustSee || "",
-    });
-
-    // Items per day, derived from pace. Each item maps to a fixed slot
-    // so the day reads as a real schedule (morning / lunch / afternoon /
-    // dinner / evening) rather than a random pile of 3 things.
-    const slotsByPace: Record<string, Array<{ time: string; type: PlannedActivity["type"]; label: string }>> = {
-      chill: [
-        { time: "10:00", type: "activity", label: "morning" },
-        { time: "13:00", type: "meal", label: "lunch" },
-        { time: "19:00", type: "meal", label: "dinner" },
-      ],
-      balanced: [
-        { time: "09:30", type: "activity", label: "morning" },
-        { time: "12:30", type: "meal", label: "lunch" },
-        { time: "15:30", type: "activity", label: "afternoon" },
-        { time: "19:30", type: "meal", label: "dinner" },
-      ],
-      packed: [
-        { time: "08:30", type: "activity", label: "morning" },
-        { time: "12:30", type: "meal", label: "lunch" },
-        { time: "15:00", type: "activity", label: "afternoon" },
-        { time: "18:30", type: "activity", label: "evening" },
-        { time: "20:30", type: "meal", label: "dinner" },
-      ],
-    };
-    const slots = slotsByPace[pace] ?? slotsByPace.balanced;
-    const itemsPerDay = slots.length;
-
-    // For each city leg, run one Haiku call covering that leg's days.
-    // Parallel across legs. Each call gets the full pacing template +
-    // the locked city + the user profile context.
-    const legResults = await Promise.all(
-      legs.map((leg) => {
-        const daysStr = leg.days.join(",");
-        const slotsStr = slots
-          .map((s, i) => `${i + 1}. ${s.label} (${s.time}, type=${s.type})`)
-          .join("; ");
-        return client.messages.create({
-          model: "claude-haiku-4-5",
-          max_tokens: 200 * leg.days.length, // ~200 tokens/day worth of items
-          messages: [
-            {
-              role: "user",
-              content:
-                `${context}. ` +
-                `\n\nYou are planning days ${daysStr} of the trip — all in ${leg.city}. ` +
-                `\nGenerate exactly ${itemsPerDay} items per day, in this order: ${slotsStr}. ` +
-                `\n\nRules:` +
-                `\n- Every PLACE must be a real venue in ${leg.city} with the city name appended: "Venue Name, ${leg.city}". This is critical for map lookup.` +
-                `\n- Group items each day by neighborhood — minimize travel time between morning, lunch, afternoon, and dinner.` +
-                `\n- Lunch and dinner picks must be near the activity that comes right before them.` +
-                `\n- If a day is a travel day (arrival/departure between cities), make the first slot a "transport" type from the previous city.` +
-                `\n\nOutput format: one line per item:` +
-                `\nDAY|TYPE|TIME|COST|TITLE|PLACE_WITH_CITY` +
-                `\n\nTYPE = activity / meal / transport / accommodation. COST in USD per person. ` +
-                `\nNo extra text, no headings, no commentary.`,
-            },
-            { role: "assistant", content: `${leg.days[0]}|` },
-          ],
-        });
-      }),
-    );
-
-    // Merge all activities
-    const activities: PlannedActivity[] = [];
-    legs.forEach((leg, idx) => {
-      const raw = legResults[idx].content[0]?.type === "text"
-        ? legResults[idx].content[0].text
-        : "";
-      activities.push(...parseLines(`${leg.days[0]}|`, raw));
-    });
-
-    // Generate summary + tips in a single fast call
-    const metaRes = await client.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 200,
-      messages: [
-        {
-          role: "user",
-          content: `${context}. Give a 1-sentence trip summary and 3 practical tips as JSON. No fences.`,
-        },
-        { role: "assistant", content: '{"summary":"' },
-      ],
-    });
-
-    let summary = "Your trip is all planned — check the activities below!";
-    let tips: string[] = [];
-    try {
-      const metaRaw = metaRes.content[0]?.type === "text" ? metaRes.content[0].text : "";
-      const metaText = '{"summary":"' + metaRaw.trim();
-      // ensure it ends with }
-      const cleaned = metaText.endsWith("}") ? metaText : metaText + "}";
-      const meta = JSON.parse(cleaned);
-      if (meta.summary) summary = meta.summary;
-      if (Array.isArray(meta.tips)) tips = meta.tips.slice(0, 3);
-    } catch {
-      // fallback — keep defaults
+    if (mode === "route") {
+      return await handleRoute(client, trip, numDays, trip.members.length, prefs, locale);
     }
-
-    const result: AiPlannerResult = { summary, tips, activities };
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("AI planner error:", error);
-    if (error?.status === 401)
-      return NextResponse.json({ error: "AI API key is invalid" }, { status: 503 });
-    if (error?.status === 429)
-      return NextResponse.json({ error: "AI rate limit — try again in a moment" }, { status: 429 });
-    return NextResponse.json({ error: error?.message ?? "Failed to generate plan" }, { status: 500 });
+    return await handleAssemble(client, {
+      tripId,
+      destination: trip.destination ?? "",
+      leg: body.leg as { city: string; days: number[] },
+      prefs,
+      memberCount: trip.members.length,
+      locale,
+    });
+  } catch (err) {
+    if (err instanceof PlacesNotConfiguredError) {
+      return NextResponse.json({ error: err.message }, { status: 503 });
+    }
+    console.error("[ai/plan]", err);
+    return NextResponse.json({ error: "Planner failed — please try again." }, { status: 500 });
   }
 }

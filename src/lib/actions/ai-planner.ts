@@ -8,6 +8,12 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { geocode } from "@/lib/geocode";
 
+/**
+ * Planner v2: items arriving from the grounded planner carry a real
+ * Google place (id, coords, photo, rating) — those insert directly with
+ * full metadata and NO geocoding. The legacy text-only shape still works
+ * (manual additions, older flows) and falls back to Nominatim.
+ */
 export interface PlannedActivity {
   day: number;
   title: string;
@@ -16,6 +22,19 @@ export interface PlannedActivity {
   locationName?: string;
   costEstimate?: number;
   notes?: string;
+  /** grounded place payload (planner v2) */
+  place?: {
+    placeId: string;
+    lat: number;
+    lng: number;
+    photoUrl?: string | null;
+    rating?: number | null;
+    userRatingsTotal?: number | null;
+    priceLevel?: number | null;
+    placeTypes?: string[];
+    address?: string | null;
+    mapsUrl?: string | null;
+  };
 }
 
 const VALID_TYPES = ["activity", "accommodation", "transport", "meal", "other"] as const;
@@ -29,7 +48,6 @@ function sanitizeType(raw: string): ItemType {
 function sanitizeTime(raw?: string): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
-  // Accept H:MM, HH:MM, HH:MM:SS
   if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) return trimmed;
   return null;
 }
@@ -56,73 +74,62 @@ export async function addPlannedItems(tripId: string, items: PlannedActivity[]) 
     email: user.email,
   }).onConflictDoNothing();
 
-  // Geocode each item's locationName so it shows up as a pin on the trip
-  // map. Without this, AI-planned items only appear in the list — the map
-  // looks empty and the two views feel disconnected. Best-effort: failures
-  // leave coords null so the item still saves. Falls back to using the
-  // title when the model didn't emit a locationName. Nominatim tolerates
-  // small parallel bursts for user-triggered actions.
+  // Grounded items already carry coordinates; only legacy text items go
+  // through Nominatim (best-effort, failures leave coords null).
   const geos = await Promise.all(
     items.map((a) => {
+      if (a.place) return Promise.resolve(null);
       const query = (a.locationName || a.title || "").trim();
       if (!query) return Promise.resolve(null);
       return geocode(query, trip.destination ?? undefined).catch(() => null);
     }),
   );
 
-  // B21: fill missing startTimes from the slot template — the AI
-  // occasionally emits empty TIME for an item, leaving it un-timed at
-  // the top of the day list. We assign a sensible default based on the
-  // item's position within its day (every-3h spacing from 09:00).
+  // Fill missing startTimes from the slot template (every-3h from 09:00).
   const itemsByDay = new Map<number, number>();
-  const enriched = items.map((a) => {
+  const enriched = items.map((a, i) => {
     const cleaned = sanitizeTime(a.startTime);
-    if (cleaned) return { ...a, startTime: cleaned };
+    if (cleaned) return { orig: i, ...a, startTime: cleaned };
     const positionInDay = itemsByDay.get(a.day) ?? 0;
     itemsByDay.set(a.day, positionInDay + 1);
-    const hour = 9 + positionInDay * 3; // 09:00, 12:00, 15:00, 18:00...
-    return { ...a, startTime: `${String(hour).padStart(2, "0")}:00` };
+    const hour = 9 + positionInDay * 3;
+    return { orig: i, ...a, startTime: `${String(hour).padStart(2, "0")}:00` };
   });
 
-  // B21: sort each day chronologically so the bottom-sheet list reads
-  // morning → noon → evening. Previously items rendered in raw insert
-  // order which meant the model's "stay first, dinner second, lunch
-  // third" output stayed in that scrambled sequence.
+  // Sort each day chronologically so the list reads morning → evening.
   const sortedItems = [...enriched].sort((a, b) => {
     if (a.day !== b.day) return a.day - b.day;
-    const tA = (a.startTime ?? "23:59").replace(":", "");
-    const tB = (b.startTime ?? "23:59").replace(":", "");
-    return parseInt(tA) - parseInt(tB);
-  });
-  // Build an index map so we can re-index sortOrder per day for the
-  // final insert.
-  const perDayCounter = new Map<number, number>();
-  const indexed = sortedItems.map((a) => {
-    const count = perDayCounter.get(a.day) ?? 0;
-    perDayCounter.set(a.day, count + 1);
-    return { item: a, sortOrder: count };
+    return parseInt((a.startTime ?? "23:59").replace(":", "")) -
+      parseInt((b.startTime ?? "23:59").replace(":", ""));
   });
 
-  // Re-align geocode results to the new sorted order.
-  const originalIndex = new Map(items.map((a, i) => [a, i]));
-  const rows = indexed.map(({ item: a, sortOrder }) => {
-    const origIdx = originalIndex.get(items.find((orig) =>
-      orig.day === a.day && orig.title === a.title && orig.locationName === a.locationName,
-    )!) ?? 0;
+  const perDayCounter = new Map<number, number>();
+  const rows = sortedItems.map((a) => {
+    const sortOrder = perDayCounter.get(a.day) ?? 0;
+    perDayCounter.set(a.day, sortOrder + 1);
+    const geo = geos[a.orig];
     return {
       tripId,
       dayDate: addDays(trip.startDate as string, a.day - 1),
       title: a.title,
       type: sanitizeType(a.type),
       startTime: a.startTime,
-      locationName: a.locationName ?? null,
-      locationLat: geos[origIdx]?.lat ?? null,
-      locationLng: geos[origIdx]?.lng ?? null,
+      locationName: a.locationName ?? a.place?.address ?? null,
+      locationLat: a.place?.lat ?? geo?.lat ?? null,
+      locationLng: a.place?.lng ?? geo?.lng ?? null,
       costEstimate: a.costEstimate ?? null,
       notes: a.notes ?? null,
       status: "proposed" as const,
       sortOrder,
       createdBy: user.id,
+      // grounded metadata → the item lands on the map as a full place card
+      googlePlaceId: a.place?.placeId ?? null,
+      provider: a.place ? "google" : "manual",
+      photoUrl: a.place?.photoUrl ?? null,
+      rating: a.place?.rating ?? null,
+      priceLevel: a.place?.priceLevel ?? null,
+      userRatingsTotal: a.place?.userRatingsTotal ?? null,
+      placeTypes: a.place?.placeTypes ?? null,
     };
   });
 
@@ -177,6 +184,17 @@ export async function voteOnPlannedItems(
       options: optionLabels,
       voteId: vote.id,
       source: "ai_planner",
+      // Grounded proof rides along so the vote card can show the real
+      // place (photo, rating, Google link) instead of bare text.
+      places: items
+        .filter((i) => i.place)
+        .map((i) => ({
+          title: i.title,
+          placeId: i.place!.placeId,
+          mapsUrl: i.place!.mapsUrl ?? null,
+          photoUrl: i.place!.photoUrl ?? null,
+          rating: i.place!.rating ?? null,
+        })),
     },
   });
 

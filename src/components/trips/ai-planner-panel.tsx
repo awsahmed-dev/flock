@@ -1,8 +1,30 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkle as Sparkles, CircleNotch as Loader2, CheckCircle as CheckCircle2, MapPin, Clock, ForkKnife as Utensils, Buildings as Hotel, Bus, Ticket, Plus, CheckSquareOffset as Vote, CheckSquare, Square } from "@phosphor-icons/react/dist/ssr";
+import {
+  Sparkle as Sparkles,
+  CircleNotch as Loader2,
+  MapPin,
+  Clock,
+  ForkKnife as Utensils,
+  Ticket,
+  Plus,
+  CheckSquareOffset as Vote,
+  CheckSquare,
+  Square,
+  Star,
+  ArrowSquareOut,
+  Minus,
+  X,
+  AirplaneTilt,
+  Train,
+  Bus,
+  Car,
+  Boat,
+  PersonSimpleWalk,
+  ArrowsClockwise,
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
 import { toast } from "sonner";
@@ -16,14 +38,45 @@ interface Props {
   destination: string;
 }
 
-interface AiPlannerResult {
-  summary: string;
-  tips: string[];
-  activities: PlannedActivity[];
+/* — API shapes (mirror /api/ai/plan) — */
+interface RouteLeg {
+  city: string;
+  cityLabel: string;
+  nights: number;
+  why: string;
+  travel: { mode: TravelMode; note: string } | null;
+}
+type TravelMode = "flight" | "train" | "bus" | "car" | "ferry" | "walk";
+
+interface PlannedPlace {
+  placeId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  priceLevel: number | null;
+  photoUrl: string | null;
+  address: string | null;
+  category: string | null;
+  placeTypes: string[];
+  mapsUrl: string;
+}
+interface AssembledItem {
+  day: number;
+  type: "activity" | "meal" | "transport" | "accommodation";
+  startTime: string | null;
+  note: string;
+  place: PlannedPlace;
+  alt: PlannedPlace | null;
+}
+interface LegState {
+  status: "pending" | "loading" | "done" | "error";
+  summary?: string;
+  items: AssembledItem[];
+  error?: string;
 }
 
-// B15-f: labels are i18n keys; resolved at render time so a runtime
-// language switch relabels the wizard without remounting state.
 const TRAVEL_STYLES = [
   { value: "adventure", labelKey: "aiPlan.vibeAdventure", descKey: "aiPlan.vibeAdventureDesc" },
   { value: "relaxed", labelKey: "aiPlan.vibeRelaxed", descKey: "aiPlan.vibeRelaxedDesc" },
@@ -32,122 +85,236 @@ const TRAVEL_STYLES = [
   { value: "budget", labelKey: "aiPlan.vibeBudget", descKey: "aiPlan.vibeBudgetDesc" },
   { value: "luxury", labelKey: "aiPlan.vibeLuxury", descKey: "aiPlan.vibeLuxuryDesc" },
 ] as const;
+type TravelStyle = (typeof TRAVEL_STYLES)[number]["value"];
 
-type TravelStyle = typeof TRAVEL_STYLES[number]["value"];
-
-const TYPE_ICON: Record<string, React.ReactNode> = {
-  activity: <Ticket className="w-3 h-3" />,
-  accommodation: <Hotel className="w-3 h-3" />,
-  transport: <Bus className="w-3 h-3" />,
-  meal: <Utensils className="w-3 h-3" />,
-};
-
-const TYPE_COLOR: Record<string, string> = {
-  activity: "text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/30",
-  accommodation: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30",
-  transport: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30",
-  meal: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30",
-};
-
-// B15-f: loading messages live as i18n keys; the t() call happens
-// inside the render so a language flip mid-load shows the new copy.
-const LOADING_KEYS = [
-  "aiPlan.loadingScouting",
-  "aiPlan.loadingBalancing",
-  "aiPlan.loadingHidden",
-  "aiPlan.loadingLocal",
-  "aiPlan.loadingCrafting",
+const PACES = [
+  { value: "chill", labelKey: "aiPlan.paceChill", descKey: "aiPlan.paceChillDesc" },
+  { value: "balanced", labelKey: "aiPlan.paceBalanced", descKey: "aiPlan.paceBalancedDesc" },
+  { value: "packed", labelKey: "aiPlan.pacePacked", descKey: "aiPlan.pacePackedDesc" },
 ] as const;
+
+const BUDGETS = [
+  { value: "shoestring", labelKey: "aiPlan.budgetShoestring", descKey: "aiPlan.budgetShoestringDesc" },
+  { value: "mid", labelKey: "aiPlan.budgetMid", descKey: "aiPlan.budgetMidDesc" },
+  { value: "splurge", labelKey: "aiPlan.budgetSplurge", descKey: "aiPlan.budgetSplurgeDesc" },
+] as const;
+
+const DIETARY = ["halal", "vegetarian", "vegan", "gluten-free"] as const;
+
+const TRAVEL_ICON: Record<TravelMode, React.ReactNode> = {
+  flight: <AirplaneTilt className="w-3.5 h-3.5" />,
+  train: <Train className="w-3.5 h-3.5" />,
+  bus: <Bus className="w-3.5 h-3.5" />,
+  car: <Car className="w-3.5 h-3.5" />,
+  ferry: <Boat className="w-3.5 h-3.5" />,
+  walk: <PersonSimpleWalk className="w-3.5 h-3.5" />,
+};
+const TRAVEL_MODES = Object.keys(TRAVEL_ICON) as TravelMode[];
+
+function priceGlyphs(level: number | null): string {
+  if (!level || level < 1) return "";
+  return "$".repeat(Math.min(level, 4));
+}
+
+/** AssembledItem → the server-action shape, carrying the grounded place. */
+function toPlanned(it: AssembledItem, dayOffsetMap: Map<number, number>): PlannedActivity {
+  return {
+    day: dayOffsetMap.get(it.day) ?? it.day,
+    title: it.place.name,
+    type: it.type,
+    startTime: it.startTime ?? undefined,
+    locationName: it.place.address ?? it.place.name,
+    notes: it.note || undefined,
+    place: {
+      placeId: it.place.placeId,
+      lat: it.place.lat,
+      lng: it.place.lng,
+      photoUrl: it.place.photoUrl,
+      rating: it.place.rating,
+      userRatingsTotal: it.place.userRatingsTotal,
+      priceLevel: it.place.priceLevel,
+      placeTypes: it.place.placeTypes,
+      address: it.place.address,
+      mapsUrl: it.place.mapsUrl,
+    },
+  };
+}
 
 export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const router = useRouter();
   const t = useT();
 
+  // wizard position: 1 vibe · 2 rhythm+constraints · 3 route · 4 journey
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+
+  // prefs
   const [travelStyle, setTravelStyle] = useState<TravelStyle>("cultural");
   const [interests, setInterests] = useState("");
-  const [notes, setNotes] = useState("");
-  // B3-b: structured questionnaire. Step counter drives the multi-pane
-  // form below (Vibe → Rhythm → Constraints → Generate).
-  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [pace, setPace] = useState<"chill" | "balanced" | "packed">("balanced");
   const [dailyBudget, setDailyBudget] = useState<"shoestring" | "mid" | "splurge">("mid");
   const [dietary, setDietary] = useState<string[]>([]);
   const [mustSee, setMustSee] = useState("");
   const [avoid, setAvoid] = useState("");
 
-  function toggleDietary(tag: string) {
-    setDietary((prev) =>
-      prev.includes(tag) ? prev.filter((d) => d !== tag) : [...prev, tag],
-    );
-  }
-  const [plan, setPlan] = useState<AiPlannerResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState(0);
-  const [selected, setSelected] = useState<Set<string>>(new Set()); // keys are "day-index"
-  const [busy, setBusy] = useState<string | null>(null); // which action is running
+  // route
+  const [legs, setLegs] = useState<RouteLeg[]>([]);
+  const [numDays, setNumDays] = useState(0);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [newCity, setNewCity] = useState("");
+
+  // journey
+  const [legStates, setLegStates] = useState<LegState[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set()); // "leg-item"
+  const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  // Group by day
-  const byDay = useMemo(() => {
-    const map: Record<number, PlannedActivity[]> = {};
-    plan?.activities.forEach((a) => {
-      (map[a.day] ??= []).push(a);
-    });
-    return map;
-  }, [plan]);
+  const prefsBody = { tripId, travelStyle, interests, pace, dailyBudget, dietary, mustSee, avoid };
 
-  const days = Object.keys(byDay).map(Number).sort((a, b) => a - b);
-  const allKeys = plan?.activities.map((_, i) => `k-${i}`) ?? [];
-  const allSelected = allKeys.length > 0 && allKeys.every((k) => selected.has(k));
-  const selectedItems: PlannedActivity[] = plan
-    ? plan.activities.filter((_, i) => selected.has(`k-${i}`))
-    : [];
+  const usedDays = legs.reduce((s, l) => s + l.nights, 0);
+  const daysBalanced = numDays > 0 && usedDays === numDays;
 
-  async function generate() {
-    setPlan(null);
+  /** day-number map: leg order → consecutive 1-indexed trip days */
+  function legDays(legIdx: number): number[] {
+    let start = 1;
+    for (let i = 0; i < legIdx; i++) start += legs[i].nights;
+    return Array.from({ length: legs[legIdx].nights }, (_, i) => start + i);
+  }
+
+  /* ── route step ─────────────────────────────────────────────────── */
+
+  async function fetchRoute() {
+    setRouteLoading(true);
+    try {
+      const res = await fetch("/api/ai/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...prefsBody, mode: "route" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? t("aiPlan.legFailedGeneric"));
+        return;
+      }
+      setLegs(data.legs);
+      setNumDays(data.numDays);
+      setStep(3);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("aiPlan.legFailedGeneric"));
+    } finally {
+      setRouteLoading(false);
+    }
+  }
+
+  function bumpNights(idx: number, delta: number) {
+    setLegs((prev) =>
+      prev.map((l, i) => (i === idx ? { ...l, nights: Math.max(1, l.nights + delta) } : l)),
+    );
+  }
+  function removeLeg(idx: number) {
+    setLegs((prev) => prev.filter((_, i) => i !== idx));
+  }
+  function setTravelModeAt(idx: number, mode: TravelMode) {
+    setLegs((prev) =>
+      prev.map((l, i) =>
+        i === idx ? { ...l, travel: { mode, note: l.travel?.note ?? "" } } : l,
+      ),
+    );
+  }
+  function addCity() {
+    const city = newCity.trim();
+    if (!city) return;
+    setLegs((prev) => [
+      ...prev,
+      { city, cityLabel: city, nights: 1, why: "", travel: { mode: "car", note: "" } },
+    ]);
+    setNewCity("");
+  }
+
+  /* ── journey step: assemble legs sequentially ───────────────────── */
+
+  async function startJourney() {
+    if (!daysBalanced) return;
+    setStep(4);
     setSelected(new Set());
-    setLoading(true);
-    let msgIdx = 0;
-    setLoadingMsg(0);
-    const interval = setInterval(() => {
-      msgIdx = (msgIdx + 1) % LOADING_KEYS.length;
-      setLoadingMsg(msgIdx);
-    }, 2200);
+    const states: LegState[] = legs.map(() => ({ status: "pending", items: [] }));
+    setLegStates([...states]);
 
+    for (let i = 0; i < legs.length; i++) {
+      states[i] = { status: "loading", items: [] };
+      setLegStates([...states]);
+      try {
+        const res = await fetch("/api/ai/plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...prefsBody,
+            mode: "assemble",
+            leg: { city: legs[i].city, days: legDays(i) },
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? t("aiPlan.legFailedGeneric"));
+        states[i] = { status: "done", summary: data.summary, items: data.items };
+        // pre-select everything from this leg
+        setSelected((prev) => {
+          const next = new Set(prev);
+          (data.items as AssembledItem[]).forEach((_, j) => next.add(`${i}-${j}`));
+          return next;
+        });
+      } catch (err) {
+        states[i] = {
+          status: "error",
+          items: [],
+          error: err instanceof Error ? err.message : t("aiPlan.legFailedGeneric"),
+        };
+      }
+      setLegStates([...states]);
+    }
+  }
+
+  async function retryLeg(i: number) {
+    const states = [...legStates];
+    states[i] = { status: "loading", items: [] };
+    setLegStates([...states]);
     try {
       const res = await fetch("/api/ai/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tripId,
-          travelStyle,
-          interests,
-          notes,
-          pace,
-          dailyBudget,
-          dietary,
-          mustSee,
-          avoid,
+          ...prefsBody,
+          mode: "assemble",
+          leg: { city: legs[i].city, days: legDays(i) },
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Failed to generate plan");
-        return;
-      }
-      setPlan(data);
-      // Select all by default
-      setSelected(new Set(data.activities.map((_: any, i: number) => `k-${i}`)));
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to generate plan");
-    } finally {
-      clearInterval(interval);
-      setLoading(false);
+      if (!res.ok) throw new Error(data.error ?? t("aiPlan.legFailedGeneric"));
+      states[i] = { status: "done", summary: data.summary, items: data.items };
+      setSelected((prev) => {
+        const next = new Set(prev);
+        (data.items as AssembledItem[]).forEach((_, j) => next.add(`${i}-${j}`));
+        return next;
+      });
+    } catch (err) {
+      states[i] = {
+        status: "error",
+        items: [],
+        error: err instanceof Error ? err.message : t("aiPlan.legFailedGeneric"),
+      };
     }
+    setLegStates([...states]);
   }
 
-  function toggleOne(idx: number) {
-    const key = `k-${idx}`;
+  /* ── selection + actions ────────────────────────────────────────── */
+
+  const identityDayMap = new Map<number, number>(); // grounded days are already trip days
+
+  const allEntries: { key: string; item: AssembledItem }[] = legStates.flatMap((ls, i) =>
+    ls.items.map((item, j) => ({ key: `${i}-${j}`, item })),
+  );
+  const allSelected = allEntries.length > 0 && allEntries.every((e) => selected.has(e.key));
+  const selectedEntries = allEntries.filter((e) => selected.has(e.key));
+
+  function toggleKey(key: string) {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -156,75 +323,63 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     });
   }
 
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(allKeys));
-  }
-
-  function handleAddSingle(idx: number) {
-    if (!plan) return;
-    setBusy(`add-${idx}`);
+  function handleAdd(items: AssembledItem[], busyKey: string, closeAfter = false) {
+    if (items.length === 0) return;
+    setBusy(busyKey);
     startTransition(async () => {
       try {
-        await addPlannedItems(tripId, [plan.activities[idx]]);
-        toast.success("Added to itinerary");
+        const { count } = await addPlannedItems(
+          tripId,
+          items.map((it) => toPlanned(it, identityDayMap)),
+        );
+        toast.success(t("aiPlan.toastAdded", { count }));
+        if (closeAfter) onClose();
         router.refresh();
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to add");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t("aiPlan.legFailedGeneric"));
       } finally {
         setBusy(null);
       }
     });
   }
 
-  function handleVoteSingle(idx: number) {
-    if (!plan) return;
-    setBusy(`vote-${idx}`);
+  function handleVote(items: AssembledItem[], busyKey: string, question?: string) {
+    if (items.length === 0) return;
+    setBusy(busyKey);
     startTransition(async () => {
       try {
-        await voteOnPlannedItems(tripId, [plan.activities[idx]]);
-        toast.success("Vote posted to chat!");
+        await voteOnPlannedItems(
+          tripId,
+          items.map((it) => toPlanned(it, identityDayMap)),
+          question,
+        );
+        toast.success(t("aiPlan.toastVote"));
         router.refresh();
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to create vote");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t("aiPlan.legFailedGeneric"));
       } finally {
         setBusy(null);
       }
     });
   }
 
-  function handleAddSelected() {
-    if (selectedItems.length === 0) return;
-    setBusy("add-bulk");
-    startTransition(async () => {
-      try {
-        const { count } = await addPlannedItems(tripId, selectedItems);
-        toast.success(`Added ${count} ${count === 1 ? "item" : "items"} to itinerary`);
-        onClose();
-        router.refresh();
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to add");
-      } finally {
-        setBusy(null);
-      }
-    });
+  /** the alt duel: main place vs alternative as a two-option Huddle vote */
+  function handleDuel(item: AssembledItem, busyKey: string) {
+    if (!item.alt) return;
+    const altItem: AssembledItem = { ...item, place: item.alt, alt: null };
+    handleVote([item, altItem], busyKey, undefined);
   }
 
-  function handleVoteSelected() {
-    if (selectedItems.length === 0) return;
-    setBusy("vote-bulk");
-    startTransition(async () => {
-      try {
-        await voteOnPlannedItems(tripId, selectedItems);
-        toast.success("Vote posted to chat!");
-        onClose();
-        router.refresh();
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to create vote");
-      } finally {
-        setBusy(null);
-      }
-    });
-  }
+  /* ── render ─────────────────────────────────────────────────────── */
+
+  const stepLabel =
+    step === 1
+      ? t("aiPlan.stepVibe")
+      : step === 2
+        ? t("aiPlan.stepRhythm")
+        : step === 3
+          ? t("aiPlan.stepRoute")
+          : t("aiPlan.stepJourney");
 
   return (
     <SidePanel
@@ -232,432 +387,517 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
       onClose={onClose}
       title={t("aiPlan.title")}
       subtitle={t("aiPlan.subtitle", { destination })}
-      icon={<Sparkles className="w-4 h-4 text-white" />}
-      accentGradient="from-primary to-primary"
-      width="md"
     >
-      {/* B3-b: 3-step questionnaire — Vibe → Rhythm → Constraints. Each
-          step is a single screen so the user is never overwhelmed by a
-          wall of inputs (the old single-form approach). */}
-      {!plan && (
-        <div className="p-4 space-y-4">
-          {/* Step indicator */}
-          <div className="flex items-center gap-1.5">
-            {[1, 2, 3].map((n) => (
-              <div
-                key={n}
-                className={`h-1 flex-1 rounded-full transition-colors ${
-                  step >= n ? "bg-primary" : "bg-muted"
-                }`}
+      <div className="p-4 space-y-4">
+        {/* step indicator */}
+        <div className="flex items-center gap-1.5">
+          {[1, 2, 3, 4].map((n) => (
+            <span
+              key={n}
+              className={`h-1 flex-1 rounded-full transition-colors ${step >= n ? "bg-primary" : "bg-muted"}`}
+            />
+          ))}
+        </div>
+        <p className="text-xs font-semibold text-muted-foreground">
+          {t("aiPlan.stepOf", { step, label: stepLabel })}
+        </p>
+
+        {/* ─── Step 1: vibe ─────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-semibold mb-2">{t("aiPlan.whatsTheVibe")}</p>
+              <div className="grid grid-cols-2 gap-2">
+                {TRAVEL_STYLES.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setTravelStyle(s.value)}
+                    className={`rounded-xl border p-3 text-start transition-colors ${
+                      travelStyle === s.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">{t(s.labelKey)}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t(s.descKey)}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-2">{t("aiPlan.whatAreYouInto")}</p>
+              <input
+                value={interests}
+                onChange={(e) => setInterests(e.target.value)}
+                placeholder={t("aiPlan.interestsPlaceholder")}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
               />
-            ))}
+            </div>
+            <Button className="w-full" onClick={() => setStep(2)}>
+              {t("aiPlan.next")}
+            </Button>
           </div>
-          <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-            {t("aiPlan.stepOf", {
-              step,
-              label: t(step === 1 ? "aiPlan.stepVibe" : step === 2 ? "aiPlan.stepRhythm" : "aiPlan.stepConstraints"),
-            })}
-          </p>
+        )}
 
-          {/* ─── Step 1: Vibe ─────────────────────────────────────── */}
-          {step === 1 && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold">{t("aiPlan.whatsTheVibe")}</p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {TRAVEL_STYLES.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => setTravelStyle(s.value)}
-                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
-                        travelStyle === s.value
-                          ? "border-primary bg-primary/8 shadow-sm"
-                          : "border-border/60 hover:border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <span className="text-sm">{t(s.labelKey)}</span>
-                      <span className="text-[10px] text-muted-foreground">{t(s.descKey)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">
-                  {t("aiPlan.whatAreYouInto")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
-                </label>
-                <input
-                  value={interests}
-                  onChange={(e) => setInterests(e.target.value)}
-                  placeholder={t("aiPlan.interestsPlaceholder")}
-                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+        {/* ─── Step 2: rhythm + constraints ─────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-semibold mb-2">{t("aiPlan.paceQuestion")}</p>
+              <div className="grid grid-cols-3 gap-2">
+                {PACES.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPace(p.value)}
+                    className={`rounded-xl border p-2.5 text-center transition-colors ${
+                      pace === p.value ? "border-primary bg-primary/10" : "border-border"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">{t(p.labelKey)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{t(p.descKey)}</p>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-
-          {/* ─── Step 2: Rhythm ───────────────────────────────────── */}
-          {step === 2 && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold">{t("aiPlan.paceQuestion")}</p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { v: "chill" as const, labelKey: "aiPlan.paceChill", descKey: "aiPlan.paceChillDesc" },
-                    { v: "balanced" as const, labelKey: "aiPlan.paceBalanced", descKey: "aiPlan.paceBalancedDesc" },
-                    { v: "packed" as const, labelKey: "aiPlan.pacePacked", descKey: "aiPlan.pacePackedDesc" },
-                  ].map((p) => (
-                    <button
-                      key={p.v}
-                      type="button"
-                      onClick={() => setPace(p.v)}
-                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
-                        pace === p.v
-                          ? "border-primary bg-primary/8 shadow-sm"
-                          : "border-border/60 hover:border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <span className="text-sm">{t(p.labelKey)}</span>
-                      <span className="text-[10px] text-muted-foreground">{t(p.descKey)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-xs font-semibold">{t("aiPlan.budgetQuestion")}</p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { v: "shoestring" as const, labelKey: "aiPlan.budgetShoestring", descKey: "aiPlan.budgetShoestringDesc" },
-                    { v: "mid" as const, labelKey: "aiPlan.budgetMid", descKey: "aiPlan.budgetMidDesc" },
-                    { v: "splurge" as const, labelKey: "aiPlan.budgetSplurge", descKey: "aiPlan.budgetSplurgeDesc" },
-                  ].map((b) => (
-                    <button
-                      key={b.v}
-                      type="button"
-                      onClick={() => setDailyBudget(b.v)}
-                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-all ${
-                        dailyBudget === b.v
-                          ? "border-primary bg-primary/8 shadow-sm"
-                          : "border-border/60 hover:border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <span className="text-sm">{t(b.labelKey)}</span>
-                      <span className="text-[10px] text-muted-foreground">{t(b.descKey)}</span>
-                    </button>
-                  ))}
-                </div>
+            <div>
+              <p className="text-sm font-semibold mb-2">{t("aiPlan.budgetQuestion")}</p>
+              <div className="grid grid-cols-3 gap-2">
+                {BUDGETS.map((b) => (
+                  <button
+                    key={b.value}
+                    type="button"
+                    onClick={() => setDailyBudget(b.value)}
+                    className={`rounded-xl border p-2.5 text-center transition-colors ${
+                      dailyBudget === b.value ? "border-primary bg-primary/10" : "border-border"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">{t(b.labelKey)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{t(b.descKey)}</p>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-
-          {/* ─── Step 3: Constraints ──────────────────────────────── */}
-          {step === 3 && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold">
-                  {t("aiPlan.dietaryQuestion")} <span className="font-normal text-muted-foreground">{t("aiPlan.anyApply")}</span>
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {["vegetarian", "vegan", "halal", "kosher", "gluten-free", "nut allergy"].map((tag) => {
-                    const on = dietary.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleDietary(tag)}
-                        className={`rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all ${
-                          on
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border/60 hover:border-border hover:bg-muted/40"
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">
-                  {t("aiPlan.mustSeeQuestion")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
-                </label>
-                <input
-                  value={mustSee}
-                  onChange={(e) => setMustSee(e.target.value)}
-                  placeholder={t("aiPlan.mustSeePlaceholder")}
-                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">
-                  {t("aiPlan.avoidQuestion")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
-                </label>
-                <input
-                  value={avoid}
-                  onChange={(e) => setAvoid(e.target.value)}
-                  placeholder={t("aiPlan.avoidPlaceholder")}
-                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">
-                  {t("aiPlan.notesQuestion")} <span className="font-normal text-muted-foreground">({t("expenses.notesOptional")})</span>
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t("aiPlan.notesPlaceholder")}
-                  rows={2}
-                  className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+            <div>
+              <p className="text-sm font-semibold mb-1">{t("aiPlan.dietaryQuestion")}</p>
+              <p className="text-xs text-muted-foreground mb-2">{t("aiPlan.anyApply")}</p>
+              <div className="flex flex-wrap gap-2">
+                {DIETARY.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() =>
+                      setDietary((prev) =>
+                        prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
+                      )
+                    }
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      dietary.includes(d) ? "border-primary bg-primary/10" : "border-border"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-
-          {/* Navigation */}
-          <div className="flex items-center gap-2 pt-1">
-            {step > 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep((s) => (s === 3 ? 2 : 1))}
-                disabled={loading}
-                className="flex-1"
-              >
+            <div>
+              <p className="text-sm font-semibold mb-2">{t("aiPlan.mustSeeQuestion")}</p>
+              <input
+                value={mustSee}
+                onChange={(e) => setMustSee(e.target.value)}
+                placeholder={t("aiPlan.mustSeePlaceholder")}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+              />
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-2">{t("aiPlan.avoidQuestion")}</p>
+              <input
+                value={avoid}
+                onChange={(e) => setAvoid(e.target.value)}
+                placeholder={t("aiPlan.avoidPlaceholder")}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
                 {t("aiPlan.back")}
               </Button>
-            )}
-            {step < 3 ? (
-              <Button
-                type="button"
-                onClick={() => setStep((s) => (s === 1 ? 2 : 3))}
-                className="flex-1 bg-primary hover:opacity-90 border-0"
-              >
-                {t("aiPlan.next")}
-              </Button>
-            ) : (
-              <Button
-                onClick={generate}
-                disabled={loading}
-                className="flex-1 bg-primary hover:opacity-90 border-0 shadow-sm shadow-primary/20"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                    {t(LOADING_KEYS[loadingMsg])}
-                  </>
+              <Button className="flex-1" onClick={fetchRoute} disabled={routeLoading}>
+                {routeLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 me-2" />
-                    {t("aiPlan.generate")}
+                    <MapPin className="w-4 h-4 me-1.5" />
+                    {t("aiPlan.suggestRoute")}
                   </>
                 )}
               </Button>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading (first-time) */}
-      {loading && !plan && (
-        <div className="px-4 pb-4">
-          <div className="rounded-xl bg-muted/40 border px-3 py-4 flex flex-col items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <p className="text-xs text-muted-foreground">{t(LOADING_KEYS[loadingMsg])}</p>
-          </div>
-        </div>
-      )}
+        {/* ─── Step 3: the route — the user is the captain ──────── */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">{t("aiPlan.routeTitle")}</p>
+              <span
+                className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  daysBalanced
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                }`}
+              >
+                {t("aiPlan.routeDaysUsed", { used: usedDays, total: numDays })}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">{t("aiPlan.routeSubtitle")}</p>
 
-      {/* Results */}
-      {plan && (
-        <div className="flex flex-col">
-          {/* Summary + tips */}
-          <div className="p-4 space-y-3 border-b bg-muted/30">
-            <p className="text-xs text-muted-foreground leading-relaxed">{plan.summary}</p>
-            {plan.tips.length > 0 && (
-              <div className="space-y-1">
-                {plan.tips.map((tip, i) => (
-                  <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                    <span className="text-amber-500 mt-0.5">💡</span>
-                    <span>{tip}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Bulk toolbar */}
-          <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur">
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-            >
-              {allSelected ? (
-                <CheckSquare className="w-3.5 h-3.5 text-primary" />
-              ) : (
-                <Square className="w-3.5 h-3.5" />
-              )}
-              {selectedItems.length} of {plan.activities.length} selected
-            </button>
-            <button
-              type="button"
-              onClick={generate}
-              disabled={loading}
-              className="text-xs text-primary hover:underline"
-            >
-              {loading ? "Regenerating…" : "Regenerate"}
-            </button>
-          </div>
-
-          {/* Day-by-day items */}
-          <div className="p-4 space-y-4">
-            {days.map((day) => (
-              <div key={day} className="space-y-2">
-                <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                  Day {day}
-                </p>
-                <div className="space-y-1.5">
-                  {byDay[day].map((act) => {
-                    const idx = plan.activities.indexOf(act);
-                    const key = `k-${idx}`;
-                    const isSelected = selected.has(key);
-                    const addBusy = busy === `add-${idx}`;
-                    const voteBusy = busy === `vote-${idx}`;
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`rounded-xl border bg-background p-2.5 space-y-1.5 transition-colors ${
-                          isSelected ? "border-primary/50 bg-primary/[0.02]" : "border-border/60"
-                        }`}
+            <div className="space-y-2.5">
+              {legs.map((leg, i) => (
+                <div key={`${leg.city}-${i}`}>
+                  {/* travel hop chip */}
+                  {i > 0 && (
+                    <div className="flex items-center gap-2 ps-4 pb-2">
+                      <select
+                        value={leg.travel?.mode ?? "car"}
+                        onChange={(e) => setTravelModeAt(i, e.target.value as TravelMode)}
+                        className="rounded-full border border-border bg-background px-2 py-1 text-[11px] font-semibold"
+                        aria-label={t("aiPlan.travelMode")}
                       >
-                        <div className="flex items-start gap-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleOne(idx)}
-                            className="shrink-0 mt-0.5"
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-primary" />
-                            ) : (
-                              <Square className="w-4 h-4 text-muted-foreground" />
-                            )}
-                          </button>
-                          <span
-                            className={`shrink-0 rounded-md p-1 mt-0.5 ${
-                              TYPE_COLOR[act.type] ?? ""
-                            }`}
-                          >
-                            {TYPE_ICON[act.type]}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium leading-snug">{act.title}</p>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {act.startTime && (
-                                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                                  <Clock className="w-2.5 h-2.5" />
-                                  {act.startTime}
-                                </span>
-                              )}
-                              {act.locationName && (
-                                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground truncate max-w-[180px]">
-                                  <MapPin className="w-2.5 h-2.5 shrink-0" />
-                                  {act.locationName}
-                                </span>
-                              )}
-                              {act.costEstimate !== undefined && act.costEstimate > 0 && (
-                                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                  ~${act.costEstimate}
-                                </span>
-                              )}
-                            </div>
-                            {act.notes && (
-                              <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                                {act.notes}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Per-item actions */}
-                        <div className="flex items-center gap-1.5 pl-[26px]">
-                          <button
-                            type="button"
-                            onClick={() => handleAddSingle(idx)}
-                            disabled={addBusy || voteBusy}
-                            className="inline-flex items-center gap-1 rounded-md border bg-muted/40 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 dark:hover:bg-emerald-950/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors disabled:opacity-50"
-                          >
-                            {addBusy ? (
-                              <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                            ) : (
-                              <Plus className="w-2.5 h-2.5" />
-                            )}
-                            Add
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleVoteSingle(idx)}
-                            disabled={addBusy || voteBusy}
-                            className="inline-flex items-center gap-1 rounded-md border bg-muted/40 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 dark:hover:bg-violet-950/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors disabled:opacity-50"
-                          >
-                            {voteBusy ? (
-                              <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                            ) : (
-                              <Vote className="w-2.5 h-2.5" />
-                            )}
-                            Vote
-                          </button>
-                        </div>
+                        {TRAVEL_MODES.map((m) => (
+                          <option key={m} value={m}>
+                            {t(`aiPlan.travel_${m}`)}
+                          </option>
+                        ))}
+                      </select>
+                      {leg.travel?.note ? (
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          {leg.travel.note}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="rounded-xl border border-border p-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{leg.cityLabel}</p>
+                        {leg.why ? (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{leg.why}</p>
+                        ) : null}
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => bumpNights(i, -1)}
+                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
+                          aria-label="-1"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-sm font-bold tabular-nums min-w-[3.5ch] text-center">
+                          {t("aiPlan.nights", { count: leg.nights })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => bumpNights(i, 1)}
+                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
+                          aria-label="+1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                        {legs.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeLeg(i)}
+                            className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive"
+                            aria-label={t("common.delete")}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Sticky bulk action bar */}
-          <div className="sticky bottom-0 border-t bg-background/95 backdrop-blur p-3 flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleVoteSelected}
-              disabled={selectedItems.length === 0 || busy !== null}
-              className="flex-1"
-            >
-              {busy === "vote-bulk" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <>
-                  <Vote className="w-3.5 h-3.5 me-1.5" />
-                  Vote on {selectedItems.length}
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleAddSelected}
-              disabled={selectedItems.length === 0 || busy !== null}
-              className="flex-1 bg-primary hover:opacity-90 border-0"
-            >
-              {busy === "add-bulk" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 me-1.5" />
-                  Add {selectedItems.length} to plan
-                </>
-              )}
-            </Button>
+            {/* add a city */}
+            <div className="flex gap-2">
+              <input
+                value={newCity}
+                onChange={(e) => setNewCity(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCity()}
+                placeholder={t("aiPlan.addCityPlaceholder")}
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              />
+              <Button variant="outline" onClick={addCity} disabled={!newCity.trim()}>
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={fetchRoute} disabled={routeLoading}>
+                {routeLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowsClockwise className="w-4 h-4" />
+                )}
+              </Button>
+              <Button className="flex-1" onClick={startJourney} disabled={!daysBalanced}>
+                <Sparkles className="w-4 h-4 me-1.5" />
+                {t("aiPlan.startPlanning")}
+              </Button>
+            </div>
+            {!daysBalanced && numDays > 0 && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                {t("aiPlan.routeBalanceHint", { total: numDays })}
+              </p>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* ─── Step 4: the journey — real places, leg by leg ────── */}
+        {step === 4 && (
+          <div className="space-y-5 pb-24">
+            {legs.map((leg, i) => {
+              const ls = legStates[i];
+              if (!ls) return null;
+              const byDay = new Map<number, { key: string; item: AssembledItem }[]>();
+              ls.items.forEach((item, j) => {
+                const arr = byDay.get(item.day) ?? [];
+                arr.push({ key: `${i}-${j}`, item });
+                byDay.set(item.day, arr);
+              });
+              return (
+                <section key={`${leg.city}-${i}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <p className="text-sm font-bold">{leg.cityLabel}</p>
+                    {ls.status === "done" && (
+                      <button
+                        type="button"
+                        onClick={() => handleAdd(ls.items, `add-leg-${i}`)}
+                        disabled={busy !== null}
+                        className="ms-auto text-[11px] font-bold text-primary hover:underline disabled:opacity-50"
+                      >
+                        {busy === `add-leg-${i}` ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          t("aiPlan.addLeg")
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {ls.status === "loading" || ls.status === "pending" ? (
+                    <div className="rounded-xl border border-border p-4 flex items-center gap-3">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">
+                        {t("aiPlan.planningLeg", { city: leg.cityLabel })}
+                      </p>
+                    </div>
+                  ) : ls.status === "error" ? (
+                    <div className="rounded-xl border border-destructive/40 p-4 space-y-2">
+                      <p className="text-sm text-destructive">{ls.error}</p>
+                      <Button size="sm" variant="outline" onClick={() => retryLeg(i)}>
+                        {t("aiPlan.retry")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {ls.summary ? (
+                        <p className="text-xs text-muted-foreground">{ls.summary}</p>
+                      ) : null}
+                      {[...byDay.keys()]
+                        .sort((a, b) => a - b)
+                        .map((day) => (
+                          <div key={day}>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                              {t("aiPlan.dayLabel", { n: day })}
+                            </p>
+                            <div className="space-y-2">
+                              {byDay.get(day)!.map(({ key, item }) => {
+                                const isSel = selected.has(key);
+                                return (
+                                  <div
+                                    key={key}
+                                    className={`rounded-xl border overflow-hidden transition-colors ${
+                                      isSel ? "border-primary/50" : "border-border"
+                                    }`}
+                                  >
+                                    <div className="flex gap-3 p-3">
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleKey(key)}
+                                        className="shrink-0 mt-0.5 text-primary"
+                                        aria-label={isSel ? "deselect" : "select"}
+                                      >
+                                        {isSel ? (
+                                          <CheckSquare className="w-4.5 h-4.5" weight="fill" />
+                                        ) : (
+                                          <Square className="w-4.5 h-4.5 text-muted-foreground" />
+                                        )}
+                                      </button>
+                                      {item.place.photoUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                          src={item.place.photoUrl}
+                                          alt=""
+                                          loading="lazy"
+                                          className="w-16 h-16 rounded-lg object-cover shrink-0"
+                                        />
+                                      ) : (
+                                        <div className="w-16 h-16 rounded-lg bg-muted shrink-0 flex items-center justify-center">
+                                          {item.type === "meal" ? (
+                                            <Utensils className="w-5 h-5 text-muted-foreground" />
+                                          ) : (
+                                            <Ticket className="w-5 h-5 text-muted-foreground" />
+                                          )}
+                                        </div>
+                                      )}
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold leading-snug">
+                                          {item.place.name}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-muted-foreground">
+                                          {item.place.rating != null && (
+                                            <span className="inline-flex items-center gap-0.5 font-semibold text-amber-600 dark:text-amber-400">
+                                              <Star className="w-3 h-3" weight="fill" />
+                                              {item.place.rating.toFixed(1)}
+                                              {item.place.userRatingsTotal ? (
+                                                <span className="text-muted-foreground font-normal">
+                                                  ({item.place.userRatingsTotal.toLocaleString()})
+                                                </span>
+                                              ) : null}
+                                            </span>
+                                          )}
+                                          {priceGlyphs(item.place.priceLevel) && (
+                                            <span>{priceGlyphs(item.place.priceLevel)}</span>
+                                          )}
+                                          {item.startTime && (
+                                            <span className="inline-flex items-center gap-0.5">
+                                              <Clock className="w-3 h-3" />
+                                              {item.startTime}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {item.note ? (
+                                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                            {item.note}
+                                          </p>
+                                        ) : null}
+                                        <div className="flex items-center gap-3 mt-2">
+                                          <a
+                                            href={item.place.mapsUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                                          >
+                                            <ArrowSquareOut className="w-3 h-3" />
+                                            {t("aiPlan.openInGoogle")}
+                                          </a>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleAdd([item], `add-${key}`)
+                                            }
+                                            disabled={busy !== null}
+                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-foreground/70 hover:text-foreground disabled:opacity-50"
+                                          >
+                                            {busy === `add-${key}` ? (
+                                              <Loader2 className="w-3 h-3 animate-spin" />
+                                            ) : (
+                                              <Plus className="w-3 h-3" />
+                                            )}
+                                            {t("aiPlan.addOne")}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* the duel: a real alternative → crew vote */}
+                                    {item.alt && (
+                                      <div className="border-t border-dashed border-border bg-muted/40 px-3 py-2 flex items-center gap-2">
+                                        <span className="text-[11px] text-muted-foreground shrink-0">
+                                          {t("aiPlan.orAlt")}
+                                        </span>
+                                        <span className="text-[12px] font-semibold truncate">
+                                          {item.alt.name}
+                                          {item.alt.rating != null && (
+                                            <span className="text-amber-600 dark:text-amber-400 ms-1">
+                                              ★{item.alt.rating.toFixed(1)}
+                                            </span>
+                                          )}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDuel(item, `duel-${key}`)}
+                                          disabled={busy !== null}
+                                          className="ms-auto inline-flex items-center gap-1 rounded-full border border-primary/40 text-primary px-2.5 py-1 text-[11px] font-bold hover:bg-primary/10 disabled:opacity-50 shrink-0"
+                                        >
+                                          {busy === `duel-${key}` ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            <Vote className="w-3 h-3" />
+                                          )}
+                                          {t("aiPlan.askCrew")}
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
+
+            {/* sticky bulk bar */}
+            {allEntries.length > 0 && (
+              <div className="fixed bottom-0 inset-x-0 sm:absolute border-t border-border bg-background/95 backdrop-blur p-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelected(allSelected ? new Set() : new Set(allEntries.map((e) => e.key)))
+                  }
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  {allSelected ? (
+                    <CheckSquare className="w-4 h-4 text-primary" weight="fill" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  {t("aiPlan.selectAll")}
+                </button>
+                <Button
+                  size="sm"
+                  className="ms-auto"
+                  disabled={selectedEntries.length === 0 || busy !== null}
+                  onClick={() =>
+                    handleAdd(selectedEntries.map((e) => e.item), "add-bulk", true)
+                  }
+                >
+                  {busy === "add-bulk" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 me-1" />
+                      {t("aiPlan.addSelected", { count: selectedEntries.length })}
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </SidePanel>
   );
 }
