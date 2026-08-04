@@ -705,7 +705,7 @@
   "aiPlan": {
     "title": "AI Trip Planner",
     "subtitle": "Smart itinerary for {destination}",
-    "stepOf": "Step {step} of 3 · {label}",
+    "stepOf": "Step {step} of 4 · {label}",
     "stepVibe": "Vibe",
     "stepRhythm": "Rhythm",
     "stepConstraints": "Constraints",
@@ -788,7 +788,8 @@
     "gatewayHint": "Optional — anchors the route to your real flights.",
     "startCityPlaceholder": "Arrival city (e.g. Tokyo)",
     "endCityPlaceholder": "Departure city (same if empty)",
-    "placesCount": "{count} places"
+    "placesCount": "{count} places",
+    "queued": "Queued…"
   },
   "auth": {
     "loginTitle": "Welcome back",

@@ -705,7 +705,7 @@
   "aiPlan": {
     "title": "مخطط الرحلات الذكي",
     "subtitle": "خطة ذكية لوجهة {destination}",
-    "stepOf": "الخطوة {step} من 3 · {label}",
+    "stepOf": "الخطوة {step} من 4 · {label}",
     "stepVibe": "الأجواء",
     "stepRhythm": "الإيقاع",
     "stepConstraints": "التفضيلات",
@@ -788,7 +788,8 @@
     "gatewayHint": "اختياري — يربط خط الرحلة برحلات الطيران الفعلية.",
     "startCityPlaceholder": "مدينة الوصول (مثلًا طوكيو)",
     "endCityPlaceholder": "مدينة المغادرة (نفسها إن تُركت فارغة)",
-    "placesCount": "{count} أماكن"
+    "placesCount": "{count} أماكن",
+    "queued": "في الانتظار…"
   },
   "auth": {
     "loginTitle": "أهلًا بعودتك",

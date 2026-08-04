@@ -331,9 +331,12 @@ async function handleAssemble(
     prefs: Prefs;
     memberCount: number;
     locale: string;
+    /** places already planned in earlier legs — never repeat them */
+    excludePlaceIds: string[];
   },
 ) {
   const { leg, prefs, locale } = args;
+  const excluded = new Set(args.excludePlaceIds);
   if (!leg?.city || !Array.isArray(leg.days) || leg.days.length === 0) {
     return NextResponse.json({ error: "Bad leg" }, { status: 400 });
   }
@@ -389,7 +392,7 @@ async function handleAssemble(
   for (const s of settled) {
     if (s.status !== "fulfilled") continue;
     for (const p of s.value) {
-      if (seen.has(p.placeId)) continue;
+      if (seen.has(p.placeId) || excluded.has(p.placeId)) continue;
       seen.add(p.placeId);
       candidates.push(p);
     }
@@ -524,6 +527,9 @@ export async function POST(request: NextRequest) {
       prefs,
       memberCount: trip.members.length,
       locale,
+      excludePlaceIds: Array.isArray(body.excludePlaceIds)
+        ? (body.excludePlaceIds as unknown[]).map(String).slice(0, 200)
+        : [],
     });
   } catch (err) {
     if (err instanceof PlacesNotConfiguredError) {

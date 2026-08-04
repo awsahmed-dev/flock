@@ -394,6 +394,10 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     const states: LegState[] = legs.map(() => ({ status: "pending", items: [] }));
     setLegStates([...states]);
 
+    // places already planned in earlier legs — a Fuji day-trip from Tokyo
+    // shouldn't reappear when the Fuji leg itself assembles
+    const usedPlaceIds: string[] = [];
+
     for (let i = 0; i < legs.length; i++) {
       states[i] = { status: "loading", items: [] };
       setLegStates([...states]);
@@ -405,6 +409,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
             ...prefsBody,
             mode: "assemble",
             leg: { city: legs[i].city, days: legDays(i) },
+            excludePlaceIds: usedPlaceIds,
           }),
         });
         const data = await res.json();
@@ -420,6 +425,10 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
           .map((it) => it.day)
           .sort((a, b) => a - b)[0];
         if (firstDay != null) setOpenDays((prev) => new Set(prev).add(`${i}-${firstDay}`));
+        (data.items as AssembledItem[]).forEach((it) => {
+          usedPlaceIds.push(it.place.placeId);
+          if (it.alt) usedPlaceIds.push(it.alt.placeId);
+        });
       } catch (err) {
         states[i] = {
           status: "error",
@@ -833,12 +842,16 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                     )}
                   </div>
 
-                  {ls.status === "loading" || ls.status === "pending" ? (
+                  {ls.status === "loading" ? (
                     <div className="rounded-xl border border-border p-4 flex items-center gap-3">
                       <Loader2 className="w-4 h-4 animate-spin text-primary" />
                       <p className="text-sm text-muted-foreground">
                         {t("aiPlan.planningLeg", { city: leg.cityLabel })}
                       </p>
+                    </div>
+                  ) : ls.status === "pending" ? (
+                    <div className="rounded-xl border border-dashed border-border/70 p-4 opacity-60">
+                      <p className="text-sm text-muted-foreground">{t("aiPlan.queued")}</p>
                     </div>
                   ) : ls.status === "error" ? (
                     <div className="rounded-xl border border-destructive/40 p-4 space-y-2">
