@@ -41,7 +41,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DotsSixVertical, CaretDown } from "@phosphor-icons/react/dist/ssr";
+import { DotsSixVertical, Check } from "@phosphor-icons/react/dist/ssr";
 
 interface Props {
   open: boolean;
@@ -175,10 +175,16 @@ function SortableLeg({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
+    // The WHOLE card is the drag surface (long-press on touch, small
+    // move on pointer) — a finger-sized target instead of a 18px handle.
+    // Quick taps still reach the buttons because activation needs a
+    // hold/move first. touch-manipulation keeps normal page scroll.
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={isDragging ? "opacity-80 z-10 relative" : ""}
+      className={`touch-manipulation ${isDragging ? "opacity-80 z-10 relative" : ""}`}
     >
       {/* travel hop chip */}
       {index > 0 && (
@@ -211,15 +217,12 @@ function SortableLeg({
         )}
         <div className="p-3.5">
           <div className="flex items-start gap-2.5">
-            <button
-              type="button"
-              {...attributes}
-              {...listeners}
-              className="shrink-0 mt-0.5 text-muted-foreground touch-none cursor-grab active:cursor-grabbing"
-              aria-label="drag"
+            <span
+              className="shrink-0 -ms-1 p-1.5 text-muted-foreground cursor-grab active:cursor-grabbing"
+              aria-hidden
             >
-              <DotsSixVertical className="w-4.5 h-4.5" />
-            </button>
+              <DotsSixVertical className="w-5 h-5" />
+            </span>
             <div className="min-w-0 flex-1">
               {!leg.photoUrl && <p className="text-sm font-bold truncate">{leg.cityLabel}</p>}
               {leg.why ? (
@@ -307,8 +310,6 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     endCity,
   };
 
-  // journey step: which day sections are expanded ("legIdx-day")
-  const [openDays, setOpenDays] = useState<Set<string>>(new Set());
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
@@ -421,10 +422,6 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
           (data.items as AssembledItem[]).forEach((_, j) => next.add(`${i}-${j}`));
           return next;
         });
-        const firstDay = (data.items as AssembledItem[])
-          .map((it) => it.day)
-          .sort((a, b) => a - b)[0];
-        if (firstDay != null) setOpenDays((prev) => new Set(prev).add(`${i}-${firstDay}`));
         (data.items as AssembledItem[]).forEach((it) => {
           usedPlaceIds.push(it.place.placeId);
           if (it.alt) usedPlaceIds.push(it.alt.placeId);
@@ -868,165 +865,149 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                       {[...byDay.keys()]
                         .sort((a, b) => a - b)
                         .map((day) => {
-                          const dayKey = `${i}-${day}`;
-                          const isOpen = openDays.has(dayKey);
                           return (
-                          <div key={day} className="rounded-xl border border-border/70 overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setOpenDays((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(dayKey)) next.delete(dayKey);
-                                  else next.add(dayKey);
-                                  return next;
-                                })
-                              }
-                              className="w-full flex items-center justify-between px-3 py-2.5 bg-muted/40"
-                            >
-                              <span className="text-[12px] font-bold">
-                                {t("aiPlan.dayLabel", { n: day })}
-                                <span className="text-muted-foreground font-semibold ms-2">
-                                  {t("aiPlan.placesCount", { count: byDay.get(day)!.length })}
-                                </span>
+                          <div key={day}>
+                            <p className="text-[12px] font-bold mb-2">
+                              {t("aiPlan.dayLabel", { n: day })}
+                              <span className="text-muted-foreground font-semibold ms-2">
+                                {t("aiPlan.placesCount", { count: byDay.get(day)!.length })}
                               </span>
-                              <CaretDown
-                                className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
-                              />
-                            </button>
-                            {isOpen && (
-                            <div className="space-y-2 p-2">
+                            </p>
+                            {/* swipe sideways through the day's places */}
+                            <div className="flex gap-3 overflow-x-auto snap-x pb-2 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                               {byDay.get(day)!.map(({ key, item }) => {
                                 const isSel = selected.has(key);
+                                const compact = (n: number) =>
+                                  new Intl.NumberFormat(undefined, { notation: "compact" }).format(n);
                                 return (
                                   <div
                                     key={key}
-                                    className={`rounded-xl border overflow-hidden transition-colors ${
-                                      isSel ? "border-primary/50" : "border-border"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => toggleKey(key)}
+                                    onKeyDown={(e) => e.key === "Enter" && toggleKey(key)}
+                                    className={`w-60 shrink-0 snap-start rounded-2xl border bg-card overflow-hidden cursor-pointer transition-all ${
+                                      isSel ? "border-primary ring-1 ring-primary/35" : "border-border"
                                     }`}
                                   >
-                                    <div className="flex gap-3 p-3">
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleKey(key)}
-                                        className="shrink-0 mt-0.5 text-primary"
-                                        aria-label={isSel ? "deselect" : "select"}
-                                      >
-                                        {isSel ? (
-                                          <CheckSquare className="w-4.5 h-4.5" weight="fill" />
-                                        ) : (
-                                          <Square className="w-4.5 h-4.5 text-muted-foreground" />
-                                        )}
-                                      </button>
+                                    {/* the photo IS the pitch */}
+                                    <div className="relative h-36 bg-muted">
                                       {item.place.photoUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
                                           src={item.place.photoUrl}
                                           alt=""
                                           loading="lazy"
-                                          className="w-16 h-16 rounded-lg object-cover shrink-0"
+                                          className="absolute inset-0 w-full h-full object-cover"
                                         />
                                       ) : (
-                                        <div className="w-16 h-16 rounded-lg bg-muted shrink-0 flex items-center justify-center">
+                                        <div className="absolute inset-0 flex items-center justify-center">
                                           {item.type === "meal" ? (
-                                            <Utensils className="w-5 h-5 text-muted-foreground" />
+                                            <Utensils className="w-7 h-7 text-muted-foreground" />
                                           ) : (
-                                            <Ticket className="w-5 h-5 text-muted-foreground" />
+                                            <Ticket className="w-7 h-7 text-muted-foreground" />
                                           )}
                                         </div>
                                       )}
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-semibold leading-snug">
-                                          {item.place.name}
-                                        </p>
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-muted-foreground">
-                                          {item.place.rating != null && (
-                                            <span className="inline-flex items-center gap-0.5 font-semibold text-amber-600 dark:text-amber-400">
-                                              <Star className="w-3 h-3" weight="fill" />
-                                              {item.place.rating.toFixed(1)}
-                                              {item.place.userRatingsTotal ? (
-                                                <span className="text-muted-foreground font-normal">
-                                                  ({item.place.userRatingsTotal.toLocaleString()})
-                                                </span>
-                                              ) : null}
+                                      <span
+                                        className={`absolute top-2 end-2 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                          isSel ? "bg-primary text-white" : "bg-black/40 text-white/85"
+                                        }`}
+                                        aria-hidden
+                                      >
+                                        <Check className="w-3.5 h-3.5" weight="bold" />
+                                      </span>
+                                      {item.place.rating != null && (
+                                        <span className="absolute bottom-2 start-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-sm text-white px-2 py-0.5 text-[11px] font-bold">
+                                          <Star className="w-3 h-3 text-amber-400" weight="fill" />
+                                          {item.place.rating.toFixed(1)}
+                                          {item.place.userRatingsTotal ? (
+                                            <span className="font-medium text-white/75">
+                                              ({compact(item.place.userRatingsTotal)})
                                             </span>
-                                          )}
-                                          {priceGlyphs(item.place.priceLevel) && (
-                                            <span>{priceGlyphs(item.place.priceLevel)}</span>
-                                          )}
-                                          {item.startTime && (
-                                            <span className="inline-flex items-center gap-0.5">
-                                              <Clock className="w-3 h-3" />
-                                              {item.startTime}
-                                            </span>
-                                          )}
-                                        </div>
-                                        {item.note ? (
-                                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                            {item.note}
-                                          </p>
-                                        ) : null}
-                                        <div className="flex items-center gap-3 mt-2">
-                                          <a
-                                            href={item.place.mapsUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
-                                          >
-                                            <ArrowSquareOut className="w-3 h-3" />
-                                            {t("aiPlan.openInGoogle")}
-                                          </a>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleAdd([item], `add-${key}`)}
-                                            disabled={busy !== null}
-                                            aria-label={t("aiPlan.addOne")}
-                                            className="ms-auto w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:text-foreground hover:border-primary/50 disabled:opacity-50"
-                                          >
-                                            {busy === `add-${key}` ? (
-                                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            ) : (
-                                              <Plus className="w-3.5 h-3.5" />
-                                            )}
-                                          </button>
-                                        </div>
-                                      </div>
+                                          ) : null}
+                                        </span>
+                                      )}
+                                      {item.startTime && (
+                                        <span className="absolute bottom-2 end-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-sm text-white px-2 py-0.5 text-[11px] font-bold">
+                                          <Clock className="w-3 h-3" />
+                                          {item.startTime}
+                                        </span>
+                                      )}
                                     </div>
 
-                                    {/* the duel: a real alternative → crew vote */}
-                                    {item.alt && (
-                                      <div className="border-t border-dashed border-border bg-muted/40 px-3 py-2 flex items-center gap-2">
-                                        <span className="text-[11px] text-muted-foreground shrink-0">
-                                          {t("aiPlan.orAlt")}
-                                        </span>
-                                        <span className="text-[12px] font-semibold truncate">
-                                          {item.alt.name}
-                                          {item.alt.rating != null && (
-                                            <span className="text-amber-600 dark:text-amber-400 ms-1">
-                                              ★{item.alt.rating.toFixed(1)}
-                                            </span>
-                                          )}
-                                        </span>
+                                    <div className="p-3">
+                                      <div className="flex items-center gap-1.5">
+                                        <p className="text-sm font-semibold leading-snug line-clamp-1 flex-1">
+                                          {item.place.name}
+                                        </p>
+                                        {priceGlyphs(item.place.priceLevel) && (
+                                          <span className="text-[11px] font-bold text-muted-foreground shrink-0">
+                                            {priceGlyphs(item.place.priceLevel)}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">
+                                        {item.note}
+                                      </p>
+                                      <div className="flex items-center justify-between mt-2.5">
+                                        <a
+                                          href={item.place.mapsUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                                        >
+                                          <ArrowSquareOut className="w-3 h-3" />
+                                          {t("aiPlan.openInGoogle")}
+                                        </a>
                                         <button
                                           type="button"
-                                          onClick={() => handleDuel(item, `duel-${key}`)}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAdd([item], `add-${key}`);
+                                          }}
                                           disabled={busy !== null}
-                                          className="ms-auto inline-flex items-center gap-1 rounded-full border border-primary/40 text-primary px-2.5 py-1 text-[11px] font-bold hover:bg-primary/10 disabled:opacity-50 shrink-0"
+                                          aria-label={t("aiPlan.addOne")}
+                                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:text-foreground hover:border-primary/50 disabled:opacity-50"
                                         >
-                                          {busy === `duel-${key}` ? (
-                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          {busy === `add-${key}` ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                           ) : (
-                                            <Vote className="w-3 h-3" />
+                                            <Plus className="w-3.5 h-3.5" />
                                           )}
-                                          {t("aiPlan.askCrew")}
                                         </button>
                                       </div>
-                                    )}
+
+                                      {item.alt && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDuel(item, `duel-${key}`);
+                                          }}
+                                          disabled={busy !== null}
+                                          className="mt-2.5 w-full flex items-center gap-1.5 rounded-lg border border-dashed border-primary/35 bg-primary/[0.04] px-2.5 py-1.5 text-start disabled:opacity-50"
+                                        >
+                                          {busy === `duel-${key}` ? (
+                                            <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+                                          ) : (
+                                            <Vote className="w-3 h-3 text-primary shrink-0" />
+                                          )}
+                                          <span className="text-[11px] text-muted-foreground truncate">
+                                            {t("aiPlan.orAlt")}{" "}
+                                            <span className="font-semibold text-foreground">{item.alt.name}</span>
+                                          </span>
+                                          <span className="ms-auto text-[11px] font-bold text-primary shrink-0">
+                                            {t("aiPlan.askCrew")}
+                                          </span>
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 );
                               })}
                             </div>
-                            )}
                           </div>
                           );
                         })}
