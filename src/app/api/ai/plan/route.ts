@@ -47,6 +47,8 @@ export interface RouteLeg {
   why: string;
   /** how you get here from the previous leg (null for the first) */
   travel: { mode: "flight" | "train" | "bus" | "car" | "ferry" | "walk"; note: string } | null;
+  /** real city photo (Google) so the route step sells the stop */
+  photoUrl: string | null;
 }
 
 export interface PlannedPlace {
@@ -147,6 +149,10 @@ interface Prefs {
   interests: string;
   mustSee: string;
   avoid: string;
+  /** arrival gateway — where the trip physically starts */
+  startCity: string;
+  /** departure gateway — where it ends (defaults to startCity) */
+  endCity: string;
 }
 
 function prefsFromBody(body: Record<string, unknown>): Prefs {
@@ -158,6 +164,8 @@ function prefsFromBody(body: Record<string, unknown>): Prefs {
     interests: String(body.interests ?? ""),
     mustSee: String(body.mustSee ?? ""),
     avoid: String(body.avoid ?? ""),
+    startCity: String(body.startCity ?? "").trim(),
+    endCity: String(body.endCity ?? "").trim(),
   };
 }
 
@@ -242,9 +250,18 @@ async function handleRoute(
     prompt:
       `Propose the city route for a ${numDays}-day trip to "${trip.destination}".\n` +
       `${prefsLines(prefs, memberCount)}\n` +
+      (prefs.startCity
+        ? `The trip STARTS in ${prefs.startCity} (arrival gateway) — the first leg must be there or begin from it.\n`
+        : `Assume arrival at the destination's main international gateway; start the route there.\n`) +
+      (prefs.endCity
+        ? `The trip ENDS in ${prefs.endCity} (departure gateway) — the last leg must be there or route back to it.\n`
+        : prefs.startCity
+          ? `Departure is from ${prefs.startCity} too — the route must loop back cheaply (last leg = ${prefs.startCity} or a short hop away; mention the return in its travelNote).\n`
+          : "") +
       `Rules:\n` +
       `- Nights across all legs MUST sum to exactly ${numDays}.\n` +
       `- BALANCE the allocation to each city's actual depth of things to do for this group's style — never dump most nights in one city while starving another unless it truly deserves it; justify in 'why'.\n` +
+      `- 'why' must SELL the stop: its one wow factor + why this many nights (e.g. "قلب طوكيو الحديث — المعابد والأسواق وأفضل طعام في اليابان").\n` +
       `- Contiguous blocks only, geographic order that minimizes backtracking.\n` +
       `- Single-city destination → exactly one leg with all ${numDays} nights.\n` +
       `- travelMode/travelNote: the realistic way to reach each city from the previous one with a rough duration. First leg: travelMode "none", empty note.\n` +
@@ -263,11 +280,12 @@ async function handleRoute(
         l.travelMode && l.travelMode !== "none"
           ? { mode: l.travelMode as NonNullable<RouteLeg["travel"]>["mode"], note: l.travelNote ?? "" }
           : null,
+      photoUrl: null,
     }));
 
   if (legs.length === 0) {
     const fallback = (trip.destination ?? "").split(",")[0].trim();
-    legs = [{ city: fallback, cityLabel: fallback, nights: numDays, why: "", travel: null }];
+    legs = [{ city: fallback, cityLabel: fallback, nights: numDays, why: "", travel: null, photoUrl: null }];
   }
   // Clamp total nights to numDays (trim from the end / pad the last leg).
   let total = legs.reduce((s, l) => s + l.nights, 0);
@@ -284,6 +302,19 @@ async function handleRoute(
   }
   if (total < numDays && legs.length) {
     legs[legs.length - 1].nights += numDays - total;
+  }
+
+  // Real city photos so the route step sells each stop (one cheap
+  // text search per city, capped + best-effort).
+  if (!(await isOverCap())) {
+    const shots = await Promise.allSettled(
+      legs.map((l) => textSearch(l.city, { max: 1, languageCode: locale === "ar" ? "ar" : "en" })),
+    );
+    shots.forEach((s, i) => {
+      if (s.status === "fulfilled" && s.value[0]?.photoRef) {
+        legs[i].photoUrl = photoMediaUrl(s.value[0].photoRef, 640);
+      }
+    });
   }
 
   return NextResponse.json({ legs, numDays });
@@ -336,13 +367,19 @@ async function handleAssemble(
       `Write Google Maps search queries to find real places for ${leg.days.length} day(s) in ${leg.city}.\n` +
       `${prefsLines(prefs, args.memberCount)}\n` +
       (taste ? `${taste}\n` : "") +
-      `Cover: signature sights for this style, food matching the dietary rules, one local-gem query, one relaxing/evening option. ` +
-      `Be SPECIFIC (dish names, neighborhoods, "best X") — vague queries return chains. 5-8 queries, each must include "${leg.city}".`,
+      `Mix (in this order of importance):\n` +
+      `1. TWO queries for the city's world-famous, iconic sights — the places everyone flies there for. Name them explicitly when you know them (e.g. "Senso-ji temple ${leg.city}", "Shibuya crossing ${leg.city}").\n` +
+      `2. Food queries matching the group (dish names, neighborhoods). Dietary rules apply ONLY to food/restaurant queries — NEVER put dietary words in sightseeing queries.\n` +
+      `3. One local-gem query and one relaxing/evening option for this style.\n` +
+      `5-8 queries total, each must include "${leg.city}".`,
   });
 
-  // 2) Real candidates from Google Places.
-  const queries = (intents ?? []).filter(Boolean).slice(0, 8);
-  if (queries.length === 0) return NextResponse.json({ error: "No search intents" }, { status: 502 });
+  // 2) Real candidates from Google Places. Seed a guaranteed iconic
+  // query so a bad intent batch can never produce a plan with no
+  // famous landmarks (the "went to Tokyo, saw no Tokyo" bug).
+  const modelQueries = (intents ?? []).filter(Boolean).slice(0, 7);
+  if (modelQueries.length === 0) return NextResponse.json({ error: "No search intents" }, { status: 502 });
+  const queries = [`top tourist attractions in ${leg.city}`, ...modelQueries];
 
   const settled = await Promise.allSettled(
     queries.map((q) => textSearch(q, { max: 5, languageCode: locale === "ar" ? "ar" : "en" })),
@@ -410,6 +447,7 @@ async function handleAssemble(
       `CATALOG (index| name | category | rating (reviews) | price | address):\n${catalog}\n` +
       `Rules:\n` +
       `- ${PACE_ITEMS[prefs.pace] ?? PACE_ITEMS.balanced}; include lunch AND dinner each day from meal-appropriate candidates.\n` +
+      `- EVERY day must anchor on at least one famous, high-review-count signature sight (the reason people visit ${leg.city}); gems and food are built around those anchors.\n` +
       `- Prefer high ratings with meaningful review counts; a hidden gem (fewer reviews) is welcome when it clearly fits the crew — say so in the note.\n` +
       `- Cluster each day geographically (use the addresses).\n` +
       `- Use 'alt' sparingly: only when two candidates genuinely compete for the same slot and the crew should decide.\n` +

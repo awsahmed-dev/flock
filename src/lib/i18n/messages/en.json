@@ -783,7 +783,12 @@
     "selectAll": "Select all",
     "addSelected": "Add {count} to plan",
     "toastAdded": "Added {count} to the itinerary",
-    "toastVote": "Sent to the Huddle for a vote"
+    "toastVote": "Sent to the Huddle for a vote",
+    "gatewayQuestion": "Where do you land, where do you leave from?",
+    "gatewayHint": "Optional — anchors the route to your real flights.",
+    "startCityPlaceholder": "Arrival city (e.g. Tokyo)",
+    "endCityPlaceholder": "Departure city (same if empty)",
+    "placesCount": "{count} places"
   },
   "auth": {
     "loginTitle": "Welcome back",

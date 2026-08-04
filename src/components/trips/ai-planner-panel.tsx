@@ -30,6 +30,18 @@ import { SidePanel } from "@/components/ui/side-panel";
 import { toast } from "sonner";
 import { addPlannedItems, voteOnPlannedItems, type PlannedActivity } from "@/lib/actions/ai-planner";
 import { useT } from "@/components/i18n/locale-provider";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { DotsSixVertical, CaretDown } from "@phosphor-icons/react/dist/ssr";
 
 interface Props {
   open: boolean;
@@ -45,6 +57,7 @@ interface RouteLeg {
   nights: number;
   why: string;
   travel: { mode: TravelMode; note: string } | null;
+  photoUrl: string | null;
 }
 type TravelMode = "flight" | "train" | "bus" | "car" | "ferry" | "walk";
 
@@ -140,6 +153,117 @@ function toPlanned(it: AssembledItem, dayOffsetMap: Map<number, number>): Planne
   };
 }
 
+/** One draggable route-leg card: city photo banner + wow line + controls. */
+function SortableLeg({
+  id,
+  leg,
+  index,
+  legsCount,
+  t,
+  onBump,
+  onRemove,
+  onTravelMode,
+}: {
+  id: string;
+  leg: RouteLeg;
+  index: number;
+  legsCount: number;
+  t: (k: string, v?: Record<string, string | number>) => string;
+  onBump: (idx: number, delta: number) => void;
+  onRemove: (idx: number) => void;
+  onTravelMode: (idx: number, mode: TravelMode) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={isDragging ? "opacity-80 z-10 relative" : ""}
+    >
+      {/* travel hop chip */}
+      {index > 0 && (
+        <div className="flex items-center gap-2 ps-4 pb-2">
+          <select
+            value={leg.travel?.mode ?? "car"}
+            onChange={(e) => onTravelMode(index, e.target.value as TravelMode)}
+            className="rounded-full border border-border bg-background px-2 py-1 text-[11px] font-semibold"
+            aria-label={t("aiPlan.travelMode")}
+          >
+            {TRAVEL_MODES.map((m) => (
+              <option key={m} value={m}>
+                {t(`aiPlan.travel_${m}`)}
+              </option>
+            ))}
+          </select>
+          {leg.travel?.note ? (
+            <span className="text-[11px] text-muted-foreground truncate">{leg.travel.note}</span>
+          ) : null}
+        </div>
+      )}
+      <div className="rounded-2xl border border-border overflow-hidden bg-card">
+        {leg.photoUrl && (
+          <div className="relative h-20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={leg.photoUrl} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+            <p className="absolute bottom-2 start-3 text-white font-bold text-sm drop-shadow">{leg.cityLabel}</p>
+          </div>
+        )}
+        <div className="p-3.5">
+          <div className="flex items-start gap-2.5">
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              className="shrink-0 mt-0.5 text-muted-foreground touch-none cursor-grab active:cursor-grabbing"
+              aria-label="drag"
+            >
+              <DotsSixVertical className="w-4.5 h-4.5" />
+            </button>
+            <div className="min-w-0 flex-1">
+              {!leg.photoUrl && <p className="text-sm font-bold truncate">{leg.cityLabel}</p>}
+              {leg.why ? (
+                <p className="text-xs text-muted-foreground line-clamp-2">{leg.why}</p>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => onBump(index, -1)}
+                className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
+                aria-label="-1"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-sm font-bold tabular-nums min-w-[4ch] text-center">
+                {t("aiPlan.nights", { count: leg.nights })}
+              </span>
+              <button
+                type="button"
+                onClick={() => onBump(index, 1)}
+                className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
+                aria-label="+1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+              {legsCount > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(index)}
+                  className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive"
+                  aria-label={t("common.delete")}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const router = useRouter();
   const t = useT();
@@ -155,6 +279,8 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const [dietary, setDietary] = useState<string[]>([]);
   const [mustSee, setMustSee] = useState("");
   const [avoid, setAvoid] = useState("");
+  const [startCity, setStartCity] = useState("");
+  const [endCity, setEndCity] = useState("");
 
   // route
   const [legs, setLegs] = useState<RouteLeg[]>([]);
@@ -168,7 +294,36 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const prefsBody = { tripId, travelStyle, interests, pace, dailyBudget, dietary, mustSee, avoid };
+  const prefsBody = {
+    tripId,
+    travelStyle,
+    interests,
+    pace,
+    dailyBudget,
+    dietary,
+    mustSee,
+    avoid,
+    startCity,
+    endCity,
+  };
+
+  // journey step: which day sections are expanded ("legIdx-day")
+  const [openDays, setOpenDays] = useState<Set<string>>(new Set());
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
+  );
+
+  function onLegDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    setLegs((prev) => {
+      const from = prev.findIndex((_, i) => `leg-${i}` === active.id);
+      const to = prev.findIndex((_, i) => `leg-${i}` === over.id);
+      if (from < 0 || to < 0) return prev;
+      return arrayMove(prev, from, to);
+    });
+  }
 
   const usedDays = legs.reduce((s, l) => s + l.nights, 0);
   const daysBalanced = numDays > 0 && usedDays === numDays;
@@ -225,7 +380,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     if (!city) return;
     setLegs((prev) => [
       ...prev,
-      { city, cityLabel: city, nights: 1, why: "", travel: { mode: "car", note: "" } },
+      { city, cityLabel: city, nights: 1, why: "", travel: { mode: "car", note: "" }, photoUrl: null },
     ]);
     setNewCity("");
   }
@@ -255,12 +410,16 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? t("aiPlan.legFailedGeneric"));
         states[i] = { status: "done", summary: data.summary, items: data.items };
-        // pre-select everything from this leg
+        // pre-select everything from this leg, expand its first day
         setSelected((prev) => {
           const next = new Set(prev);
           (data.items as AssembledItem[]).forEach((_, j) => next.add(`${i}-${j}`));
           return next;
         });
+        const firstDay = (data.items as AssembledItem[])
+          .map((it) => it.day)
+          .sort((a, b) => a - b)[0];
+        if (firstDay != null) setOpenDays((prev) => new Set(prev).add(`${i}-${firstDay}`));
       } catch (err) {
         states[i] = {
           status: "error",
@@ -519,6 +678,24 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                 className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
               />
             </div>
+            <div>
+              <p className="text-sm font-semibold mb-1">{t("aiPlan.gatewayQuestion")}</p>
+              <p className="text-xs text-muted-foreground mb-2">{t("aiPlan.gatewayHint")}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={startCity}
+                  onChange={(e) => setStartCity(e.target.value)}
+                  placeholder={t("aiPlan.startCityPlaceholder")}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+                />
+                <input
+                  value={endCity}
+                  onChange={(e) => setEndCity(e.target.value)}
+                  placeholder={t("aiPlan.endCityPlaceholder")}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+                />
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
                 {t("aiPlan.back")}
@@ -554,75 +731,39 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
             </div>
             <p className="text-xs text-muted-foreground -mt-2">{t("aiPlan.routeSubtitle")}</p>
 
-            <div className="space-y-2.5">
-              {legs.map((leg, i) => (
-                <div key={`${leg.city}-${i}`}>
-                  {/* travel hop chip */}
-                  {i > 0 && (
-                    <div className="flex items-center gap-2 ps-4 pb-2">
-                      <select
-                        value={leg.travel?.mode ?? "car"}
-                        onChange={(e) => setTravelModeAt(i, e.target.value as TravelMode)}
-                        className="rounded-full border border-border bg-background px-2 py-1 text-[11px] font-semibold"
-                        aria-label={t("aiPlan.travelMode")}
-                      >
-                        {TRAVEL_MODES.map((m) => (
-                          <option key={m} value={m}>
-                            {t(`aiPlan.travel_${m}`)}
-                          </option>
-                        ))}
-                      </select>
-                      {leg.travel?.note ? (
-                        <span className="text-[11px] text-muted-foreground truncate">
-                          {leg.travel.note}
-                        </span>
-                      ) : null}
-                    </div>
-                  )}
-                  <div className="rounded-xl border border-border p-3.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold truncate">{leg.cityLabel}</p>
-                        {leg.why ? (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{leg.why}</p>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => bumpNights(i, -1)}
-                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
-                          aria-label="-1"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="text-sm font-bold tabular-nums min-w-[3.5ch] text-center">
-                          {t("aiPlan.nights", { count: leg.nights })}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => bumpNights(i, 1)}
-                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
-                          aria-label="+1"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                        {legs.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeLeg(i)}
-                            className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive"
-                            aria-label={t("common.delete")}
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            {/* gateway anchors */}
+            {(startCity || endCity) && (
+              <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground px-1">
+                <span className="inline-flex items-center gap-1">
+                  <AirplaneTilt className="w-3.5 h-3.5" />
+                  {startCity || "—"}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  {endCity || startCity || "—"}
+                  <AirplaneTilt className="w-3.5 h-3.5 -scale-x-100" />
+                </span>
+              </div>
+            )}
+
+            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={onLegDragEnd}>
+              <SortableContext items={legs.map((_, i) => `leg-${i}`)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2.5">
+                  {legs.map((leg, i) => (
+                    <SortableLeg
+                      key={`leg-${i}`}
+                      id={`leg-${i}`}
+                      leg={leg}
+                      index={i}
+                      legsCount={legs.length}
+                      t={t}
+                      onBump={bumpNights}
+                      onRemove={removeLeg}
+                      onTravelMode={setTravelModeAt}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
 
             {/* add a city */}
             <div className="flex gap-2">
@@ -713,12 +854,35 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                       ) : null}
                       {[...byDay.keys()]
                         .sort((a, b) => a - b)
-                        .map((day) => (
-                          <div key={day}>
-                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                              {t("aiPlan.dayLabel", { n: day })}
-                            </p>
-                            <div className="space-y-2">
+                        .map((day) => {
+                          const dayKey = `${i}-${day}`;
+                          const isOpen = openDays.has(dayKey);
+                          return (
+                          <div key={day} className="rounded-xl border border-border/70 overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenDays((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(dayKey)) next.delete(dayKey);
+                                  else next.add(dayKey);
+                                  return next;
+                                })
+                              }
+                              className="w-full flex items-center justify-between px-3 py-2.5 bg-muted/40"
+                            >
+                              <span className="text-[12px] font-bold">
+                                {t("aiPlan.dayLabel", { n: day })}
+                                <span className="text-muted-foreground font-semibold ms-2">
+                                  {t("aiPlan.placesCount", { count: byDay.get(day)!.length })}
+                                </span>
+                              </span>
+                              <CaretDown
+                                className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                            {isOpen && (
+                            <div className="space-y-2 p-2">
                               {byDay.get(day)!.map(({ key, item }) => {
                                 const isSel = selected.has(key);
                                 return (
@@ -801,18 +965,16 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                                           </a>
                                           <button
                                             type="button"
-                                            onClick={() =>
-                                              handleAdd([item], `add-${key}`)
-                                            }
+                                            onClick={() => handleAdd([item], `add-${key}`)}
                                             disabled={busy !== null}
-                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-foreground/70 hover:text-foreground disabled:opacity-50"
+                                            aria-label={t("aiPlan.addOne")}
+                                            className="ms-auto w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:text-foreground hover:border-primary/50 disabled:opacity-50"
                                           >
                                             {busy === `add-${key}` ? (
-                                              <Loader2 className="w-3 h-3 animate-spin" />
+                                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                             ) : (
-                                              <Plus className="w-3 h-3" />
+                                              <Plus className="w-3.5 h-3.5" />
                                             )}
-                                            {t("aiPlan.addOne")}
                                           </button>
                                         </div>
                                       </div>
@@ -851,8 +1013,10 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                                 );
                               })}
                             </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                     </div>
                   )}
                 </section>

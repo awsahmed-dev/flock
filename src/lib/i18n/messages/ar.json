@@ -783,7 +783,12 @@
     "selectAll": "تحديد الكل",
     "addSelected": "أضف {count} إلى الخطة",
     "toastAdded": "أضفنا {count} إلى الخطة",
-    "toastVote": "أرسلناها إلى الهدل للتصويت"
+    "toastVote": "أرسلناها إلى الهدل للتصويت",
+    "gatewayQuestion": "أين تهبطون، ومن أين تغادرون؟",
+    "gatewayHint": "اختياري — يربط خط الرحلة برحلات الطيران الفعلية.",
+    "startCityPlaceholder": "مدينة الوصول (مثلًا طوكيو)",
+    "endCityPlaceholder": "مدينة المغادرة (نفسها إن تُركت فارغة)",
+    "placesCount": "{count} أماكن"
   },
   "auth": {
     "loginTitle": "أهلًا بعودتك",
