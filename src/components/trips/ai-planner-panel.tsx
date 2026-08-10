@@ -37,11 +37,21 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  pointerWithin,
+  useDroppable,
+  type CollisionDetection,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DotsSixVertical, Check } from "@phosphor-icons/react/dist/ssr";
+import { DotsSixVertical, Check, CaretLeft, CaretRight, CaretDown } from "@phosphor-icons/react/dist/ssr";
+import { getDayColor } from "@/lib/day-colors";
 
 interface Props {
   open: boolean;
@@ -83,10 +93,14 @@ interface AssembledItem {
   place: PlannedPlace;
   alt: PlannedPlace | null;
 }
+/** AssembledItem with a stable client id — selection and drag survive reorders. */
+interface UItem extends AssembledItem {
+  uid: string;
+}
 interface LegState {
   status: "pending" | "loading" | "done" | "error";
   summary?: string;
-  items: AssembledItem[];
+  items: UItem[];
   error?: string;
 }
 
@@ -128,6 +142,19 @@ function priceGlyphs(level: number | null): string {
   if (!level || level < 1) return "";
   return "$".repeat(Math.min(level, 4));
 }
+
+/** Chip drops aim with the POINTER (rows are panel-wide, so their rect
+ *  center sits far from the grab point); row-over-row sorting keeps
+ *  closestCenter. Without this, dropping "on D3" could land on the chip
+ *  nearest the row's center instead. */
+const placeCollision: CollisionDetection = (args) => {
+  const chipHit = pointerWithin(args).find((c) => String(c.id).startsWith("daychip-"));
+  if (chipHit) return [chipHit];
+  return closestCenter({
+    ...args,
+    droppableContainers: args.droppableContainers.filter((c) => !String(c.id).startsWith("daychip-")),
+  });
+};
 
 /** AssembledItem → the server-action shape, carrying the grounded place. */
 function toPlanned(it: AssembledItem, dayOffsetMap: Map<number, number>): PlannedActivity {
@@ -267,6 +294,250 @@ function SortableLeg({
   );
 }
 
+/** Step-4 city tab: click to jump, drag sideways to reorder the whole leg. */
+function SortableCityTab({
+  id,
+  label,
+  daysLabel,
+  active,
+  status,
+  onSelect,
+}: {
+  id: string;
+  label: string;
+  daysLabel: string;
+  active: boolean;
+  status: LegState["status"];
+  onSelect: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <button
+      type="button"
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={onSelect}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`touch-manipulation flex-1 min-w-0 rounded-xl border px-2 py-1.5 text-center transition-colors ${
+        isDragging ? "opacity-80 z-10 relative" : ""
+      } ${
+        active
+          ? "border-primary/35 bg-primary/10 text-primary"
+          : "border-border text-muted-foreground hover:border-primary/40"
+      }`}
+    >
+      <span className="block text-xs font-bold truncate">{label}</span>
+      <span className={`block text-[10px] font-semibold ${active ? "text-primary/75" : "text-muted-foreground/70"}`}>
+        {status === "error" ? "!" : daysLabel}
+        {(status === "loading" || status === "pending") && (
+          <Loader2 className="inline w-2.5 h-2.5 ms-1 animate-spin align-[-1px]" />
+        )}
+      </span>
+    </button>
+  );
+}
+
+/** Day chip in the rail: click to view, and a drop target for place rows. */
+function DayRailChip({
+  day,
+  active,
+  disabled,
+  selCount,
+  total,
+  onSelect,
+}: {
+  day: number;
+  active: boolean;
+  disabled: boolean;
+  selCount: number;
+  total: number;
+  onSelect: () => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `daychip-${day}`, disabled });
+  return (
+    <button
+      type="button"
+      ref={(el) => {
+        setNodeRef(el);
+        if (active && el) el.scrollIntoView({ inline: "center", block: "nearest" });
+      }}
+      onClick={onSelect}
+      disabled={disabled}
+      className={`shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border text-xs font-bold transition-colors disabled:opacity-40 ${
+        active
+          ? "bg-primary border-primary text-primary-foreground"
+          : isOver
+            ? "border-primary bg-primary/15 text-foreground"
+            : "border-border bg-card text-muted-foreground"
+      }`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: getDayColor(day - 1) }} aria-hidden />
+      D{day}
+      {total > 0 && (
+        <span
+          className={`text-[10px] font-extrabold ${
+            active ? "text-primary-foreground/60" : selCount === total ? "text-[var(--clr-moss)]" : "text-muted-foreground/70"
+          }`}
+        >
+          {selCount}/{total}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** One compact place row: drag to sort (or onto a day chip), tap to expand. */
+function SortablePlaceRow({
+  item,
+  dayColor,
+  isSel,
+  isOpen,
+  busy,
+  t,
+  onToggleSel,
+  onToggleOpen,
+  onAddOne,
+  onDuel,
+}: {
+  item: UItem;
+  dayColor: string;
+  isSel: boolean;
+  isOpen: boolean;
+  busy: string | null;
+  t: (k: string, v?: Record<string, string | number>) => string;
+  onToggleSel: () => void;
+  onToggleOpen: () => void;
+  onAddOne: () => void;
+  onDuel: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.uid });
+  const compact = (n: number) => new Intl.NumberFormat(undefined, { notation: "compact" }).format(n);
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`rounded-2xl border bg-card overflow-hidden touch-manipulation ${
+        isDragging ? "opacity-80 z-10 relative shadow-lg" : ""
+      } ${isSel ? "border-primary/50" : "border-border"}`}
+    >
+      {/* the whole row is the drag surface (hold on touch, small move on pointer) */}
+      <div {...attributes} {...listeners} className="flex items-center gap-2.5 p-2.5 cursor-pointer" onClick={onToggleOpen}>
+        <span className="shrink-0 -ms-0.5 text-muted-foreground/70 cursor-grab active:cursor-grabbing" aria-hidden>
+          <DotsSixVertical className="w-4 h-4" />
+        </span>
+        <div
+          className="w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+          style={{ background: `color-mix(in srgb, ${dayColor} 16%, var(--muted))` }}
+        >
+          {item.place.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.place.photoUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
+          ) : item.type === "meal" ? (
+            <Utensils className="w-[18px] h-[18px] text-muted-foreground" />
+          ) : (
+            <Ticket className="w-[18px] h-[18px] text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold leading-snug truncate">{item.place.name}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+            {item.startTime && (
+              <span className="inline-flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {item.startTime}
+              </span>
+            )}
+            {item.place.rating != null && (
+              <span className="inline-flex items-center gap-0.5 font-bold text-foreground/80">
+                <Star className="w-3 h-3 text-amber-400" weight="fill" />
+                {item.place.rating.toFixed(1)}
+                {item.place.userRatingsTotal ? (
+                  <span className="font-medium text-muted-foreground">({compact(item.place.userRatingsTotal)})</span>
+                ) : null}
+              </span>
+            )}
+            {priceGlyphs(item.place.priceLevel) && (
+              <span className="font-bold">{priceGlyphs(item.place.priceLevel)}</span>
+            )}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSel();
+          }}
+          aria-label={isSel ? t("common.delete") : t("aiPlan.addOne")}
+          className={`w-[26px] h-[26px] rounded-full flex items-center justify-center shrink-0 transition-colors ${
+            isSel
+              ? "bg-primary text-primary-foreground"
+              : "border-2 border-border text-transparent hover:border-primary/50"
+          }`}
+        >
+          <Check className="w-3.5 h-3.5" weight="bold" />
+        </button>
+        <CaretDown
+          className={`w-3.5 h-3.5 text-muted-foreground/70 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
+      </div>
+
+      {isOpen && (
+        <div className="border-t border-border px-3 py-2.5">
+          {item.note ? <p className="text-xs text-muted-foreground leading-relaxed">{item.note}</p> : null}
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <a
+              href={item.place.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+            >
+              <ArrowSquareOut className="w-3 h-3" />
+              {t("aiPlan.openInGoogle")}
+            </a>
+            {item.alt && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDuel();
+                }}
+                disabled={busy !== null}
+                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-primary/35 bg-primary/[0.04] px-2.5 py-1 text-[11px] text-muted-foreground disabled:opacity-50"
+              >
+                {busy === `duel-${item.uid}` ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+                ) : (
+                  <Vote className="w-3 h-3 text-primary shrink-0" />
+                )}
+                {t("aiPlan.orAlt")} <span className="font-semibold text-foreground">{item.alt.name}</span>
+                <span className="font-bold text-primary">{t("aiPlan.askCrew")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddOne();
+              }}
+              disabled={busy !== null}
+              aria-label={t("aiPlan.addOne")}
+              className="ms-auto w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:text-foreground hover:border-primary/50 disabled:opacity-50"
+            >
+              {busy === `add-${item.uid}` ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
   const router = useRouter();
   const t = useT();
@@ -293,8 +564,10 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
 
   // journey
   const [legStates, setLegStates] = useState<LegState[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set()); // "leg-item"
+  const [selected, setSelected] = useState<Set<string>>(new Set()); // item uids
   const [busy, setBusy] = useState<string | null>(null);
+  const [activeDay, setActiveDay] = useState(1); // absolute trip day in view
+  const [expanded, setExpanded] = useState<Set<string>>(new Set()); // open rows
   const [, startTransition] = useTransition();
 
   const prefsBody = {
@@ -334,6 +607,16 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     let start = 1;
     for (let i = 0; i < legIdx; i++) start += legs[i].nights;
     return Array.from({ length: legs[legIdx].nights }, (_, i) => start + i);
+  }
+
+  /** which leg owns an absolute trip day */
+  function dayToLeg(day: number): number {
+    let start = 1;
+    for (let i = 0; i < legs.length; i++) {
+      if (day < start + legs[i].nights) return i;
+      start += legs[i].nights;
+    }
+    return Math.max(0, legs.length - 1);
   }
 
   /* ── route step ─────────────────────────────────────────────────── */
@@ -392,6 +675,8 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
     if (!daysBalanced) return;
     setStep(4);
     setSelected(new Set());
+    setExpanded(new Set());
+    setActiveDay(1);
     const states: LegState[] = legs.map(() => ({ status: "pending", items: [] }));
     setLegStates([...states]);
 
@@ -415,14 +700,15 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? t("aiPlan.legFailedGeneric"));
-        states[i] = { status: "done", summary: data.summary, items: data.items };
-        // pre-select everything from this leg, expand its first day
+        const items: UItem[] = (data.items as AssembledItem[]).map((it, j) => ({ ...it, uid: `${i}-${j}` }));
+        states[i] = { status: "done", summary: data.summary, items };
+        // pre-select everything from this leg
         setSelected((prev) => {
           const next = new Set(prev);
-          (data.items as AssembledItem[]).forEach((_, j) => next.add(`${i}-${j}`));
+          items.forEach((it) => next.add(it.uid));
           return next;
         });
-        (data.items as AssembledItem[]).forEach((it) => {
+        items.forEach((it) => {
           usedPlaceIds.push(it.place.placeId);
           if (it.alt) usedPlaceIds.push(it.alt.placeId);
         });
@@ -453,10 +739,11 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t("aiPlan.legFailedGeneric"));
-      states[i] = { status: "done", summary: data.summary, items: data.items };
+      const items: UItem[] = (data.items as AssembledItem[]).map((it, j) => ({ ...it, uid: `${i}-${j}` }));
+      states[i] = { status: "done", summary: data.summary, items };
       setSelected((prev) => {
         const next = new Set(prev);
-        (data.items as AssembledItem[]).forEach((_, j) => next.add(`${i}-${j}`));
+        items.forEach((it) => next.add(it.uid));
         return next;
       });
     } catch (err) {
@@ -473,11 +760,18 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
 
   const identityDayMap = new Map<number, number>(); // grounded days are already trip days
 
-  const allEntries: { key: string; item: AssembledItem }[] = legStates.flatMap((ls, i) =>
-    ls.items.map((item, j) => ({ key: `${i}-${j}`, item })),
+  const allEntries: { key: string; item: UItem }[] = legStates.flatMap((ls) =>
+    ls.items.map((item) => ({ key: item.uid, item })),
   );
-  const allSelected = allEntries.length > 0 && allEntries.every((e) => selected.has(e.key));
   const selectedEntries = allEntries.filter((e) => selected.has(e.key));
+
+  // step-4 pager derivations
+  const activeLegIdx = legs.length > 0 ? dayToLeg(activeDay) : 0;
+  const activeLegState: LegState | undefined = legStates[activeLegIdx];
+  const dayItems = activeLegState?.items.filter((it) => it.day === activeDay) ?? [];
+  const allDaysFlat = legs.flatMap((_, i) => legDays(i));
+  const dayPos = allDaysFlat.indexOf(activeDay);
+  const daySelCount = dayItems.filter((it) => selected.has(it.uid)).length;
 
   function toggleKey(key: string) {
     setSelected((prev) => {
@@ -486,6 +780,104 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
       else next.add(key);
       return next;
     });
+  }
+
+  function toggleExpanded(uid: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  }
+
+  /* ── step-4 drag: sort places, move across days, reorder city tabs ── */
+
+  function findItem(uid: string): { legIdx: number; itemIdx: number; item: UItem } | null {
+    for (let i = 0; i < legStates.length; i++) {
+      const j = legStates[i].items.findIndex((it) => it.uid === uid);
+      if (j >= 0) return { legIdx: i, itemIdx: j, item: legStates[i].items[j] };
+    }
+    return null;
+  }
+
+  function onPlaceDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over) return;
+    const uid = String(active.id);
+    const overId = String(over.id);
+    const src = findItem(uid);
+    if (!src) return;
+
+    if (overId.startsWith("daychip-")) {
+      // dropped on a day chip → move the place to that day (possibly another leg)
+      const targetDay = Number(overId.slice("daychip-".length));
+      if (!Number.isFinite(targetDay) || targetDay === src.item.day) return;
+      const targetLeg = dayToLeg(targetDay);
+      setLegStates((prev) => {
+        const next = prev.map((ls) => ({ ...ls, items: [...ls.items] }));
+        const [moved] = next[src.legIdx].items.splice(src.itemIdx, 1);
+        next[targetLeg].items.push({ ...moved, day: targetDay });
+        return next;
+      });
+      return;
+    }
+
+    // dropped on another row → reorder within the visible day
+    if (overId === uid) return;
+    const dst = findItem(overId);
+    if (!dst || dst.legIdx !== src.legIdx || dst.item.day !== src.item.day) return;
+    setLegStates((prev) => {
+      const next = prev.map((ls) => ({ ...ls, items: [...ls.items] }));
+      const items = next[src.legIdx].items;
+      const dayIdxs = items.map((it, k) => (it.day === src.item.day ? k : -1)).filter((k) => k >= 0);
+      const sub = dayIdxs.map((k) => items[k]);
+      const from = sub.findIndex((it) => it.uid === uid);
+      const to = sub.findIndex((it) => it.uid === overId);
+      if (from < 0 || to < 0) return prev;
+      const movedSub = arrayMove(sub, from, to);
+      dayIdxs.forEach((k, z) => {
+        items[k] = movedSub[z];
+      });
+      return next;
+    });
+  }
+
+  function onTabDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = Number(String(active.id).slice("citytab-".length));
+    const to = Number(String(over.id).slice("citytab-".length));
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return;
+    // remember each leg's old first day, then renumber after the move
+    const starts: number[] = [];
+    {
+      let s = 1;
+      legs.forEach((l) => {
+        starts.push(s);
+        s += l.nights;
+      });
+    }
+    const zipped = legs.map((l, i) => ({
+      leg: l,
+      st: legStates[i] ?? ({ status: "pending", items: [] } as LegState),
+      oldStart: starts[i],
+    }));
+    const moved = arrayMove(zipped, from, to);
+    let s = 1;
+    const newLegs: RouteLeg[] = [];
+    const newStates: LegState[] = [];
+    for (const z of moved) {
+      newLegs.push(z.leg);
+      newStates.push({ ...z.st, items: z.st.items.map((it) => ({ ...it, day: s + (it.day - z.oldStart) })) });
+      s += z.leg.nights;
+    }
+    setLegs(newLegs);
+    setLegStates(newStates);
+    // follow the dragged city to its new first day
+    let ns = 1;
+    for (let i = 0; i < to; i++) ns += newLegs[i].nights;
+    setActiveDay(ns);
   }
 
   function handleAdd(items: AssembledItem[], busyKey: string, closeAfter = false) {
@@ -806,241 +1198,193 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
           </div>
         )}
 
-        {/* ─── Step 4: the journey — real places, leg by leg ────── */}
+        {/* ─── Step 4: the journey — day pager (one day at a time) ── */}
         {step === 4 && (
-          <div className="space-y-5 pb-24">
-            {legs.map((leg, i) => {
-              const ls = legStates[i];
-              if (!ls) return null;
-              const byDay = new Map<number, { key: string; item: AssembledItem }[]>();
-              ls.items.forEach((item, j) => {
-                const arr = byDay.get(item.day) ?? [];
-                arr.push({ key: `${i}-${j}`, item });
-                byDay.set(item.day, arr);
-              });
-              return (
-                <section key={`${leg.city}-${i}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-bold">{leg.cityLabel}</p>
-                    {ls.status === "done" && (
-                      <button
-                        type="button"
-                        onClick={() => handleAdd(ls.items, `add-leg-${i}`)}
-                        disabled={busy !== null}
-                        className="ms-auto text-[11px] font-bold text-primary hover:underline disabled:opacity-50"
-                      >
-                        {busy === `add-leg-${i}` ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          t("aiPlan.addLeg")
-                        )}
-                      </button>
-                    )}
+          <div className="space-y-3 pb-24">
+            {/* city tabs — click to jump, drag sideways to reorder the trip */}
+            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={onTabDragEnd}>
+              <SortableContext items={legs.map((_, i) => `citytab-${i}`)} strategy={horizontalListSortingStrategy}>
+                <div className="flex gap-2">
+                  {legs.map((leg, i) => (
+                    <SortableCityTab
+                      key={`citytab-${i}`}
+                      id={`citytab-${i}`}
+                      label={leg.cityLabel}
+                      daysLabel={t("aiPlan.tabDays", { count: leg.nights })}
+                      active={i === activeLegIdx}
+                      status={legStates[i]?.status ?? "pending"}
+                      onSelect={() => setActiveDay(legDays(i)[0])}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+
+            <DndContext sensors={dndSensors} collisionDetection={placeCollision} onDragEnd={onPlaceDragEnd}>
+              {/* day rail — every chip is also a drop target for place rows */}
+              <div className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {legs.map((_, li) =>
+                  legDays(li).map((d) => {
+                    const ls = legStates[li];
+                    const dItems = ls?.items.filter((it) => it.day === d) ?? [];
+                    return (
+                      <DayRailChip
+                        key={d}
+                        day={d}
+                        active={d === activeDay}
+                        disabled={!ls || ls.status !== "done"}
+                        selCount={dItems.filter((it) => selected.has(it.uid)).length}
+                        total={dItems.length}
+                        onSelect={() => setActiveDay(d)}
+                      />
+                    );
+                  }),
+                )}
+              </div>
+
+              {/* day header: prev · Day N — city · next */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveDay(allDaysFlat[dayPos - 1] ?? activeDay)}
+                  disabled={dayPos <= 0}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 shrink-0"
+                  aria-label={t("aiPlan.back")}
+                >
+                  <CaretLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+                </button>
+                <div className="flex-1 text-center min-w-0">
+                  <p className="text-sm font-bold truncate">
+                    {t("aiPlan.dayLabel", { n: activeDay })} · {legs[activeLegIdx]?.cityLabel}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("aiPlan.placesCount", { count: dayItems.length })}
+                    {dayItems[0]?.startTime ? <> · {t("aiPlan.startsAt", { time: dayItems[0].startTime })}</> : null}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveDay(allDaysFlat[dayPos + 1] ?? activeDay)}
+                  disabled={dayPos >= allDaysFlat.length - 1}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 shrink-0"
+                  aria-label={t("aiPlan.next")}
+                >
+                  <CaretRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                </button>
+              </div>
+
+              {/* the day's places */}
+              {!activeLegState || activeLegState.status === "pending" ? (
+                <div className="rounded-xl border border-dashed border-border/70 p-4 opacity-60">
+                  <p className="text-sm text-muted-foreground">{t("aiPlan.queued")}</p>
+                </div>
+              ) : activeLegState.status === "loading" ? (
+                <div className="rounded-xl border border-border p-4 flex items-center gap-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">
+                    {t("aiPlan.planningLeg", { city: legs[activeLegIdx]?.cityLabel ?? "" })}
+                  </p>
+                </div>
+              ) : activeLegState.status === "error" ? (
+                <div className="rounded-xl border border-destructive/40 p-4 space-y-2">
+                  <p className="text-sm text-destructive">{activeLegState.error}</p>
+                  <Button size="sm" variant="outline" onClick={() => retryLeg(activeLegIdx)}>
+                    {t("aiPlan.retry")}
+                  </Button>
+                </div>
+              ) : dayItems.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border/70 p-4">
+                  <p className="text-xs text-muted-foreground text-center">{t("aiPlan.emptyDay")}</p>
+                </div>
+              ) : (
+                <SortableContext items={dayItems.map((it) => it.uid)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {dayItems.map((item) => (
+                      <SortablePlaceRow
+                        key={item.uid}
+                        item={item}
+                        dayColor={getDayColor(activeDay - 1)}
+                        isSel={selected.has(item.uid)}
+                        isOpen={expanded.has(item.uid)}
+                        busy={busy}
+                        t={t}
+                        onToggleSel={() => toggleKey(item.uid)}
+                        onToggleOpen={() => toggleExpanded(item.uid)}
+                        onAddOne={() => handleAdd([item], `add-${item.uid}`)}
+                        onDuel={() => handleDuel(item, `duel-${item.uid}`)}
+                      />
+                    ))}
                   </div>
+                </SortableContext>
+              )}
 
-                  {ls.status === "loading" ? (
-                    <div className="rounded-xl border border-border p-4 flex items-center gap-3">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground">
-                        {t("aiPlan.planningLeg", { city: leg.cityLabel })}
-                      </p>
-                    </div>
-                  ) : ls.status === "pending" ? (
-                    <div className="rounded-xl border border-dashed border-border/70 p-4 opacity-60">
-                      <p className="text-sm text-muted-foreground">{t("aiPlan.queued")}</p>
-                    </div>
-                  ) : ls.status === "error" ? (
-                    <div className="rounded-xl border border-destructive/40 p-4 space-y-2">
-                      <p className="text-sm text-destructive">{ls.error}</p>
-                      <Button size="sm" variant="outline" onClick={() => retryLeg(i)}>
-                        {t("aiPlan.retry")}
-                      </Button>
-                    </div>
+              {activeLegState?.status === "done" && activeLegState.items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => handleAdd(activeLegState.items, `add-leg-${activeLegIdx}`)}
+                  disabled={busy !== null}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-[11px] font-bold text-primary hover:border-primary/50 disabled:opacity-50"
+                >
+                  {busy === `add-leg-${activeLegIdx}` ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <div className="space-y-3">
-                      {ls.summary ? (
-                        <p className="text-xs text-muted-foreground">{ls.summary}</p>
-                      ) : null}
-                      {[...byDay.keys()]
-                        .sort((a, b) => a - b)
-                        .map((day) => {
-                          return (
-                          <div key={day}>
-                            <p className="text-[12px] font-bold mb-2">
-                              {t("aiPlan.dayLabel", { n: day })}
-                              <span className="text-muted-foreground font-semibold ms-2">
-                                {t("aiPlan.placesCount", { count: byDay.get(day)!.length })}
-                              </span>
-                            </p>
-                            {/* swipe sideways through the day's places */}
-                            <div className="flex gap-3 overflow-x-auto snap-x pb-2 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                              {byDay.get(day)!.map(({ key, item }) => {
-                                const isSel = selected.has(key);
-                                const compact = (n: number) =>
-                                  new Intl.NumberFormat(undefined, { notation: "compact" }).format(n);
-                                return (
-                                  <div
-                                    key={key}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => toggleKey(key)}
-                                    onKeyDown={(e) => e.key === "Enter" && toggleKey(key)}
-                                    className={`w-60 shrink-0 snap-start rounded-2xl border bg-card overflow-hidden cursor-pointer transition-all ${
-                                      isSel ? "border-primary ring-1 ring-primary/35" : "border-border"
-                                    }`}
-                                  >
-                                    {/* the photo IS the pitch */}
-                                    <div className="relative h-36 bg-muted">
-                                      {item.place.photoUrl ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img
-                                          src={item.place.photoUrl}
-                                          alt=""
-                                          loading="lazy"
-                                          className="absolute inset-0 w-full h-full object-cover"
-                                        />
-                                      ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                          {item.type === "meal" ? (
-                                            <Utensils className="w-7 h-7 text-muted-foreground" />
-                                          ) : (
-                                            <Ticket className="w-7 h-7 text-muted-foreground" />
-                                          )}
-                                        </div>
-                                      )}
-                                      <span
-                                        className={`absolute top-2 end-2 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                          isSel ? "bg-primary text-white" : "bg-black/40 text-white/85"
-                                        }`}
-                                        aria-hidden
-                                      >
-                                        <Check className="w-3.5 h-3.5" weight="bold" />
-                                      </span>
-                                      {item.place.rating != null && (
-                                        <span className="absolute bottom-2 start-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-sm text-white px-2 py-0.5 text-[11px] font-bold">
-                                          <Star className="w-3 h-3 text-amber-400" weight="fill" />
-                                          {item.place.rating.toFixed(1)}
-                                          {item.place.userRatingsTotal ? (
-                                            <span className="font-medium text-white/75">
-                                              ({compact(item.place.userRatingsTotal)})
-                                            </span>
-                                          ) : null}
-                                        </span>
-                                      )}
-                                      {item.startTime && (
-                                        <span className="absolute bottom-2 end-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-sm text-white px-2 py-0.5 text-[11px] font-bold">
-                                          <Clock className="w-3 h-3" />
-                                          {item.startTime}
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    <div className="p-3">
-                                      <div className="flex items-center gap-1.5">
-                                        <p className="text-sm font-semibold leading-snug line-clamp-1 flex-1">
-                                          {item.place.name}
-                                        </p>
-                                        {priceGlyphs(item.place.priceLevel) && (
-                                          <span className="text-[11px] font-bold text-muted-foreground shrink-0">
-                                            {priceGlyphs(item.place.priceLevel)}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">
-                                        {item.note}
-                                      </p>
-                                      <div className="flex items-center justify-between mt-2.5">
-                                        <a
-                                          href={item.place.mapsUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
-                                        >
-                                          <ArrowSquareOut className="w-3 h-3" />
-                                          {t("aiPlan.openInGoogle")}
-                                        </a>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAdd([item], `add-${key}`);
-                                          }}
-                                          disabled={busy !== null}
-                                          aria-label={t("aiPlan.addOne")}
-                                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:text-foreground hover:border-primary/50 disabled:opacity-50"
-                                        >
-                                          {busy === `add-${key}` ? (
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                          ) : (
-                                            <Plus className="w-3.5 h-3.5" />
-                                          )}
-                                        </button>
-                                      </div>
-
-                                      {item.alt && (
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDuel(item, `duel-${key}`);
-                                          }}
-                                          disabled={busy !== null}
-                                          className="mt-2.5 w-full flex items-center gap-1.5 rounded-lg border border-dashed border-primary/35 bg-primary/[0.04] px-2.5 py-1.5 text-start disabled:opacity-50"
-                                        >
-                                          {busy === `duel-${key}` ? (
-                                            <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
-                                          ) : (
-                                            <Vote className="w-3 h-3 text-primary shrink-0" />
-                                          )}
-                                          <span className="text-[11px] text-muted-foreground truncate">
-                                            {t("aiPlan.orAlt")}{" "}
-                                            <span className="font-semibold text-foreground">{item.alt.name}</span>
-                                          </span>
-                                          <span className="ms-auto text-[11px] font-bold text-primary shrink-0">
-                                            {t("aiPlan.askCrew")}
-                                          </span>
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                          );
-                        })}
-                    </div>
+                    <>
+                      <Plus className="w-3 h-3" />
+                      {t("aiPlan.addLeg")}
+                    </>
                   )}
-                </section>
-              );
-            })}
+                </button>
+              )}
+            </DndContext>
 
             {/* sticky bulk bar */}
             {allEntries.length > 0 && (
               <div className="fixed bottom-0 inset-x-0 sm:absolute border-t border-border bg-background/95 backdrop-blur p-3 flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setSelected(allSelected ? new Set() : new Set(allEntries.map((e) => e.key)))
-                  }
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    const allDaySel = dayItems.length > 0 && dayItems.every((it) => selected.has(it.uid));
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      dayItems.forEach((it) => {
+                        if (allDaySel) next.delete(it.uid);
+                        else next.add(it.uid);
+                      });
+                      return next;
+                    });
+                  }}
+                  disabled={dayItems.length === 0}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-40"
                 >
-                  {allSelected ? (
+                  {dayItems.length > 0 && dayItems.every((it) => selected.has(it.uid)) ? (
                     <CheckSquare className="w-4 h-4 text-primary" weight="fill" />
                   ) : (
                     <Square className="w-4 h-4" />
                   )}
-                  {t("aiPlan.selectAll")}
+                  {t("aiPlan.dayLabel", { n: activeDay })} ({daySelCount}/{dayItems.length})
                 </button>
                 <Button
                   size="sm"
-                  className="ms-auto"
-                  disabled={selectedEntries.length === 0 || busy !== null}
+                  variant="outline"
+                  className="ms-auto border-primary/35 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                  disabled={daySelCount === 0 || busy !== null}
                   onClick={() =>
-                    handleAdd(selectedEntries.map((e) => e.item), "add-bulk", true)
+                    handleAdd(
+                      dayItems.filter((it) => selected.has(it.uid)),
+                      `add-day-${activeDay}`,
+                    )
                   }
+                >
+                  {busy === `add-day-${activeDay}` ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    t("aiPlan.addDay", { count: daySelCount })
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={selectedEntries.length === 0 || busy !== null}
+                  onClick={() => handleAdd(selectedEntries.map((e) => e.item), "add-bulk", true)}
                 >
                   {busy === "add-bulk" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

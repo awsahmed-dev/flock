@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { motion } from "motion/react";
+import { motion, useAnimationControls, useDragControls } from "motion/react";
 import { parseISO, isToday } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { Plus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDo
 import { useRouter } from "next/navigation";
 import dynamicImport from "next/dynamic";
 import {
-  DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor,
+  DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, TouchSensor,
   useSensor, useSensors, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
@@ -181,12 +181,49 @@ export function ItineraryBoard({
   // to ~55vh by default which made the map feel like a sub-feature).
   // User taps the sheet handle to expand.
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Real follow-the-finger sheet drag: the sheet travels the measured
+  // distance between fully-open (y=0) and collapsed (only the 3.75rem
+  // control strip peeking). The old version pinned constraints to 0/0,
+  // so dragging only rubber-banded ~10% and read as "click-only".
+  const sheetEl = useRef<HTMLDivElement | null>(null);
+  const [sheetTravel, setSheetTravel] = useState(0);
+  const sheetTravelRef = useRef(0);
+  const sheetAnim = useAnimationControls();
+  const sheetDrag = useDragControls();
+  // a real drag must not double-fire the handle's onClick fallback on release
+  const sheetJustDragged = useRef(false);
+  const toggleSheet = () => {
+    if (sheetJustDragged.current) return;
+    setSheetOpen((o) => !o);
+  };
+  useEffect(() => {
+    const el = sheetEl.current;
+    if (!el) return;
+    const measure = () => {
+      const v = Math.max(0, el.offsetHeight - 60); // 60px = 3.75rem strip
+      sheetTravelRef.current = v;
+      setSheetTravel(v);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  useEffect(() => {
+    if (sheetTravel <= 0) return;
+    sheetAnim.start({
+      y: sheetOpen ? 0 : sheetTravel,
+      transition: { type: "spring", damping: 28, stiffness: 280 },
+    });
+  }, [sheetOpen, sheetTravel, sheetAnim]);
   const [, startTransition] = useTransition();
 
   const localCurrency = inferLocalCurrency(destination);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // touch: a short hold before drag so the grip doesn't fight list scroll
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -592,17 +629,36 @@ export function ItineraryBoard({
           to collapse. Click still works as a fallback for fat-finger
           users / non-touch devices. */}
       <motion.div
+        ref={sheetEl}
         className="absolute left-0 right-0 bottom-0 z-20 lg:hidden"
-        animate={{ y: sheetOpen ? 0 : "calc(100% - 3.75rem)" }}
-        transition={{ type: "spring", damping: 28, stiffness: 280 }}
+        initial={{ y: "calc(100% - 3.75rem)" }}
+        animate={sheetAnim}
         drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0.1, bottom: 0.1 }}
+        dragListener={false}
+        dragControls={sheetDrag}
+        dragConstraints={{ top: 0, bottom: sheetTravel }}
+        dragElastic={{ top: 0.05, bottom: 0.05 }}
+        dragMomentum={false}
+        onDragStart={() => {
+          sheetJustDragged.current = true;
+        }}
         onDragEnd={(_, info) => {
-          // > 50px down OR a fast downward flick → collapse
-          if (info.offset.y > 50 || info.velocity.y > 500) setSheetOpen(false);
-          // > 50px up OR a fast upward flick → expand
-          else if (info.offset.y < -50 || info.velocity.y < -500) setSheetOpen(true);
+          setTimeout(() => {
+            sheetJustDragged.current = false;
+          }, 120);
+          // decide by how far/fast the finger travelled from the snap it left
+          const next = sheetOpen
+            ? !(info.offset.y > 40 || info.velocity.y > 400)
+            : info.offset.y < -40 || info.velocity.y < -400;
+          if (next === sheetOpen) {
+            // threshold not crossed — spring back to the current snap
+            sheetAnim.start({
+              y: sheetOpen ? 0 : sheetTravelRef.current,
+              transition: { type: "spring", damping: 28, stiffness: 280 },
+            });
+          } else {
+            setSheetOpen(next);
+          }
         }}
       >
         {/* Design-review Page 8: the sheet token (--sheet-bg @ 92% + blur 10),
@@ -620,7 +676,8 @@ export function ItineraryBoard({
               top; tapping it still toggles the sheet. */}
           <button
             type="button"
-            onClick={() => setSheetOpen((o) => !o)}
+            onClick={toggleSheet}
+            onPointerDown={(e) => sheetDrag.start(e)}
             className="w-full pt-2.5 pb-1.5 flex justify-center cursor-grab active:cursor-grabbing touch-none"
             aria-label={sheetOpen ? "Collapse" : "Expand"}
           >
@@ -673,8 +730,9 @@ export function ItineraryBoard({
               offering AI Plan or manual Add. */}
           <button
             type="button"
-            onClick={() => setSheetOpen((o) => !o)}
-            className="w-full px-4 pb-3 flex items-center justify-between gap-3 text-left hover:bg-accent/20 transition-colors"
+            onClick={toggleSheet}
+            onPointerDown={(e) => sheetDrag.start(e)}
+            className="w-full px-4 pb-3 flex items-center justify-between gap-3 text-left hover:bg-accent/20 transition-colors touch-none"
           >
             <div className="min-w-0">
               <p className="font-extrabold text-base truncate">

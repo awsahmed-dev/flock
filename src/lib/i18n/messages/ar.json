@@ -789,7 +789,11 @@
     "startCityPlaceholder": "مدينة الوصول (مثلًا طوكيو)",
     "endCityPlaceholder": "مدينة المغادرة (نفسها إن تُركت فارغة)",
     "placesCount": "{count} أماكن",
-    "queued": "في الانتظار…"
+    "queued": "في الانتظار…",
+    "tabDays": "{count} أيام",
+    "startsAt": "يبدأ {time}",
+    "emptyDay": "لا شيء في هذا اليوم بعد — اسحب مكانًا إلى شريحة اليوم لنقله هنا.",
+    "addDay": "أضِف اليوم ({count})"
   },
   "auth": {
     "loginTitle": "أهلًا بعودتك",

@@ -789,7 +789,11 @@
     "startCityPlaceholder": "Arrival city (e.g. Tokyo)",
     "endCityPlaceholder": "Departure city (same if empty)",
     "placesCount": "{count} places",
-    "queued": "Queued…"
+    "queued": "Queued…",
+    "tabDays": "{count} days",
+    "startsAt": "starts {time}",
+    "emptyDay": "Nothing on this day yet — drag a place onto this day's chip to move it here.",
+    "addDay": "Add day ({count})"
   },
   "auth": {
     "loginTitle": "Welcome back",
