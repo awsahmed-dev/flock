@@ -4,6 +4,15 @@ import Link from "next/link";
 import { useT } from "@/components/i18n/locale-provider";
 import { useState } from "react";
 import { Users, MapPin, Wallet, Package, CalendarDots as CalendarDays, Check, CaretRight as ChevronRight, CaretDown as ChevronDown } from "@phosphor-icons/react/dist/ssr";
+import { tripReadiness, type ReadinessStepId } from "@/lib/trip-readiness";
+
+const STEP_ICON: Record<ReadinessStepId, typeof Users> = {
+  dates: CalendarDays,
+  crew: Users,
+  stops: MapPin,
+  budget: Wallet,
+  pack: Package,
+};
 
 /**
  * Phase 6 §3-B(3): the Trip Prep checklist.
@@ -37,16 +46,19 @@ export function TripPrepChecklist({
   collapsedOnly?: boolean;
 }) {
   const t = useT();
-  const packingPercent = packTotal > 0 ? Math.round((packedCount / packTotal) * 100) : 0;
-  const steps = [
-    { id: "dates", label: t("cockpit.stepDates"), done: hasDates, href: `${base}/settings`, icon: CalendarDays },
-    { id: "crew", label: t("cockpit.stepCrew"), done: crewCount > 1, href: `${base}/members`, icon: Users },
-    { id: "stops", label: t("cockpit.stepStops"), done: stopsCount >= 1, href: `${base}/itinerary`, icon: MapPin },
-    { id: "budget", label: t("cockpit.stepBudget"), done: hasBudget, href: `${base}/settings`, icon: Wallet },
-    // §3-B: completes at ≥50% packed — never on mere item existence.
-    { id: "pack", label: t("cockpit.stepPack"), done: packingPercent >= 50, href: `${base}/pack`, icon: Package },
-  ];
-  const completed = steps.filter((s) => s.done).length;
+  // Steps come from lib/trip-readiness — the same call that produces the
+  // PLANNING bar's percentage, so DEPARTURE's ring and PLANNING's bar can
+  // never disagree about what "done" means.
+  const shared = tripReadiness({ hasDates, crewCount, stopsCount, hasBudget, packedCount, packTotal });
+  const packingPercent = shared.packingPercent;
+  const steps = shared.steps.map((s) => ({
+    id: s.id,
+    label: t(s.labelKey),
+    done: s.done,
+    href: `${base}${s.path}`,
+    icon: STEP_ICON[s.id],
+  }));
+  const completed = shared.doneCount;
   const allDone = completed === steps.length;
   const unchecked = steps.filter((s) => !s.done);
   const visible = unchecked.slice(0, 2);

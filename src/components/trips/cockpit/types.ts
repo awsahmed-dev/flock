@@ -45,7 +45,6 @@ export interface CockpitShared {
   crew: CockpitCrew[];
   packing: { packed: number; total: number };
   spent: number;
-  readiness: number;
   ticker: { text: string; eventType: string } | null;
   teaser: TeaserPlace[];
   /** Sprint 5: documents replaced booking anchors on every cockpit. */
