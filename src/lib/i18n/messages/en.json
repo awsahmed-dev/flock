@@ -557,6 +557,8 @@
     "addWhatYouDid": "Add what you actually did…",
     "addStopTo": "Add a stop to {day}…",
     "nothingPlannedYet": "Nothing planned yet.",
+    "emptyDayBody": "Nothing here yet. Add somewhere you want to go — you can move it to another day later.",
+    "browseIdeas": "Browse ideas in {destination}",
     "loadingMap": "Loading map…"
   },
   "discover": {
@@ -1142,6 +1144,10 @@
     "dur2Weeks": "2 Weeks",
     "dur1Month": "1 Month",
     "durCustom": "Custom",
+    "chooseDates": "Choose exact dates",
+    "needDestination": "Add a destination to continue.",
+    "needDates": "Pick your dates to continue.",
+    "needName": "Give your trip a name to continue.",
     "nameLabel": "Trip name",
     "namePlaceholder": "Name your trip",
     "crewTitle": "Who is coming?",
@@ -1299,6 +1305,7 @@
     "metricStart": "Start →",
     "metricNotSet": "Not set",
     "metricPeople": "{count, plural, one {1 person} other {# people}}",
+    "metricJustYou": "Just you",
     "metricItems": "{packed}/{total} items",
     "metricCreate": "Create →",
     "departure": "Departure",

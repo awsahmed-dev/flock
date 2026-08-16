@@ -557,6 +557,8 @@
     "addWhatYouDid": "أضف ما فعلتموه فعلًا…",
     "addStopTo": "أضف محطة إلى {day}…",
     "nothingPlannedYet": "لا شيء مخطط بعد.",
+    "emptyDayBody": "لا يوجد شيء هنا بعد. أضف مكانًا تودّ زيارته — يمكنك نقله إلى يوم آخر لاحقًا.",
+    "browseIdeas": "تصفّح أفكارًا في {destination}",
     "loadingMap": "جارٍ تحميل الخريطة…"
   },
   "discover": {
@@ -1142,6 +1144,10 @@
     "dur2Weeks": "أسبوعان",
     "dur1Month": "شهر",
     "durCustom": "مخصص",
+    "chooseDates": "اختر التواريخ بالضبط",
+    "needDestination": "أضف وجهة للمتابعة.",
+    "needDates": "اختر تواريخك للمتابعة.",
+    "needName": "سمِّ رحلتك للمتابعة.",
     "nameLabel": "اسم الرحلة",
     "namePlaceholder": "سمِّ رحلتك",
     "crewTitle": "من سيأتي معك؟",
@@ -1299,6 +1305,7 @@
     "metricStart": "ابدأ ←",
     "metricNotSet": "غير محددة",
     "metricPeople": "{count, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخص}}",
+    "metricJustYou": "أنت فقط",
     "metricItems": "{packed}/{total} عناصر",
     "metricCreate": "أنشئ ←",
     "departure": "المغادرة",
