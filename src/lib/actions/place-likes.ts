@@ -23,6 +23,13 @@ export async function togglePlaceLike(
   const user = await getCurrentUser();
   if (!user) throw new Error("Not signed in");
 
+  // AUTHZ: tripId used to be taken on faith. Trip UUIDs live in URLs, so any
+  // signed-in user could write likes — and, via the Huddle side effects below,
+  // inject a suggestion card and Pulse rows — into a stranger's trip.
+  const { getTripWithMembership } = await import("@/lib/actions/trips");
+  const likeTrip = await getTripWithMembership(tripId, user.id);
+  if (!likeTrip) throw new Error("Trip not found or access denied");
+
   const where = and(
     eq(placeLikes.tripId, tripId),
     eq(placeLikes.placeId, placeId),

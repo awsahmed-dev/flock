@@ -6,6 +6,16 @@ import tsconfigPaths from "vite-tsconfig-paths";
 // match app imports. Node environment — these are pure functions, no DOM.
 export default defineConfig({
   plugins: [tsconfigPaths()],
+  // Server actions import `server-only`, `next/cache` and `next/headers`,
+  // none of which resolve outside a Next runtime — which is why nothing in
+  // src/lib/actions had a test before. These aliases are test-only.
+  resolve: {
+    alias: [
+      { find: /^server-only$/, replacement: new URL("./src/test-support/server-only.ts", import.meta.url).pathname },
+      { find: /^next\/cache$/, replacement: new URL("./src/test-support/next-cache.ts", import.meta.url).pathname },
+      { find: /^next\/headers$/, replacement: new URL("./src/test-support/next-headers.ts", import.meta.url).pathname },
+    ],
+  },
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],

@@ -214,8 +214,11 @@ export async function deleteMessage(formData: FormData) {
 
   const { user, trip } = await getAuthedMember(tripId);
 
+  // AUTHZ: scoped to the authorized trip. Unscoped, the owner check below was
+  // evaluated against whatever trip the client named, and the body/metadata
+  // null-out below is irreversible.
   const message = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
   });
   if (!message) throw new Error("Message not found");
 
@@ -227,7 +230,7 @@ export async function deleteMessage(formData: FormData) {
   await db
     .update(chatMessages)
     .set({ deletedAt: new Date(), body: null, metadata: null })
-    .where(eq(chatMessages.id, messageId));
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/chat`);
 }

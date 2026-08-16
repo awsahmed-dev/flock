@@ -23,6 +23,14 @@ export async function recordInteraction(input: {
 }): Promise<{ interactionCount: number }> {
   const user = await getCurrentUser();
   if (!user) throw new Error("Not signed in");
+  // AUTHZ: input.tripId was unverified — any signed-in user could write
+  // interaction rows against any trip id.
+  {
+    const { getTripWithMembership } = await import("@/lib/actions/trips");
+    if (!(await getTripWithMembership(input.tripId, user.id))) {
+      throw new Error("Trip not found or access denied");
+    }
+  }
 
   await db.insert(placeInteractions).values({
     userId: user.id,

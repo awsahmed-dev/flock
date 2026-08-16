@@ -238,6 +238,14 @@ export async function votePoll(decisionId: string, tripId: string, optionId: str
 /** §4-A timeout sweep: expire open decisions past expires_at ("Filed under
  *  maybe"). Called on Huddle page load — cheap and idempotent. */
 export async function expireStaleDecisions(tripId: string) {
+  // AUTHZ: this had no getCurrentUser() at all — an exported "use server"
+  // function that mutated huddle_decisions for any trip id, unauthenticated.
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not signed in");
+  const { getTripWithMembership } = await import("@/lib/actions/trips");
+  if (!(await getTripWithMembership(tripId, user.id))) {
+    throw new Error("Trip not found or access denied");
+  }
   await db
     .update(huddleDecisions)
     .set({ status: "expired", outcome: "passed", resolvedAt: new Date() })
