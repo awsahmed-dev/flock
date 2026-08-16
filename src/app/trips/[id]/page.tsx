@@ -174,17 +174,13 @@ export default async function TripPage({ params }: Props) {
       }
     : null;
 
-  // §6.5 readiness: locked-days 40% · budget 10% · packing 20% · crew 10% ·
-  // documents 20% (Sprint 5: docs replaced booking anchors as the
-  // "confirmations are in" signal).
-  const daysWithLocked = new Set(rows.filter((r) => r.status === "confirmed").map((r) => r.dayDate)).size;
-  const readiness = Math.round(
-    (days.length ? (daysWithLocked / days.length) * 40 : 0) +
-      (trip.budgetTotal != null && trip.budgetTotal > 0 ? 10 : 0) +
-      (packing.total > 0 ? Math.min(1, packing.packed / Math.max(1, packing.total)) * 20 : 0) +
-      (crew.length >= 2 ? 10 : 0) +
-      (tripDocs.length > 0 ? 20 : 0),
-  );
+  // Readiness is deliberately NOT computed here any more. It used to be a
+  // weighted score (locked days 40% · budget 10% · packing 20% · crew 10% ·
+  // docs 20%) with no relationship to the 5-step checklist rendered directly
+  // beneath it — so a brand-new trip read "Trip 0% ready" above "1 done ✓".
+  // The bar and the checklist now both derive from lib/trip-readiness.ts,
+  // from the same facts in the same call. No component takes a percentage as
+  // a prop any more, so the two cannot drift apart again.
 
   // Phase 7 §5: open decisions drive the ONE primary action card.
   const [{ count: huddleOpen }] = await db
@@ -206,7 +202,6 @@ export default async function TripPage({ params }: Props) {
     crew,
     packing,
     spent,
-    readiness,
     ticker,
     teaser,
     documents: tripDocs,

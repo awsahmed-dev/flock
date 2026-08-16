@@ -18,13 +18,28 @@ import type { CockpitShared } from "./types";
  * hero (220px) + ONE primary action (64px) + the readiness bar. Everything
  * else — day pills, crew, teaser, metrics — lives below the fold, metrics
  * LAST (they're reference, not actions).
+ *
+ * First-run pass: the screen now actually obeys the "ONE primary action"
+ * rule above. It used to offer ELEVEN controls that all resolved to
+ * /itinerary (the primary CTA, a "Plan days" row, N day chips, the PLANNED
+ * metric cell, and the nav's left circle) out of 23 total — measured at
+ * 390x844 on a brand-new trip. Removed here: the "Plan days" row and the
+ * PLANNED cell, both pure duplicates of the CTA; and the day rail while the
+ * trip has zero stops, where it is N identical links to nothing.
+ *
+ * Added: an explicit "Invite your crew" second action. Paxawa is a group
+ * app, but on a fresh solo trip CrewPulse returns null (crew < 2) and the
+ * only route to invites was a metric cell or a collapsed checklist row — so
+ * the one thing that makes this app different was invisible at exactly the
+ * moment it mattered most. It is suppressed when the primary action is
+ * already the invite, so the two can never say the same thing.
  */
 export function PlanningCockpit(props: CockpitShared) {
   const t = useT();
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl,
     currency, budgetTotal, days, items, crew, packing,
-    readiness, ticker, teaser, huddleOpen, documents,
+    ticker, teaser, huddleOpen, documents,
   } = props;
   const base = `/trips/${tripId}`;
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
@@ -38,25 +53,30 @@ export function PlanningCockpit(props: CockpitShared) {
   const primary = (() => {
     if (huddleOpen > 0)
       return {
+        key: "votes",
         icon: Vote,
         label: t("cockpit.votesWaiting", { count: huddleOpen }),
         href: `${base}/huddle`,
       };
     if (items.length === 0)
-      return { icon: MapPin, label: t("cockpit.firstStops"), href: `${base}/itinerary` };
+      return { key: "stops", icon: MapPin, label: t("cockpit.firstStops"), href: `${base}/itinerary` };
     if (crew.length < 2)
-      return { icon: Users, label: t("cockpit.inviteCrew"), href: `${base}/members` };
+      return { key: "crew", icon: Users, label: t("cockpit.inviteCrew"), href: `${base}/members` };
     if (budgetTotal == null || budgetTotal <= 0)
-      return { icon: Wallet, label: t("cockpit.setBudget"), href: `${base}/settings` };
+      return { key: "budget", icon: Wallet, label: t("cockpit.setBudget"), href: `${base}/settings` };
     if (packingPercent < 50)
       return {
+        key: "pack",
         icon: Package,
         label: packing.total === 0 ? t("cockpit.startPacking") : t("cockpit.keepPacking", { percent: packingPercent }),
         href: `${base}/pack`,
       };
-    return { icon: MapPin, label: t("cockpit.keepShaping"), href: `${base}/itinerary` };
+    return { key: "shape", icon: MapPin, label: t("cockpit.keepShaping"), href: `${base}/itinerary` };
   })();
   const PrimaryIcon = primary.icon;
+  // The second real first move in a group app. Never shown when the primary
+  // action already IS the invite — one job, one control.
+  const showInvite = crew.length < 2 && primary.key !== "crew";
 
   return (
     <main className="bg-background text-foreground min-h-svh">
@@ -100,10 +120,22 @@ export function PlanningCockpit(props: CockpitShared) {
           <ChevronRight size={20} className="shrink-0 rtl:rotate-180" />
         </Link>
 
+        {/* 2b. THE SECOND MOVE — get your people in. Outlined, not filled:
+            clearly secondary to the one primary action above it. */}
+        {showInvite && (
+          <Link
+            href={`${base}/members`}
+            className="flex items-center gap-3 h-[52px] px-4 rounded-2xl border-[1.5px] border-primary text-foreground active:scale-[0.99] transition-transform"
+          >
+            <Users size={20} className="shrink-0 text-primary" />
+            <span className="flex-1 min-w-0 text-[15px] font-bold truncate">{t("cockpit.inviteCrew")}</span>
+            <ChevronRight size={18} className="shrink-0 text-muted-foreground rtl:rotate-180" />
+          </Link>
+        )}
+
         {/* 3. READINESS BAR — one line; the checklist hides behind the tap. */}
         <ReadinessChecklist
           base={base}
-          readiness={readiness}
           hasDates={!!startDate}
           crewCount={crew.length}
           stopsCount={items.length}
@@ -114,8 +146,12 @@ export function PlanningCockpit(props: CockpitShared) {
 
         {/* ── Below the fold ─────────────────────────────────────────── */}
 
-        {/* 4. DAY PILLS RAIL. */}
-        <DayPillRail tripId={tripId} days={days} stopCountByDay={stopCountByDay} />
+        {/* 4. DAY PILLS RAIL — only once there is something to see. On an
+            empty trip these were N identical links to the same empty page,
+            and the "Plan days" row above them was a third copy of the CTA. */}
+        {items.length > 0 && (
+          <DayPillRail tripId={tripId} days={days} stopCountByDay={stopCountByDay} />
+        )}
 
         {/* 5. THE CREW. */}
         {/* Sprint 9 FIX-4: readiness no longer passed — the checklist bar
@@ -205,6 +241,7 @@ export function PlanningCockpit(props: CockpitShared) {
         {/* 7. METRICS — LAST: reference data, not primary actions. */}
         <MetricGrid
           tripId={tripId}
+          showPlanned={false}
           placesCount={items.length}
           budgetTotal={budgetTotal}
           currency={currency}
