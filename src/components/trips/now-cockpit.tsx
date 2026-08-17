@@ -75,6 +75,7 @@ export function NowCockpit({
   teaser = [],
   anchors = [],
   documents = [],
+  todayIso,
 }: {
   tripId: string;
   tripName: string;
@@ -89,13 +90,19 @@ export function NowCockpit({
   /** Sprint 4 FIX-5b: day-pinned documents — a boarding pass surfaces on
    *  the day it's needed, not four taps deep in Pack. */
   documents?: { id: string; title: string; type: string; url: string; dayDate: string | null }[];
+  /** fix/tz: today in the traveller's zone, resolved once on the server. */
+  todayIso: string;
 }) {
   const t = useT();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const { resolvedTheme } = useTheme();
 
-  const todayIso = useMemo(() => isoFmt(new Date(), "yyyy-MM-dd"), []);
+  // fix/tz: supplied by the server in the traveller's zone. Computing it here
+  // meant the cockpit picked a different default day than the nav did, and the
+  // UP NEXT card / Navigate + Done buttons / day-progress line all failed to
+  // render whenever the server insisted the trip was live and the client
+  // disagreed.
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? todayIso;
   const [selectedDay, setSelectedDay] = useState(defaultDay);
   const [detent, setDetent] = useState<Detent>("peek");

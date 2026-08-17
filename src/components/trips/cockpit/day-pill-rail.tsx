@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useT } from "@/components/i18n/locale-provider";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
-import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 import { ChipRail } from "@/components/ui/chip-rail";
@@ -20,14 +19,16 @@ export function DayPillRail({
   tripId,
   days,
   stopCountByDay,
+  todayIso,
 }: {
   tripId: string;
   days: string[];
   stopCountByDay: Record<string, number>;
+  /** fix/tz: from the server, in the traveller's zone — not `new Date()`. */
+  todayIso: string;
 }) {
   const t = useT();
   const base = `/trips/${tripId}`;
-  const todayIso = isoFmt(new Date(), "yyyy-MM-dd");
 
   return (
     <section>

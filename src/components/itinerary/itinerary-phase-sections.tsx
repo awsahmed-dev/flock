@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, Camera, Plus, Image as ImageIcon, CircleNotch as Loader2, Package } from "@phosphor-icons/react/dist/ssr";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { differenceInCalendarDays } from "date-fns";
+import { diffDaysIso, toIsoDay } from "@/lib/today";
 import { setStopCompleted, updateItemStatus } from "@/lib/actions/itinerary";
 import { togglePackingItem } from "@/lib/actions/packing";
 import { addTripPhoto } from "@/lib/actions/photos";
@@ -152,18 +152,23 @@ export function DepartureStrip({
   startDate,
   packItems,
   t,
+  todayIso,
 }: {
   tripId: string;
   startDate: string;
   packItems: { id: string; label: string; category: string; packed: boolean }[];
   t: T;
+  /** fix/tz: today in the traveller's zone, from the server. */
+  todayIso: string;
 }) {
   const [, startTransition] = useTransition();
   // Optimistic overrides — the server round-trip shouldn't gate the tick.
   const [localPacked, setLocalPacked] = useState<Record<string, boolean>>({});
   const packed = (p: { id: string; packed: boolean }) => localPacked[p.id] ?? p.packed;
   const left = packItems.filter((p) => !packed(p)).length;
-  const daysOut = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
+  // fix/tz: a calendar-day countdown. Computed from `new Date()` this ticked
+  // down visibly on hydration every night for any traveller east of UTC.
+  const daysOut = Math.max(0, diffDaysIso(todayIso, toIsoDay(startDate)));
   const show = [...packItems].sort((a, b) => Number(packed(a)) - Number(packed(b))).slice(0, 6);
 
   function toggle(id: string) {

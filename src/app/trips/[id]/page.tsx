@@ -204,6 +204,7 @@ export default async function TripPage({ params }: Props) {
     .where(and(eq(huddleDecisions.tripId, id), eq(huddleDecisions.status, "open")));
 
   const shared = {
+    todayIso,
     tripId: id,
     name: trip.name,
     destination: trip.destination,
@@ -335,6 +336,7 @@ export default async function TripPage({ params }: Props) {
       endDate={trip.endDate}
       teaser={teaser}
       documents={tripDocs.filter((d) => d.dayDate != null)}
+      todayIso={todayIso}
     />
     </>
   );

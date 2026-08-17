@@ -158,6 +158,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       startDate={trip.startDate}
       packItems={packList}
       photoCountByItem={photoCountByItem}
+      todayIso={todayIso}
     />
   );
 }

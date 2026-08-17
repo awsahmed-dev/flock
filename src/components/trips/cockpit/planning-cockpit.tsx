@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
+import { diffDaysIso, toIsoDay } from "@/lib/today";
 import { Star, CaretRight as ChevronRight, CheckSquareOffset as Vote, MapPin, Users, Wallet, Package } from "@phosphor-icons/react/dist/ssr";
 import { ReadinessChecklist } from "./readiness-checklist";
 import { CrewPulse } from "./crew-pulse";
@@ -24,10 +24,13 @@ export function PlanningCockpit(props: CockpitShared) {
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl,
     currency, budgetTotal, days, items, crew, packing,
-    readiness, ticker, teaser, huddleOpen, documents,
+    readiness, ticker, teaser, huddleOpen, documents, todayIso,
   } = props;
   const base = `/trips/${tripId}`;
-  const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
+  // fix/tz: "15 days to go" was computed from `new Date()` inside a client
+  // component, so the server (UTC) and the traveller disagreed for hours every
+  // night and the number visibly ticked down on hydration.
+  const daysUntil = Math.max(0, diffDaysIso(todayIso, toIsoDay(startDate)));
   const dateLabel = `${dfFormat(parseDateOnly(startDate), "d MMM")} – ${dfFormat(parseDateOnly(endDate), "d MMM yyyy")}`;
 
   const stopCountByDay: Record<string, number> = {};
@@ -115,7 +118,7 @@ export function PlanningCockpit(props: CockpitShared) {
         {/* ── Below the fold ─────────────────────────────────────────── */}
 
         {/* 4. DAY PILLS RAIL. */}
-        <DayPillRail tripId={tripId} days={days} stopCountByDay={stopCountByDay} />
+        <DayPillRail tripId={tripId} days={days} stopCountByDay={stopCountByDay} todayIso={todayIso} />
 
         {/* 5. THE CREW. */}
         {/* Sprint 9 FIX-4: readiness no longer passed — the checklist bar
