@@ -10,7 +10,10 @@ import { createCameraExpense } from "@/lib/actions/expenses";
 export interface PocketDayStatus {
   date: string; // day cached (ISO)
   stops: number;
-  updatedAt: string;
+  updatedAt: string; // real instant, for display
+  /** fix/tz: the traveller's calendar day the warm ran on. Optional so a
+   *  status written by a previous build still parses. */
+  warmedOn?: string;
 }
 
 const STATUS_KEY = "paxawa-pocket-day";
@@ -41,13 +44,21 @@ export function pocketDayEnabled(): boolean {
  * sheet row. Also owns the reconnect flush of the offline outbox.
  */
 export function PocketDay({
-  tripId, startDate, endDate, days, stops,
+  tripId, startDate, endDate, days, stops, todayIso,
 }: {
   tripId: string;
   startDate: string;
   endDate: string;
   days: string[];
   stops: { dayDate: string; photoUrl: string | null }[];
+  /**
+   * fix/tz: today, as the SERVER resolved it in the traveller's zone. This
+   * component used to derive it from `new Date().toISOString()` — the UTC
+   * calendar day — so for every traveller east of Greenwich between midnight
+   * and their UTC offset, Pocket Day pre-cached the WRONG day for offline use.
+   * A Kuala Lumpur traveller opening the app at 01:00 warmed yesterday.
+   */
+  todayIso: string;
 }) {
   // Reconnect → flush the outbox (§10-B).
   useEffect(() => {
@@ -95,11 +106,10 @@ export function PocketDay({
   // Nightly pre-cache (§10-A fallback path).
   useEffect(() => {
     if (!navigator.onLine || !pocketDayEnabled()) return;
-    const phase = tripPhase({ startDate, endDate });
+    const phase = tripPhase({ startDate, endDate }, todayIso);
     if (phase !== "LIVE" && phase !== "DEPARTURE") return;
 
     const now = new Date();
-    const todayIso = now.toISOString().slice(0, 10);
     // Target: tomorrow during LIVE (or T-1 evening); day 1 during DEPARTURE.
     const idx = days.indexOf(todayIso);
     const target = phase === "LIVE" && idx >= 0 && idx < days.length - 1 ? days[idx + 1] : days[0];
@@ -109,7 +119,10 @@ export function PocketDay({
     const evening = now.getHours() >= 21;
     const stale = !status || status.date !== target;
     if (!stale && !evening) return;
-    if (status?.date === target && status.updatedAt.slice(0, 10) === todayIso) return;
+    // `warmedOn` is the traveller's calendar day; `updatedAt` stays a real
+    // instant for display. Comparing the UTC slice of an instant against a
+    // local calendar day made this guard miss every night east of Greenwich.
+    if (status?.date === target && status.warmedOn === todayIso) return;
 
     const targetStops = stops.filter((s) => s.dayDate === target);
     const warm = async () => {
@@ -125,7 +138,12 @@ export function PocketDay({
         );
         localStorage.setItem(
           STATUS_KEY,
-          JSON.stringify({ date: target, stops: targetStops.length, updatedAt: new Date().toISOString() } satisfies PocketDayStatus),
+          JSON.stringify({
+            date: target,
+            stops: targetStops.length,
+            updatedAt: new Date().toISOString(),
+            warmedOn: todayIso,
+          } satisfies PocketDayStatus),
         );
       } catch {
         /* partial cache is fine — never surface an error for a warmer */
@@ -133,7 +151,7 @@ export function PocketDay({
     };
     const id = window.setTimeout(warm, 4000); // after first paint settles
     return () => window.clearTimeout(id);
-  }, [tripId, startDate, endDate, days, stops, refreshTick]);
+  }, [tripId, startDate, endDate, days, stops, refreshTick, todayIso]);
 
   return null;
 }

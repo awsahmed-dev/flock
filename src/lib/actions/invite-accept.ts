@@ -131,6 +131,9 @@ async function notifyJoined(
     if (!profile?.email) continue;
     const rendered = await renderInviteAccepted({
       recipientName: m.displayName || profile.displayName || "there",
+      // fix/tz (T-2): memberId identifies the JOINER, so the key was constant
+      // across this loop and only the first crew member heard about the join.
+      recipientUserId: m.userId,
       joinerName,
       tripName: trip.name,
       destination: trip.destination,

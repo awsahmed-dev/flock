@@ -22,10 +22,10 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
-    // DB-backed suites (authz.test.ts) need a real Postgres + Supabase env
+    // DB-backed suites (authz.test.ts, email-fanout.test.ts) need a real Postgres + Supabase env
     // and are wired to THROW rather than skip when it's missing. Keep them
     // out of the default `npm test` so the unit gate stays honest, and run
     // them deliberately via `npm run test:authz` (which sets the env).
-    exclude: process.env.RUN_DB_TESTS ? ["**/node_modules/**"] : ["**/node_modules/**", "src/lib/__tests__/authz.test.ts"],
+    exclude: process.env.RUN_DB_TESTS ? ["**/node_modules/**"] : ["**/node_modules/**", "src/lib/__tests__/authz.test.ts", "src/lib/__tests__/email-fanout.test.ts"],
   },
 });

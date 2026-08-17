@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { motion, useAnimationControls, useDragControls } from "motion/react";
-import { parseISO, isToday } from "date-fns";
+import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
 import { Plus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDown, ArrowSquareOut as ExternalLink, MagnifyingGlass as Search, Compass, Bed, Airplane as Plane, Car, ForkKnife as Utensils, Ticket, Question as HelpCircle, Trash as Trash2, Pencil, DotsSixVertical as GripVertical, MapPin, Clock, Note as StickyNote, Wallet, FileText, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
@@ -73,6 +73,18 @@ interface Props {
   startDate?: string | null;
   packItems?: { id: string; label: string; category: string; packed: boolean }[];
   photoCountByItem?: Record<string, number>;
+  /**
+   * fix/tz: today in the traveller's zone, from the server.
+   *
+   * NOTE what this does and does not fix. `day === todayIso` was NOT an
+   * off-by-one: date-fns v4 parses a bare "YYYY-MM-DD" as LOCAL midnight, so on
+   * the client it was already correct — verified by execution. What it WAS doing
+   * is computing "today" during a render the server also performs, so the
+   * highlighted day and the default focused day flipped on hydration whenever
+   * the server's UTC day differed from the traveller's. Using the threaded value
+   * removes the flip; it does not change which day is correct.
+   */
+  todayIso: string;
 }
 
 const DAY_PALETTE = [
@@ -131,6 +143,7 @@ export function ItineraryBoard({
   startDate = null,
   packItems = [],
   photoCountByItem = {},
+  todayIso,
 }: Props) {
   const t = useT();
   const { locale } = useLocale();
@@ -170,9 +183,9 @@ export function ItineraryBoard({
   const [focusedDay, setFocusedDay] = useState<string | null>(() => {
     if (initialDay && days.includes(initialDay)) return initialDay;
     // Design-audit Page 7: during the trip, Today is the default day.
-    // Page 8 fix: LOCAL time via isToday, not toISOString() (UTC) — the
-    // cockpit and this sheet must agree on what "today" is.
-    const localToday = days.find((d) => isToday(parseISO(d)));
+    // Page 8 fix: the cockpit and this sheet must agree on what "today" is.
+    // fix/tz: they now agree because both are handed the same string.
+    const localToday = days.find((d) => d === todayIso);
     if (localToday) return localToday;
     return days[0] ?? null;
   });
@@ -486,7 +499,7 @@ export function ItineraryBoard({
               const dayItems = getItemsForDay(day);
               const dayIdx = days.indexOf(day);
               const palette = DAY_PALETTE[dayIdx % DAY_PALETTE.length];
-              const today = isToday(parseISO(day));
+              const today = day === todayIso;
               const showDayHeader = focusedDay == null;
               return (
                 <div key={day} className="mb-6">
@@ -717,7 +730,7 @@ export function ItineraryBoard({
                 /* §6-A: real calendar date, not "D1" — "Thu 18". Page 8:
                    during LIVE the current day reads "Today". */
                 label={
-                  phase === "LIVE" && isToday(parseISO(day))
+                  phase === "LIVE" && day === todayIso
                     ? t("nav.today")
                     : format(parseISO(day), "EEE d")
                 }
@@ -757,7 +770,7 @@ export function ItineraryBoard({
             {/* Sprint 8 Item 6: DEPARTURE — countdown + pack-today sit once
                 above the day list; day-pinned docs render per-day below. */}
             {phase === "DEPARTURE" && startDate && (
-              <DepartureStrip tripId={tripId} startDate={startDate} packItems={packItems} t={t} />
+              <DepartureStrip tripId={tripId} startDate={startDate} packItems={packItems} t={t} todayIso={todayIso} />
             )}
             <DndContext
               sensors={sensors}
@@ -769,7 +782,7 @@ export function ItineraryBoard({
                 const dayItems = getItemsForDay(day);
                 const dayIdx = days.indexOf(day);
                 const palette = DAY_PALETTE[dayIdx % DAY_PALETTE.length];
-                const today = isToday(parseISO(day));
+                const today = day === todayIso;
                 // B25-r2: when only one day is in view the sheet's pinned
                 // header already shows "Day N · day-of-week, date · X
                 // items" — repeating the same info as a richer card here

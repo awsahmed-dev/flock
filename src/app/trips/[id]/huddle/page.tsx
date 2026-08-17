@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { huddleDecisions, activities, packingItems , documents } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
+import { getToday } from "@/lib/today-server";
 import { expireStaleDecisions } from "@/lib/actions/huddle";
 import { HuddleBoard } from "@/components/huddle/huddle-board";
 
@@ -56,7 +57,8 @@ export default async function HuddlePage({ params, searchParams }: Props) {
     .from(packingItems)
     .where(eq(packingItems.tripId, id));
   const packing = { packed: packRows.filter((r) => r.packed).length, total: packRows.length };
-  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate });
+  const todayIso = await getToday();
+  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate }, todayIso);
 
   const crew = trip.members.map((m) => ({
     userId: m.userId,

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { format as isoFmt } from "date-fns";
 import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, Camera, MagnifyingGlass as Search, House, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
 import type { Icon as LucideIcon } from "@phosphor-icons/react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -91,6 +90,7 @@ export function DynamicBottomNav({
   endDate,
   currency = "USD",
   budgetTotal = null,
+  todayIso,
 }: {
   tripId: string;
   destination?: string;
@@ -99,12 +99,20 @@ export function DynamicBottomNav({
   endDate: string;
   currency?: string;
   budgetTotal?: number | null;
+  /**
+   * fix/tz: today, from the server, in the traveller's zone. This component
+   * recomputed the phase with `new Date()` — so a Los Angeles traveller at
+   * 18:00 got server HTML reading "Today · Nearby · Money" and a hydrated nav
+   * reading "Now · Pack · Discover": different labels, different icons and
+   * different hrefs, silently, every evening.
+   */
+  todayIso: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useT();
   const base = `/trips/${tripId}`;
-  const phase: TripPhase = tripPhase({ startDate, endDate });
+  const phase: TripPhase = tripPhase({ startDate, endDate }, todayIso);
 
   const [plusOpen, setPlusOpen] = useState(false);
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
@@ -160,7 +168,6 @@ export function DynamicBottomNav({
     return "";
   })();
 
-  const todayIso = isoFmt(new Date(), "yyyy-MM-dd");
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? "";
 
   // [+] behavior: single tap = phase default; long-press 400ms = full sheet.

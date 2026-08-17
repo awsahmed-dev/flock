@@ -9,6 +9,7 @@ import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { getLocale, getDictionary, isRtl } from "@/lib/i18n";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { TimeZoneSync } from "@/components/pwa/timezone-sync";
 import { setActiveLocale } from "@/lib/i18n/date-fns";
 
 const inter = Inter({
@@ -175,6 +176,9 @@ export default async function RootLayout({
           <Providers>
             {children}
             <NavigationTracker />
+            {/* fix/tz: reports the traveller's IANA zone to the server via a
+                cookie so `getToday()` stops answering in UTC. Renders nothing. */}
+            <TimeZoneSync />
             <PushNotificationInit />
             <OfflineBanner />
             <RegisterSW />

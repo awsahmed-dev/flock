@@ -18,6 +18,8 @@ import { AccountAvatarButton } from "@/components/account/account-avatar-button"
 import { NewTripTrigger } from "@/components/trips/new-trip-trigger";
 import { ColdStartRedirect } from "@/components/dashboard/cold-start-redirect";
 import { tripPhase } from "@/lib/trip-phase";
+import { getToday } from "@/lib/today-server";
+import { diffDaysIso, toIsoDay } from "@/lib/today";
 import type { InferSelectModel } from "drizzle-orm";
 import type { trips as tripsTable } from "@/lib/db/schema";
 
@@ -78,18 +80,32 @@ export default async function DashboardPage() {
     .orderBy(trips.startDate);
 
   const allTrips: Trip[] = userTrips.map((r) => r.trip);
-  const now = new Date();
+  // fix/tz: resolved once, in the traveller's zone, and passed to every
+  // phase decision on this page.
+  const todayIso = await getToday();
 
   // §1-F: separate the trip list into the three zones.
-  const ongoing = allTrips.filter(
-    (t) => parseDateOnly(t.startDate) <= now && parseDateOnly(t.endDate) >= now,
-  );
+  //
+  // fix/tz: these used to compare `parseDateOnly(endDate)` — LOCAL MIDNIGHT on
+  // the end date — against `new Date()`, an instant. So from 00:00:01 on the
+  // final day of a trip, `parseDateOnly(endDate) < now` was already true and
+  // the trip was filed under PAST, while `tripPhase()` on this very same page
+  // still said LIVE and handed it the cold-start hero. The dashboard called one
+  // trip both "past" and "live" for the whole of its last day, in every
+  // timezone — verified by execution, not a boundary-window edge case.
+  //
+  // Comparing calendar day to calendar day makes the three buckets exhaustive,
+  // mutually exclusive and inclusive at both ends — and makes "ongoing" mean
+  // exactly what tripPhase calls LIVE by construction rather than by luck.
+  const startOf = (t: Trip) => toIsoDay(t.startDate);
+  const endOf = (t: Trip) => toIsoDay(t.endDate);
+  const ongoing = allTrips.filter((t) => startOf(t) <= todayIso && endOf(t) >= todayIso);
   const future = allTrips
-    .filter((t) => parseDateOnly(t.startDate) > now)
-    .sort((a, b) => parseDateOnly(a.startDate).getTime() - parseDateOnly(b.startDate).getTime());
+    .filter((t) => startOf(t) > todayIso)
+    .sort((a, b) => startOf(a).localeCompare(startOf(b)));
   const pastTrips = allTrips
-    .filter((t) => parseDateOnly(t.endDate) < now)
-    .sort((a, b) => parseDateOnly(b.endDate).getTime() - parseDateOnly(a.endDate).getTime());
+    .filter((t) => endOf(t) < todayIso)
+    .sort((a, b) => endOf(b).localeCompare(endOf(a)));
 
   const activeTrip = ongoing[0] ?? null;
   // Any extra ongoing trip (rare) rides in the Coming Up rail so it isn't lost.
@@ -100,7 +116,6 @@ export default async function DashboardPage() {
   const statTripIds = [activeTrip, ...upcomingTrips, pastTrips[0]]
     .filter(Boolean)
     .map((t) => (t as Trip).id);
-  const todayIso = format(now, "yyyy-MM-dd");
   const itinByTrip = new Map<string, { total: number; today: number }>();
   if (statTripIds.length) {
     const rows = await db
@@ -149,7 +164,10 @@ export default async function DashboardPage() {
     const start = parseDateOnly(activeTrip.startDate);
     const end = parseDateOnly(activeTrip.endDate);
     const totalDays = differenceInCalendarDays(end, start) + 1;
-    const currentDayIndex = Math.max(0, Math.min(totalDays - 1, differenceInCalendarDays(now, start)));
+    const currentDayIndex = Math.max(
+      0,
+      Math.min(totalDays - 1, diffDaysIso(toIsoDay(activeTrip.startDate), todayIso)),
+    );
     activeStats = {
       memberCount: memberRows.length,
       spent,
@@ -176,7 +194,8 @@ export default async function DashboardPage() {
   const empty = allTrips.length === 0;
 
   // Phase 6 §2.2: cold-start — a LIVE trip owns the app open.
-  const liveTrip = allTrips.find((t) => tripPhase(t) === "LIVE") ?? null;
+  // fix/tz: the phase follows the viewer's calendar, not the server's.
+  const liveTrip = allTrips.find((t) => tripPhase(t, todayIso) === "LIVE") ?? null;
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -188,7 +207,7 @@ export default async function DashboardPage() {
             <Logo variant="full" size="sm" />
           </Link>
           <p className="type-caption text-tertiary mt-3 uppercase tracking-wider">
-            {format(now, "EEEE, d MMMM")}
+            {format(parseDateOnly(todayIso), "EEEE, d MMMM")}
           </p>
           <h1 className="text-[26px] font-bold leading-tight mt-0.5 truncate">
             {t(`greeting.${timeOfDay}`, { name: firstName })}
@@ -218,7 +237,7 @@ export default async function DashboardPage() {
               owns the top of the dashboard when nothing is live. */}
           {!activeTrip &&
             pastTrips[0] &&
-            differenceInCalendarDays(now, parseDateOnly(pastTrips[0].endDate)) <= 14 && (
+            diffDaysIso(toIsoDay(pastTrips[0].endDate), todayIso) <= 14 && (
               <section>
                 <div className="relative mx-4 rounded-3xl overflow-hidden" style={{ height: 180 }}>
                   <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(pastTrips[0].id)}`} />
@@ -298,7 +317,7 @@ export default async function DashboardPage() {
               <SectionLabel label={t("dashboard.comingUp")} />
               <div className="flex gap-3 overflow-x-auto scrollbar-none px-4 pb-1">
                 {upcomingTrips.map((trip) => {
-                  const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(trip.startDate), now));
+                  const daysUntil = Math.max(0, diffDaysIso(todayIso, toIsoDay(trip.startDate)));
                   const stops = itinByTrip.get(trip.id)?.total ?? 0;
                   const totalDays = differenceInCalendarDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
                   const progress = Math.min(100, (stops / Math.max(1, totalDays * 3)) * 100);

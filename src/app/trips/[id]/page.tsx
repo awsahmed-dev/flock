@@ -19,6 +19,7 @@ import { totalInCurrency, totalInCurrencyBy } from "@/lib/money-total";
 import { convert as convertOrNull } from "@/lib/fx";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 import { tripPhase } from "@/lib/trip-phase";
+import { getToday } from "@/lib/today-server";
 import { NowCockpit, type NowItem } from "@/components/trips/now-cockpit";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { PlanningCockpit } from "@/components/trips/cockpit/planning-cockpit";
@@ -47,7 +48,11 @@ export default async function TripPage({ params }: Props) {
   const trip = await getTripWithMembership(id, user.id);
   if (!trip) redirect("/dashboard");
 
-  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate });
+  // fix/tz: one "today" for this whole render, resolved in the traveller's
+  // zone. Threaded into every client component below so the server HTML and
+  // the hydrated render cannot disagree about what day it is.
+  const todayIso = await getToday();
+  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate }, todayIso);
 
   // Keep the hero photo warm for every phase's hero.
   ensureTripHeroImage({
@@ -199,6 +204,7 @@ export default async function TripPage({ params }: Props) {
     .where(and(eq(huddleDecisions.tripId, id), eq(huddleDecisions.status, "open")));
 
   const shared = {
+    todayIso,
     tripId: id,
     name: trip.name,
     destination: trip.destination,
@@ -238,6 +244,7 @@ export default async function TripPage({ params }: Props) {
           endDate={trip.endDate}
           days={days}
           stops={items.map((i) => ({ dayDate: i.dayDate, photoUrl: i.photoUrl ?? null }))}
+          todayIso={todayIso}
         />
         <DepartureCockpit {...shared} t={t} />
       </>
@@ -311,6 +318,7 @@ export default async function TripPage({ params }: Props) {
       endDate={trip.endDate}
       days={days}
       stops={items.map((i) => ({ dayDate: i.dayDate, photoUrl: i.photoUrl ?? null }))}
+      todayIso={todayIso}
     />
     <NowCockpit
       tripId={id}
@@ -328,6 +336,7 @@ export default async function TripPage({ params }: Props) {
       endDate={trip.endDate}
       teaser={teaser}
       documents={tripDocs.filter((d) => d.dayDate != null)}
+      todayIso={todayIso}
     />
     </>
   );

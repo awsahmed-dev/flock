@@ -13,7 +13,10 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:authz": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/authz.test.ts"
+    "test:authz": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/authz.test.ts",
+    "test:tz": "for tz in UTC America/Los_Angeles Asia/Kuala_Lumpur Asia/Riyadh Pacific/Kiritimati; do echo \"--- TZ=$tz ---\"; TZ=$tz vitest run src/lib/__tests__/tz.test.ts || exit 1; done",
+    "tz:repro": "for tz in UTC America/Los_Angeles Asia/Kuala_Lumpur; do TZ=$tz node scripts/tz-repro.mjs; done",
+    "test:db": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/email-fanout.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",

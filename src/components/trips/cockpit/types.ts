@@ -32,6 +32,12 @@ export interface TeaserPlace {
 
 /** Props shared by all four phase cockpits (assembled by the trip page). */
 export interface CockpitShared {
+  /**
+   * fix/tz: today ("YYYY-MM-DD") as the server resolved it in the traveller's
+   * zone. Every cockpit is a client component rendered from a server page, so
+   * anything that computes "today" itself flips on hydration.
+   */
+  todayIso: string;
   tripId: string;
   name: string;
   destination: string;

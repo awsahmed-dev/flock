@@ -158,6 +158,10 @@ async function notifyVoteOpened(
     if (!profile?.email) continue;
     const rendered = await renderVoteOpened({
       recipientName: m.displayName || "there",
+      // fix/tz (T-2): without this the key was `vote_opened:<voteId>` for every
+      // member, so on a 4-person trip only ONE crew member was emailed and the
+      // per-recipient locale work below was dead effort.
+      recipientUserId: m.userId,
       authorName: authorRow?.displayName ?? "Someone in the crew",
       tripName: tripRow.name,
       question,

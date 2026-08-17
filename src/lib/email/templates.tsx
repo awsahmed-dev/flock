@@ -14,6 +14,7 @@ import {
 } from "@react-email/components";
 import { render } from "@react-email/render";
 import { getDictionary, tFromDict, type Locale } from "@/lib/i18n";
+import { emailIdempotencyKey } from "@/lib/email/idempotency";
 
 // B15-f: locale-aware HTML/text rendering. Callers pass each recipient's
 // preferred language (`profiles.locale`) and the templates pick copy
@@ -134,6 +135,21 @@ function PrimaryButton({ href, label }: { href: string; label: string }) {
 
 interface VoteOpenedProps {
   recipientName: string;
+  /**
+   * fix/tz (T-2): the RECIPIENT's user id, and the reason this field exists.
+   *
+   * Resend's contract is: same idempotencyKey within 24h -> the second send is
+   * silently dropped and the call still returns ok. These keys were built from
+   * the SUBJECT of the notification (the vote, the expense, the joining member)
+   * while the caller loops over every crew member, so the key was constant
+   * across the loop and only the FIRST recipient was ever emailed. Everyone
+   * else got nothing, and `sendEmail` reported success.
+   *
+   * The key must therefore identify (event, recipient). trips.ts:147 already
+   * got this right -- `trip-invite:${trip.id}:${email}` -- and is the pattern
+   * these now follow.
+   */
+  recipientUserId: string;
   authorName: string;
   tripName: string;
   question: string;
@@ -199,7 +215,7 @@ export async function renderVoteOpened(p: VoteOpenedProps) {
     subject: t("email.voteOpenedSubject", { actor: p.authorName, trip: p.tripName }),
     html,
     text,
-    idempotencyKey: `vote_opened:${p.voteId}`,
+    idempotencyKey: emailIdempotencyKey({ kind: "vote_opened", voteId: p.voteId }, p.recipientUserId),
   };
 }
 
@@ -209,6 +225,8 @@ export async function renderVoteOpened(p: VoteOpenedProps) {
 
 interface ExpenseLoggedProps {
   recipientName: string;
+  /** fix/tz (T-2): see VoteOpenedProps.recipientUserId. */
+  recipientUserId: string;
   payerName: string;
   tripName: string;
   title: string;
@@ -265,7 +283,10 @@ export async function renderExpenseLogged(p: ExpenseLoggedProps) {
     subject: t("email.expenseLoggedSubject", { actor: p.payerName, title: p.title }),
     html,
     text,
-    idempotencyKey: `expense_logged:${p.expenseId}:${p.recipientName}`,
+    // Was keyed on recipientName -- a DISPLAY NAME. Two debtors both called
+    // "Mom" collided, and any two members missing both tripMembers.displayName
+    // and profiles.displayName both fell back to "there" and collided too.
+    idempotencyKey: emailIdempotencyKey({ kind: "expense_logged", expenseId: p.expenseId }, p.recipientUserId),
   };
 }
 
@@ -275,6 +296,8 @@ export async function renderExpenseLogged(p: ExpenseLoggedProps) {
 
 interface InviteAcceptedProps {
   recipientName: string;
+  /** fix/tz (T-2): see VoteOpenedProps.recipientUserId. */
+  recipientUserId: string;
   joinerName: string;
   tripName: string;
   destination: string;
@@ -318,6 +341,7 @@ export async function renderInviteAccepted(p: InviteAcceptedProps) {
     subject: t("email.inviteAcceptedSubject", { actor: p.joinerName, trip: p.tripName }),
     html,
     text,
-    idempotencyKey: `invite_accepted:${p.memberId}`,
+    // memberId is the JOINER, so this was constant across the recipient loop.
+    idempotencyKey: emailIdempotencyKey({ kind: "invite_accepted", memberId: p.memberId }, p.recipientUserId),
   };
 }

@@ -7,6 +7,7 @@ import { CaretLeft as ChevronLeft, ChatCircle as MessageCircle } from "@phosphor
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
+import { toIsoDay } from "@/lib/today";
 import { eachDayOfInterval, format as isoFmt } from "date-fns";
 import { DynamicBottomNav } from "@/components/navigation/dynamic-bottom-nav";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
@@ -31,6 +32,13 @@ interface Props {
   isOwner: boolean;
   /** Phase 7 §4: crew for the header avatar stack + Crew sheet. */
   crew?: CrewMember[];
+  /**
+   * fix/tz: today ("YYYY-MM-DD") as the server resolved it in the traveller's
+   * zone. The shell and the nav must not compute this themselves — the nav
+   * derives its tab set, its labels, its icons AND its hrefs from the phase, so
+   * a client that disagrees with the server swaps all four on hydration.
+   */
+  todayIso: string;
   children: React.ReactNode;
 }
 
@@ -46,7 +54,7 @@ interface Props {
  * right = avatar → account menu. Titles are left-aligned; no centered titles,
  * no hamburger, no drawer.
  */
-export function TripShell({ trip, isOwner, crew = [], children }: Props) {
+export function TripShell({ trip, isOwner, crew = [], todayIso, children }: Props) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -132,7 +140,13 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
   // Immersive screens have no shell top bar and fill the viewport: Discover
   // (Screen D) and the NOW cockpit (Screen C, the trip root — full-screen map
   // + its own draggable sheet). They carry their own controls.
-  const started = parseDateOnly(trip.startDate) <= new Date();
+  // fix/tz: a calendar-day comparison rather than local-midnight-vs-instant.
+  // HONEST NOTE: this value currently has no consumers — it was already dead on
+  // main (eslint flags it as unused there too). Converted for consistency so it
+  // is not a landmine if someone wires it up, NOT because it fixes a live bug.
+  // Left in place rather than deleted, per the "don't remove apparently-dead
+  // code" rule in AGENTS.md.
+  const started = toIsoDay(trip.startDate) <= todayIso;
   // Day list for the nav's "Add place to today" sub-sheet (Fix 5).
   const navDays = eachDayOfInterval({
     start: parseDateOnly(trip.startDate),
@@ -252,6 +266,7 @@ export function TripShell({ trip, isOwner, crew = [], children }: Props) {
           endDate={trip.endDate}
           currency={trip.currency}
           budgetTotal={trip.budgetTotal}
+          todayIso={todayIso}
         />
       </div>
     </div>
