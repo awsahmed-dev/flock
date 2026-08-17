@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { TZ_COOKIE, isTimeZone } from "@/lib/today";
 
@@ -38,10 +38,30 @@ import { TZ_COOKIE, isTimeZone } from "@/lib/today";
  * behind it, and it is listed in `docs/timezone-model.md` rather than smuggled
  * in here.
  */
+/**
+ * Read a cookie value that MIGHT be percent-encoded by an older deploy.
+ * decodeURIComponent throws on a malformed sequence, so it is guarded.
+ */
+function decodeCookie(raw: string | undefined): string | undefined {
+  if (raw == null) return undefined;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export function TimeZoneSync() {
   const router = useRouter();
 
+  // Refresh at most once per mount, no matter what. A belt to the braces below:
+  // if the cookie comparison ever fails again for a reason I have not thought
+  // of, the cost is one wasted refresh, not an unbounded loop.
+  const refreshed = useRef(false);
+
   useEffect(() => {
+    if (refreshed.current) return;
+
     let zone: string | undefined;
     try {
       zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -50,15 +70,38 @@ export function TimeZoneSync() {
     }
     if (!isTimeZone(zone)) return;
 
-    const current = document.cookie
+    const raw = document.cookie
       .split("; ")
       .find((row) => row.startsWith(`${TZ_COOKIE}=`))
       ?.slice(TZ_COOKIE.length + 1);
 
+    // Decode before comparing. THE BUG THIS FIXES, and it was severe:
+    //
+    // This used to write `encodeURIComponent(zone)` and compare the RAW cookie
+    // value against the un-encoded zone. Every IANA zone except "UTC" contains a
+    // "/", so the stored value was "Asia%2FRiyadh" and the comparison against
+    // "Asia/Riyadh" could never be true. Two consequences, both shipped:
+    //
+    //   1. router.refresh() fired on every mount, forever — an unbounded
+    //      refresh loop on every page for every non-UTC user.
+    //   2. the server read "Asia%2FRiyadh", `isTimeZone()` rejected "%" as an
+    //      illegal character, and getTimeZone() fell back to UTC — so the whole
+    //      of fix/tz did nothing at all in production.
+    //
+    // It passed every test because the unit tests never touch this seam and
+    // every render capture set the cookie RAW through Playwright's cookie API,
+    // bypassing this component entirely.
+    const current = decodeCookie(raw);
     if (current === zone) return;
 
+    // Write it RAW. IANA zone names are letters, digits, "/", "_", "-" and "+",
+    // all of which are legal cookie-octets (RFC 6265 excludes ";", ",",
+    // whitespace, quotes and backslash — none of which appear in a zone name).
+    // Encoding bought nothing and cost correctness.
     // 1 year, path "/", lax — mirrors the locale cookie.
-    document.cookie = `${TZ_COOKIE}=${encodeURIComponent(zone)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    document.cookie = `${TZ_COOKIE}=${zone}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+
+    refreshed.current = true;
 
     // Re-render the current route now that the server can answer "what day is
     // it?" correctly. Without this the first visit stays on UTC until the

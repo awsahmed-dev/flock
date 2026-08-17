@@ -173,3 +173,55 @@ describe("helpers", () => {
     expect(addDaysIso("", 1)).toBe("");
   });
 });
+
+describe("T-6 FIXED — the cookie seam, which is where fix/tz actually broke", () => {
+  // This block exists because every other test in this file passed while the
+  // branch did NOTHING in production. <TimeZoneSync /> wrote the zone
+  // percent-encoded and the server rejected it, so getTimeZone() fell back to
+  // UTC for every traveller — and the client's comparison never matched, so
+  // router.refresh() fired on every mount forever.
+  //
+  // The unit tests never touched the seam and every render capture set the
+  // cookie RAW through Playwright, bypassing the component. Tested components,
+  // untested join.
+
+  it("a percent-encoded zone is NOT a valid zone — this is what the server saw", () => {
+    expect(isTimeZone("Asia%2FRiyadh")).toBe(false);
+    expect(isTimeZone("Pacific%2FKiritimati")).toBe(false);
+    expect(isTimeZone("America%2FLos_Angeles")).toBe(false);
+  });
+
+  it("...and decoding it makes it valid again, which is the recovery path", () => {
+    for (const encoded of ["Asia%2FRiyadh", "Pacific%2FKiritimati", "America%2FLos_Angeles"]) {
+      expect(isTimeZone(decodeURIComponent(encoded))).toBe(true);
+    }
+  });
+
+  it("raw IANA zone names need no encoding — every character is a legal cookie-octet", () => {
+    // RFC 6265 cookie-octet excludes ";", ",", whitespace, '"' and "\\".
+    // No IANA zone name contains any of them, so encoding bought nothing.
+    const ILLEGAL = /[;,\s"\\]/;
+    for (const zone of [
+      "UTC", "Asia/Riyadh", "America/Los_Angeles", "Pacific/Kiritimati",
+      "Europe/London", "Asia/Kuala_Lumpur", "America/Argentina/Buenos_Aires",
+      "Etc/GMT+10", "Australia/Sydney",
+    ]) {
+      expect(ILLEGAL.test(zone)).toBe(false);
+      expect(isTimeZone(zone)).toBe(true);
+      // The round trip that must hold: what we write is what we read back.
+      expect(zone).toBe(decodeURIComponent(zone));
+    }
+  });
+
+  it("UTC was the ONLY value that worked, which is why nothing looked wrong", () => {
+    // encodeURIComponent is a no-op on "UTC" — no slash. So the sandbox default
+    // and any UTC server behaved perfectly while every real traveller did not.
+    expect(encodeURIComponent("UTC")).toBe("UTC");
+    expect(encodeURIComponent("Asia/Riyadh")).not.toBe("Asia/Riyadh");
+  });
+
+  it("a junk cookie still degrades to UTC rather than throwing", () => {
+    expect(isTimeZone("%%%")).toBe(false);
+    expect(todayInZone("%%%", new Date("2026-10-05T01:00:00.000Z"))).toBe("2026-10-05");
+  });
+});
