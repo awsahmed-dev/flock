@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { itineraryItems, documents, packingItems, tripPhotos } from "@/lib/db/schema";
 import { eq, asc, inArray, and, or, isNull, sql } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
+import { getToday } from "@/lib/today-server";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -109,7 +110,8 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
 
   // Sprint 8 Item 6: the sheet is phase-aware. DEPARTURE pulls the pack
   // list (mine + shared); RECAP pulls crew-photo counts per stop.
-  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate });
+  const todayIso = await getToday();
+  const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate }, todayIso);
   const packList =
     phase === "DEPARTURE"
       ? await db

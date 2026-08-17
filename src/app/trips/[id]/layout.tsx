@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { TripShell } from "@/components/trips/trip-shell";
+import { getToday } from "@/lib/today-server";
 import { isOwner as checkOwner } from "@/lib/permissions";
 
 interface Props {
@@ -48,7 +49,13 @@ export default async function TripLayout({ children, params }: Props) {
   }));
 
   return (
-    <TripShell trip={tripForShell} userId={user.id} isOwner={checkOwner(trip, user.id)} crew={crew}>
+    <TripShell
+      trip={tripForShell}
+      userId={user.id}
+      isOwner={checkOwner(trip, user.id)}
+      crew={crew}
+      todayIso={await getToday()}
+    >
       {children}
     </TripShell>
   );

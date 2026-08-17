@@ -12,7 +12,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:tz": "for tz in UTC America/Los_Angeles Asia/Kuala_Lumpur Asia/Riyadh Pacific/Kiritimati; do echo \"--- TZ=$tz ---\"; TZ=$tz vitest run src/lib/__tests__/tz.test.ts || exit 1; done",
+    "tz:repro": "for tz in UTC America/Los_Angeles Asia/Kuala_Lumpur; do TZ=$tz node scripts/tz-repro.mjs; done"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",

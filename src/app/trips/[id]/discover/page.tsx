@@ -14,6 +14,7 @@ import { DiscoverFeed } from "@/components/discover/discover-feed";
 import type { PlaceCategoryKey } from "@/components/discover/primitives";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { tripPhase } from "@/lib/trip-phase";
+import { getToday } from "@/lib/today-server";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -47,6 +48,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       : null;
 
   const trip = await getTripWithMembership(id, user.id);
+  const todayIso = await getToday();
   if (!trip) redirect("/dashboard");
 
   // §3-A: the user's saved places for this trip — hearts pre-fill from these
@@ -97,7 +99,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       <div className="hidden sm:flex items-baseline justify-between gap-3">
         <h1 className="text-2xl sm:text-[1.9rem] font-extrabold tracking-[-0.02em] leading-tight">
           {/* §5-H: during LIVE the header relabels to Nearby. */}
-          {tripPhase(trip) === "LIVE"
+          {tripPhase(trip, todayIso) === "LIVE"
             ? t("nav.nearby")
             : t("discover.title", { destination: trip.destination })}
         </h1>
@@ -120,7 +122,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         savedPlaces={savedPlaces}
         likedPlaceIds={likedPlaceIds}
         likeCounts={likeCounts}
-        defaultMapView={tripPhase(trip) === "LIVE"}
+        defaultMapView={tripPhase(trip, todayIso) === "LIVE"}
       />
     </div>
   );
