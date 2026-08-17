@@ -10,7 +10,7 @@ export default async function SignupPage() {
   const dict = getDictionary(locale);
   const t = (k: string) => tFromDict(dict, k, undefined, locale);
   return (
-    <AuthShell subtitle={t("auth.signupHero")} boarding={t("auth.signupBoarding")}>
+    <AuthShell subtitle={t("auth.signupHero")} boarding={t("auth.signupBoarding")} tagline={t("auth.tagline")}>
       <SignupForm />
       <p className="text-center text-sm text-[#141414]/55 mt-6">
         {t("auth.haveAccount")}{" "}

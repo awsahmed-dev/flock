@@ -12,8 +12,11 @@ import { MARKETING_LIGHT_VARS, MARKETING_SKY } from "@/components/landing/market
 export function AuthShell({
   subtitle,
   boarding,
+  tagline,
   children,
 }: {
+  /** brand tagline under the logo — ar "نروح سوا", en "Pack Together" (auth.tagline) */
+  tagline: string;
   /** line under the logo, e.g. "Welcome back · أهلًا بعودتك" */
   subtitle: string;
   /** boarding-strip label, e.g. "Now boarding · الصعود" */
@@ -46,7 +49,7 @@ export function AuthShell({
             <Logo variant="full" size="xs" />
           </Link>
           <span className="w-px h-4 bg-[#141414]/15" aria-hidden />
-          <span className="text-[11px] font-bold text-[#141414]/55">نروح سوا</span>
+          <span className="text-[11px] font-bold text-[#141414]/55">{tagline}</span>
         </div>
       </header>
 
