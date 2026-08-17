@@ -91,6 +91,15 @@ export async function updateBooking(input: {
   const isOwner = trip.members.some((m) => m.userId === user.id && m.role === "owner");
   if (!isOwner) throw new Error("Only the trip owner can edit bookings");
 
+  // authz-2: bookings has no tripId — only stopId. The stop must belong to
+  // THIS trip, or an owner of trip A could rewrite trip B's confirmation
+  // numbers / PDFs by passing B's stopId with A's tripId.
+  const stop = await db.query.itineraryItems.findFirst({
+    columns: { id: true },
+    where: and(eq(itineraryItems.id, input.stopId), eq(itineraryItems.tripId, input.tripId)),
+  });
+  if (!stop) throw new Error("Stop not found");
+
   if (input.time !== undefined) {
     await db
       .update(itineraryItems)

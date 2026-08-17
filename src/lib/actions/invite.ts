@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { randomBytes } from "crypto";
+import { inviteExpiry } from "@/lib/invite-ttl";
 import { getBaseUrl } from "@/lib/base-url";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/send";
@@ -38,7 +39,7 @@ export async function createTripInvite(tripId: string): Promise<string> {
     token = existing!.token;
   } else {
     token = randomBytes(16).toString("hex");
-    await db.insert(tripInvites).values({ tripId, token, createdBy: user.id });
+    await db.insert(tripInvites).values({ tripId, token, createdBy: user.id, expiresAt: inviteExpiry() });
   }
   return `${getBaseUrl()}/invite/${token}`;
 }

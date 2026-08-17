@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Crown, UserPlus } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/ui/page-header";
 import { ShareTripSheet } from "@/components/trips/share-trip-sheet";
 import { useT } from "@/components/i18n/locale-provider";
+import { leaveTrip, removeMember } from "@/lib/actions/members";
+import { toast } from "sonner";
 
 interface Member {
   userId: string;
@@ -28,19 +30,32 @@ interface Props {
   inviteUrl: string | null;
 }
 
-/* isOwner + inviteUrl are passed by the page but the current MVP doesn't
- * use them (no remove/role-edit yet; the share sheet mints its own link).
- * Keep them in the prop type so the page contract stays stable when those
- * actions land. */
+/* inviteUrl is passed by the page but unused (the share sheet mints its own
+ * link). Kept in the prop type so the page contract stays stable. */
 export function MembersBoard({
   tripId,
   tripName,
   userId,
-  isOwner: _isOwner,
+  isOwner,
   members,
   inviteUrl: _inviteUrl,
 }: Props) {
   const t = useT();
+  const [pending, startTransition] = useTransition();
+  function onLeave() {
+    if (!window.confirm(t("crew.leaveConfirm", { trip: tripName }))) return;
+    startTransition(async () => {
+      try { await leaveTrip(tripId); } catch (e) {
+        if (!(e instanceof Error && e.message.includes("NEXT_REDIRECT"))) toast.error(t("common.failed"));
+      }
+    });
+  }
+  function onRemove(m: Member) {
+    if (!window.confirm(t("crew.removeConfirm", { name: memberName(m) }))) return;
+    startTransition(async () => {
+      try { await removeMember(tripId, m.userId); toast.success(t("common.removed")); } catch { toast.error(t("common.failed")); }
+    });
+  }
   const owner = members.find((m) => m.role === "owner");
   const otherMembers = members.filter((m) => m.role !== "owner");
   const ordered = owner ? [owner, ...otherMembers] : otherMembers;
@@ -77,7 +92,12 @@ export function MembersBoard({
         {/* Single-column stack on mobile; fills width on desktop. */}
         <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
           {ordered.map((m) => (
-            <MemberRow key={m.userId} member={m} isCurrentUser={m.userId === userId} />
+            <MemberRow
+              key={m.userId}
+              member={m}
+              isCurrentUser={m.userId === userId}
+              onRemove={isOwner && m.userId !== userId && m.role !== "owner" ? () => onRemove(m) : undefined}
+            />
           ))}
         </div>
       </section>
@@ -94,6 +114,17 @@ export function MembersBoard({
           <UserPlus className="w-5 h-5" />
           {t("crew.inviteMore")}
         </button>
+        {/* authz-2: members could never leave. Owners delete the trip instead. */}
+        {!isOwner && (
+          <button
+            type="button"
+            onClick={onLeave}
+            disabled={pending}
+            className="mt-3 w-full h-11 rounded-2xl text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+          >
+            {t("crew.leaveTrip")}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -102,9 +133,11 @@ export function MembersBoard({
 function MemberRow({
   member,
   isCurrentUser,
+  onRemove,
 }: {
   member: Member;
   isCurrentUser: boolean;
+  onRemove?: () => void;
 }) {
   const t = useT();
   const avatarUrl = member.user?.avatarUrl ?? null;
@@ -139,6 +172,14 @@ function MemberRow({
           <Crown className="w-3 h-3" />
           {t("crew.owner")}
         </span>
+      ) : onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="tap-hit inline-flex items-center rounded-full border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase shrink-0 transition-colors"
+        >
+          {t("crew.remove")}
+        </button>
       ) : (
         <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase shrink-0">
           {t("crew.member")}

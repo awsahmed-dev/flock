@@ -67,6 +67,15 @@ export async function reactToDecision(
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Access denied");
 
+  // authz-2: decision_reactions has no tripId — prove the decision belongs to
+  // THIS trip before reading or writing a reaction against it. Without this a
+  // member of trip A could react on (and auto-resolve) trip B's decisions.
+  const owned = await db.query.huddleDecisions.findFirst({
+    columns: { id: true },
+    where: and(eq(huddleDecisions.id, decisionId), eq(huddleDecisions.tripId, tripId)),
+  });
+  if (!owned) throw new Error("Decision not found");
+
   const existing = await db
     .select({ id: decisionReactions.id })
     .from(decisionReactions)
@@ -94,7 +103,7 @@ export async function reactToDecision(
   let resolved = false;
   if (reaction === "add_it") {
     const decision = await db.query.huddleDecisions.findFirst({
-      where: eq(huddleDecisions.id, decisionId),
+      where: and(eq(huddleDecisions.id, decisionId), eq(huddleDecisions.tripId, tripId)),
     });
     if (decision && decision.status === "open" && decision.type === "suggestion") {
       const [{ count: addVotes }] = await db
@@ -198,9 +207,12 @@ export async function votePoll(decisionId: string, tripId: string, optionId: str
   if (!trip) throw new Error("Access denied");
 
   const decision = await db.query.huddleDecisions.findFirst({
-    where: eq(huddleDecisions.id, decisionId),
+    where: and(eq(huddleDecisions.id, decisionId), eq(huddleDecisions.tripId, tripId)),
   });
-  if (!decision || decision.type !== "poll" || decision.status !== "open") return;
+  // authz-2: THROW on a foreign decision (the silent `return` made the IDOR
+  // untestable and hid the attempt); keep the silent no-op for closed polls.
+  if (!decision) throw new Error("Decision not found");
+  if (decision.type !== "poll" || decision.status !== "open") return;
 
   type Opt = { id: string; label: string; voterIds: string[] };
   const options = (decision.pollOptions as Opt[]) ?? [];
@@ -221,7 +233,7 @@ export async function votePoll(decisionId: string, tripId: string, optionId: str
         ? { status: "resolved" as const, outcome: `closed:${winner.label}`, resolvedAt: new Date() }
         : {}),
     })
-    .where(eq(huddleDecisions.id, decisionId));
+    .where(and(eq(huddleDecisions.id, decisionId), eq(huddleDecisions.tripId, tripId)));
 
   if (winner) {
     const tally = options.map((o) => o.voterIds.length).sort((a, b) => b - a);

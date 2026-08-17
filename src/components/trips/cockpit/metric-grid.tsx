@@ -37,6 +37,7 @@ export function MetricGrid({
             icon: MapPin,
             label: t("cockpit.metricPlanned"),
             value: placesCount > 0 ? t("cockpit.metricStops", { count: placesCount }) : t("cockpit.metricStart"),
+            invite: placesCount === 0,
             href: `${base}/itinerary`,
           },
         ]
@@ -44,21 +45,27 @@ export function MetricGrid({
     {
       icon: Wallet,
       label: t("cockpit.metricBudget"),
-      value: budgetTotal != null ? `${currency} ${Math.round(budgetTotal).toLocaleString()}` : t("cockpit.metricNotSet"),
+      // Empty cells are invitations, not verdicts. "Not set" / "Just you" /
+      // "0/18 items" told a brand-new user they had nothing three times over
+      // (first-run Finding 7); a verb tells them what the cell is FOR.
+      value: budgetTotal != null ? `${currency} ${Math.round(budgetTotal).toLocaleString()}` : t("cockpit.metricSetBudget"),
+      invite: budgetTotal == null,
       href: `${base}/money`,
     },
     {
       icon: Users,
       label: t("cockpit.metricCrew"),
-      // "1 person" reads like a statistic about strangers. "Just you" reads
-      // like the app noticing, which is the nudge that matters here.
-      value: crewCount <= 1 ? t("cockpit.metricJustYou") : t("cockpit.metricPeople", { count: crewCount }),
+      value: crewCount <= 1 ? t("cockpit.metricInviteCrew") : t("cockpit.metricPeople", { count: crewCount }),
+      invite: crewCount <= 1,
       href: `${base}/members`,
     },
     {
       icon: Package,
       label: t("cockpit.metricPacking"),
-      value: packing.total > 0 ? t("cockpit.metricItems", { packed: packing.packed, total: packing.total }) : t("cockpit.metricCreate"),
+      // "0/18" referred to 18 items the app created silently — the first
+      // reaction was "what 18 items?". Show the count only once packing began.
+      value: packing.total > 0 && packing.packed > 0 ? t("cockpit.metricItems", { packed: packing.packed, total: packing.total }) : t("cockpit.metricStartPacking"),
+      invite: !(packing.total > 0 && packing.packed > 0),
       href: `${base}/pack`,
     },
   ];
@@ -90,7 +97,10 @@ export function MetricGrid({
                 <ChevronRight size={12} className="ms-auto text-tertiary rtl:rotate-180" />
               )}
             </div>
-            <p className="line-clamp-1 mt-1 text-[15px] font-bold text-foreground">{cell.value}</p>
+            {/* Invitations are a verb phrase, not a number — a step smaller and
+                primary-tinted so they read as "tap to do this", and so
+                "Set a budget" fits a 113px 3-up cell without clipping. */}
+            <p className={`line-clamp-1 mt-1 font-bold ${cell.invite ? "text-[13px] text-primary" : "text-[15px] text-foreground"}`}>{cell.value}</p>
           </Link>
         );
       })}

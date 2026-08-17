@@ -289,6 +289,7 @@ export function DynamicBottomNav({
       {/* Sprint 6 FIX-3 — Figma pill nav: [home 56] [12] [pill flex] [12]
           [action 56], all same height, separate floating glass elements. */}
       <div
+        data-bottom-nav
         className="fixed inset-x-0 z-40 flex items-center justify-center gap-2"
         style={{ bottom: "env(safe-area-inset-bottom)", padding: "12px 16px", pointerEvents: "none" }}
       >

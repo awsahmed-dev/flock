@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { placeInteractions, userTasteVectors, placeTasteTags, placeLikes, tripMembers, profiles } from "@/lib/db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { getTripWithMembership } from "@/lib/actions/trips";
 import {
   nudgeVector, seedsFromTiles, NEUTRAL_VECTOR,
   type FiveDimVector, type TasteSignal,
@@ -122,6 +123,10 @@ export async function getTasteContext(tripId: string): Promise<{
 }> {
   const user = await getCurrentUser();
   if (!user) throw new Error("Not signed in");
+  // authz-2: this read leaked every member's name + taste vector of ANY trip
+  // to any signed-in user. Membership first.
+  const trip = await getTripWithMembership(tripId, user.id);
+  if (!trip) throw new Error("Trip not found or access denied");
 
   const members = await db
     .select({ userId: tripMembers.userId, name: profiles.displayName })
