@@ -42,7 +42,7 @@ export function PhotosGrid({ tripId, tripName, photos }: { tripId: string; tripN
       {/* Lightbox. */}
       {open && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col" onClick={() => setOpen(null)}>
-          <button type="button" aria-label="Close" className="absolute top-3 end-3 z-10 w-11 h-11 flex items-center justify-center text-white" style={{ marginTop: "env(safe-area-inset-top)" }}>
+          <button type="button" aria-label="Close" onClick={(e) => { e.stopPropagation(); setOpen(null); }} className="absolute top-3 end-3 z-10 w-11 h-11 flex items-center justify-center text-white" style={{ marginTop: "env(safe-area-inset-top)" }}>
             <X size={22} />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}

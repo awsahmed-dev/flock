@@ -84,6 +84,13 @@ export function PlaceCardCompact({
         )}
         {/* Fix 2 (pass 2): editorial "AI pick" badge removed for consistency
             with the immersive card — no editorial label on cards. */}
+        {/* Sweep Task 4 NOTE: this save control cannot be made keyboard-
+            reachable in place — the whole compact card is a <button>, so a
+            focusable control inside it is a nested-interactive violation
+            (verified with axe). Giving save a keyboard path needs the card
+            restructured (div + inner open button + sibling save button),
+            which is a layout change, not a sweep. Left as authored;
+            tracked as a design decision. */}
         <span
           role="button"
           tabIndex={-1}
