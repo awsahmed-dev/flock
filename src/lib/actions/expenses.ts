@@ -242,6 +242,10 @@ async function notifyExpenseLogged(args: {
     });
     const rendered = await renderExpenseLogged({
       recipientName: member?.displayName || profile.displayName || "there",
+      // fix/tz (T-2): the key used to be built from recipientName, so two
+      // debtors sharing a display name -- or both falling back to "there" --
+      // collided and only one was emailed. The id was on `s` all along.
+      recipientUserId: s.userId,
       payerName: args.payerName,
       tripName: args.tripName,
       title: args.title,
