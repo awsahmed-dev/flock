@@ -1,5 +1,6 @@
 "use client";
 
+import { protectedFileUrl } from "@/lib/storage-url";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -169,8 +170,7 @@ export function AddExpenseDialog({
         .from("trip-documents")
         .upload(path, file, { cacheControl: "3600", contentType: file.type || undefined });
       if (upErr) throw new Error(upErr.message);
-      const { data } = supabase.storage.from("trip-documents").getPublicUrl(path);
-      setReceiptUrl(data.publicUrl);
+      setReceiptUrl(protectedFileUrl("trip-documents", path));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("common.failed"));
     } finally {

@@ -1,5 +1,6 @@
 "use client";
 
+import { protectedFileUrl } from "@/lib/storage-url";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Check, Camera, Plus, Image as ImageIcon, CircleNotch as Loader2, Package } from "@phosphor-icons/react/dist/ssr";
@@ -336,8 +337,7 @@ export function RecapStopCard({
         .from("trip-documents")
         .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
       if (upErr) throw new Error(upErr.message);
-      const { data: urlData } = supabase.storage.from("trip-documents").getPublicUrl(path);
-      const res = await addTripPhoto({ tripId, itemId: item.id, url: urlData.publicUrl });
+      const res = await addTripPhoto({ tripId, itemId: item.id, url: protectedFileUrl("trip-documents", path) });
       if (res.error) throw new Error(res.error);
       setLocalPhotos((n) => n + 1);
       toast.success(t("itinerary.photoAdded"));

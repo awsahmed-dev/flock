@@ -1,5 +1,6 @@
 "use client";
 
+import { protectedFileUrl } from "@/lib/storage-url";
 import { useState, useTransition, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -108,10 +109,8 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
           });
         if (upErr) throw new Error(upErr.message);
 
-        const { data: urlData } = supabase.storage
-          .from("trip-documents")
-          .getPublicUrl(path);
-        const url = urlData.publicUrl;
+        // authz-3: private bucket — store the same-origin proxy URL.
+        const url = protectedFileUrl("trip-documents", path);
 
         const isImage = file.type.startsWith("image/");
 

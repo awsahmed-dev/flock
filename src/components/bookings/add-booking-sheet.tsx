@@ -1,5 +1,6 @@
 "use client";
 
+import { protectedFileUrl } from "@/lib/storage-url";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
@@ -43,8 +44,7 @@ export function AddBookingSheet({ tripId, days }: { tripId: string; days: string
         .from("trip-documents")
         .upload(path, file, { cacheControl: "3600", contentType: file.type || "application/pdf" });
       if (error) throw error;
-      const { data } = supabase.storage.from("trip-documents").getPublicUrl(path);
-      setPdfUrl(data.publicUrl);
+      setPdfUrl(protectedFileUrl("trip-documents", path));
       toast.success("PDF attached");
     } catch {
       toast.error("Couldn't upload that PDF");
