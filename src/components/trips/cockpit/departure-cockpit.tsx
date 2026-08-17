@@ -20,7 +20,7 @@ type T = (key: string, params?: Record<string, string | number>) => string;
 export async function DepartureCockpit(props: CockpitShared & { t: T }) {
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl, currency,
-    budgetTotal, days, items, crew, packing, readiness, ticker, t,
+    budgetTotal, days, items, crew, packing, ticker, t,
   } = props;
   const base = `/trips/${tripId}`;
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin, CalendarDots as CalendarDays } from "@phosphor-icons/react/dist/ssr";
 import {
   addDays,
   addMonths,
@@ -63,6 +63,7 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
   const [name, setName] = useState("");
   const [nameDirty, setNameDirty] = useState(false);
+  const [destinationSettled, setDestinationSettled] = useState("");
 
   // Step 2
   const [crew, setCrew] = useState<string[]>([]);
@@ -82,12 +83,15 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
   }, [open]);
 
   // Suggest a trip name from the destination unless the user edited it.
+  // Keyed off the SETTLED destination (picked from the list, or the field
+  // blurred) rather than the live keystroke value — otherwise the name box
+  // flickers "T Trip" → "To Trip" → "Tok Trip" as you type.
   useEffect(() => {
-    if (!nameDirty && destination) {
-      const city = destination.split(",")[0].trim();
+    if (!nameDirty && destinationSettled) {
+      const city = destinationSettled.split(",")[0].trim();
       setName(city ? `${city} Trip` : "");
     }
-  }, [destination, nameDirty]);
+  }, [destinationSettled, nameDirty]);
 
   const DURATIONS: { key: string; label: string; days: number }[] = [
     { key: "weekend", label: t("create.durWeekend"), days: 2 },
@@ -124,6 +128,14 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
   }, [start, end]);
 
   const canNextStep1 = destination.trim().length > 1 && start && end && name.trim().length > 0;
+  // A disabled control that won't say why is a dead end. One instruction at a
+  // time, in step order — not a list, which doesn't translate cleanly.
+  const nextBlockedReason = (() => {
+    if (destination.trim().length <= 1) return t("create.needDestination");
+    if (!start || !end) return t("create.needDates");
+    if (name.trim().length === 0) return t("create.needName");
+    return null;
+  })();
 
   function submit() {
     if (!destination || !start || !end || !name) return;
@@ -205,6 +217,7 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
               t={t}
               destination={destination}
               setDestination={(v) => { setDestination(v); }}
+              setDestinationSettled={setDestinationSettled}
               durations={DURATIONS}
               durationKey={durationKey}
               pickDuration={pickDuration}
@@ -252,9 +265,16 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
         {/* Footer CTA */}
         <div className="shrink-0 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] border-t border-border bg-card">
           {step === 1 && (
-            <PrimaryBtn disabled={!canNextStep1} onClick={() => setStep(2)}>
-              {t("create.next")} →
-            </PrimaryBtn>
+            <>
+              <PrimaryBtn disabled={!canNextStep1} onClick={() => setStep(2)}>
+                {t("create.next")} →
+              </PrimaryBtn>
+              {nextBlockedReason && (
+                <p className="mt-2 text-center text-[12.5px] text-muted-foreground">
+                  {nextBlockedReason}
+                </p>
+              )}
+            </>
           )}
           {step === 2 && (
             <div className="space-y-2">
@@ -321,6 +341,7 @@ function Step1({
   t,
   destination,
   setDestination,
+  setDestinationSettled,
   durations,
   durationKey,
   pickDuration,
@@ -338,6 +359,7 @@ function Step1({
   t: (k: string, p?: Record<string, string | number>) => string;
   destination: string;
   setDestination: (v: string) => void;
+  setDestinationSettled: (v: string) => void;
   durations: { key: string; label: string; days: number }[];
   durationKey: string | null;
   pickDuration: (key: string, days: number) => void;
@@ -356,16 +378,26 @@ function Step1({
     <div className="space-y-5">
       <h2 className="type-h1">{t("create.whereTitle")}</h2>
 
-      <DestinationAutocomplete value={destination} onPick={setDestination} t={t} />
+      <DestinationAutocomplete
+        value={destination}
+        onType={setDestination}
+        onPick={(v) => { setDestination(v); setDestinationSettled(v); }}
+        onSettle={setDestinationSettled}
+        t={t}
+      />
 
-      {/* Duration chips */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1">
+      {/* Duration presets. They WRAP — they used to sit in a horizontal
+          scroller, and at 390px "Custom" started at x=379 (11px of it on
+          screen) while at 360px "1 Month" was clipped too. Four chips filled
+          the width edge to edge, so nothing hinted that more existed: the
+          only route to real dates was off the side of the phone. */}
+      <div className="flex flex-wrap gap-2">
         {durations.map((d) => (
           <button
             key={d.key}
             type="button"
             onClick={() => pickDuration(d.key, d.days)}
-            className={`shrink-0 h-10 px-4 rounded-full text-sm font-semibold transition-all active:scale-95 ${
+            className={`h-10 px-4 rounded-full text-sm font-semibold transition-all active:scale-95 ${
               durationKey === d.key
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/70"
@@ -374,22 +406,27 @@ function Step1({
             {d.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setShowCalendar(!showCalendar)}
-          className={`shrink-0 h-10 px-4 rounded-full text-sm font-semibold transition-all active:scale-95 ${
-            durationKey === "custom" || showCalendar
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground hover:bg-secondary/70"
-          }`}
-        >
-          {t("create.durCustom")}
-        </button>
       </div>
 
-      {datesLabel && !showCalendar && (
-        <p className="text-sm text-muted-foreground tabular-nums">{datesLabel}</p>
-      )}
+      {/* The calendar gets its own full-width row — it is a peer of the
+          presets, not a fifth chip, and it can never be pushed off-screen. */}
+      <button
+        type="button"
+        onClick={() => setShowCalendar(!showCalendar)}
+        className={`w-full h-12 rounded-xl px-4 flex items-center justify-between text-[15px] font-semibold transition-colors ${
+          durationKey === "custom" || showCalendar
+            ? "bg-secondary ring-2 ring-primary/40 text-foreground"
+            : "bg-secondary text-foreground hover:bg-secondary/70"
+        }`}
+      >
+        <span className="flex items-center gap-2.5 min-w-0">
+          <CalendarDays className="w-[18px] h-[18px] shrink-0 text-muted-foreground" />
+          <span className={`truncate tabular-nums ${datesLabel ? "" : "text-muted-foreground font-medium"}`}>
+            {datesLabel ?? t("create.chooseDates")}
+          </span>
+        </span>
+        <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+      </button>
 
       {showCalendar && (
         <RangeCalendar start={start} end={end} onChange={setRange} month={month} setMonth={setMonth} />
@@ -409,13 +446,32 @@ function Step1({
   );
 }
 
+/**
+ * Destination field.
+ *
+ * The typed text IS the destination. It used to be that only clicking a
+ * Google Places prediction called `onPick`, so `destination` stayed empty
+ * however much you typed — and "Next" stayed greyed out with no explanation
+ * whenever Places returned nothing (flaky network, quota, a typo, an obscure
+ * town). The trip-name auto-fill hung off the same value, so one invisible
+ * dependency killed two fields at once.
+ *
+ * Predictions are now a shortcut, not a gate: `onType` keeps the parent in
+ * sync on every keystroke, `onPick` overwrites with the canonical name when
+ * a suggestion is chosen, and `onSettle` marks the value stable (pick or
+ * blur) so the name suggestion doesn't flicker mid-word.
+ */
 function DestinationAutocomplete({
   value,
+  onType,
   onPick,
+  onSettle,
   t,
 }: {
   value: string;
+  onType: (v: string) => void;
   onPick: (v: string) => void;
+  onSettle: (v: string) => void;
   t: (k: string, p?: Record<string, string | number>) => string;
 }) {
   const [q, setQ] = useState(value);
@@ -423,10 +479,15 @@ function DestinationAutocomplete({
   const [openList, setOpenList] = useState(false);
   const [loading, setLoading] = useState(false);
   const session = useRef(Math.random().toString(36).slice(2));
+  // The last value chosen from the list. Suppresses the refetch that would
+  // otherwise fire immediately after a pick. This used to be `value`, which
+  // now changes on every keystroke — comparing against it would mean the
+  // query always equalled the value and predictions never loaded at all.
+  const lastPicked = useRef<string>(value);
 
   useEffect(() => {
     const query = q.trim();
-    if (query.length < 2 || query === value) {
+    if (query.length < 2 || query === lastPicked.current) {
       setPreds([]);
       return;
     }
@@ -446,15 +507,16 @@ function DestinationAutocomplete({
       }
     }, 280);
     return () => clearTimeout(id);
-  }, [q, value]);
+  }, [q]);
 
   return (
     <div className="relative">
       <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
       <input
         value={q}
-        onChange={(e) => setQ(e.target.value)}
+        onChange={(e) => { setQ(e.target.value); onType(e.target.value); }}
         onFocus={() => preds.length && setOpenList(true)}
+        onBlur={() => onSettle(q.trim())}
         placeholder={t("create.destPlaceholder")}
         className="w-full h-12 rounded-xl bg-secondary ps-11 pe-4 text-[15px] outline-none focus:ring-2 focus:ring-primary/40"
       />
@@ -469,6 +531,7 @@ function DestinationAutocomplete({
               type="button"
               onClick={() => {
                 const dest = predictionDestination(p);
+                lastPicked.current = dest;
                 onPick(dest);
                 setQ(dest);
                 setOpenList(false);

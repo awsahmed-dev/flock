@@ -193,7 +193,15 @@ export function ItineraryBoard({
   // B7c: start collapsed so the map dominates the surface (was opening
   // to ~55vh by default which made the map feel like a sub-feature).
   // User taps the sheet handle to expand.
-  const [sheetOpen, setSheetOpen] = useState(false);
+  //
+  // First-run exception: a trip with ZERO stops opens EXPANDED. Measured at
+  // 390x844, the collapsed sheet put "Add a stop to Monday…" at y=770 —
+  // underneath the floating nav at y=774 — reachable only by finding a 20px
+  // grab bar. The trip home's primary action literally says "Start adding
+  // your first stops" and sent people to a screen where the way to do that
+  // was off the bottom edge. An empty map is not worth dominating anything;
+  // once a single stop exists this reverts to the collapsed default.
+  const [sheetOpen, setSheetOpen] = useState(initialItems.length === 0);
   // Real follow-the-finger sheet drag: the sheet travels the measured
   // distance between fully-open (y=0) and collapsed (only the 3.75rem
   // control strip peeking). The old version pinned constraints to 0/0,
@@ -945,15 +953,39 @@ export function ItineraryBoard({
                         mockup's dashed entry at the bottom of each day. */}
                     {(phase === "PLANNING" || phase === "DEPARTURE") && (
                       <div className="mt-2">
-                        {dayItems.length === 0 && (
-                          <p className="text-[12px] text-muted-foreground px-1 pb-1.5">
-                            {t("itinerary.nothingPlannedYet")}
-                          </p>
+                        {dayItems.length === 0 ? (
+                          /* An empty day is where a first-timer arrives, so it
+                             gets a real primary button rather than a 13px
+                             dashed ghost row — plus a second door, because
+                             people often don't know WHAT to add, only that
+                             they should. Days that already have stops keep
+                             the quiet inline row below. */
+                          <div className="rounded-2xl border-[1.5px] border-dashed border-border px-4 py-5 text-center">
+                            <p className="text-[14px] text-muted-foreground leading-relaxed">
+                              {t("itinerary.emptyDayBody")}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => openAddFor(day)}
+                              className="mt-3.5 w-full h-12 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] inline-flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
+                            >
+                              <Plus size={18} className="shrink-0" />
+                              {t("itinerary.addStopTo", { day: format(parseISO(day), "EEEE") })}
+                            </button>
+                            <Link
+                              href={`/trips/${tripId}/discover`}
+                              className="mt-2 w-full h-11 rounded-2xl bg-muted text-foreground font-semibold text-[14px] inline-flex items-center justify-center gap-2"
+                            >
+                              <Compass size={17} className="shrink-0 text-primary" />
+                              {t("itinerary.browseIdeas", { destination })}
+                            </Link>
+                          </div>
+                        ) : (
+                          <InlineAddRow
+                            label={t("itinerary.addStopTo", { day: format(parseISO(day), "EEEE") })}
+                            onClick={() => openAddFor(day)}
+                          />
                         )}
-                        <InlineAddRow
-                          label={t("itinerary.addStopTo", { day: format(parseISO(day), "EEEE") })}
-                          onClick={() => openAddFor(day)}
-                        />
                       </div>
                     )}
                     {phase === "RECAP" && (
