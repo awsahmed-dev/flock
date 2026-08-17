@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:authz": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/authz.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
