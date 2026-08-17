@@ -25,12 +25,14 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 // ─── moments ─────────────────────────────────────────────────────────────────
-type MomentKey = "T49" | "T3" | "LIVE_AM" | "LIVE_LAST";
-const MOMENTS: { key: MomentKey; label: string; phase: "PLANNING" | "DEPARTURE" | "LIVE"; sub: string }[] = [
+type MomentKey = "EMPTY" | "T49" | "T3" | "LIVE_AM" | "LIVE_LAST" | "RECAP";
+const MOMENTS: { key: MomentKey; label: string; phase: "PLANNING" | "DEPARTURE" | "LIVE" | "RECAP"; sub: string }[] = [
+  { key: "EMPTY", label: "T−21 · brand new", phase: "PLANNING", sub: "Kyoto · 0 stops · just you · nothing set" },
   { key: "T49", label: "T−49 · planning", phase: "PLANNING", sub: "Tokyo · 12 stops · 4 crew · budget set · nothing packed" },
   { key: "T3", label: "T−3 · departure", phase: "DEPARTURE", sub: "Tokyo · docs 1/2 · packed 4/18" },
   { key: "LIVE_AM", label: "Live · day 2 · 09:40", phase: "LIVE", sub: "Seoul · 4 stops today · next in 1h20" },
   { key: "LIVE_LAST", label: "Live · final day · 21:59", phase: "LIVE", sub: "Seoul · 1 of 4 done · flight 23:10" },
+  { key: "RECAP", label: "Home · +2 days", phase: "RECAP", sub: "Seoul · 9 stops · USD 1,120 · 2 unsettled" },
 ];
 
 type Stop = { time: string; title: string; place: string; icon: typeof MapPin; done?: boolean; missed?: boolean };
@@ -127,10 +129,44 @@ function Hero({ eyebrow, name, sub }: { eyebrow: string; name: string; sub: stri
     </div>
   );
 }
-function Cta({ icon: I, label, primary = true }: { icon: typeof MapPin; label: string; primary?: boolean }) {
+type CtaStyle = "pill" | "hue" | "card" | "ticket";
+const HUE = { horizon: "#FF8A5C", dune: "#E0B252", wayfind: "#3EC5B7", brand: "#8B7CFF" } as const;
+function Cta({ icon: I, label, primary = true, style = "pill", hue = "brand", support, urgency }: {
+  icon: typeof MapPin; label: string; primary?: boolean; style?: CtaStyle; hue?: keyof typeof HUE; support?: string; urgency?: string;
+}) {
+  const col = HUE[hue];
+  if (!primary) return (
+    <div className="h-14 rounded-full flex items-center gap-3 px-5 font-bold text-[16px] border-[1.5px] border-white/20 text-white"><I size={20} />{label}<CaretRight className="ms-auto text-white/50" /></div>
+  );
+  if (style === "pill") return (
+    <div className="h-16 rounded-full flex items-center gap-3 px-5 font-bold text-[17px] bg-[#8B7CFF] text-black"><I size={22} />{label}<CaretRight className="ms-auto" /></div>
+  );
+  if (style === "hue") return (
+    <div className="h-16 rounded-full flex items-center gap-3 px-5 font-bold text-[17px] text-black" style={{ background: col, boxShadow: `0 10px 30px ${col}55` }}><I size={22} weight="fill" />{label}<CaretRight className="ms-auto" /></div>
+  );
+  if (style === "card") return (
+    <div className="relative rounded-3xl p-4 text-black overflow-hidden" style={{ background: `linear-gradient(135deg, ${col} 0%, ${col}dd 100%)`, boxShadow: `0 14px 40px ${col}55, inset 0 1px 0 rgba(255,255,255,.35)` }}>
+      <div className="flex items-start justify-between">
+        <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] font-black tracking-wider uppercase">{urgency ?? "Do this next"}</span>
+        <I size={22} weight="fill" className="opacity-80" />
+      </div>
+      <p className="text-[22px] font-black leading-tight mt-2">{label}</p>
+      {support && <p className="text-[13px] font-semibold opacity-80 mt-0.5">{support}</p>}
+      <div className="mt-3 h-11 rounded-full bg-black text-white flex items-center justify-center gap-1.5 font-bold text-[14px]">Open <CaretRight size={14} weight="bold" /></div>
+    </div>
+  );
+  // ticket: boarding-pass stub — the brand motif from the auth shell
   return (
-    <div className={`h-16 rounded-full flex items-center gap-3 px-5 font-bold text-[17px] ${primary ? "bg-[#8B7CFF] text-black" : "border-[1.5px] border-[#8B7CFF] text-white"}`}>
-      <I size={22} />{label}<CaretRight className="ms-auto" />
+    <div className="relative flex rounded-2xl overflow-hidden text-black" style={{ boxShadow: `0 14px 40px ${col}44` }}>
+      <div className="flex-1 p-4" style={{ background: col }}>
+        <p className="text-[10px] font-black tracking-[0.2em] uppercase opacity-70">{urgency ?? "Now boarding"}</p>
+        <p className="text-[19px] font-black leading-tight mt-1">{label}</p>
+        {support && <p className="text-[12px] font-semibold opacity-80 mt-0.5">{support}</p>}
+      </div>
+      <div className="relative w-[84px] flex flex-col items-center justify-center gap-1 border-s-2 border-dashed border-black/30" style={{ background: col }}>
+        <span className="absolute -top-2 -start-2 w-4 h-4 rounded-full bg-[#0d0d0d]" /><span className="absolute -bottom-2 -start-2 w-4 h-4 rounded-full bg-[#0d0d0d]" />
+        <I size={22} weight="fill" /><span className="text-[11px] font-black">GO</span>
+      </div>
     </div>
   );
 }
@@ -155,8 +191,47 @@ function Cells({ items }: { items: [typeof MapPin, string, string][] }) {
   );
 }
 
+
+// ─── 4 · HORIZON: time as space + postcards, not a list ──────────────────────
+function HorizonStrip({ nowLabel, marks, progress }: { nowLabel: string; marks: { at: number; label: string; hot?: boolean }[]; progress: number }) {
+  return (
+    <div className="px-1 pt-1">
+      <div className="relative h-9">
+        <div className="absolute inset-x-0 top-4 h-[3px] rounded-full bg-white/10" />
+        <div className="absolute top-4 h-[3px] rounded-full bg-[#7CCF7C]" style={{ left: 0, width: `${progress}%` }} />
+        {/* now */}
+        <div className="absolute top-[9px] -translate-x-1/2" style={{ left: `${progress}%` }}>
+          <div className="w-[13px] h-[13px] rounded-full bg-orange-300 ring-4 ring-orange-300/25" />
+          <span className="absolute -top-0.5 start-4 text-[10px] font-black tracking-wider text-orange-300 whitespace-nowrap">{nowLabel}</span>
+        </div>
+        {marks.map((m) => (
+          <div key={m.label} className="absolute -translate-x-1/2" style={{ left: `${m.at}%` }}>
+            <div className={`mt-[13px] w-[7px] h-[7px] rounded-full ${m.hot ? "bg-orange-300" : "bg-white/40"}`} />
+            <span className={`absolute top-6 -translate-x-1/2 start-1 text-[10px] whitespace-nowrap ${m.hot ? "text-orange-300 font-bold" : "text-white/45"}`}>{m.label}</span>
+          </div>
+        ))}
+        <Airplane size={14} weight="fill" className="absolute -end-0.5 top-[10px] text-white/70" />
+      </div>
+    </div>
+  );
+}
+function Postcard({ img, kicker, title, lines, wide = false, tint }: { img: string; kicker: string; title: string; lines: string[]; wide?: boolean; tint?: string }) {
+  return (
+    <div className={`relative shrink-0 snap-start overflow-hidden rounded-2xl ${wide ? "w-[300px]" : "w-[190px]"} h-[150px]`} style={{ backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+      <div className="absolute inset-0" style={{ background: tint ?? "linear-gradient(180deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,.75) 100%)" }} />
+      <div className="absolute inset-x-0 bottom-0 p-3">
+        <p className="text-[10px] font-black tracking-wider uppercase text-white/70">{kicker}</p>
+        <p className="text-[16px] font-bold leading-tight">{title}</p>
+        {lines.map((l) => <p key={l} className="text-[12px] text-white/80">{l}</p>)}
+      </div>
+    </div>
+  );
+}
+const pic = (seed: string) => `https://picsum.photos/seed/${seed}/600/400`;
+
 // ─── A · auditor ─────────────────────────────────────────────────────────────
 function VariantA({ m }: { m: MomentKey }) {
+  if (m === "EMPTY" || m === "RECAP") return <div className="p-6 text-white/40 text-sm">not drawn for this moment</div>;
   if (m === "T49" || m === "T3") {
     const dep = m === "T3";
     return (
@@ -209,7 +284,9 @@ function VariantA({ m }: { m: MomentKey }) {
 }
 
 // ─── B · one clock (tripMoment) ───────────────────────────────────────────────
-function VariantB({ m }: { m: MomentKey }) {
+type Below = "today" | "fold" | "strip" | "line" | "horizon";
+function VariantB({ m, cta = "pill", below = "today" }: { m: MomentKey; cta?: CtaStyle; below?: Below }) {
+  if (m === "EMPTY" || m === "RECAP") return <div className="p-6 text-white/40 text-sm">not drawn for this moment</div>;
   if (m === "T49" || m === "T3") {
     const dep = m === "T3";
     return (
@@ -219,29 +296,142 @@ function VariantB({ m }: { m: MomentKey }) {
           {dep ? (
             <>
               {/* DEPARTURE cockpit already owns packing — untouched */}
-              <Cta icon={Package} label="Pack — 14 left · 3 days" />
-              <Ready label="4 of 5 due · docs" pct={80} />
-              <div className={`${c.card} px-4 py-3 text-[14px] space-y-1`}>
-                <p className="font-bold">Departure board</p>
-                <p className="text-white/70">✈ SV 826 · 06 Oct 09:15 · RUH → NRT</p>
-                <p className="text-white/70">🛏 Shinjuku Granbell · check-in 15:00</p>
-                <p className="text-orange-300">📄 Passport scan missing → add</p>
-              </div>
+              <Cta icon={Package} label="Pack — 14 left" support="18 items · flight in 3 days" urgency="Due now" hue="dune" style={cta} />
+              {below === "horizon" ? (
+                <>
+                  <HorizonStrip nowLabel="T−3" progress={88} marks={[{ at: 62, label: "budget" }, { at: 78, label: "docs", hot: true }, { at: 92, label: "pack", hot: true }]} />
+                  <div className="flex gap-2.5 overflow-hidden -me-4 pt-1">
+                    <Postcard img={pic("boarding-pass")} kicker="Oct 6 · 09:15" title="SV 826 · RUH → NRT" lines={["Gate opens 08:15 · 4 crew on it"]} wide tint="linear-gradient(180deg, rgba(20,20,40,.35), rgba(0,0,0,.85))" />
+                    <Postcard img={pic("shinjuku-hotel")} kicker="Night 1" title="Shinjuku Granbell" lines={["check-in 15:00 · 2 rooms"]} />
+                    <Postcard img={pic("tokyo-shibuya")} kicker="Tokyo on Oct 6" title="24° · light rain" lines={["pack a shell · umbrella ✔"]} />
+                  </div>
+                  <div className="rounded-2xl border border-orange-300/40 bg-orange-300/10 px-4 py-2.5 text-[13px] flex items-center gap-2"><FileText size={16} className="text-orange-300" /><span><span className="font-bold text-orange-300">Passport scan missing</span> · add before T−1</span><CaretRight size={14} className="ms-auto text-orange-300" /></div>
+                </>
+              ) : below === "today" || below === "fold" ? (
+                <>
+                  <Ready label={below === "fold" ? "Docs still due" : "4 of 5 due · docs"} pct={80} />
+                  <div className={`${c.card} px-4 py-3 text-[14px] space-y-1`}>
+                    <p className="font-bold">Departure board</p>
+                    <p className="text-white/70">✈ SV 826 · 06 Oct 09:15 · RUH → NRT</p>
+                    <p className="text-white/70">🛏 Shinjuku Granbell · check-in 15:00</p>
+                    <p className="text-orange-300">📄 Passport scan missing → add</p>
+                  </div>
+                </>
+              ) : below === "strip" ? (
+                <>
+                  <div className="flex gap-2 overflow-hidden -me-4">
+                    {[["!", "docs due"], ["4/18", "packed"], ["4", "crew ready"], ["3d", "to go"]].map(([k, v]) => (
+                      <span key={v} className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] font-semibold flex items-center gap-1.5"><span className="text-orange-300 text-[11px]">{k}</span>{v}</span>
+                    ))}
+                  </div>
+                  <div className={`${c.card} px-4 py-3 text-[14px] space-y-1`}>
+                    <p className="font-bold">Departure board</p>
+                    <p className="text-white/70">✈ SV 826 · 06 Oct 09:15 · RUH → NRT</p>
+                    <p className="text-white/70">🛏 Shinjuku Granbell · check-in 15:00</p>
+                    <p className="text-orange-300">📄 Passport scan missing → add</p>
+                  </div>
+                </>
+              ) : (
+                <div className={`${c.card} p-4`}>
+                  <p className="text-[11px] font-bold tracking-wider text-white/40 uppercase mb-2">Coming up</p>
+                  <div className="relative ms-2 border-s border-white/10 ps-5 space-y-3">
+                    {[["T−1", "Passport scan → docs", FileText, "missing"], ["Oct 6", "SV 826 · RUH → NRT", Airplane, "09:15"], ["Oct 6", "Shinjuku Granbell", Bed, "check-in 15:00"], ["Oct 6", "Day 1 · 3 stops", MapPin, "Shibuya"]].map(([w, t, I, sub]) => (
+                      <div key={t as string} className="relative flex items-center gap-3">
+                        <span className="absolute -start-[25px] top-1.5 w-2.5 h-2.5 rounded-full border border-white/40 bg-[#1a1a1c]" />
+                        <span className="w-12 text-[12px] text-white/50">{w as string}</span><I size={16} className="text-white/60" />
+                        <span className="text-[14px] font-semibold">{t as string}</span><span className="ms-auto text-[12px] text-orange-300/90">{sub as string}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <>
               {/* ladder floor: nothing due at T-49 → say so, point at Discover */}
-              <Cta icon={ChatCircle} label="Vote: Nikko or Hakone?" />
-              <div className={`${c.card} px-4 py-3`}>
-                <p className="text-[15px] font-semibold">Nothing else due · 49 days out</p>
-                <p className="text-[13px] text-[#8B7CFF] font-semibold">Go heart something in Discover →</p>
-              </div>
-              {/* phase-weighted readiness */}
-              <Ready label="3 of 3 due · on track" pct={100} />
-              <div className="flex gap-2 overflow-hidden">
-                {["Mon 5 ·3", "Tue 6 ·2", "Wed 7 ·2", "Thu 8 ·1"].map((x) => <span key={x} className="shrink-0 rounded-full border border-white/10 px-3 py-2 text-[13px] font-semibold">{x}</span>)}
-              </div>
-              <Cells items={[[Wallet, "Budget", "USD 8,000"], [Users, "Crew", "4 people"], [Package, "Packing", "Due T−2"]]} />
+              <Cta icon={ChatCircle} label="Nikko or Hakone?" support="Crew vote · 2 of 4 voted · closes tonight" urgency="Your vote's missing" hue="horizon" style={cta} />
+              {below === "today" && (
+                <>
+                  <div className={`${c.card} px-4 py-3`}>
+                    <p className="text-[15px] font-semibold">Nothing else due · 49 days out</p>
+                    <p className="text-[13px] text-[#8B7CFF] font-semibold">Go heart something in Discover →</p>
+                  </div>
+                  <Ready label="3 of 3 due · on track" pct={100} />
+                  <div className="flex gap-2 overflow-hidden">
+                    {["Mon 5 ·3", "Tue 6 ·2", "Wed 7 ·2", "Thu 8 ·1"].map((x) => <span key={x} className="shrink-0 rounded-full border border-white/10 px-3 py-2 text-[13px] font-semibold">{x}</span>)}
+                  </div>
+                  <Cells items={[[Wallet, "Budget", "USD 8,000"], [Users, "Crew", "4 people"], [Package, "Packing", "Due T−2"]]} />
+                </>
+              )}
+              {below === "fold" && (
+                <>
+                  {/* 1 · FOLD: two blocks. Readiness absorbs the "nothing due" line;
+                      chips + cells become one quiet overview card. */}
+                  <div className={`${c.card} px-5 py-4`}>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 h-2 rounded-full bg-white/10"><div className="h-full rounded-full bg-[#7CCF7C]" style={{ width: "100%" }} /></div>
+                      <span className="font-bold text-[15px]">On track</span>
+                    </div>
+                    <p className="text-[13px] text-white/60 mt-2">3 of 3 due done · nothing else until T−14 · <span className="text-[#8B7CFF] font-semibold">heart places in Discover →</span></p>
+                  </div>
+                  <div className={`${c.card} divide-y divide-white/5`}>
+                    {[[CalendarDots, "7 days · 12 stops planned", "Plan"], [Users, "4 crew · all in", "Crew"], [Wallet, "USD 8,000 budget · 0 spent", "Money"], [Package, "Packing opens T−2", ""]].map(([I, t, go]) => (
+                      <div key={t as string} className="flex items-center gap-3 px-4 h-12 text-[14px]"><I size={18} className="text-white/60" /><span className="font-semibold flex-1">{t as string}</span>{go ? <span className="text-[12px] text-white/40 flex items-center">{go as string} <CaretRight size={12} /></span> : null}</div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {below === "strip" && (
+                <>
+                  {/* 2 · STRIP: one scrolling status strip, then the crew — the
+                      product. Days/metrics live in their own tabs. */}
+                  <div className="flex gap-2 overflow-hidden -me-4">
+                    {[["●", "On track"], ["7d", "12 stops"], ["4", "crew"], ["$", "8,000"], ["T−2", "pack"]].map(([k, v]) => (
+                      <span key={v} className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] font-semibold flex items-center gap-1.5"><span className="text-[#7CCF7C] text-[11px]">{k}</span>{v}</span>
+                    ))}
+                  </div>
+                  <div className={`${c.card} p-4`}>
+                    <p className="text-[11px] font-bold tracking-wider text-white/40 uppercase mb-2">Crew · 4 going</p>
+                    <div className="flex items-center gap-2 mb-3">{["M", "R", "S", "A"].map((x, i) => <span key={x} className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold" style={{ background: ["#3EC5B7", "#FF8A5C", "#E0B252", "#8B7CFF"][i], color: "#111" }}>{x}</span>)}</div>
+                    <p className="text-[14px]"><span className="font-semibold">Rania</span> hearted <span className="font-semibold">TeamLab Planets</span> · 2h</p>
+                    <p className="text-[14px] text-white/70 mt-1"><span className="font-semibold text-white">Sami</span> added a stop to Wed 7 · yesterday</p>
+                    <p className="text-[13px] text-[#8B7CFF] font-semibold mt-2">Nothing else due · go heart something in Discover →</p>
+                  </div>
+                </>
+              )}
+              {below === "horizon" && (
+                <>
+                  <HorizonStrip nowLabel="T−49" progress={18} marks={[{ at: 62, label: "budget" }, { at: 78, label: "docs" }, { at: 92, label: "pack" }]} />
+                  <div className="flex gap-2.5 overflow-hidden -me-4 pt-1">
+                    <Postcard img={pic("tokyo-shibuya")} kicker="Tokyo right now" title="27° · clear · 18:03 sunset" lines={["¥ 156 = $1 · 6h ahead of you"]} />
+                    <Postcard img={pic("tokyo-day1")} kicker="Your day 1 · Oct 6" title="Shibuya crossing → ramen" lines={["3 stops · lands 15:00 · hotel 15:30"]} />
+                    <Postcard img={pic("teamlab-planets")} kicker="Crew is looking at" title="TeamLab Planets" lines={["Rania ♥ · 2h ago · not on the plan yet"]} />
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex -space-x-2">{["M", "R", "S", "A"].map((x, i) => <span key={x} className="w-7 h-7 rounded-full ring-2 ring-[#0d0d0d] flex items-center justify-center text-[11px] font-bold" style={{ background: ["#3EC5B7", "#FF8A5C", "#E0B252", "#8B7CFF"][i], color: "#111" }}>{x}</span>)}</div>
+                    <p className="text-[13px] text-white/60">4 going · 12 stops · USD 8,000 · <span className="text-[#8B7CFF] font-semibold">Discover →</span></p>
+                  </div>
+                </>
+              )}
+              {below === "line" && (
+                <>
+                  {/* 3 · LINE-LITE: what's coming, in order, replaces bar + chips
+                      + cells. The ticket is "now"; this is "next". */}
+                  <div className={`${c.card} p-4`}>
+                    <p className="text-[11px] font-bold tracking-wider text-white/40 uppercase mb-2">Coming up</p>
+                    <div className="relative ms-2 border-s border-white/10 ps-5 space-y-3">
+                      {[["T−14", "Budget check-in", Wallet, "USD 8,000 set"], ["T−7", "Docs", FileText, "passport · hotel"], ["T−2", "Pack", Package, "18 items"], ["Oct 6", "SV 826 · RUH → NRT", Airplane, "09:15"]].map(([w, t, I, sub]) => (
+                        <div key={t as string} className="relative flex items-center gap-3">
+                          <span className="absolute -start-[25px] top-1.5 w-2.5 h-2.5 rounded-full border border-white/40 bg-[#1a1a1c]" />
+                          <span className="w-12 text-[12px] text-white/50">{w as string}</span><I size={16} className="text-white/60" />
+                          <span className="text-[14px] font-semibold">{t as string}</span><span className="ms-auto text-[12px] text-white/40">{sub as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[13px] text-white/50 px-1">Nothing due today · <span className="text-[#8B7CFF] font-semibold">heart places in Discover →</span></p>
+                </>
+              )}
             </>
           )}
         </div>
@@ -323,6 +513,7 @@ function NowLine({ label }: { label: string }) {
   );
 }
 function VariantC({ m }: { m: MomentKey }) {
+  if (m === "EMPTY" || m === "RECAP") return <div className="p-6 text-white/40 text-sm">not drawn for this moment</div>;
   const live = m === "LIVE_AM" || m === "LIVE_LAST";
   const last = m === "LIVE_LAST";
   const stops = last ? LAST : DAY2;
@@ -399,10 +590,90 @@ function VariantC({ m }: { m: MomentKey }) {
   );
 }
 
+
+// ─── D · Horizon system across all six moments ───────────────────────────────
+function Stub({ hue, kicker, title, sub, icon: I }: { hue: keyof typeof HUE; kicker: string; title: string; sub: string; icon: typeof MapPin }) {
+  return <Cta icon={I} label={title} support={sub} urgency={kicker} hue={hue} style="ticket" />;
+}
+function Footer({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <div className="flex -space-x-2">{["M", "R", "S", "A"].map((x, i) => <span key={x} className="w-7 h-7 rounded-full ring-2 ring-[#0d0d0d] flex items-center justify-center text-[11px] font-bold" style={{ background: ["#3EC5B7", "#FF8A5C", "#E0B252", "#8B7CFF"][i], color: "#111" }}>{x}</span>)}</div>
+      <p className="text-[13px] text-white/60">{text}</p>
+    </div>
+  );
+}
+function VariantD({ m }: { m: MomentKey }) {
+  if (m === "EMPTY") return (
+    <div className="h-full overflow-hidden">
+      <Hero eyebrow="IN 21 DAYS" name="Kyoto" sub="Kyoto, Japan · 7 Sep – 13 Sep 2026" />
+      <div className="px-4 pt-4 space-y-3">
+        <Stub hue="brand" kicker="First stop" title="Where do you want to go?" sub="Add one place · we'll draft the rest" icon={MapPin} />
+        {/* the horizon exists from day one: it just has nothing on it yet */}
+        <HorizonStrip nowLabel="T−21" progress={30} marks={[{ at: 62, label: "budget" }, { at: 78, label: "docs" }, { at: 92, label: "pack" }]} />
+        <div className="flex gap-2.5 overflow-hidden -me-4 pt-1">
+          <Postcard img={pic("kyoto-fushimi")} kicker="Crews like yours start with" title="Fushimi Inari" lines={["★ 4.7 · 40k reviews · dawn is quiet"]} />
+          <Postcard img={pic("kyoto-now")} kicker="Kyoto right now" title="31° · humid · 18:40 sunset" lines={["¥ 156 = $1 · 6h ahead"]} />
+          <Postcard img={pic("crew-invite")} kicker="Just you so far" title="Invite your crew" lines={["one link · no account needed"]} tint="linear-gradient(180deg, rgba(139,124,255,.25), rgba(0,0,0,.85))" />
+        </div>
+        <p className="text-[13px] text-white/50">Nothing else due · 21 days out</p>
+      </div>
+    </div>
+  );
+  if (m === "T49" || m === "T3") return <VariantB m={m} cta="ticket" below="horizon" />;
+  if (m === "RECAP") return (
+    <div className="h-full overflow-hidden">
+      <Hero eyebrow="HOME · 2 DAYS AGO" name="Seoul" sub="7 days · 9 stops · 4 crew" />
+      <div className="px-4 pt-4 space-y-3">
+        <Stub hue="dune" kicker="Settle up" title="You owe Rania USD 42" sub="2 splits open · everyone else is square" icon={Wallet} />
+        {/* the horizon flips: it's the whole trip now, and the dots are memories */}
+        <HorizonStrip nowLabel="" progress={100} marks={[{ at: 6, label: "ICN" }, { at: 30, label: "day 2" }, { at: 55, label: "day 4" }, { at: 82, label: "sunset" }, { at: 96, label: "home" }]} />
+        <div className="flex gap-2.5 overflow-hidden -me-4 pt-1">
+          <Postcard img={pic("seoul-han")} kicker="Most hearted" title="Sunset at Han River" lines={["4 of 4 marked it · 12 photos"]} wide />
+          <Postcard img={pic("seoul-market")} kicker="Rania's photo" title="Gwangjang Market" lines={["day 2 · 19:40"]} />
+        </div>
+        <Footer text="USD 1,120 spent · 280 each · Share the Wrap →" />
+      </div>
+    </div>
+  );
+  // LIVE — the map stays; the sheet's peek IS the ticket, teal (wayfind)
+  const last = m === "LIVE_LAST";
+  const stops = last ? LAST : DAY2;
+  const next = stops.find((x) => !x.done && !x.missed)!;
+  const idx = stops.indexOf(next);
+  return (
+    <div className="h-full">
+      <MapBg />
+      <Sheet height="auto" label="peek = ticket + horizon">
+        <Stub hue={last ? "horizon" : "wayfind"} kicker={last ? "Departure tonight · leave by 20:30" : `Up next · ${next.time} · in 1h20`} title={next.title} sub={next.place} icon={last ? Airplane : NavigationArrow} />
+        {/* today as a horizon: stops are the dots, now is the orange one */}
+        <HorizonStrip nowLabel={last ? "21:59" : "09:40"} progress={last ? 88 : 22} marks={stops.map((x, i) => ({ at: 8 + i * 28, label: x.time, hot: i === idx }))} />
+        <div className="flex gap-2.5 overflow-hidden -me-4 pt-1">
+          {last ? (
+            <>
+              <Postcard img={pic("icn-airport")} kicker="Getting to ICN" title="AREX from Hongik · 52 min" lines={["last comfortable train 20:20"]} wide />
+              <Postcard img={pic("seoul-han")} kicker="Skipped today" title="Han River sunset" lines={["mark done · or let it go"]} />
+            </>
+          ) : (
+            <>
+              <Postcard img={pic("gyeongbok")} kicker="Nearby · open now" title="Tosokchon Samgyetang" lines={["4 min walk · ★ 4.5 · crew ♥ 2"]} />
+              <Postcard img={pic("crew-live")} kicker="Crew" title="Sami is at Bukchon" lines={["arrived 09:20 · 12 min from you"]} />
+              <Postcard img={pic("seoul-weather")} kicker="Today" title="29° · rain from 15:00" lines={["Bukchon before, market after"]} />
+            </>
+          )}
+        </div>
+      </Sheet>
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function NowLabPage() {
   if (process.env.NODE_ENV === "production") notFound();
   const [m, setM] = useState<MomentKey>("LIVE_LAST");
+  const [ctaLab, setCtaLab] = useState(false);
+  const [belowLab, setBelowLab] = useState(false);
+  const [dLab, setDLab] = useState(false);
   const mm = MOMENTS.find((x) => x.key === m)!;
   return (
     <div className="min-h-screen bg-[#08080a] text-white p-6">
@@ -418,11 +689,33 @@ export default function NowLabPage() {
           ))}
           <span className="self-center text-white/40 text-sm ms-2">{mm.phase} · {mm.sub}</span>
         </div>
-        <div className="flex flex-wrap gap-8 justify-center" data-variants>
-          <Phone title="A · Auditor's fixes"><VariantA m={m} /></Phone>
-          <Phone title="B · One clock (tripMoment)"><VariantB m={m} /></Phone>
-          <Phone title="C · The Line"><VariantC m={m} /></Phone>
-        </div>
+        <button data-cta-lab onClick={() => setCtaLab((v) => !v)} className={`mb-4 rounded-full px-4 py-2 text-sm font-bold border ${ctaLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>CTA lab (B × 3 styles)</button>
+        <button data-below-lab onClick={() => setBelowLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${belowLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>Below-CTA lab (B3 × 3 layouts)</button>
+        <button data-d-lab onClick={() => setDLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${dLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>D · Horizon system (all moments)</button>
+        {dLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title={`D · Horizon · ${mm.label}`}><VariantD m={m} /></Phone>
+          </div>
+        ) : belowLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title="1 · Fold (two blocks)"><VariantB m={m} cta="ticket" below="fold" /></Phone>
+            <Phone title="2 · Strip + crew"><VariantB m={m} cta="ticket" below="strip" /></Phone>
+            <Phone title="3 · Line-lite (coming up)"><VariantB m={m} cta="ticket" below="line" /></Phone>
+            <Phone title="4 · Horizon + postcards"><VariantB m={m} cta="ticket" below="horizon" /></Phone>
+          </div>
+        ) : ctaLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title="B1 · Hue by action (pill)"><VariantB m={m} cta="hue" /></Phone>
+            <Phone title="B2 · Action card"><VariantB m={m} cta="card" /></Phone>
+            <Phone title="B3 · Boarding stub"><VariantB m={m} cta="ticket" /></Phone>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title="A · Auditor&apos;s fixes"><VariantA m={m} /></Phone>
+            <Phone title="B · One clock (tripMoment)"><VariantB m={m} /></Phone>
+            <Phone title="C · The Line"><VariantC m={m} /></Phone>
+          </div>
+        )}
       </div>
     </div>
   );
