@@ -13,6 +13,7 @@ import { eq, and, asc, desc } from "drizzle-orm";
 import { parseISO, differenceInDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
+import { addDaysIso, diffDaysIso, toIsoDay } from "@/lib/today";
 import { MapPin, Calendar, Clock, CurrencyDollar as DollarSign, Ticket, Buildings as Hotel, Bus, ForkKnife as Utensils, Star, ArrowSquareOut as ExternalLink, Users, Globe, CheckCircle as CheckCircle2, ChartBar as BarChart3 } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
@@ -154,15 +155,32 @@ export default async function SharePage({ params }: Props) {
     {},
   );
 
-  // Build ordered day list
+  // Build ordered day list.
+  //
+  // fix/tz: this used to step a LOCAL-midnight Date and serialise each step with
+  // `.toISOString()`. That is the exact inverse of the bug date-only.ts was
+  // written for: it shifts every day one EARLIER in UTC-PLUS zones and is
+  // correct in the Americas. Measured, for a 10–13 Jul trip:
+  //
+  //   UTC / Los_Angeles   [07-10, 07-11, 07-12, 07-13]   4/4 day_date rows match
+  //   Riyadh / London / KL[07-09, 07-10, 07-11, 07-12]   3/4 match
+  //
+  // Because byDay() matches these keys against itinerary_items.day_date, the
+  // final day of every shared recap rendered EMPTY and day 1's stops sat under
+  // day 2's heading. Dormant on Vercel (UTC); live in `next dev` for anyone
+  // developing in the Gulf, Europe or Asia — i.e. on this project's own machines.
+  //
+  // The keys are calendar days, so they are now built as strings. No Date is
+  // constructed, so no Date can be serialised through the wrong zone.
+  const startIso = toIsoDay(trip.startDate);
+  const totalDays = diffDaysIso(startIso, toIsoDay(trip.endDate)) + 1;
+  const days: string[] = Array.from({ length: totalDays }, (_, i) => addDaysIso(startIso, i));
+
+  // Dates for DISPLAY only — `format()` needs a Date, and parseDateOnly's local
+  // midnight is what makes it render the right calendar day in every zone.
+  // Never compare these against an instant; that is what the strings above are for.
   const start = parseDateOnly(trip.startDate);
   const end = parseDateOnly(trip.endDate);
-  const totalDays = differenceInDays(end, start) + 1;
-  const days: string[] = Array.from({ length: totalDays }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    return d.toISOString().split("T")[0];
-  });
 
   const byDay = (day: string) =>
     confirmedItems.filter((i) => i.dayDate === day);
