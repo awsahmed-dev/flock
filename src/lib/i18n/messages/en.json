@@ -795,6 +795,13 @@
     "emptyDay": "Nothing on this day yet — drag a place onto this day's chip to move it here.",
     "addDay": "Add day ({count})"
   },
+  "errorPage": {
+    "title": "Something went off-course",
+    "body": "The page hit an error while loading. The crew's been notified — try again, or head back to where you were.",
+    "ref": "Ref: {digest}",
+    "tryAgain": "Try again",
+    "dashboard": "Dashboard"
+  },
   "auth": {
     "loginTitle": "Welcome back",
     "loginSubtitle": "Sign in to continue",
@@ -814,6 +821,10 @@
     "forgotPassword": "Forgot password?",
     "loginToast": "Welcome back",
     "signupToast": "Account created",
+    "loginHero": "Welcome back ✈",
+    "loginBoarding": "Re-boarding · Sign in",
+    "signupHero": "Create your account, let's go together ✈",
+    "signupBoarding": "Now boarding · Sign up",
     "signoutToast": "Signed out"
   },
   "email": {
@@ -1404,6 +1415,8 @@
     "typeStay": "Stay",
     "typeTransport": "Transport",
     "typeMeal": "Meal",
+    "editItem": "Edit item",
+    "saveChanges": "Save changes",
     "typeOther": "Other"
   },
   "pocket": {

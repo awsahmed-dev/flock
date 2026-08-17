@@ -169,7 +169,7 @@ export default async function TripPage({ params }: Props) {
   });
   const ticker = lastActivity
     ? {
-        text: describeEvent(t, lastActivity.actor?.displayName ?? "؟", lastActivity.eventType, lastActivity.placeName),
+        text: describeEvent(t, lastActivity.actor?.displayName ?? "—", lastActivity.eventType, lastActivity.placeName),
         eventType: lastActivity.eventType,
       }
     : null;

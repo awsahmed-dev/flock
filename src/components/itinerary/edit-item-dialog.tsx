@@ -10,6 +10,7 @@ import { CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import type { InferSelectModel } from "drizzle-orm";
 import type { itineraryItems } from "@/lib/db/schema";
+import { useT } from "@/components/i18n/locale-provider";
 
 type Item = InferSelectModel<typeof itineraryItems>;
 
@@ -21,15 +22,16 @@ interface Props {
 }
 
 const TYPES = [
-  { value: "activity", label: "Activity" },
-  { value: "accommodation", label: "Stay" },
-  { value: "transport", label: "Transport" },
-  { value: "meal", label: "Meal" },
-  { value: "other", label: "Other" },
+  { value: "activity", key: "addItem.typeActivity" },
+  { value: "accommodation", key: "addItem.typeStay" },
+  { value: "transport", key: "addItem.typeTransport" },
+  { value: "meal", key: "addItem.typeMeal" },
+  { value: "other", key: "addItem.typeOther" },
 ];
 
 export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
   const [isPending, startTransition] = useTransition();
+  const t = useT();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,10 +53,10 @@ export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
           notes: (formData.get("notes") as string) || null,
         };
         onUpdated(updated);
-        toast.success("Item updated");
+        toast.success(t("form.itemUpdated"));
       } catch (err) {
         if (err instanceof Error && !err.message.includes("NEXT_REDIRECT")) {
-          toast.error("Failed to update item");
+          toast.error(t("form.failedToUpdateItem"));
         }
       }
     });
@@ -66,66 +68,66 @@ export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
     <BottomSheet
       open
       onClose={onClose}
-      title="Edit item"
+      title={t("addItem.editItem")}
       size="md"
       footer={
         <div className="flex gap-2 justify-end">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
           <Button
             type="button"
             disabled={isPending}
             onClick={() => formRef.current?.requestSubmit()}
           >
             {isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-            Save changes
+            {t("addItem.saveChanges")}
           </Button>
         </div>
       }
     >
         <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-title">Title *</Label>
+            <Label htmlFor="edit-title">{t("common.title")} *</Label>
             <Input id="edit-title" name="title" defaultValue={item.title} required autoFocus />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-type">Type</Label>
+              <Label htmlFor="edit-type">{t("common.type")}</Label>
               <select
                 id="edit-type"
                 name="type"
                 defaultValue={item.type}
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                {TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                {TYPES.map((o) => (
+                  <option key={o.value} value={o.value}>{t(o.key)}</option>
                 ))}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-time">Time</Label>
+              <Label htmlFor="edit-time">{t("common.time")}</Label>
               <Input id="edit-time" name="startTime" type="time" defaultValue={item.startTime ?? ""} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-location">Location</Label>
+            <Label htmlFor="edit-location">{t("common.location")}</Label>
             <Input id="edit-location" name="locationName" defaultValue={item.locationName ?? ""} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-cost">Cost estimate</Label>
+              <Label htmlFor="edit-cost">{t("common.costEstimate")}</Label>
               <Input id="edit-cost" name="costEstimate" type="number" min="0" step="0.01" defaultValue={item.costEstimate ?? ""} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-url">Booking link</Label>
+              <Label htmlFor="edit-url">{t("common.bookingLink")}</Label>
               <Input id="edit-url" name="bookingUrl" type="url" defaultValue={item.bookingUrl ?? ""} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-notes">Notes</Label>
+            <Label htmlFor="edit-notes">{t("common.notes")}</Label>
             <Input id="edit-notes" name="notes" defaultValue={item.notes ?? ""} />
           </div>
 

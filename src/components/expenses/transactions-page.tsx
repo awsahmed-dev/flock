@@ -409,7 +409,7 @@ function SlimRow({
   const cat = CATEGORY_CONFIG[expense.category] ?? CATEGORY_CONFIG.other;
   const CatIcon = cat.icon;
   const isPayer = expense.paidBy === userId;
-  const payerName = isPayer ? "You" : (expense.payer?.displayName ?? "Someone");
+  const payerName = isPayer ? t("expenses.payerYou") : (expense.payer?.displayName ?? t("expenses.payerSomeone"));
   const mySplit = expense.splits.find((s) => s.userId === userId);
   const iOwe = !isPayer && mySplit && !mySplit.settled;
 

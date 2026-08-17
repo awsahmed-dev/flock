@@ -513,7 +513,7 @@ export function ExpensesBoard({
                       size="md"
                     />
                     <span className="text-sm font-medium flex-1 truncate">
-                      {isMe ? "You" : b.displayName}
+                      {isMe ? t("expenses.payerYou") : b.displayName}
                     </span>
                     <div className="text-right">
                       <p
