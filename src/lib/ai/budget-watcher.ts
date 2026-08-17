@@ -29,6 +29,13 @@ const FALLBACK_NUDGES: Record<Threshold, (pct: number, currency: string, remaini
     `Trip is now over budget by ${Math.round((p - 1) * 100)}%. Worth a quick chat?`,
 };
 
+/**
+ * `budgetTotal` MUST be the effective budget — i.e. already passed through
+ * `effectiveTripBudget()`. Callers used to hand over the raw column, so on a
+ * per-person budget this fired "you're at 90% of the budget" when the trip
+ * was at 23%. The alert is idempotent per threshold, so a false alarm can
+ * never be taken back.
+ */
 export async function maybePostBudgetAlert(
   tripId: string,
   budgetTotal: number | null | undefined,
