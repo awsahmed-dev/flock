@@ -14,6 +14,8 @@ import {
 } from "@/components/animate-ui/primitives/animate/tabs";
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
 import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
+import { AddConfirmationSheet } from "@/components/confirmations/add-confirmation-sheet";
+import { Ticket } from "@phosphor-icons/react/dist/ssr";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 import { tripPhase, type TripPhase } from "@/lib/trip-phase";
@@ -128,6 +130,14 @@ export function DynamicBottomNav({
   const [addPlaceOpen, setAddPlaceOpen] = useState(false);
   // Sprint 4 FIX-5a: the document composer owned by the + menu.
   const [docOpen, setDocOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Now-redesign step 1: any surface can open the confirmation sheet by event
+  // (trip home "Add a confirmation", empty Day 1, docs tab).
+  useEffect(() => {
+    const open = () => setConfirmOpen(true);
+    window.addEventListener("paxawa:openConfirmation", open);
+    return () => window.removeEventListener("paxawa:openConfirmation", open);
+  }, []);
   // Sprint 9 Part 2: ≥768px the nav scales up (frame padding + label size
   // are inline styles, so a media query can't reach them).
   const [desktop, setDesktop] = useState(false);
@@ -430,6 +440,7 @@ export function DynamicBottomNav({
               router.push(phase === "PLANNING" ? `${base}/money?add=expense` : `${base}/money/expense-camera`);
             }}
           />
+          <ActionRow icon={Ticket} label={t("confirm.title")} onClick={() => { setPlusOpen(false); setConfirmOpen(true); }} />
           <ActionRow icon={FileText} label={t("nav.addDocument")} onClick={() => { setPlusOpen(false); setDocOpen(true); }} />
           <ActionRow icon={Users} label={t("nav.askCrew")} onClick={() => { setPlusOpen(false); router.push(`${base}/huddle?compose=poll`); }} />
           <ActionRow icon={Share2} label={t("nav.shareTrip")} onClick={() => { setPlusOpen(false); dispatch("paxawa:openCrewSheet"); }} />
@@ -449,6 +460,7 @@ export function DynamicBottomNav({
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={currency} total={budgetTotal} />
       {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
       <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
+      <AddConfirmationSheet tripId={tripId} tripStart={startDate} tripEnd={endDate} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
     </div>
   );
 }
