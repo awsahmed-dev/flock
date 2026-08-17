@@ -109,6 +109,33 @@ anyone developing in the Gulf, Europe or Asia.
 
 ---
 
+## Verified in the running app, not just in tests
+
+`scripts/tz-capture.mjs` renders the same instant to two travellers whose only
+difference is the `paxawa_tz` cookie. Run against a seeded trip whose LAST day is
+today in UTC ("Seoul Now", 14–17 Aug, captured at 2026-08-17 15:55Z):
+
+| | `main` | `fix/tz` |
+|---|---|---|
+| **UTC traveller** — for whom it is 17 Aug, the final day | dashboard hero: **"Seoul Now — wrapped 🎬 · See your Wrap →"** while `/trips/<id>` renders the LIVE cockpit with UP NEXT | cold-starts into the live cockpit; day pager reads **"Final day 🌅"** |
+| **Pacific/Kiritimati traveller** (UTC+14) — for whom it is already 18 Aug | force-redirected *into* the live cockpit, day pager stuck on **"Fri 14 Aug"** (day 1) | header reads **"TUESDAY, 18 AUGUST"**, trip filed as **wrapped**, Lisbon countdown **1d** |
+
+Three things to read out of that table:
+
+1. On `main` the dashboard called the trip "wrapped" **on its own final day**, while
+   the trip screen simultaneously showed the live cockpit. Both screens, one
+   page load.
+2. On `main` both travellers got the *same* answer — the server's UTC one —
+   because there was no channel for the traveller's zone. On `fix/tz` they get
+   different answers, and each is right for the person looking at it.
+3. The day pager defaulting to "Fri 14 Aug" is `days.indexOf(todayIso)` failing
+   to find today, which is why the UP NEXT card and the day-progress line went
+   missing during LIVE.
+
+(The Mapbox panel fails to load in the sandbox — no egress. Unrelated.)
+
+---
+
 ## Still wrong — deliberately not fixed here
 
 These need a schema column or a product decision, and inventing either inside a
