@@ -145,6 +145,10 @@
     "owner": "Owner",
     "member": "Member",
     "you": "(you)",
+    "leaveTrip": "Leave this trip",
+    "leaveConfirm": "Leave “{trip}”? You'll need a new invite to come back.",
+    "remove": "Remove",
+    "removeConfirm": "Remove {name} from this trip?",
     "copyInviteLink": "Copy invite link",
     "inviteCopiedToast": "Invite link copied!",
     "failedToCopyToast": "Failed to copy"

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { pushSubscriptions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -66,9 +66,11 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Missing endpoint" }, { status: 400 });
   }
 
+  // authz-2: any signed-in user could unsubscribe ANY device by endpoint
+  // (endpoints are guessable-ish and leak in logs). Only your own rows.
   await db
     .delete(pushSubscriptions)
-    .where(eq(pushSubscriptions.endpoint, endpoint));
+    .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)));
 
   return NextResponse.json({ ok: true });
 }

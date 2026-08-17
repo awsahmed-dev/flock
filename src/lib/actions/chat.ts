@@ -245,6 +245,14 @@ export async function toggleReaction(formData: FormData) {
   const { user } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
+  // authz-2: the reaction row has no tripId, so prove the message is in
+  // this trip before writing anything against it.
+  const target = await db.query.chatMessages.findFirst({
+    columns: { id: true },
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
+  });
+  if (!target) throw new Error("Message not found");
+
   const existing = await db.query.messageReactions.findFirst({
     where: and(
       eq(messageReactions.messageId, messageId),
@@ -272,15 +280,17 @@ export async function togglePin(formData: FormData) {
   const isOwner = trip.members.some((m) => m.userId === user.id && m.role === "owner");
   if (!isOwner) throw new Error("Only trip owners can pin messages");
 
+  // authz-2: scope the OBJECT to the trip the caller was authorized on.
+  // `eq(id)` alone let a member of trip A pass a messageId from trip B.
   const message = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
   });
   if (!message) throw new Error("Message not found");
 
   await db
     .update(chatMessages)
     .set({ pinned: !message.pinned })
-    .where(eq(chatMessages.id, messageId));
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/chat`);
 }
@@ -294,8 +304,10 @@ export async function confirmExpenseCard(formData: FormData) {
   const { user, trip } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
+  // authz-2: scope the OBJECT to the trip the caller was authorized on.
+  // `eq(id)` alone let a member of trip A pass a messageId from trip B.
   const message = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
   });
   if (!message || message.type !== "expense_card") throw new Error("Invalid message");
 
@@ -341,7 +353,7 @@ export async function confirmExpenseCard(formData: FormData) {
   await db
     .update(chatMessages)
     .set({ metadata: { ...meta, confirmedExpenseId: expense.id } })
-    .where(eq(chatMessages.id, messageId));
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/chat`);
   revalidatePath(`/trips/${tripId}/expenses`);
@@ -366,8 +378,10 @@ export async function confirmVoteCard(formData: FormData) {
   const { user, trip } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
+  // authz-2: scope the OBJECT to the trip the caller was authorized on.
+  // `eq(id)` alone let a member of trip A pass a messageId from trip B.
   const message = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
   });
   if (!message || message.type !== "vote_card") throw new Error("Invalid message");
 
@@ -389,7 +403,7 @@ export async function confirmVoteCard(formData: FormData) {
   await db
     .update(chatMessages)
     .set({ metadata: { ...meta, options: optionLabels, voteId: vote.id } })
-    .where(eq(chatMessages.id, messageId));
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/chat`);
   revalidatePath(`/trips/${tripId}/votes`);
@@ -411,8 +425,10 @@ export async function confirmLinkToItinerary(formData: FormData) {
   const { user, trip } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
+  // authz-2: scope the OBJECT to the trip the caller was authorized on.
+  // `eq(id)` alone let a member of trip A pass a messageId from trip B.
   const message = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
   });
   if (!message || message.type !== "link_card") throw new Error("Invalid message");
 
@@ -434,7 +450,7 @@ export async function confirmLinkToItinerary(formData: FormData) {
   await db
     .update(chatMessages)
     .set({ metadata: { ...meta, confirmedAction: "itinerary", linkedId: item.id } })
-    .where(eq(chatMessages.id, messageId));
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/chat`);
   revalidatePath(`/trips/${tripId}/itinerary`);
@@ -450,8 +466,10 @@ export async function confirmLinkToVote(formData: FormData) {
   const { user } = await getAuthedMember(tripId);
   await ensureProfile(user as any);
 
+  // authz-2: scope the OBJECT to the trip the caller was authorized on.
+  // `eq(id)` alone let a member of trip A pass a messageId from trip B.
   const message = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)),
   });
   if (!message || message.type !== "link_card") throw new Error("Invalid message");
 
@@ -469,7 +487,7 @@ export async function confirmLinkToVote(formData: FormData) {
   await db
     .update(chatMessages)
     .set({ metadata: { ...meta, confirmedAction: "vote", linkedId: vote.id } })
-    .where(eq(chatMessages.id, messageId));
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/chat`);
   revalidatePath(`/trips/${tripId}/votes`);

@@ -145,6 +145,10 @@
     "owner": "المنظّم",
     "member": "عضو",
     "you": "(أنت)",
+    "leaveTrip": "مغادرة الرحلة",
+    "leaveConfirm": "تغادر «{trip}»؟ ستحتاج دعوة جديدة للعودة.",
+    "remove": "إزالة",
+    "removeConfirm": "تزيل {name} من هذه الرحلة؟",
     "copyInviteLink": "انسخ رابط الدعوة",
     "inviteCopiedToast": "تم نسخ رابط الدعوة!",
     "failedToCopyToast": "تعذّر النسخ"

@@ -97,10 +97,14 @@ export async function toggleTapback(tripId: string, commentId: string, emoji: st
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Access denied");
 
+  // authz-2: thread_comments carries no tripId — join through its thread and
+  // require that thread to be in the authorized trip. Throw (not the old silent
+  // `return`) so a foreign commentId is an error, not an invisible no-op.
   const comment = await db.query.threadComments.findFirst({
     where: eq(threadComments.id, commentId),
+    with: { thread: { columns: { tripId: true } } },
   });
-  if (!comment) return;
+  if (!comment || comment.thread?.tripId !== tripId) throw new Error("Comment not found");
   const tapbacks = { ...((comment.tapbacks ?? {}) as Record<string, string[]>) };
   const list = tapbacks[emoji] ?? [];
   tapbacks[emoji] = list.includes(user.id) ? list.filter((u) => u !== user.id) : [...list, user.id];

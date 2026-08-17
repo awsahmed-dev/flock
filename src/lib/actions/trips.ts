@@ -7,6 +7,7 @@ import { trips, tripMembers, tripInvites, profiles, packingItems } from "@/lib/d
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
+import { inviteExpiry } from "@/lib/invite-ttl";
 import { getLocale } from "@/lib/i18n";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 import { sendEmail } from "@/lib/email/send";
@@ -111,12 +112,14 @@ export async function createTrip(formData: FormData) {
     destination,
   }).catch(() => {});
 
-  // Create a permanent invite token
+  // Create the trip's share invite token (authz-2: bounded to INVITE_TTL_DAYS,
+  // no longer permanent — createTripInvite reissues after it lapses).
   const token = randomBytes(16).toString("hex");
   await db.insert(tripInvites).values({
     tripId: trip.id,
     token,
     createdBy: user.id,
+    expiresAt: inviteExpiry(),
   });
 
   // QA BUG-2: persist each wizard invitee as an email-targeted invite row
@@ -134,6 +137,7 @@ export async function createTrip(formData: FormData) {
           token: randomBytes(16).toString("hex"),
           invitedEmail: email,
           createdBy: user.id,
+          expiresAt: inviteExpiry(),
         })),
       )
       .catch((e) => console.error("[createTrip/invites] insert failed:", e));
