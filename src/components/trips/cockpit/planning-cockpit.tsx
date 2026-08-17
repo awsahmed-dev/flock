@@ -164,12 +164,15 @@ export function PlanningCockpit(props: CockpitShared) {
         {/* Sprint 5 §3b: confirmations at a glance — more time-sensitive than
             packing. Quiet prompt when empty; up to 3 chips + See all after. */}
         {documents.length === 0 ? (
-          <Link
-            href={`${base}/huddle?tab=docs`}
-            className="text-[13px] text-muted-foreground px-1 -mt-1"
+          // Now-redesign step 1: opens the Add-a-confirmation sheet (owned by
+          // the bottom nav) instead of bouncing to the docs tab.
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("paxawa:openConfirmation"))}
+            className="text-[13px] text-muted-foreground px-1 -mt-1 text-start"
           >
             {t("cockpit.addConfirmation")}
-          </Link>
+          </button>
         ) : (
           <section>
             <div className="flex items-center justify-between mb-2">
