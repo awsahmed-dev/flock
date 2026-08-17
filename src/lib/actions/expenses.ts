@@ -280,8 +280,12 @@ export async function deleteExpense(formData: FormData) {
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Trip not found or access denied");
 
+  // AUTHZ: scope the lookup to the trip we just authorized. Without the
+  // tripId predicate the owner check below is evaluated against whatever trip
+  // the client named — and since every trip creator is an owner, "owner" is a
+  // role anyone can grant themselves in one click.
   const expense = await db.query.expenses.findFirst({
-    where: eq(expenses.id, expenseId),
+    where: and(eq(expenses.id, expenseId), eq(expenses.tripId, tripId)),
   });
   if (!expense) throw new Error("Expense not found");
 
@@ -292,7 +296,7 @@ export async function deleteExpense(formData: FormData) {
     throw new Error("Not authorized to delete this expense");
   }
 
-  await db.delete(expenses).where(eq(expenses.id, expenseId));
+  await db.delete(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.tripId, tripId)));
   revalidatePath(`/trips/${tripId}/expenses`);
 }
 
@@ -353,12 +357,23 @@ export async function settleSplit(formData: FormData) {
   const splitId = formData.get("splitId") as string;
   const tripId = formData.get("tripId") as string;
 
-  // Only the payer or the debtor can settle
   const split = await db.query.expenseSplits.findFirst({
     where: eq(expenseSplits.id, splitId),
-    with: { expense: { columns: { paidBy: true, title: true, currency: true } } },
+    with: { expense: { columns: { paidBy: true, title: true, currency: true, tripId: true } } },
   });
-  if (!split) throw new Error("Split not found");
+  if (!split || !split.expense) throw new Error("Split not found");
+
+  // AUTHZ (was entirely absent — the comment below described a check that did
+  // not exist, so any signed-in user holding a splitId could clear that debt).
+  // Three gates, in order: the split must belong to the trip the caller named,
+  // the caller must be a member of that trip, and — as the old comment always
+  // intended — only the payer or the debtor may settle it.
+  if (split.expense.tripId !== tripId) throw new Error("Split not found");
+  const settleTrip = await getTripWithMembership(tripId, user.id);
+  if (!settleTrip) throw new Error("Trip not found or access denied");
+  if (split.userId !== user.id && split.expense.paidBy !== user.id) {
+    throw new Error("Only the payer or the debtor can settle this");
+  }
 
   await db
     .update(expenseSplits)

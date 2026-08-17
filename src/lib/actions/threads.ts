@@ -75,6 +75,13 @@ export async function addThreadComment(tripId: string, threadId: string, content
   const body = content.trim();
   if (!body) return null;
 
+  // AUTHZ: threadId was never tied to the authorized trip, so a member of any
+  // trip could post into any other trip's thread.
+  const parentThread = await db.query.threads.findFirst({
+    where: and(eq(threads.id, threadId), eq(threads.tripId, tripId)),
+  });
+  if (!parentThread) throw new Error("Thread not found");
+
   const [row] = await db
     .insert(threadComments)
     .values({ threadId, userId: user.id, content: body })

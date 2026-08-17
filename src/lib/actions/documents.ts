@@ -3,7 +3,7 @@
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { documents, profiles } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTripWithMembership } from "./trips";
@@ -71,8 +71,9 @@ export async function deleteDocument(formData: FormData) {
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Trip not found or access denied");
 
+  // AUTHZ: scoped to the authorized trip (see expenses.ts for the full note).
   const doc = await db.query.documents.findFirst({
-    where: eq(documents.id, documentId),
+    where: and(eq(documents.id, documentId), eq(documents.tripId, tripId)),
   });
   if (!doc) throw new Error("Document not found");
 
@@ -83,7 +84,7 @@ export async function deleteDocument(formData: FormData) {
     throw new Error("Not authorized to delete this document");
   }
 
-  await db.delete(documents).where(eq(documents.id, documentId));
+  await db.delete(documents).where(and(eq(documents.id, documentId), eq(documents.tripId, tripId)));
   revalidatePath(`/trips/${tripId}/documents`);
   revalidatePath(`/trips/${tripId}/pack`);
 }

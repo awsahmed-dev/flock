@@ -213,6 +213,18 @@ export async function castVote(formData: FormData) {
     })
     .onConflictDoNothing();
 
+  // AUTHZ: the vote and the chosen option must both belong to the authorized
+  // trip. Previously neither was checked, so a member of any trip could stuff
+  // a vote in any other trip.
+  const targetVote = await db.query.votes.findFirst({
+    where: and(eq(votes.id, voteId), eq(votes.tripId, tripId)),
+    with: { options: { columns: { id: true } } },
+  });
+  if (!targetVote) throw new Error("Vote not found");
+  if (!targetVote.options.some((o) => o.id === selectedOptionId)) {
+    throw new Error("That option does not belong to this vote");
+  }
+
   // Upsert: one response per user per vote
   const existing = await db.query.voteResponses.findFirst({
     where: and(
@@ -247,9 +259,11 @@ export async function closeVote(formData: FormData) {
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Trip not found or access denied");
 
-  // Only trip owner or vote creator can close
+  // Only trip owner or vote creator can close. AUTHZ: the lookup is scoped to
+  // the authorized trip, so the owner check cannot be satisfied by a trip the
+  // caller made for themselves.
   const vote = await db.query.votes.findFirst({
-    where: eq(votes.id, voteId),
+    where: and(eq(votes.id, voteId), eq(votes.tripId, tripId)),
   });
   if (!vote) throw new Error("Vote not found");
 
@@ -263,7 +277,7 @@ export async function closeVote(formData: FormData) {
   await db
     .update(votes)
     .set({ status: "closed", resolvedAt: new Date() })
-    .where(eq(votes.id, voteId));
+    .where(and(eq(votes.id, voteId), eq(votes.tripId, tripId)));
 
   // B13c: tell the crew the vote was resolved.
   recordEvent({
@@ -290,7 +304,7 @@ export async function deleteVote(formData: FormData) {
   if (!trip) throw new Error("Trip not found or access denied");
 
   const vote = await db.query.votes.findFirst({
-    where: eq(votes.id, voteId),
+    where: and(eq(votes.id, voteId), eq(votes.tripId, tripId)),
   });
   if (!vote) throw new Error("Vote not found");
 
@@ -301,7 +315,7 @@ export async function deleteVote(formData: FormData) {
     throw new Error("Not authorized to delete this vote");
   }
 
-  await db.delete(votes).where(eq(votes.id, voteId));
+  await db.delete(votes).where(and(eq(votes.id, voteId), eq(votes.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/votes`);
 }
