@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { createBaseConverter } from "@/lib/money-total";
+import { FxIncompleteNote } from "@/components/expenses/fx-incomplete-note";
 import { fmtAmount as fmt } from "@/lib/numerals";
-import { convert, type RateBundle } from "@/lib/fx";
+import { type RateBundle } from "@/lib/fx";
 import { ArrowRight, Check, CircleNotch as Loader2, Bell } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
@@ -99,11 +101,9 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
   }
 
   const data = useMemo(() => {
-    function toBase(amount: number, ccy: string) {
-      if (ccy === currency) return amount;
-      const c = convert(amount, ccy, currency, fxRates);
-      return c ?? 0;
-    }
+    // A missing rate no longer silently counts a row as zero — the row is
+    // still excluded from the arithmetic, but recorded so the UI can say so.
+    const { toBase, missing } = createBaseConverter(currency, fxRates);
 
     const shared = expenses.filter((e) => e.scope !== "personal");
 
@@ -162,7 +162,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
       if (Math.abs(c.net) < 0.005) j++;
     }
 
-    return { nets, transfers };
+    return { nets, transfers, fxMissing: [...missing] };
   }, [expenses, members, currency, fxRates]);
 
   return (
@@ -172,6 +172,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
         title={t("expenses.balancesTitle")}
         subtitle={data.nets.length <= 1 ? t("expenses.balancesSolo") : t("expenses.whoOwesWho")}
       />
+      <FxIncompleteNote currencies={data.fxMissing} className="-mt-3" />
 
       {/* View switch — hidden when nothing to settle (solo trip). Canonical
           SegmentedControl so the tap targets clear 40px (was a p-0.5 /

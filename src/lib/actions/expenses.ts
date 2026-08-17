@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { splitEqually } from "@/lib/split";
 import { db } from "@/lib/db";
 import { expenses, expenseSplits, profiles, tripMembers, chatMessages } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
@@ -125,13 +126,17 @@ export async function createExpense(formData: FormData) {
   const members = allMembers;
 
   if (scope === "shared" && splitType === "equal" && members.length > 0) {
-    const perPerson = amount / members.length;
+    // Shares are computed in minor units and the remainder goes to the payer,
+    // so they sum EXACTLY to `amount` for every party count and currency.
+    // Previously this stored `amount / members.length` raw: $100 split 7 ways
+    // told each person "$14.29", which adds up to $100.03.
+    const shares = splitEqually(amount, currency, members.map((m) => m.userId), payerId);
     await db.insert(expenseSplits).values(
-      members.map((m) => ({
+      shares.map((s) => ({
         expenseId: expense.id,
-        userId: m.userId,
-        amountOwed: perPerson,
-        settled: m.userId === payerId, // Payer is pre-settled (Sprint 3 FIX-3)
+        userId: s.userId,
+        amountOwed: s.amountOwed,
+        settled: s.userId === payerId, // Payer is pre-settled (Sprint 3 FIX-3)
       }))
     );
   } else if (scope === "shared" && customSplits && customSplits.length > 0) {

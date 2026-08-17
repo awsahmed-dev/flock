@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createBaseConverter } from "@/lib/money-total";
+import { FxIncompleteNote } from "@/components/expenses/fx-incomplete-note";
 import Link from "next/link";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import { ExpenseSheet } from "./expense-sheet";
@@ -8,8 +10,8 @@ import { Receipt, ArrowUpRight, ArrowDownRight, ArrowsLeftRight as ArrowRightLef
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { fmtAmount as fmt } from "@/lib/numerals";
-import type { RateBundle } from "@/lib/fx";
-import { convert } from "@/lib/fx";
+import { convert, type RateBundle } from "@/lib/fx";
+
 import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { simplifySettlements } from "@/lib/settle";
@@ -136,11 +138,9 @@ export function ExpensesBoard({
     const sharedExpenses = expenseList.filter((e) => e.scope !== "personal");
     const personalExpenses = expenseList.filter((e) => e.scope === "personal");
 
-    function toBase(amount: number, ccy: string) {
-      if (ccy === currency) return amount;
-      const c = convert(amount, ccy, currency, fxRates);
-      return c ?? 0;
-    }
+    // A missing rate no longer silently counts a row as zero — the row is
+    // still excluded from the arithmetic, but recorded so the UI can say so.
+    const { toBase, missing } = createBaseConverter(currency, fxRates);
 
     const totalSharedBase = sharedExpenses.reduce(
       (s, e) => s + toBase(e.amount, e.currency),
@@ -205,6 +205,7 @@ export function ExpensesBoard({
       (expenseCurrencies.size === 1 && !expenseCurrencies.has(currency));
 
     return {
+      fxMissing: [...missing],
       sharedExpenses,
       totalSharedBase,
       myPaidBase,
@@ -262,6 +263,7 @@ export function ExpensesBoard({
           <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
             {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••••"}
           </p>
+          <FxIncompleteNote currencies={derived.fxMissing} className="mt-1 !text-white/85" />
           {derived.isMultiCurrency && fxRates && (
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-white/70">
               <ArrowRightLeft className="w-3 h-3" />

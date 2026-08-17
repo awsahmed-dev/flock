@@ -14,7 +14,9 @@ import { effectiveTripBudget } from "@/lib/budget";
 import { eq, asc, desc, inArray, and, sql } from "drizzle-orm";
 import { eachDayOfInterval, format as isoFormat, differenceInCalendarDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { getRates, convert } from "@/lib/fx";
+import { getRates } from "@/lib/fx";
+import { totalInCurrency, totalInCurrencyBy } from "@/lib/money-total";
+import { convert as convertOrNull } from "@/lib/fx";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
 import { tripPhase } from "@/lib/trip-phase";
 import { NowCockpit, type NowItem } from "@/components/trips/now-cockpit";
@@ -83,15 +85,19 @@ export default async function TripPage({ params }: Props) {
     .from(expenses)
     .where(eq(expenses.tripId, id));
   const rates = expRows.length ? await getRates(tripCurrency).catch(() => null) : null;
-  let spent = 0;
-  const spentByUser = new Map<string, number>();
-  for (const e of expRows) {
-    const amt = Number(e.amount) || 0;
-    const converted =
-      e.currency !== tripCurrency ? convert(amt, e.currency, tripCurrency, rates) ?? amt : amt;
-    spent += converted;
-    spentByUser.set(e.paidBy, (spentByUser.get(e.paidBy) ?? 0) + converted);
-  }
+  // A missing rate no longer becomes a number. `?? amt` used to count a
+  // 50,000 JPY expense as 50,000 USD — 156x the real figure — and the /money
+  // screen's `?? 0` counted the same row as zero. Both are now excluded from
+  // the total and reported, so the UI can say the total is incomplete instead
+  // of stating a wrong one confidently.
+  const spentTotal = totalInCurrency(expRows, tripCurrency, rates);
+  const spent = spentTotal.total;
+  const spentByUserResult = totalInCurrencyBy(
+    expRows.map((e) => ({ amount: Number(e.amount) || 0, currency: e.currency, key: e.paidBy })),
+    tripCurrency,
+    rates,
+  );
+  const spentByUser = spentByUserResult.byKey;
 
   const days = eachDayOfInterval({
     start: parseDateOnly(trip.startDate),
@@ -200,7 +206,12 @@ export default async function TripPage({ params }: Props) {
     endDate: trip.endDate,
     heroImageUrl: trip.heroImageUrl ?? trip.coverImage ?? null,
     currency: tripCurrency,
-    budgetTotal: trip.budgetTotal != null ? Number(trip.budgetTotal) : null,
+    // A per-person budget must be multiplied by the crew size before any
+    // screen compares spend against it. LIVE already did this (see the
+    // NowCockpit call below); PLANNING, DEPARTURE and RECAP read the raw
+    // column, so a "$2,000 per person" trip with 4 people showed a $2,000
+    // budget on three screens and $8,000 on two others.
+    budgetTotal: effectiveTripBudget(trip.budgetTotal, trip.budgetType, crew.length),
     days,
     items,
     crew,
@@ -255,8 +266,15 @@ export default async function TripPage({ params }: Props) {
     for (const s of splitRows) {
       if (s.settled || s.debtorId === s.payerId) continue;
       const amt = Number(s.amountOwed) || 0;
+      // Same rule as the spend total: a missing rate is NOT a number. An
+      // unconvertible split is skipped rather than counted at face value —
+      // `?? amt` here rendered an unsettled 25,000 JPY share as
+      // "Bob owes you USD 25,000".
       const converted =
-        s.currency !== tripCurrency ? convert(amt, s.currency, tripCurrency, rates) ?? amt : amt;
+        s.currency === tripCurrency
+          ? amt
+          : convertOrNull(amt, s.currency, tripCurrency, rates);
+      if (converted == null) continue;
       nets.set(s.payerId, (nets.get(s.payerId) ?? 0) + converted);
       nets.set(s.debtorId, (nets.get(s.debtorId) ?? 0) - converted);
     }

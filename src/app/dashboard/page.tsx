@@ -10,7 +10,8 @@ import { eq, inArray } from "drizzle-orm";
 import { differenceInCalendarDays } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { getRates, convert } from "@/lib/fx";
+import { getRates } from "@/lib/fx";
+import { totalInCurrency } from "@/lib/money-total";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { Logo } from "@/components/ui/logo";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
@@ -118,6 +119,8 @@ export default async function DashboardPage() {
   let activeStats: {
     memberCount: number;
     spent: number;
+    /** Currencies whose rows were EXCLUDED from `spent` because no rate was available. */
+    spentMissing: string[];
     currency: string;
     totalDays: number;
     currentDayIndex: number;
@@ -130,12 +133,18 @@ export default async function DashboardPage() {
       db.select({ amount: expenses.amount, currency: expenses.currency }).from(expenses).where(eq(expenses.tripId, activeTrip.id)),
     ]);
     let spent = 0;
+    let spentMissing: string[] = [];
     if (expRows.length) {
       const rates = await getRates(tripCurrency).catch(() => null);
-      for (const e of expRows) {
-        const amt = Number(e.amount) || 0;
-        spent += e.currency !== tripCurrency ? convert(amt, e.currency, tripCurrency, rates) ?? amt : amt;
-      }
+      // `?? amt` used to count a 96,000 KRW dinner as 96,000 USD when the
+      // rate was missing. Rows without a rate are now excluded and named.
+      const total = totalInCurrency(
+        expRows.map((e) => ({ amount: Number(e.amount) || 0, currency: e.currency })),
+        tripCurrency,
+        rates,
+      );
+      spent = total.total;
+      spentMissing = total.unconverted.map((r) => r.currency);
     }
     const start = parseDateOnly(activeTrip.startDate);
     const end = parseDateOnly(activeTrip.endDate);
@@ -144,6 +153,7 @@ export default async function DashboardPage() {
     activeStats = {
       memberCount: memberRows.length,
       spent,
+      spentMissing,
       currency: tripCurrency,
       totalDays,
       currentDayIndex,
@@ -265,7 +275,11 @@ export default async function DashboardPage() {
                   </p>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <StatChip icon={MapPin} value={t("dashboard.stopsToday", { count: activeStats.todayStops })} />
-                    <StatChip icon={Wallet} value={money(activeStats.spent, activeStats.currency)} />
+                    <StatChip
+                      icon={Wallet}
+                      value={activeStats.spentMissing.length ? `${money(activeStats.spent, activeStats.currency)}+` : money(activeStats.spent, activeStats.currency)}
+                      title={activeStats.spentMissing.length ? t("dashboard.spentIncomplete", { currencies: activeStats.spentMissing.join(", ") }) : undefined}
+                    />
                     <StatChip icon={Users} value={t("dashboard.crewCount", { count: activeStats.memberCount })} />
                   </div>
                   <div className="flex gap-2 mt-3 pointer-events-auto">
@@ -388,9 +402,9 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function StatChip({ icon: Icon, value }: { icon: typeof MapPin; value: string }) {
+function StatChip({ icon: Icon, value, title }: { icon: typeof MapPin; value: string; title?: string }) {
   return (
-    <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: "rgba(255,255,255,0.15)" }}>
+    <span title={title} aria-label={title} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: "rgba(255,255,255,0.15)" }}>
       <Icon size={12} className="text-white" />
       <span className="text-[11px] font-medium text-white">{value}</span>
     </span>
