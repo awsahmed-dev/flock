@@ -113,7 +113,10 @@
   --success: var(--green-600);
   --warning: var(--yellow-600);
   --danger: var(--red-600);
-  --text-tertiary: #8F8B99;
+  /* Sweep Task 2: was #8F8B99 (3.02:1 on --muted). #716E79 is the lightest
+     same-hue value that clears WCAG 4.5:1 on background/card/muted
+     (4.54:1 worst case) while staying lighter than --muted-foreground. */
+  --text-tertiary: #716E79;
   --accent-glow: var(--clr-brand-dim);
   --route-line: var(--clr-wayfind);
   --pin-today: var(--clr-wayfind);
