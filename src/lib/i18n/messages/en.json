@@ -1008,13 +1008,20 @@
     "disclosure": "Some links earn Paxawa a small commission. We only show partners we'd use ourselves."
   },
   "onboarding": {
-    "howItWorks": "How Paxawa works",
-    "step1Title": "Plan it on the map",
-    "step1Body": "Add stops, get AI suggestions, see your trip on one map.",
-    "step2Title": "Book what you need",
-    "step2Body": "Open Bookings to add hotels, flights and eSIM — tickets you carry.",
-    "step3Title": "Carry it in Bookings",
-    "step3Body": "Every confirmed ticket lands in Bookings with a barcode."
+    "eyebrow": "Welcome to Paxawa",
+    "title": "Group trips, without the group-chat chaos.",
+    "subtitle": "Plan, vote, and split expenses in one place — so your next trip actually happens.",
+    "step": "Step {n}",
+    "crewTitle": "Plan together, not in a chaotic group chat",
+    "crewBody": "Drop in your friends with one link. Everyone sees the same plan, votes on the same options, owes the same totals.",
+    "aiTitle": "Let AI scout your itinerary",
+    "aiBody": "Tell us where and when. Get real places, day by day, then drag, edit, or vote on what stays.",
+    "moneyTitle": "Track who paid for what, in any currency",
+    "moneyBody": "Log expenses as they happen — equal-split or custom. Balances stay live, settlements stay clean.",
+    "cta": "Plan your first trip",
+    "tagVoting": "Group voting",
+    "tagSplitting": "Expense splitting",
+    "tagAi": "AI itinerary"
   },
   "profile": {
     "menuLink": "Profile",
@@ -1319,6 +1326,9 @@
     "metricPacking": "Packing",
     "metricStops": "{count, plural, one {1 stop} other {# stops}}",
     "metricStart": "Start →",
+    "metricSetBudget": "Set a budget",
+    "metricInviteCrew": "Invite crew",
+    "metricStartPacking": "Start packing",
     "metricNotSet": "Not set",
     "metricPeople": "{count, plural, one {1 person} other {# people}}",
     "metricJustYou": "Just you",
@@ -1430,6 +1440,14 @@
     "editItem": "Edit item",
     "saveChanges": "Save changes",
     "typeOther": "Other"
+  },
+  "consent": {
+    "title": "Help us build a better product?",
+    "body": "We'd like to track anonymous usage events (signup, trip created, vote opened) to understand what works. Never reads your trip content. See our {policy}.",
+    "policy": "privacy policy",
+    "allow": "Allow",
+    "decline": "Decline",
+    "declineAria": "Decline analytics"
   },
   "pocket": {
     "title": "Pocket Day",

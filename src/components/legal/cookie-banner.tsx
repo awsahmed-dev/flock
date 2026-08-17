@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/components/i18n/locale-provider";
 import { Cookie, X } from "@phosphor-icons/react/dist/ssr";
 import {
   setAnalyticsConsent,
@@ -25,6 +26,7 @@ import {
 const CONSENT_KEY = "paxawa:analytics-consent";
 
 export function CookieBanner() {
+  const t = useT();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -59,12 +61,13 @@ export function CookieBanner() {
     <div
       role="dialog"
       aria-labelledby="cookie-banner-title"
-      className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-50 rounded-2xl border border-border bg-card/95 backdrop-blur-md shadow-2xl shadow-black/30 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4"
+      data-cookie-banner
+      className="cookie-banner fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-50 rounded-2xl border border-border bg-card/95 backdrop-blur-md shadow-2xl shadow-black/30 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4"
     >
       <button
         onClick={() => decide(false)}
         className="absolute top-3 right-3 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        aria-label="Decline analytics"
+        aria-label={t("consent.declineAria")}
       >
         <X className="w-4 h-4" />
       </button>
@@ -75,32 +78,30 @@ export function CookieBanner() {
         </div>
         <div className="flex-1 min-w-0">
           <p id="cookie-banner-title" className="text-sm font-bold">
-            Help us build a better product?
+            {t("consent.title")}
           </p>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            We'd like to track anonymous usage events (signup, trip created,
-            vote opened) to understand what works. Never reads your trip
-            content. See our{" "}
+            {t("consent.body").split("{policy}")[0]}
             <Link
               href="/privacy"
               className="text-primary hover:underline font-medium"
             >
-              privacy policy
+              {t("consent.policy")}
             </Link>
-            .
+            {t("consent.body").split("{policy}")[1]}
           </p>
           <div className="flex items-center gap-2 mt-3">
             <button
               onClick={() => decide(true)}
               className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold px-3 py-2 hover:opacity-90 transition-opacity"
             >
-              Allow
+              {t("consent.allow")}
             </button>
             <button
               onClick={() => decide(false)}
               className="flex-1 inline-flex items-center justify-center rounded-lg border border-border bg-muted/40 text-foreground text-xs font-bold px-3 py-2 hover:bg-muted/60 transition-colors"
             >
-              Decline
+              {t("consent.decline")}
             </button>
           </div>
         </div>

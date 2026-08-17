@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Compass, MapPin, Wallet, Users, ChatCircle as MessageCircle, MapTrifold as MapIcon, Receipt } from "@phosphor-icons/react/dist/ssr";
+import { MapPin, Wallet, Users, ChatCircle as MessageCircle, MapTrifold as MapIcon, Receipt } from "@phosphor-icons/react/dist/ssr";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { trips, tripMembers, profiles, itineraryItems, expenses } from "@/lib/db/schema";
@@ -16,6 +16,7 @@ import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { Logo } from "@/components/ui/logo";
 import { AccountAvatarButton } from "@/components/account/account-avatar-button";
 import { NewTripTrigger } from "@/components/trips/new-trip-trigger";
+import { OnboardingCard } from "@/components/dashboard/onboarding-card";
 import { ColdStartRedirect } from "@/components/dashboard/cold-start-redirect";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
@@ -219,14 +220,11 @@ export default async function DashboardPage() {
       </header>
 
       {empty ? (
+        // First-run Finding 8: the written, translated onboarding card was
+        // dead code while this rendered a compass and one pill. Now it is
+        // the zero-trip experience.
         <div className="px-4">
-          <div className="rounded-2xl border border-dashed border-border bg-secondary/40 px-6 py-12 text-center">
-            <Compass className="w-8 h-8 mx-auto text-tertiary" />
-            <p className="mt-3 type-body-lg font-semibold">{t("dashboard.noTripsYet")}</p>
-            <div className="mt-4 flex justify-center">
-              <NewTripTrigger variant="inline" label={t("dashboard.newTrip")} />
-            </div>
-          </div>
+          <OnboardingCard />
         </div>
       ) : (
         <div

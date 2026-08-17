@@ -526,3 +526,11 @@ html[dir="rtl"] body {
     drop-shadow(0 0 14px rgba(255, 255, 255, 0.35))
     drop-shadow(0 22px 40px rgba(10, 14, 24, 0.28));
 }
+
+/* Consent banner must never cover the floating bottom nav on phones: the nav
+   zone is 12px + 56px + 12px above the safe area. Only when a nav is mounted. */
+@media (max-width: 639px) {
+  body:has([data-bottom-nav]) .cookie-banner {
+    bottom: calc(env(safe-area-inset-bottom) + 92px);
+  }
+}
