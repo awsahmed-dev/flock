@@ -874,6 +874,141 @@ function VariantE({ m, quiet = false }: { m: MomentKey; quiet?: boolean }) {
   );
 }
 
+
+// ─── G · smaller: compact notes with hidden detail; LIVE shows the schedule ──
+function NoteRow({ p, open = false }: { p: P2; open?: boolean }) {
+  const col = HUE[p.hue ?? "brand"];
+  const I = p.icon ?? MapPin;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#161618] px-3.5 py-3">
+      <div className="flex items-center gap-3">
+        <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${col}22` }}><I size={17} weight="fill" style={{ color: col }} /></span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-bold leading-tight truncate">{p.title}</p>
+          <p className="text-[12px] text-white/50 truncate">{open ? p.purpose : p.body}</p>
+        </div>
+        <span className="text-[12px] font-bold shrink-0 flex items-center gap-0.5" style={{ color: col }}>{p.action.split(" ")[0]} <CaretRight size={11} weight="bold" /></span>
+      </div>
+      {open && <p className="text-[13px] text-white/65 mt-2 ps-12">{p.body}</p>}
+    </div>
+  );
+}
+function HeroCard({ p }: { p: P2 }) {
+  const col = HUE[p.hue ?? "brand"];
+  const I = p.icon ?? MapPin;
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-white/10 h-[176px]" style={{ backgroundImage: `url(${p.img})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+      <div className="absolute inset-0" style={{ background: p.tint ?? "linear-gradient(180deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.85) 100%)" }} />
+      <span className="absolute top-3 start-3 rounded-full bg-black/45 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-white/85 flex items-center gap-1"><I size={12} style={{ color: col }} weight="fill" />{p.purpose}</span>
+      <div className="absolute inset-x-0 bottom-0 p-3.5 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black tracking-wider uppercase" style={{ color: col }}>{p.kicker}</p>
+          <p className="text-[18px] font-bold leading-tight truncate">{p.title}</p>
+          <p className="text-[12px] text-white/70 truncate">{p.body}</p>
+        </div>
+        <span className="shrink-0 rounded-full px-3.5 h-9 flex items-center text-[13px] font-bold text-black" style={{ background: col }}>{p.action}</span>
+      </div>
+    </div>
+  );
+}
+function ScheduleRow({ s, state, now }: { s: Stop; state: "done" | "missed" | "next" | "later"; now?: string }) {
+  const I = s.icon;
+  const dim = state === "done";
+  return (
+    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl ${state === "next" ? "bg-[#3EC5B7]/10 border border-[#3EC5B7]/40" : "border border-transparent"} ${dim ? "opacity-45" : ""}`}>
+      <span className="w-11 text-[13px] tabular-nums font-semibold text-white/60">{s.time}</span>
+      <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${state === "next" ? "bg-[#3EC5B7]/20" : "bg-white/[0.06]"}`}><I size={15} className={state === "next" ? "text-[#3EC5B7]" : "text-white/70"} /></span>
+      <div className="min-w-0 flex-1">
+        <p className={`text-[15px] font-bold leading-tight truncate ${dim ? "line-through" : ""}`}>{s.title}</p>
+        <p className="text-[12px] text-white/50 truncate">{state === "next" && now ? now : s.place}</p>
+      </div>
+      {state === "done" && <Check size={16} weight="bold" className="text-[#9BC97E]" />}
+      {state === "missed" && <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-bold text-white/60">Done?</span>}
+      {state === "next" && <span className="rounded-full bg-[#3EC5B7] text-black px-2.5 py-1 text-[11px] font-black">GO</span>}
+      {state === "later" && <span className="text-[11px] text-white/35">{s.place.split(" ")[0]}</span>}
+    </div>
+  );
+}
+function VariantG({ m }: { m: MomentKey }) {
+  const HZ = { budget: Wallet, docs: FileText, pack: Package };
+  if (m === "T49" || m === "T3" || m === "EMPTY" || m === "RECAP") {
+    const t3 = m === "T3", empty = m === "EMPTY", recap = m === "RECAP";
+    const cards: P2[] = recap ? [
+      { img: pic("seoul-han"), purpose: "The one everyone loved", kicker: "Most hearted · 4 of 4", title: "Sunset at Han River", body: "12 photos", action: "Open Wrap", hue: "brand", icon: Camera },
+      { img: "", purpose: "So it ends clean", kicker: "Money", title: "USD 1,120 · 280 each", body: "2 splits open", action: "Settle", hue: "dune", icon: Wallet },
+      { img: "", purpose: "Rania's memory", kicker: "Day 2", title: "Gwangjang Market photo", body: "3 reactions", action: "React", hue: "horizon", icon: Camera },
+    ] : empty ? [
+      { img: pic("kyoto-fushimi"), purpose: "To get you started", kicker: "Crews like yours start with", title: "Fushimi Inari", body: "★ 4.7 · dawn is quiet", action: "Add", hue: "brand", icon: Sparkle },
+      { img: "", purpose: "So it feels real", kicker: "", title: "Kyoto · 31° · humid", body: "¥156 = $1 · 6h ahead", action: "Weather", hue: "wayfind", icon: Sun },
+      { img: "", purpose: "Trips are better together", kicker: "", title: "Invite your crew", body: "one link · no account", action: "Share", hue: "horizon", icon: Users },
+    ] : t3 ? [
+      { img: pic("boarding-pass"), purpose: "The thing you'll need first", kicker: "Oct 6 · 09:15 · SV 826", title: "RUH → NRT", body: "gate 08:15 · 3 of 4 checked in", action: "Check in", hue: "horizon", icon: Ticket, tint: "linear-gradient(180deg, rgba(20,20,40,.4), rgba(0,0,0,.88))" },
+      { img: "", purpose: "So you pack right", kicker: "", title: "Tokyo · 24° · light rain", body: "pack a shell", action: "Fix packing", hue: "dune", icon: Sun },
+      { img: "", purpose: "So arrival is calm", kicker: "", title: "Shinjuku Granbell", body: "check-in 15:00 · 4 min from station", action: "Open", hue: "brand", icon: Bed },
+      { img: "", purpose: "So border control is 30 s", kicker: "", title: "Passport scan missing", body: "add before T−1", action: "Add", hue: "horizon", icon: FileText },
+    ] : [
+      { img: pic("teamlab-planets"), purpose: "Your crew is deciding", kicker: "Rania hearted · 2h", title: "TeamLab Planets", body: "fits Wed 7 · 2 crew ♥", action: "Add", hue: "horizon", icon: Users },
+      { img: "", purpose: "So you can picture it", kicker: "", title: "Day 1 · Shibuya → ramen", body: "lands 15:00 · 3 stops", action: "Open", hue: "brand", icon: CalendarDots },
+      { img: "", purpose: "So you know what to expect", kicker: "", title: "Tokyo · 27° · clear", body: "¥156 = $1 · 6h ahead", action: "Weather", hue: "wayfind", icon: Sun },
+      { img: "", purpose: "So no one is surprised", kicker: "", title: "USD 8,000 · 2,000 each", body: "Sami's flight isn't logged", action: "Log", hue: "dune", icon: Wallet },
+    ];
+    const [hero, ...notes] = cards;
+    return (
+      <div className="h-full overflow-y-auto pb-28">
+        <Hero eyebrow={recap ? "HOME · 2 DAYS AGO" : empty ? "IN 21 DAYS" : t3 ? "IN 3 DAYS" : "IN 49 DAYS"} name={recap ? "Seoul" : empty ? "Kyoto" : "Tokyo"} sub={recap ? "7 days · 9 stops · 4 crew" : empty ? "Kyoto, Japan · 7 Sep – 13 Sep 2026" : "Tokyo, Japan · 6 Oct – 12 Oct 2026"} />
+        <div className="px-4 pt-4 space-y-3">
+          {recap ? <Stub hue="dune" kicker="Settle up" title="You owe Rania USD 42" sub="2 splits open · everyone else is square" icon={Wallet} />
+            : empty ? <Stub hue="brand" kicker="First stop" title="Where do you want to go?" sub="Add one place · we'll draft the rest" icon={MapPin} />
+            : t3 ? <Stub hue="dune" kicker="Due now" title="Pack — 14 left" sub="18 items · flight in 3 days" icon={Package} />
+            : <Stub hue="horizon" kicker="Your vote's missing" title="Nikko or Hakone?" sub="Crew vote · 2 of 4 voted · closes tonight" icon={ChatCircle} />}
+          {recap
+            ? <Horizon2 title="Horizon · the whole trip" nowLabel="home" progress={100} endIcon={Camera} marks={[{ at: 6, label: "ICN", icon: Airplane, state: "done" }, { at: 30, label: "day 2", icon: ForkKnife, state: "done" }, { at: 55, label: "day 4", icon: Camera, state: "done" }, { at: 80, label: "sunset", icon: Sun, state: "done" }]} />
+            : <Horizon2 title={empty ? "Horizon · 21 days to Kyoto" : t3 ? "Horizon · 3 days to Tokyo" : "Horizon · 49 days to Tokyo"} nowLabel={empty ? "T−21" : t3 ? "T−3" : "T−49"} progress={empty ? 30 : t3 ? 88 : 18}
+                marks={[{ at: 60, label: "budget", icon: HZ.budget, state: t3 ? "done" : "later" }, { at: 76, label: t3 ? "docs 1/2" : "docs", icon: HZ.docs, state: t3 ? "due" : "later" }, { at: 91, label: "pack", icon: HZ.pack, state: t3 ? "due" : "later" }]} />}
+          <HeroCard p={hero} />
+          <div className="space-y-2">
+            {notes.map((p) => <NoteRow key={p.title} p={p} />)}
+          </div>
+          <Footer text={recap ? "USD 1,120 · Share the Wrap →" : empty ? "Just you · 0 stops" : "4 going · 12 stops · USD 8,000"} />
+        </div>
+      </div>
+    );
+  }
+  // LIVE: ticket + today line + THE SCHEDULE. One quiet context line, no cards.
+  const last = m === "LIVE_LAST";
+  const stops = last ? LAST : DAY2;
+  const next = stops.find((x) => !x.done && !x.missed)!;
+  const idx = stops.indexOf(next);
+  return (
+    <div className="h-full">
+      <MapBg />
+      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-[#141416] border-t border-white/10 px-4 pt-2 overflow-y-auto" style={{ height: "62%", paddingBottom: 96 }}>
+        <div className="mx-auto w-9 h-1 rounded-full bg-white/25 mb-3" />
+        <div className="space-y-3">
+          <Stub hue={last ? "horizon" : "wayfind"} kicker={last ? "Departure tonight · leave by 20:30" : `Up next · ${next.time} · in 1h20`} title={next.title} sub={next.place} icon={last ? Airplane : NavigationArrow} />
+          <Horizon2 title={last ? "Today · final day" : "Today · day 2"} nowLabel={last ? "21:59" : "09:40"} progress={last ? 88 : 22} endIcon={last ? Airplane : Moon}
+            marks={stops.map((x, i) => ({ at: 6 + i * 27, label: x.time, icon: x.icon, state: x.done ? "done" : x.missed ? "due" : i === idx ? "now" : "later" }))} />
+          {/* one context line — the only "card" that survives in LIVE */}
+          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-[13px]">
+            <Sun size={16} className="text-[#3EC5B7] shrink-0" weight="fill" />
+            <span className="flex-1 truncate">{last ? "AREX from Hongik 52 min · last comfortable train 20:20" : "29° · rain from 15:00 — swap Bukchon and the market?"}</span>
+            <span className="text-[#3EC5B7] font-bold shrink-0">{last ? "Route" : "Swap"}</span>
+          </div>
+          <div>
+            <div className="flex items-center justify-between px-1 mb-1.5">
+              <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Schedule · {stops.length} stops</p>
+              <p className="text-[12px] text-white/50">{stops.filter((x) => x.done).length} done</p>
+            </div>
+            <div className="space-y-1">
+              {stops.map((x, i) => <ScheduleRow key={x.title} s={x} state={x.done ? "done" : x.missed ? "missed" : i === idx ? "next" : "later"} now={last ? "in 1h11 · gate 246" : "in 1h20 · 12 min walk"} />)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function NowLabPage() {
   if (process.env.NODE_ENV === "production") notFound();
@@ -883,6 +1018,7 @@ export default function NowLabPage() {
   const [dLab, setDLab] = useState(false);
   const [eLab, setELab] = useState(false);
   const [fLab, setFLab] = useState(false);
+  const [gLab, setGLab] = useState(false);
   const mm = MOMENTS.find((x) => x.key === m)!;
   return (
     <div className="min-h-screen bg-[#08080a] text-white p-6">
@@ -903,7 +1039,12 @@ export default function NowLabPage() {
         <button data-d-lab onClick={() => setDLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${dLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>D · Horizon system (all moments)</button>
         <button data-e-lab onClick={() => setELab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${eLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>E · Horizon v2 (scrolls)</button>
         <button data-f-lab onClick={() => setFLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${fLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>F · one photo, then notes</button>
-        {fLab ? (
+        <button data-g-lab onClick={() => setGLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${gLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>G · smaller + schedule</button>
+        {gLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title={`G · ${mm.label}`}><VariantG m={m} /></Phone>
+          </div>
+        ) : fLab ? (
           <div className="flex flex-wrap gap-8 justify-center" data-variants>
             <Phone title={`F · Horizon v3 · ${mm.label}`}><VariantE m={m} quiet /></Phone>
           </div>
