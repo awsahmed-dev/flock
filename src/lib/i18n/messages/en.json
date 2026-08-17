@@ -789,6 +789,8 @@
     "startCityPlaceholder": "Arrival city (e.g. Tokyo)",
     "endCityPlaceholder": "Departure city (same if empty)",
     "placesCount": "{count} places",
+    "bannerStale": "{banner} — showing an older plan, some details may have changed",
+    "bannerPocket": "{banner} · Pocket Day loaded for {date}",
     "queued": "Queued…",
     "tabDays": "{count} days",
     "startsAt": "starts {time}",

@@ -789,6 +789,8 @@
     "startCityPlaceholder": "مدينة الوصول (مثلًا طوكيو)",
     "endCityPlaceholder": "مدينة المغادرة (نفسها إن تُركت فارغة)",
     "placesCount": "{count} أماكن",
+    "bannerStale": "{banner} — نعرض خطة أقدم، قد تكون بعض التفاصيل تغيّرت",
+    "bannerPocket": "{banner} · تم تحميل يوم الجيب لتاريخ {date}",
     "queued": "في الانتظار…",
     "tabDays": "{count} أيام",
     "startsAt": "يبدأ {time}",

@@ -43,8 +43,8 @@ export function OfflineBanner() {
       <WifiOff className="w-3.5 h-3.5" />
       {status
         ? stale
-          ? `${t("offline.banner")} — showing an older plan, some details may have changed`
-          : `${t("offline.banner")} · Pocket Day loaded for ${status.date}`
+          ? t("offline.bannerStale", { banner: t("offline.banner") })
+          : t("offline.bannerPocket", { banner: t("offline.banner"), date: status.date })
         : t("offline.banner")}
     </div>
   );
