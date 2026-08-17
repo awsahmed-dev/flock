@@ -667,6 +667,176 @@ function VariantD({ m }: { m: MomentKey }) {
   );
 }
 
+
+// ─── E · Horizon v2: a beautiful line, cards with a purpose, vertical ────────
+function Horizon2({ title, nowLabel, progress, marks, endIcon: End = Airplane }: {
+  title: string; nowLabel: string; progress: number;
+  marks: { at: number; label: string; icon: typeof MapPin; state?: "done" | "due" | "later" | "now" }[]; endIcon?: typeof MapPin;
+}) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent px-4 pt-3 pb-4">
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">{title}</p>
+        <span className="text-[10px] font-bold text-orange-300">● {nowLabel}</span>
+      </div>
+      <div className="relative h-14 mx-2">
+        {/* track */}
+        <div className="absolute inset-x-0 top-[22px] h-1.5 rounded-full bg-white/[0.08]" />
+        <div className="absolute top-[22px] h-1.5 rounded-full" style={{ left: 0, width: `${progress}%`, background: "linear-gradient(90deg, #6fbf6f 0%, #9BC97E 60%, #E0B252 100%)", boxShadow: "0 0 14px rgba(155,201,126,.35)" }} />
+        {/* now */}
+        <div className="absolute top-[13px] -translate-x-1/2 z-10" style={{ left: `${progress}%` }}>
+          <div className="relative w-6 h-6 rounded-full bg-orange-300 ring-[6px] ring-orange-300/20 shadow-[0_0_20px_rgba(255,180,120,.6)]">
+            <span className="absolute inset-0 rounded-full animate-ping bg-orange-300/40" />
+          </div>
+        </div>
+        {/* marks */}
+        {marks.map((m) => {
+          const I = m.icon;
+          const col = m.state === "done" ? "#9BC97E" : m.state === "due" ? "#FF8A5C" : m.state === "now" ? "#FFB478" : "rgba(255,255,255,.35)";
+          return (
+            <div key={m.label} className="absolute -translate-x-1/2 flex flex-col items-center" style={{ left: `${m.at}%`, top: 0 }}>
+              <span className={`w-7 h-7 rounded-full flex items-center justify-center border ${m.state === "due" ? "bg-orange-300/15 border-orange-300/60" : m.state === "done" ? "bg-[#9BC97E]/15 border-[#9BC97E]/50" : "bg-[#141416] border-white/15"}`}><I size={13} style={{ color: col }} weight={m.state === "done" ? "fill" : "regular"} /></span>
+              <span className="mt-[9px] w-1.5 h-1.5 rounded-full" style={{ background: col }} />
+              <span className="mt-1 text-[10px] whitespace-nowrap font-semibold" style={{ color: col }}>{m.label}</span>
+            </div>
+          );
+        })}
+        {/* end */}
+        <div className="absolute -end-2 top-[10px] w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center"><End size={14} weight="fill" className="text-white/80" /></div>
+      </div>
+    </div>
+  );
+}
+type P2 = { img: string; purpose: string; kicker: string; title: string; body: string; action: string; hue?: keyof typeof HUE; tall?: boolean; tint?: string; icon?: typeof MapPin };
+function Postcard2({ p }: { p: P2 }) {
+  const col = HUE[p.hue ?? "brand"];
+  const I = p.icon ?? MapPin;
+  return (
+    <div className={`relative overflow-hidden rounded-3xl border border-white/10 ${p.tall ? "h-[260px]" : "h-[200px]"}`} style={{ backgroundImage: `url(${p.img})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+      <div className="absolute inset-0" style={{ background: p.tint ?? "linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.85) 100%)" }} />
+      {/* purpose tag: WHY this card is here */}
+      <span className="absolute top-3 start-3 rounded-full bg-black/45 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-white/85 flex items-center gap-1"><I size={12} style={{ color: col }} weight="fill" />{p.purpose}</span>
+      <div className="absolute inset-x-0 bottom-0 p-4">
+        <p className="text-[10px] font-black tracking-wider uppercase" style={{ color: col }}>{p.kicker}</p>
+        <p className="text-[19px] font-bold leading-tight mt-0.5">{p.title}</p>
+        <p className="text-[13px] text-white/75 mt-0.5">{p.body}</p>
+        <div className="mt-3 flex items-center gap-2">
+          <span className="rounded-full px-3.5 h-9 flex items-center text-[13px] font-bold text-black" style={{ background: col }}>{p.action}</span>
+          <span className="rounded-full h-9 w-9 flex items-center justify-center border border-white/20 text-white/70">···</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+function VariantE({ m }: { m: MomentKey }) {
+  const HZ = { budget: Wallet, docs: FileText, pack: Package };
+  if (m === "T49" || m === "EMPTY") {
+    const empty = m === "EMPTY";
+    const cards: P2[] = empty ? [
+      { img: pic("kyoto-fushimi"), purpose: "To get you started", kicker: "Crews like yours start with", title: "Fushimi Inari at dawn", body: "★ 4.7 · the torii before the crowds · 20 min from Kyoto station", action: "Add as first stop", hue: "brand", tall: true, icon: Sparkle },
+      { img: pic("kyoto-now"), purpose: "So it feels real", kicker: "Kyoto right now", title: "31° · humid · sunset 18:40", body: "¥156 = $1 · 6h ahead of you", action: "Weather week", hue: "wayfind", icon: Sun },
+      { img: pic("crew-invite"), purpose: "Trips are better together", kicker: "Just you so far", title: "Invite your crew", body: "One link · no account needed · they can vote from day one", action: "Share link", hue: "horizon", icon: Users, tint: "linear-gradient(180deg, rgba(139,124,255,.35), rgba(0,0,0,.85))" },
+    ] : [
+      { img: pic("teamlab-planets"), purpose: "Your crew is deciding", kicker: "Rania hearted · 2h ago", title: "TeamLab Planets", body: "Not on the plan yet · fits Wed 7 afternoon · 2 crew ♥", action: "Add to Wed 7", hue: "horizon", tall: true, icon: Users },
+      { img: pic("tokyo-day1"), purpose: "So you can picture it", kicker: "Your day 1 · Oct 6", title: "Shibuya crossing → ramen", body: "Lands 15:00 · hotel 15:30 · 3 stops · light rain likely", action: "Open day 1", hue: "brand", icon: CalendarDots },
+      { img: pic("tokyo-shibuya"), purpose: "So you know what to expect", kicker: "Tokyo right now", title: "27° · clear · sunset 18:03", body: "¥156 = $1 · 6h ahead · typhoon season ends mid-Oct", action: "Weather week", hue: "wayfind", icon: Sun },
+      { img: pic("tokyo-money"), purpose: "So no one is surprised", kicker: "Money", title: "USD 8,000 · 2,000 each", body: "Nothing spent yet · Sami's flight isn't logged", action: "Log a booking", hue: "dune", icon: Wallet, tint: "linear-gradient(180deg, rgba(224,178,82,.25), rgba(0,0,0,.85))" },
+    ];
+    return (
+      <div className="h-full overflow-y-auto pb-28">
+        <Hero eyebrow={empty ? "IN 21 DAYS" : "IN 49 DAYS"} name={empty ? "Kyoto" : "Tokyo"} sub={empty ? "Kyoto, Japan · 7 Sep – 13 Sep 2026" : "Tokyo, Japan · 6 Oct – 12 Oct 2026"} />
+        <div className="px-4 pt-4 space-y-3">
+          {empty
+            ? <Stub hue="brand" kicker="First stop" title="Where do you want to go?" sub="Add one place · we'll draft the rest" icon={MapPin} />
+            : <Stub hue="horizon" kicker="Your vote's missing" title="Nikko or Hakone?" sub="Crew vote · 2 of 4 voted · closes tonight" icon={ChatCircle} />}
+          <Horizon2 title={empty ? "Horizon · 21 days to Kyoto" : "Horizon · 49 days to Tokyo"} nowLabel={empty ? "T−21" : "T−49"} progress={empty ? 30 : 18}
+            marks={[{ at: 60, label: "budget", icon: HZ.budget, state: "later" }, { at: 76, label: "docs", icon: HZ.docs, state: "later" }, { at: 91, label: "pack", icon: HZ.pack, state: "later" }]} />
+          <div className="flex items-center justify-between px-1 pt-1">
+            <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {cards.length}</p>
+            <p className="text-[12px] text-white/50">picked for now</p>
+          </div>
+          {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          <Footer text={empty ? "Just you · 0 stops · Invite crew →" : "4 going · 12 stops · USD 8,000 · Discover →"} />
+        </div>
+      </div>
+    );
+  }
+  if (m === "T3") {
+    const cards: P2[] = [
+      { img: pic("boarding-pass"), purpose: "The thing you'll need first", kicker: "Oct 6 · 09:15 · SV 826", title: "RUH → NRT · gate opens 08:15", body: "4 crew on it · 3 have checked in · you haven't", action: "Check in", hue: "horizon", tall: true, icon: Ticket, tint: "linear-gradient(180deg, rgba(20,20,40,.4), rgba(0,0,0,.88))" },
+      { img: pic("tokyo-shibuya"), purpose: "So you pack right", kicker: "Tokyo on Oct 6", title: "24° · light rain · 18:00 sunset", body: "Pack a shell · umbrella ✔ · no jacket needed", action: "Fix my packing", hue: "dune", icon: Sun },
+      { img: pic("shinjuku-hotel"), purpose: "So arrival is calm", kicker: "Night 1", title: "Shinjuku Granbell", body: "Check-in 15:00 · 2 rooms · 4 min from Shinjuku Sta.", action: "Open booking", hue: "brand", icon: Bed },
+      { img: pic("passport"), purpose: "So border control is 30 s", kicker: "Docs · 1 of 2", title: "Passport scan missing", body: "Add before T−1 · Sami's is in", action: "Add scan", hue: "horizon", icon: FileText, tint: "linear-gradient(180deg, rgba(255,138,92,.25), rgba(0,0,0,.88))" },
+    ];
+    return (
+      <div className="h-full overflow-y-auto pb-28">
+        <Hero eyebrow="IN 3 DAYS" name="Tokyo" sub="Tokyo, Japan · 6 Oct – 12 Oct 2026" />
+        <div className="px-4 pt-4 space-y-3">
+          <Stub hue="dune" kicker="Due now" title="Pack — 14 left" sub="18 items · flight in 3 days" icon={Package} />
+          <Horizon2 title="Horizon · 3 days to Tokyo" nowLabel="T−3" progress={88}
+            marks={[{ at: 60, label: "budget", icon: HZ.budget, state: "done" }, { at: 76, label: "docs 1/2", icon: HZ.docs, state: "due" }, { at: 91, label: "pack", icon: HZ.pack, state: "due" }]} />
+          <div className="flex items-center justify-between px-1 pt-1">
+            <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {cards.length}</p>
+            <p className="text-[12px] text-white/50">picked for now</p>
+          </div>
+          {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          <Footer text="4 going · 12 stops · USD 8,000 · Discover →" />
+        </div>
+      </div>
+    );
+  }
+  if (m === "RECAP") {
+    const cards: P2[] = [
+      { img: pic("seoul-han"), purpose: "The one everyone loved", kicker: "Most hearted · 4 of 4", title: "Sunset at Han River", body: "12 photos · Rania's is the crew favourite", action: "Open the Wrap", hue: "brand", tall: true, icon: Camera },
+      { img: pic("seoul-market"), purpose: "Rania's memory", kicker: "Day 2 · 19:40", title: "Gwangjang Market", body: "Photo from Rania · 3 reactions", action: "React", hue: "horizon", icon: Camera },
+      { img: pic("seoul-money"), purpose: "So it ends clean", kicker: "Money", title: "USD 1,120 · 280 each", body: "2 splits open · everyone else is square", action: "Settle up", hue: "dune", icon: Wallet, tint: "linear-gradient(180deg, rgba(224,178,82,.25), rgba(0,0,0,.85))" },
+    ];
+    return (
+      <div className="h-full overflow-y-auto pb-28">
+        <Hero eyebrow="HOME · 2 DAYS AGO" name="Seoul" sub="7 days · 9 stops · 4 crew" />
+        <div className="px-4 pt-4 space-y-3">
+          <Stub hue="dune" kicker="Settle up" title="You owe Rania USD 42" sub="2 splits open · everyone else is square" icon={Wallet} />
+          <Horizon2 title="Horizon · the whole trip" nowLabel="home" progress={100} endIcon={Camera}
+            marks={[{ at: 6, label: "ICN", icon: Airplane, state: "done" }, { at: 30, label: "day 2", icon: ForkKnife, state: "done" }, { at: 55, label: "day 4", icon: Camera, state: "done" }, { at: 80, label: "sunset", icon: Sun, state: "done" }]} />
+          <div className="flex items-center justify-between px-1 pt-1">
+            <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {cards.length}</p>
+            <p className="text-[12px] text-white/50">picked for now</p>
+          </div>
+          {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          <Footer text="USD 1,120 spent · Share the Wrap →" />
+        </div>
+      </div>
+    );
+  }
+  // LIVE: map on top, sheet at ~62%, everything below scrolls inside the sheet
+  const last = m === "LIVE_LAST";
+  const stops = last ? LAST : DAY2;
+  const next = stops.find((x) => !x.done && !x.missed)!;
+  const idx = stops.indexOf(next);
+  const cards: P2[] = last ? [
+    { img: pic("icn-airport"), purpose: "So you make the flight", kicker: "Getting to ICN", title: "AREX from Hongik · 52 min", body: "Last comfortable train 20:20 · 3 crew going with you", action: "Navigate", hue: "wayfind", tall: true, icon: NavigationArrow },
+    { img: pic("seoul-han"), purpose: "Skipped today", kicker: "18:00 · unmarked", title: "Han River sunset", body: "Mark it done or let it go — the recap waits for the flight", action: "Mark done", hue: "dune", icon: Sun },
+  ] : [
+    { img: pic("gyeongbok"), purpose: "Nearby · open now", kicker: "4 min walk · ★ 4.5", title: "Tosokchon Samgyetang", body: "Crew ♥ 2 · closes 22:00 · fits before the palace", action: "Add before 11:00", hue: "horizon", tall: true, icon: ForkKnife },
+    { img: pic("crew-live"), purpose: "Your crew, right now", kicker: "Sami · arrived 09:20", title: "At Bukchon already", body: "12 min from you · Rania & Ali still at breakfast", action: "Ping crew", hue: "brand", icon: Users },
+    { img: pic("seoul-weather"), purpose: "So the day works", kicker: "Today", title: "29° · rain from 15:00", body: "Bukchon before, market after — swap them?", action: "Swap 14:00 ↔ 19:30", hue: "wayfind", icon: Sun },
+  ];
+  return (
+    <div className="h-full">
+      <MapBg />
+      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-[#141416] border-t border-white/10 px-4 pt-2 overflow-y-auto" style={{ height: "66%", paddingBottom: 96 }}>
+        <div className="mx-auto w-9 h-1 rounded-full bg-white/25 mb-3" />
+        <div className="space-y-3">
+          <Stub hue={last ? "horizon" : "wayfind"} kicker={last ? "Departure tonight · leave by 20:30" : `Up next · ${next.time} · in 1h20`} title={next.title} sub={next.place} icon={last ? Airplane : NavigationArrow} />
+          <Horizon2 title={last ? "Today · final day" : "Today · day 2"} nowLabel={last ? "21:59" : "09:40"} progress={last ? 88 : 22} endIcon={last ? Airplane : Moon}
+            marks={stops.map((x, i) => ({ at: 6 + i * 27, label: x.time, icon: x.icon, state: x.done ? "done" : x.missed ? "due" : i === idx ? "now" : "later" }))} />
+          {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function NowLabPage() {
   if (process.env.NODE_ENV === "production") notFound();
@@ -674,6 +844,7 @@ export default function NowLabPage() {
   const [ctaLab, setCtaLab] = useState(false);
   const [belowLab, setBelowLab] = useState(false);
   const [dLab, setDLab] = useState(false);
+  const [eLab, setELab] = useState(false);
   const mm = MOMENTS.find((x) => x.key === m)!;
   return (
     <div className="min-h-screen bg-[#08080a] text-white p-6">
@@ -692,7 +863,12 @@ export default function NowLabPage() {
         <button data-cta-lab onClick={() => setCtaLab((v) => !v)} className={`mb-4 rounded-full px-4 py-2 text-sm font-bold border ${ctaLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>CTA lab (B × 3 styles)</button>
         <button data-below-lab onClick={() => setBelowLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${belowLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>Below-CTA lab (B3 × 3 layouts)</button>
         <button data-d-lab onClick={() => setDLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${dLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>D · Horizon system (all moments)</button>
-        {dLab ? (
+        <button data-e-lab onClick={() => setELab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${eLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>E · Horizon v2 (scrolls)</button>
+        {eLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title={`E · Horizon v2 · ${mm.label}`}><VariantE m={m} /></Phone>
+          </div>
+        ) : dLab ? (
           <div className="flex flex-wrap gap-8 justify-center" data-variants>
             <Phone title={`D · Horizon · ${mm.label}`}><VariantD m={m} /></Phone>
           </div>
