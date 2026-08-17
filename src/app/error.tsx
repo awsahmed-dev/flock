@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { Warning as AlertTriangle, ArrowsClockwise as RefreshCw } from "@phosphor-icons/react/dist/ssr";
+import { useT } from "@/components/i18n/locale-provider";
 
 /**
  * Per-route error boundary. Used when an error happens below the root
@@ -21,6 +22,7 @@ export default function RouteError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  const t = useT();
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -31,15 +33,14 @@ export default function RouteError({
         <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center mb-4">
           <AlertTriangle className="w-5 h-5 text-destructive" />
         </div>
-        <h1 className="text-lg font-bold mb-1">Something went off-course</h1>
+        <h1 className="text-lg font-bold mb-1">{t("errorPage.title")}</h1>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-          The page hit an error while loading. The crew's been notified — try
-          again, or head back to where you were.
+          {t("errorPage.body")}
         </p>
 
         {error.digest && (
           <p className="font-mono text-[10px] text-muted-foreground/70 bg-muted/40 rounded px-2 py-1 mb-4 break-all">
-            Ref: {error.digest}
+            {t("errorPage.ref", { digest: error.digest })}
           </p>
         )}
 
@@ -50,13 +51,13 @@ export default function RouteError({
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm px-4 py-2.5 hover:opacity-90 transition-opacity"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Try again
+            {t("errorPage.tryAgain")}
           </button>
           <a
             href="/dashboard"
             className="flex-1 inline-flex items-center justify-center rounded-xl border border-border bg-muted/40 text-foreground font-bold text-sm px-4 py-2.5 hover:bg-muted/60 transition-colors"
           >
-            Dashboard
+            {t("errorPage.dashboard")}
           </a>
         </div>
       </div>

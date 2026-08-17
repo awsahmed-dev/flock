@@ -92,6 +92,19 @@ export function PlaceCard({
   return (
     <article
       data-place-id={p.placeId}
+      // Keyboard path (sweep Task 4): focusable + Enter/Space opens. NOT
+      // role="button" — the card contains its own like/save/add buttons,
+      // and a button-in-button is a nested-interactive violation. An
+      // <article> with tabIndex+aria-label is the AT-honest shape.
+      tabIndex={0}
+      aria-label={p.name}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return; // let inner buttons handle their own keys
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(scored);
+        }
+      }}
       onClick={() => {
         if (longFired.current) return;
         onOpen(scored);

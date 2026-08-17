@@ -73,7 +73,7 @@ export function BalancesBlock({
                           });
                       });
                     }}
-                    className="shrink-0 h-8 px-3 rounded-full bg-primary text-primary-foreground text-[12px] font-bold"
+                    className="tap-hit shrink-0 h-8 px-3 rounded-full bg-primary text-primary-foreground text-[12px] font-bold"
                   >
                     {t("expenses.confirm")}
                   </button>
@@ -81,7 +81,7 @@ export function BalancesBlock({
                   <button
                     type="button"
                     onClick={() => setConfirming(key)}
-                    className="shrink-0 h-8 px-3 rounded-full border border-border text-[12px] font-bold text-foreground"
+                    className="tap-hit shrink-0 h-8 px-3 rounded-full border border-border text-[12px] font-bold text-foreground"
                   >
                     {t("expenses.settle")}
                   </button>

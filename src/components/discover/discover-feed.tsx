@@ -801,7 +801,7 @@ export function DiscoverFeed({
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onSave(s); }}
                         aria-label={t("discover.save")}
-                        className="absolute top-2 end-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white"
+                        className="absolute top-2 end-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white before:content-[''] before:absolute before:-inset-1.5"
                       >
                         <Heart className={`w-4 h-4 ${isSaved ? "fill-rose-500 text-rose-500" : ""}`} />
                       </button>

@@ -3,15 +3,19 @@ export const dynamic = "force-dynamic";
 import { LoginForm } from "@/components/auth/login-form";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const t = (k: string) => tFromDict(dict, k, undefined, locale);
   return (
-    <AuthShell subtitle="أهلًا بعودتك ✈" boarding="Re-boarding · تسجيل الدخول">
+    <AuthShell subtitle={t("auth.loginHero")} boarding={t("auth.loginBoarding")} tagline={t("auth.tagline")}>
       <LoginForm />
       <p className="text-center text-sm text-[#141414]/55 mt-6">
-        Don&apos;t have an account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/auth/signup" className="text-[#5B4BD9] font-semibold hover:underline">
-          Sign up
+          {t("auth.signUpLink")}
         </Link>
       </p>
     </AuthShell>

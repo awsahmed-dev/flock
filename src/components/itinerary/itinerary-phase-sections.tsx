@@ -95,7 +95,7 @@ export function LiveDayTimeline({
                 type="button"
                 onClick={() => toggleDone(item)}
                 aria-label={done ? t("itinerary.markNotDone") : t("now.done")}
-                className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center border-2"
+                className="tap-hit shrink-0 w-7 h-7 rounded-full flex items-center justify-center border-2"
                 style={
                   done
                     ? { background: "var(--clr-moss)", borderColor: "var(--clr-moss)", color: "var(--primary-foreground)" }

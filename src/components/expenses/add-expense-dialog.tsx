@@ -391,7 +391,7 @@ export function AddExpenseDialog({
               >
                 <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.paidBy")}</span>
                 <span className="flex-1 inline-flex items-center gap-1.5 justify-end text-sm font-bold">
-                  <PayerAvatar name={payer?.displayName ?? "You"} avatarUrl={payer?.avatarUrl ?? null} />
+                  <PayerAvatar name={payer?.displayName ?? t("expenses.you")} avatarUrl={payer?.avatarUrl ?? null} />
                   {payer?.userId === currentUserId || !payer ? t("expenses.you") : payer.displayName}
                   <span aria-hidden className="text-muted-foreground">▾</span>
                 </span>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { BOUNDARY_STRINGS, readBoundaryLocale, type BoundaryLocale } from "@/lib/i18n/boundary-strings";
 import * as Sentry from "@sentry/nextjs";
 import { Warning as AlertTriangle, ArrowsClockwise as RefreshCw, House as Home } from "@phosphor-icons/react/dist/ssr";
 
@@ -19,12 +20,18 @@ export default function GlobalError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  // No LocaleProvider exists here (this replaces the root layout), so the
+  // locale comes from the cookie after mount. First paint is English; the
+  // useEffect flips it — acceptable for a crash screen.
+  const [locale, setLocale] = useState<BoundaryLocale>("en");
   useEffect(() => {
     Sentry.captureException(error);
+    setLocale(readBoundaryLocale());
   }, [error]);
+  const s = BOUNDARY_STRINGS[locale];
 
   return (
-    <html lang="en">
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <body
         style={{
           margin: 0,
@@ -74,7 +81,7 @@ export default function GlobalError({
               letterSpacing: "-0.01em",
             }}
           >
-            Something went off-course
+            {s.title}
           </h1>
           <p
             style={{
@@ -84,8 +91,7 @@ export default function GlobalError({
               color: "rgba(248, 250, 252, 0.7)",
             }}
           >
-            We hit an unexpected error and the page couldn't render. The crew's
-            been notified — try again, or head back to your dashboard.
+            {s.body}
           </p>
 
           {error.digest && (
@@ -101,7 +107,7 @@ export default function GlobalError({
                 wordBreak: "break-all",
               }}
             >
-              Ref: {error.digest}
+              {s.ref} {error.digest}
             </p>
           )}
 
@@ -127,7 +133,7 @@ export default function GlobalError({
               }}
             >
               <RefreshCw size={14} />
-              Try again
+              {s.tryAgain}
             </button>
             <a
               href="/dashboard"
@@ -149,7 +155,7 @@ export default function GlobalError({
               }}
             >
               <Home size={14} />
-              Dashboard
+              {s.dashboard}
             </a>
           </div>
         </div>
