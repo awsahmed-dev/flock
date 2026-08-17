@@ -101,3 +101,28 @@ export function totalInCurrencyBy<K>(
     complete: missing.size === 0,
   };
 }
+
+/**
+ * For client components that need a scalar `toBase(amount, ccy)` inside a
+ * `useMemo` (expenses-board, balances, breakdown, transactions). Same rule as
+ * above: a row whose rate is missing contributes 0 to the arithmetic AND is
+ * recorded in `missing`, so the caller can render "total excludes KRW" next
+ * to the headline instead of silently stating a too-low number.
+ *
+ * Replaces four copies of `return c ?? 0` — which was the exact "96,000 KRW
+ * dinner counts as zero" bug this module exists to prevent.
+ */
+export function createBaseConverter(target: string, rates: RateBundle | null) {
+  const missing = new Set<string>();
+  function toBase(amount: number, ccy: string): number {
+    const n = Number(amount) || 0;
+    if (ccy === target) return n;
+    const c = convert(n, ccy, target, rates);
+    if (c == null) {
+      missing.add(ccy);
+      return 0;
+    }
+    return c;
+  }
+  return { toBase, missing };
+}

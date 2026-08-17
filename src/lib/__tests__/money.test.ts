@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { splitEqually, sharesMatchTotal, toMinorUnits, currencyExponent } from "@/lib/split";
-import { totalInCurrency, totalInCurrencyBy } from "@/lib/money-total";
+import { totalInCurrency, totalInCurrencyBy, createBaseConverter } from "@/lib/money-total";
 import { effectiveTripBudget } from "@/lib/budget";
 import type { RateBundle } from "@/lib/fx";
 
@@ -122,5 +122,29 @@ describe("M-3 FIXED — one budget number, computed one way", () => {
     const spent = 1800;
     const effective = effectiveTripBudget(2000, "per_person", 4)!;
     expect(Math.round((spent / effective) * 100)).toBe(23); // was 90 against the raw column
+  });
+});
+
+describe("createBaseConverter (client toBase replacement)", () => {
+  const rates = { base: "USD", rates: { JPY: 150, EUR: 0.9 }, fetchedAt: 0 };
+
+  it("passes base rows through and converts known currencies", () => {
+    const { toBase, missing } = createBaseConverter("USD", rates);
+    expect(toBase(100, "USD")).toBe(100);
+    expect(toBase(15000, "JPY")).toBeCloseTo(100);
+    expect([...missing]).toEqual([]);
+  });
+
+  it("records a missing rate instead of silently counting the row as zero — the 96,000 KRW dinner", () => {
+    const { toBase, missing } = createBaseConverter("USD", rates);
+    const total = toBase(20, "USD") + toBase(96000, "KRW");
+    expect(total).toBe(20); // excluded from arithmetic…
+    expect([...missing]).toEqual(["KRW"]); // …but never excluded silently
+  });
+
+  it("with no rate bundle at all, every foreign currency is reported once", () => {
+    const { toBase, missing } = createBaseConverter("USD", null);
+    toBase(1, "JPY"); toBase(2, "JPY"); toBase(3, "KRW");
+    expect([...missing].sort()).toEqual(["JPY", "KRW"]);
   });
 });

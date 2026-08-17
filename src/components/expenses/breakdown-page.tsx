@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import { createBaseConverter } from "@/lib/money-total";
+import { FxIncompleteNote } from "@/components/expenses/fx-incomplete-note";
 import { Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { fmtAmount as fmt } from "@/lib/numerals";
-import { convert, type RateBundle } from "@/lib/fx";
+import { type RateBundle } from "@/lib/fx";
 import { PageHeader } from "@/components/ui/page-header";
 import { useT } from "@/components/i18n/locale-provider";
 
@@ -61,11 +63,9 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
   const t = useT();
   const sharedCount = expenses.filter((e) => e.scope !== "personal").length;
   const data = useMemo(() => {
-    function toBase(amount: number, ccy: string) {
-      if (ccy === currency) return amount;
-      const c = convert(amount, ccy, currency, fxRates);
-      return c ?? 0;
-    }
+    // A missing rate no longer silently counts a row as zero — the row is
+    // still excluded from the arithmetic, but recorded so the UI can say so.
+    const { toBase, missing } = createBaseConverter(currency, fxRates);
 
     const shared = expenses.filter((e) => e.scope !== "personal");
     const totalBase = shared.reduce((s, e) => s + toBase(e.amount, e.currency), 0);
@@ -87,7 +87,7 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
         pct: totalBase > 0 ? (v.total / totalBase) * 100 : 0,
       }));
 
-    return { totalBase, cats };
+    return { totalBase, cats, fxMissing: [...missing] };
   }, [expenses, currency, fxRates]);
 
   return (
@@ -101,6 +101,7 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
           count: sharedCount,
         })}
       />
+      <FxIncompleteNote currencies={data.fxMissing} className="-mt-3" />
 
       {data.cats.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border/60 p-12 text-center">

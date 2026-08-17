@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { createBaseConverter } from "@/lib/money-total";
+import { FxIncompleteNote } from "@/components/expenses/fx-incomplete-note";
 import { useT } from "@/components/i18n/locale-provider";
 import { Receipt, CaretRight as ChevronRight, ArrowsLeftRight as ArrowRightLeft, MagnifyingGlass as Search, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { parseISO, eachDayOfInterval, isToday, isFuture } from "date-fns";
@@ -91,11 +93,9 @@ export function TransactionsPage({
   const derived = useMemo(() => {
     const sharedExpenses = expenseList.filter((e) => e.scope !== "personal");
 
-    function toBase(amount: number, ccy: string) {
-      if (ccy === currency) return amount;
-      const c = convert(amount, ccy, currency, fxRates);
-      return c ?? 0;
-    }
+    // A missing rate no longer silently counts a row as zero — the row is
+    // still excluded from the arithmetic, but recorded so the UI can say so.
+    const { toBase, missing } = createBaseConverter(currency, fxRates);
 
     const totalSharedBase = sharedExpenses.reduce(
       (s, e) => s + toBase(e.amount, e.currency),
@@ -128,6 +128,7 @@ export function TransactionsPage({
     });
 
     return {
+      fxMissing: [...missing],
       totalSharedBase,
       personalSpentBase: myPersonalBase + mySharedShareBase,
       dailyBreakdown,
@@ -194,6 +195,7 @@ export function TransactionsPage({
             : t("expenses.txCount", { count: expenseList.length })
         }
       />
+      <FxIncompleteNote currencies={derived.fxMissing} className="-mt-2" />
 
       {/* ── Search + add ───────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
