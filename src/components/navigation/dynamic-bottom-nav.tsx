@@ -51,13 +51,21 @@ const NAV_SHADOW = "0px 0px 6px 0px rgba(0,0,0,0.05), 0px 1px 4px 0px rgba(0,0,0
  * sidebar is gone. ≥768px the three elements scale up slightly (same
  * proportions, same material); sizing lives in these frame builders
  * because the glass MUST stay inline (Lightning CSS strips it). */
+/* The circles carry a visible label under the icon (see NavCircleContent).
+   Size is pinned to what the old padding produced — 2 x --nav-pad + a 24px
+   icon — so the glass keeps its exact previous diameter in both themes and
+   stays a circle rather than stretching into an oval around the text. The
+   icon shrinks 24 -> 20 to make room; the label reuses the tab type scale. */
+const CIRCLE_SIZE = "calc(var(--nav-pad) * 2 + 24px)";
 const circleFrame = (desktop: boolean) => ({
   backdropFilter: "blur(10px)",
   WebkitBackdropFilter: "blur(10px)",
   background: "var(--nav-glass)",
   border: "1px solid var(--nav-border)",
   borderRadius: 9999,
-  padding: desktop ? 19 : "var(--nav-pad)",
+  padding: 0,
+  width: desktop ? 62 : CIRCLE_SIZE,
+  height: desktop ? 62 : CIRCLE_SIZE,
   boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
 });
@@ -76,7 +84,9 @@ const pillFrame = () => ({
 const brandFrame = (desktop: boolean) => ({
   background: "var(--clr-brand)",
   borderRadius: 9999,
-  padding: desktop ? 19 : 16,
+  padding: 0,
+  width: desktop ? 62 : 56,
+  height: desktop ? 62 : 56,
   boxShadow: NAV_SHADOW,
   pointerEvents: "auto" as const,
 });
@@ -213,11 +223,18 @@ export function DynamicBottomNav({
     });
   }
 
-  // LEFT circle — one job: get to the itinerary fast; on the itinerary,
-  // flip home to the cockpit.
-  const left: { icon: LucideIcon; label: string; action: () => void } = isItineraryPage
-    ? { icon: House, label: phase === "LIVE" ? t("nav.today") : t("nav.now"), action: () => router.push(base) }
-    : { icon: CalendarDays, label: t("nav.itinerary"), action: () => router.push(`${base}/itinerary`) };
+  // LEFT circle — one job, one name: the itinerary. It used to flip to a
+  // House pointing at the trip root while you were on the itinerary, which
+  // was harmless as a bare glyph but became a visible duplicate once the
+  // circles carried labels: "Now" on the circle, "Now" on the tab beside it,
+  // both going to the same screen. The circle now always reads "Plan" and
+  // takes the active-chip background on the itinerary, exactly like a
+  // selected tab; the trip root is one control to its right.
+  const left: { icon: LucideIcon; label: string; action: () => void } = {
+    icon: CalendarDays,
+    label: t("nav.itinerary"),
+    action: () => router.push(`${base}/itinerary`),
+  };
 
   // RIGHT circle — the Sprint 7 scenario table. Long-press (below) always
   // opens the + menu regardless of screen.
@@ -281,11 +298,24 @@ export function DynamicBottomNav({
           type="button"
           onClick={left.action}
           aria-label={left.label}
-          className="relative flex items-center justify-center shrink-0 active:scale-95"
-          style={circleFrame(desktop)}
+          className="relative flex flex-col items-center justify-center gap-0.5 shrink-0 active:scale-95"
+          aria-current={isItineraryPage ? "page" : undefined}
+          style={{ ...circleFrame(desktop), ...(isItineraryPage ? { background: "var(--nav-chip)" } : {}) }}
         >
-          <span key={`left-${left.label}`} className="relative flex" style={{ animation: "fadeIn 200ms ease" }}>
-            <left.icon size={24} className="text-foreground" />
+          {/* The label is the point: this circle is how you reach the
+              itinerary, and for a first-timer an unlabelled calendar glyph
+              named nothing. The three pill tabs were labelled; the two
+              circles — the ones whose meaning CHANGES with the screen —
+              were not. */}
+          <span
+            key={`left-${left.label}`}
+            className="relative flex flex-col items-center gap-px"
+            style={{ animation: "fadeIn 200ms ease" }}
+          >
+            <left.icon size={20} className="text-foreground" />
+            <span className="text-[10px] font-bold leading-none text-foreground whitespace-nowrap">
+              {left.label}
+            </span>
           </span>
         </button>
 
@@ -360,11 +390,21 @@ export function DynamicBottomNav({
           onPointerLeave={onPlusCancel}
           onContextMenu={(e) => e.preventDefault()}
           aria-label={right.label}
-          className="relative flex items-center justify-center shrink-0 active:scale-95"
+          className="relative flex flex-col items-center justify-center shrink-0 active:scale-95"
           style={brandFrame(desktop)}
         >
-          <span key={`right-${right.label}-${phase}`} className="relative" style={{ animation: "fadeIn 200ms ease" }}>
-            <right.icon size={24} className="text-primary-foreground" />
+          {/* Same treatment as the left circle. This one's meaning shifts the
+              most of anything in the nav — Add / Search / Camera / Close by
+              screen and phase — so it needs the label most. */}
+          <span
+            key={`right-${right.label}-${phase}`}
+            className="relative flex flex-col items-center gap-px"
+            style={{ animation: "fadeIn 200ms ease" }}
+          >
+            <right.icon size={20} className="text-primary-foreground" />
+            <span className="text-[10px] font-bold leading-none text-primary-foreground whitespace-nowrap">
+              {right.label}
+            </span>
           </span>
         </button>
       </div>

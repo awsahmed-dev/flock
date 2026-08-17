@@ -10,6 +10,7 @@ import {
   AccordionContent,
 } from "@/components/animate-ui/components/radix/accordion";
 import { Progress } from "@/components/animate-ui/components/radix/progress";
+import { tripReadiness, type ReadinessStepId } from "@/lib/trip-readiness";
 
 /**
  * Phase 7 §5 — the readiness bar. One 52px line above the fold: a thin
@@ -17,10 +18,22 @@ import { Progress } from "@/components/animate-ui/components/radix/progress";
  * (Animate UI Accordion, visual-fix brief H), showing ONLY incomplete
  * steps; completed ones collapse to a single "N done ✓" line. The full
  * 5-row checklist never renders by default.
+ *
+ * The percentage is NOT a prop. It is derived from the same facts as the
+ * step list via `tripReadiness()`, so the bar cannot contradict the
+ * checklist it opens — see src/lib/trip-readiness.ts for why that used to
+ * happen ("Trip 0% ready" sitting above "1 done ✓" on every new trip).
  */
+const STEP_ICON: Record<ReadinessStepId, typeof Users> = {
+  dates: CalendarDays,
+  crew: Users,
+  stops: MapPin,
+  budget: Wallet,
+  pack: Package,
+};
+
 export function ReadinessChecklist({
   base,
-  readiness,
   hasDates,
   crewCount,
   stopsCount,
@@ -29,7 +42,6 @@ export function ReadinessChecklist({
   packTotal,
 }: {
   base: string;
-  readiness: number;
   hasDates: boolean;
   crewCount: number;
   stopsCount: number;
@@ -38,16 +50,15 @@ export function ReadinessChecklist({
   packTotal: number;
 }) {
   const t = useT();
-  const packingPercent = packTotal > 0 ? Math.round((packedCount / packTotal) * 100) : 0;
-  const steps = [
-    { id: "dates", label: t("cockpit.stepDates"), done: hasDates, href: `${base}/settings`, icon: CalendarDays },
-    { id: "crew", label: t("cockpit.stepCrew"), done: crewCount > 1, href: `${base}/members`, icon: Users },
-    { id: "stops", label: t("cockpit.stepStops"), done: stopsCount >= 1, href: `${base}/itinerary`, icon: MapPin },
-    { id: "budget", label: t("cockpit.stepBudget"), done: hasBudget, href: `${base}/settings`, icon: Wallet },
-    { id: "pack", label: t("cockpit.stepPack"), done: packingPercent >= 50, href: `${base}/pack`, icon: Package },
-  ];
+  const { steps, doneCount, percent, packingPercent } = tripReadiness({
+    hasDates,
+    crewCount,
+    stopsCount,
+    hasBudget,
+    packedCount,
+    packTotal,
+  });
   const incomplete = steps.filter((s) => !s.done);
-  const doneCount = steps.length - incomplete.length;
 
   return (
     <section className="rounded-2xl bg-card border border-border overflow-hidden">
@@ -57,12 +68,12 @@ export function ReadinessChecklist({
             <div className="flex-1 min-w-0 flex items-center gap-3">
               {/* Brief E: spring-animated fill, moss like every progress bar. */}
               <Progress
-                value={Math.min(100, Math.max(0, readiness))}
+                value={percent}
                 className="flex-1 h-1.5 bg-muted"
                 style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
               />
               <span className="text-[13px] font-semibold text-foreground whitespace-nowrap tabular-nums">
-                {t("cockpit.tripReady", { percent: readiness })}
+                {t("cockpit.tripReady", { percent })}
               </span>
             </div>
           </AccordionTrigger>
@@ -75,12 +86,12 @@ export function ReadinessChecklist({
             </p>
           )}
           {incomplete.map((step, i) => {
-            const Icon = step.icon;
+            const Icon = STEP_ICON[step.id];
             const active = i === 0; // the one active step gets the accent border
             return (
               <Link
                 key={step.id}
-                href={step.href}
+                href={`${base}${step.path}`}
                 className={`flex items-center gap-3 rounded-2xl px-3 bg-muted ${
                   active ? "h-16 border border-primary" : "h-12"
                 }`}
@@ -89,7 +100,7 @@ export function ReadinessChecklist({
                   <Icon size={14} className="text-muted-foreground" />
                 </span>
                 <span className={`flex-1 text-[15px] ${active ? "font-bold" : "font-medium"} text-foreground`}>
-                  {step.label}
+                  {t(step.labelKey)}
                   {step.id === "pack" && packTotal > 0 && (
                     <span className="text-muted-foreground font-normal"> · {packingPercent}%</span>
                   )}

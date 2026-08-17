@@ -16,6 +16,7 @@ export function MetricGrid({
   currency,
   crewCount,
   packing,
+  showPlanned = true,
 }: {
   tripId: string;
   placesCount: number;
@@ -23,16 +24,23 @@ export function MetricGrid({
   currency: string;
   crewCount: number;
   packing: { packed: number; total: number };
+  /** PLANNING hides this cell — it duplicates the screen's primary action.
+   *  DEPARTURE keeps it: there the primary action is the departure board. */
+  showPlanned?: boolean;
 }) {
   const t = useT();
   const base = `/trips/${tripId}`;
   const cells = [
-    {
-      icon: MapPin,
-      label: t("cockpit.metricPlanned"),
-      value: placesCount > 0 ? t("cockpit.metricStops", { count: placesCount }) : t("cockpit.metricStart"),
-      href: `${base}/itinerary`,
-    },
+    ...(showPlanned
+      ? [
+          {
+            icon: MapPin,
+            label: t("cockpit.metricPlanned"),
+            value: placesCount > 0 ? t("cockpit.metricStops", { count: placesCount }) : t("cockpit.metricStart"),
+            href: `${base}/itinerary`,
+          },
+        ]
+      : []),
     {
       icon: Wallet,
       label: t("cockpit.metricBudget"),
@@ -42,7 +50,9 @@ export function MetricGrid({
     {
       icon: Users,
       label: t("cockpit.metricCrew"),
-      value: t("cockpit.metricPeople", { count: crewCount }),
+      // "1 person" reads like a statistic about strangers. "Just you" reads
+      // like the app noticing, which is the nudge that matters here.
+      value: crewCount <= 1 ? t("cockpit.metricJustYou") : t("cockpit.metricPeople", { count: crewCount }),
       href: `${base}/members`,
     },
     {
@@ -54,7 +64,7 @@ export function MetricGrid({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className={showPlanned ? "grid grid-cols-2 gap-3" : "grid grid-cols-3 gap-2.5"}>
       {cells.map((cell) => {
         const Icon = cell.icon;
         return (
@@ -64,11 +74,21 @@ export function MetricGrid({
             className="flex flex-col justify-between rounded-2xl p-3 bg-card border border-border min-h-[72px] active:scale-[0.98] transition-transform"
           >
             <div className="flex items-center gap-1.5">
-              <Icon size={18} className="text-primary" />
-              <span className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+              <Icon size={18} className="shrink-0 text-primary" />
+              {/* 3-up cells are ~113px wide at 390px. Verified by render: the
+                  wide tracking plus the decorative chevron pushed "BUDGET" and
+                  "PACKING" onto a second line in both Inter and the fallback.
+                  The chevron is redundant anyway — the whole cell is the link. */}
+              <span
+                className={`text-[10px] font-semibold uppercase text-muted-foreground whitespace-nowrap ${
+                  showPlanned ? "tracking-wider" : "tracking-normal"
+                }`}
+              >
                 {cell.label}
               </span>
-              <ChevronRight size={12} className="ms-auto text-tertiary rtl:rotate-180" />
+              {showPlanned && (
+                <ChevronRight size={12} className="ms-auto text-tertiary rtl:rotate-180" />
+              )}
             </div>
             <p className="line-clamp-1 mt-1 text-[15px] font-bold text-foreground">{cell.value}</p>
           </Link>

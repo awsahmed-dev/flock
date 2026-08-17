@@ -15,7 +15,7 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import { db } from "@/lib/db";
 import { profiles, trips, tripMembers } from "@/lib/db/schema";
 
-const sendEmail = vi.fn(async () => ({ ok: true }));
+const sendEmail = vi.fn(async (_p: unknown) => ({ ok: true }));
 vi.mock("@/lib/email/send", () => ({ sendEmail: (p: any) => sendEmail(p) }));
 vi.mock("@/lib/push/send", () => ({ sendPush: async () => undefined }));
 vi.mock("@/lib/inbox", () => ({ recordEvent: async () => undefined }));
