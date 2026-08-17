@@ -23,8 +23,32 @@ const SPLIT = "00000000-0000-0000-0000-0000000000c2";
 const VOTE = "00000000-0000-0000-0000-0000000000c3";
 const DOC = "00000000-0000-0000-0000-0000000000c4";
 
-const run = process.env.DATABASE_URL ? describe : describe.skip;
-// NODE_ENV=development so get-user.ts falls back to DEV_USER == ATTACKER.
+// These tests are only meaningful when the actions can actually RUN. Two
+// preconditions, both verified by execution against a clean Postgres:
+//
+//  1. DATABASE_URL — without it nothing can be seeded. Silently skipping
+//     here made `vitest run` green while proving nothing (the CI trap).
+//  2. NEXT_PUBLIC_SUPABASE_URL/ANON_KEY — get-user.ts constructs a Supabase
+//     client BEFORE reaching the DEV_USER fallback. Without these, every
+//     action throws "URL and Key are required" at auth setup, the
+//     `rejects.toThrow()` assertions pass, and the IDOR suite is VACUOUS
+//     (measured: 6/7 "pass" on unfixed main). With them: 7/7 fail on main,
+//     7/7 pass on the fix — which is the claim this file exists to prove.
+//
+// So: fail loudly instead of skipping. A gate that passes by not running
+// is worse than none.
+const missing = ["DATABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  .filter((k) => !process.env[k]);
+if (missing.length) {
+  throw new Error(
+    `authz.test.ts: refusing to run without ${missing.join(", ")} — ` +
+    `without them the IDOR assertions pass vacuously. Export them (or run via npm run test:authz).`,
+  );
+}
+if (process.env.NODE_ENV !== "development") {
+  throw new Error("authz.test.ts: NODE_ENV must be 'development' so get-user.ts falls back to DEV_USER (the attacker).");
+}
+const run = describe;
 
 run("IDOR — attacker owns their own trip, targets the victim's rows", () => {
   beforeAll(async () => {
