@@ -1311,7 +1311,7 @@ function SortableItemRow({
                   ? "Skipped"
                   : "Suggested · tap to vote"
             }
-            className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
+            className={`tap-hit w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
               item.status === "confirmed"
                 ? "bg-success"
                 : item.status === "rejected"

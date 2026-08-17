@@ -412,7 +412,7 @@ export function ExpensesBoard({
                 type="button"
                 onClick={() => setActivityFilter(f)}
                 aria-pressed={active}
-                className="rounded-full h-8 px-3 text-[13px] font-semibold transition-colors"
+                className="tap-hit rounded-full h-8 px-3 text-[13px] font-semibold transition-colors"
                 style={
                   active
                     ? { background: "var(--clr-dune-dim)", color: "var(--clr-dune)", border: "1px solid rgba(224, 178, 82, 0.3)" }

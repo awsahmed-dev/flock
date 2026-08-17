@@ -324,6 +324,19 @@
 .min-h-safe-screen { min-height: 100svh; }
 /* Tap-target floor (brief §1.7): ≥44×44 for every interactive element. */
 .tap-target { min-width: 44px; min-height: 44px; }
+/* Sweep Task 3: grow the HIT area to ≥44×44 without changing the visual
+   size or layout — an invisible pseudo-element centred on the control
+   catches the tap. Use on small icon buttons that must stay small. */
+.tap-hit { position: relative; }
+.tap-hit::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
 
 /* The liquid-glass engine was removed in the reinvention (the brief uses plain
    bg-card + Tailwind backdrop-blur on the tab bar). These two classes remain as

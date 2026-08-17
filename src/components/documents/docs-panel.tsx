@@ -67,7 +67,7 @@ export function DocsPanel({ tripId, docs }: { tripId: string; docs: DocumentCard
                 onClick={() => switchView(v)}
                 aria-label={label}
                 aria-pressed={view === v}
-                className={`w-8 h-7 rounded-full flex items-center justify-center transition-colors ${
+                className={`tap-hit w-8 h-7 rounded-full flex items-center justify-center transition-colors ${
                   view === v ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
               >
