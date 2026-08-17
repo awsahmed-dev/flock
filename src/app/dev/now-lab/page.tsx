@@ -728,7 +728,38 @@ function Postcard2({ p }: { p: P2 }) {
     </div>
   );
 }
-function VariantE({ m }: { m: MomentKey }) {
+
+// One photo, then quiet: the deck's hero keeps its image, the rest are notes.
+function NoteCard({ p }: { p: P2 }) {
+  const col = HUE[p.hue ?? "brand"];
+  const I = p.icon ?? MapPin;
+  return (
+    <div className="rounded-3xl border border-white/10 bg-[#161618] p-4 flex gap-3.5">
+      <span className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: `${col}22` }}><I size={20} weight="fill" style={{ color: col }} /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold text-white/45">{p.purpose}</p>
+        <p className="text-[16px] font-bold leading-tight mt-0.5">{p.title}</p>
+        <p className="text-[13px] text-white/60 mt-0.5 leading-snug">{p.body}</p>
+        <p className="mt-2 text-[13px] font-bold flex items-center gap-1" style={{ color: col }}>{p.action} <CaretRight size={12} weight="bold" /></p>
+      </div>
+    </div>
+  );
+}
+function Deck({ cards, count }: { cards: P2[]; count?: string }) {
+  const [hero, ...rest] = cards;
+  return (
+    <>
+      <div className="flex items-center justify-between px-1 pt-1">
+        <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {count ?? cards.length}</p>
+        <p className="text-[12px] text-white/50">picked for now</p>
+      </div>
+      <Postcard2 p={{ ...hero, tall: true }} />
+      {rest.map((p) => <NoteCard key={p.title} p={p} />)}
+    </>
+  );
+}
+
+function VariantE({ m, quiet = false }: { m: MomentKey; quiet?: boolean }) {
   const HZ = { budget: Wallet, docs: FileText, pack: Package };
   if (m === "T49" || m === "EMPTY") {
     const empty = m === "EMPTY";
@@ -751,11 +782,13 @@ function VariantE({ m }: { m: MomentKey }) {
             : <Stub hue="horizon" kicker="Your vote's missing" title="Nikko or Hakone?" sub="Crew vote · 2 of 4 voted · closes tonight" icon={ChatCircle} />}
           <Horizon2 title={empty ? "Horizon · 21 days to Kyoto" : "Horizon · 49 days to Tokyo"} nowLabel={empty ? "T−21" : "T−49"} progress={empty ? 30 : 18}
             marks={[{ at: 60, label: "budget", icon: HZ.budget, state: "later" }, { at: 76, label: "docs", icon: HZ.docs, state: "later" }, { at: 91, label: "pack", icon: HZ.pack, state: "later" }]} />
+          {quiet ? <Deck cards={cards} /> : (<>
           <div className="flex items-center justify-between px-1 pt-1">
             <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {cards.length}</p>
             <p className="text-[12px] text-white/50">picked for now</p>
           </div>
           {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          </>)}
           <Footer text={empty ? "Just you · 0 stops · Invite crew →" : "4 going · 12 stops · USD 8,000 · Discover →"} />
         </div>
       </div>
@@ -775,11 +808,13 @@ function VariantE({ m }: { m: MomentKey }) {
           <Stub hue="dune" kicker="Due now" title="Pack — 14 left" sub="18 items · flight in 3 days" icon={Package} />
           <Horizon2 title="Horizon · 3 days to Tokyo" nowLabel="T−3" progress={88}
             marks={[{ at: 60, label: "budget", icon: HZ.budget, state: "done" }, { at: 76, label: "docs 1/2", icon: HZ.docs, state: "due" }, { at: 91, label: "pack", icon: HZ.pack, state: "due" }]} />
+          {quiet ? <Deck cards={cards} /> : (<>
           <div className="flex items-center justify-between px-1 pt-1">
             <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {cards.length}</p>
             <p className="text-[12px] text-white/50">picked for now</p>
           </div>
           {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          </>)}
           <Footer text="4 going · 12 stops · USD 8,000 · Discover →" />
         </div>
       </div>
@@ -798,11 +833,13 @@ function VariantE({ m }: { m: MomentKey }) {
           <Stub hue="dune" kicker="Settle up" title="You owe Rania USD 42" sub="2 splits open · everyone else is square" icon={Wallet} />
           <Horizon2 title="Horizon · the whole trip" nowLabel="home" progress={100} endIcon={Camera}
             marks={[{ at: 6, label: "ICN", icon: Airplane, state: "done" }, { at: 30, label: "day 2", icon: ForkKnife, state: "done" }, { at: 55, label: "day 4", icon: Camera, state: "done" }, { at: 80, label: "sunset", icon: Sun, state: "done" }]} />
+          {quiet ? <Deck cards={cards} /> : (<>
           <div className="flex items-center justify-between px-1 pt-1">
             <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/45">Postcards · {cards.length}</p>
             <p className="text-[12px] text-white/50">picked for now</p>
           </div>
           {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          </>)}
           <Footer text="USD 1,120 spent · Share the Wrap →" />
         </div>
       </div>
@@ -830,7 +867,7 @@ function VariantE({ m }: { m: MomentKey }) {
           <Stub hue={last ? "horizon" : "wayfind"} kicker={last ? "Departure tonight · leave by 20:30" : `Up next · ${next.time} · in 1h20`} title={next.title} sub={next.place} icon={last ? Airplane : NavigationArrow} />
           <Horizon2 title={last ? "Today · final day" : "Today · day 2"} nowLabel={last ? "21:59" : "09:40"} progress={last ? 88 : 22} endIcon={last ? Airplane : Moon}
             marks={stops.map((x, i) => ({ at: 6 + i * 27, label: x.time, icon: x.icon, state: x.done ? "done" : x.missed ? "due" : i === idx ? "now" : "later" }))} />
-          {cards.map((p) => <Postcard2 key={p.title} p={p} />)}
+          {quiet ? <Deck cards={cards} /> : cards.map((p) => <Postcard2 key={p.title} p={p} />)}
         </div>
       </div>
     </div>
@@ -845,6 +882,7 @@ export default function NowLabPage() {
   const [belowLab, setBelowLab] = useState(false);
   const [dLab, setDLab] = useState(false);
   const [eLab, setELab] = useState(false);
+  const [fLab, setFLab] = useState(false);
   const mm = MOMENTS.find((x) => x.key === m)!;
   return (
     <div className="min-h-screen bg-[#08080a] text-white p-6">
@@ -864,7 +902,12 @@ export default function NowLabPage() {
         <button data-below-lab onClick={() => setBelowLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${belowLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>Below-CTA lab (B3 × 3 layouts)</button>
         <button data-d-lab onClick={() => setDLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${dLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>D · Horizon system (all moments)</button>
         <button data-e-lab onClick={() => setELab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${eLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>E · Horizon v2 (scrolls)</button>
-        {eLab ? (
+        <button data-f-lab onClick={() => setFLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${fLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>F · one photo, then notes</button>
+        {fLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title={`F · Horizon v3 · ${mm.label}`}><VariantE m={m} quiet /></Phone>
+          </div>
+        ) : eLab ? (
           <div className="flex flex-wrap gap-8 justify-center" data-variants>
             <Phone title={`E · Horizon v2 · ${mm.label}`}><VariantE m={m} /></Phone>
           </div>
