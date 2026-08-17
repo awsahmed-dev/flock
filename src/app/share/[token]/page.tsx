@@ -16,6 +16,7 @@ import { parseDateOnly } from "@/lib/date-only";
 import { addDaysIso, diffDaysIso, toIsoDay } from "@/lib/today";
 import { MapPin, Calendar, Clock, CurrencyDollar as DollarSign, Ticket, Buildings as Hotel, Bus, ForkKnife as Utensils, Star, ArrowSquareOut as ExternalLink, Users, Globe, CheckCircle as CheckCircle2, ChartBar as BarChart3 } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
+import { signStoredUrl } from "@/lib/storage-sign";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -84,7 +85,12 @@ export default async function SharePage({ params }: Props) {
     .from(documents)
     .where(and(eq(documents.tripId, trip.id), eq(documents.type, "image")))
     .orderBy(desc(documents.createdAt))
-    .limit(12);
+    .limit(12)
+    // authz-3: the bucket is private and this page is public-by-token, so
+    // sign each image for an hour server-side. Rows whose URL can't be signed
+    // (misconfigured service key) are dropped rather than rendered broken.
+    .then((rows) => Promise.all(rows.map(async (r) => ({ ...r, url: (await signStoredUrl(r.url, 3600)) ?? "" }))))
+    .then((rows) => rows.filter((r) => r.url));
 
   // ── Decisions — resolved votes with their winning option (most-voted).
   //    Pulls the full vote list, options, and responses in 3 round-trips.

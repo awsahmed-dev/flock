@@ -5,7 +5,9 @@
  */
 
 export function isFileDoc(url: string): boolean {
-  return url.includes("/storage/v1/object/");
+  // authz-3: uploaded files now live behind /api/storage/… (private bucket);
+  // older rows still carry the Supabase object URL.
+  return url.startsWith("/api/storage/") || url.includes("/storage/v1/object/");
 }
 
 /** Best-effort format guess from the URL — the viewer trusts the blob's
