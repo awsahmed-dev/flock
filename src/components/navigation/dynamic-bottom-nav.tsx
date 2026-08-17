@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, Camera, MagnifyingGlass as Search, House, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
+import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, Camera, MagnifyingGlass as Search, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
 import type { Icon as LucideIcon } from "@phosphor-icons/react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {

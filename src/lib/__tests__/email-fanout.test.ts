@@ -15,8 +15,9 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import { db } from "@/lib/db";
 import { profiles, trips, tripMembers } from "@/lib/db/schema";
 
-const sendEmail = vi.fn(async (_p: unknown) => ({ ok: true }));
-vi.mock("@/lib/email/send", () => ({ sendEmail: (p: any) => sendEmail(p) }));
+type SendArgs = { to: string; idempotencyKey?: string };
+const sendEmail = vi.fn(async (_p: SendArgs) => ({ ok: true }));
+vi.mock("@/lib/email/send", () => ({ sendEmail: (p: SendArgs) => sendEmail(p) }));
 vi.mock("@/lib/push/send", () => ({ sendPush: async () => undefined }));
 vi.mock("@/lib/inbox", () => ({ recordEvent: async () => undefined }));
 
@@ -41,7 +42,7 @@ describe("vote_opened email fan-out", () => {
       { tripId: TRIP, userId: M[0], displayName: "Ali", role: "member" },
       { tripId: TRIP, userId: M[1], displayName: "Ali", role: "member" },
       { tripId: TRIP, userId: M[2], displayName: "Sara", role: "member" },
-    ] as any).onConflictDoNothing();
+    ]).onConflictDoNothing();
   });
 
   it("every other member gets their OWN idempotency key", async () => {
@@ -49,11 +50,11 @@ describe("vote_opened email fan-out", () => {
     const fd = new FormData();
     fd.set("tripId", TRIP); fd.set("question", "Which hotel?");
     fd.set("option_label_0", "A"); fd.set("option_label_1", "B");
-    try { await createVote(fd); } catch (e: any) { if (!String(e?.message ?? e).includes("NEXT_REDIRECT")) throw e; }
+    try { await createVote(fd); } catch (e) { if (!String(e instanceof Error ? e.message : e).includes("NEXT_REDIRECT")) throw e; }
     // notify is fire-and-forget — wait for the loop to drain.
     for (let i = 0; i < 50 && sendEmail.mock.calls.length < 3; i++) await new Promise((r) => setTimeout(r, 100));
 
-    const calls = sendEmail.mock.calls.map((c: any) => c[0]);
+    const calls = sendEmail.mock.calls.map((c) => c[0]);
     const keys = calls.map((c) => c.idempotencyKey);
     console.log("[email-fanout] sends:", calls.length, "keys:", keys);
     expect(calls.length).toBe(3);
