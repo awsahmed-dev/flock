@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { fileURLToPath } from "node:url";
 
 // Unit tests for the pure v2 discovery engine (and future pure modules).
 // `vite-tsconfig-paths` resolves the `@/` alias from tsconfig so test imports
@@ -9,11 +10,13 @@ export default defineConfig({
   // Server actions import `server-only`, `next/cache` and `next/headers`,
   // none of which resolve outside a Next runtime — which is why nothing in
   // src/lib/actions had a test before. These aliases are test-only.
+  // fileURLToPath, not .pathname: the repo lives under "My projects/Big product"
+  // and .pathname keeps the %20s, so the alias silently failed to resolve there.
   resolve: {
     alias: [
-      { find: /^server-only$/, replacement: new URL("./src/test-support/server-only.ts", import.meta.url).pathname },
-      { find: /^next\/cache$/, replacement: new URL("./src/test-support/next-cache.ts", import.meta.url).pathname },
-      { find: /^next\/headers$/, replacement: new URL("./src/test-support/next-headers.ts", import.meta.url).pathname },
+      { find: /^server-only$/, replacement: fileURLToPath(new URL("./src/test-support/server-only.ts", import.meta.url)) },
+      { find: /^next\/cache$/, replacement: fileURLToPath(new URL("./src/test-support/next-cache.ts", import.meta.url)) },
+      { find: /^next\/headers$/, replacement: fileURLToPath(new URL("./src/test-support/next-headers.ts", import.meta.url)) },
     ],
   },
   test: {
