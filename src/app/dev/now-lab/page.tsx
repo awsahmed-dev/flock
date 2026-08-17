@@ -1009,6 +1009,67 @@ function VariantG({ m }: { m: MomentKey }) {
   );
 }
 
+
+// ─── H · "Add a confirmation" — how flights/hotels get into the app ─────────
+function ConfirmSheet({ step }: { step: "pick" | "preview" }) {
+  return (
+    <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-[#141416] border-t border-white/10 px-4 pt-2" style={{ paddingBottom: 100 }}>
+      <div className="mx-auto w-9 h-1 rounded-full bg-white/25 mb-3" />
+      <p className="text-[18px] font-bold">Add a confirmation</p>
+      <p className="text-[13px] text-white/55 mb-4">Flight, hotel, train, ticket — it lands on the plan, the horizon and your docs.</p>
+      {step === "pick" ? (
+        <div className="space-y-2.5">
+          {[
+            [Camera, "Snap it", "Photo or screenshot of the email · we read it", "horizon"],
+            [FileText, "Paste it", "Email text or the booking link", "brand"],
+            [Ticket, "Type it", "Flight no. or hotel name · 20 seconds", "wayfind"],
+          ].map(([I, t, sub, hue]) => { const Ic = I as typeof MapPin; const col = HUE[hue as keyof typeof HUE]; return (
+            <div key={t as string} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#1a1a1c] px-4 py-3.5">
+              <span className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: `${col}22` }}><Ic size={20} weight="fill" style={{ color: col }} /></span>
+              <div className="flex-1"><p className="text-[15px] font-bold">{t as string}</p><p className="text-[12px] text-white/55">{sub as string}</p></div>
+              <CaretRight size={16} className="text-white/40" />
+            </div>
+          ); })}
+          <p className="text-[12px] text-white/40 pt-1">Or forward the email to <span className="text-white/70 font-semibold">trip-4f2a@in.paxawa.com</span> — same result.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-[#3EC5B7]/40 bg-[#3EC5B7]/10 px-3.5 py-2.5 text-[12px] flex items-center gap-2"><Check size={14} weight="bold" className="text-[#3EC5B7]" /><span>Read from your screenshot · <b>2 things found</b> · check them once</span></div>
+          <div className="rounded-3xl overflow-hidden border border-white/10">
+            <div className="p-4" style={{ background: "linear-gradient(135deg,#FF8A5C,#ff9d78)", color: "#111" }}>
+              <div className="flex items-center justify-between text-[10px] font-black tracking-[0.2em] uppercase opacity-70"><span>Flight</span><span>SV 826</span></div>
+              <div className="flex items-end justify-between mt-1"><div><p className="text-[28px] font-black leading-none">RUH</p><p className="text-[12px] font-semibold opacity-80">Riyadh · 09:15</p></div><Airplane size={22} weight="fill" /><div className="text-end"><p className="text-[28px] font-black leading-none">NRT</p><p className="text-[12px] font-semibold opacity-80">Tokyo · 06 Oct 15:00</p></div></div>
+              <p className="text-[12px] font-semibold mt-2 opacity-80">Conf. <b>7XK9QP</b> · 4 passengers · gate opens 08:15</p>
+            </div>
+            <div className="p-3.5 bg-[#1a1a1c] flex items-center gap-3"><Bed size={18} className="text-[#8B7CFF]" /><div className="flex-1"><p className="text-[14px] font-bold">Shinjuku Granbell Hotel</p><p className="text-[12px] text-white/55">Oct 6 → 12 · check-in 15:00 · 2 rooms · conf. HB-22910</p></div><span className="text-[12px] text-white/40">edit</span></div>
+          </div>
+          <div className="text-[12px] text-white/55 space-y-1">
+            <p>→ Day 1: <b className="text-white/80">SV 826</b> pinned 09:15, <b className="text-white/80">Granbell</b> pinned 15:00 (anchors, can&apos;t be dragged)</p>
+            <p>→ Horizon: plane at <b className="text-white/80">Oct 6 09:15</b>, hotel on the line</p>
+            <p>→ Docs: screenshot saved · <b className="text-white/80">4 crew</b> can open it offline</p>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button className="flex-1 h-12 rounded-full bg-[#8B7CFF] text-black font-bold text-[15px]">Add both</button>
+            <button className="h-12 px-5 rounded-full border border-white/15 font-bold text-[14px]">Only flight</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+function VariantH({ step }: { step: "pick" | "preview" }) {
+  return (
+    <div className="h-full overflow-hidden">
+      <div className="opacity-30 pointer-events-none">
+        <Hero eyebrow="IN 49 DAYS" name="Tokyo" sub="Tokyo, Japan · 6 Oct – 12 Oct 2026" />
+        <div className="px-4 pt-4"><Stub hue="horizon" kicker="Your vote's missing" title="Nikko or Hakone?" sub="Crew vote · 2 of 4 voted" icon={ChatCircle} /></div>
+      </div>
+      <div className="absolute inset-0 bg-black/50" />
+      <ConfirmSheet step={step} />
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function NowLabPage() {
   if (process.env.NODE_ENV === "production") notFound();
@@ -1019,6 +1080,7 @@ export default function NowLabPage() {
   const [eLab, setELab] = useState(false);
   const [fLab, setFLab] = useState(false);
   const [gLab, setGLab] = useState(false);
+  const [hLab, setHLab] = useState(false);
   const mm = MOMENTS.find((x) => x.key === m)!;
   return (
     <div className="min-h-screen bg-[#08080a] text-white p-6">
@@ -1040,7 +1102,13 @@ export default function NowLabPage() {
         <button data-e-lab onClick={() => setELab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${eLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>E · Horizon v2 (scrolls)</button>
         <button data-f-lab onClick={() => setFLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${fLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>F · one photo, then notes</button>
         <button data-g-lab onClick={() => setGLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${gLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>G · smaller + schedule</button>
-        {gLab ? (
+        <button data-h-lab onClick={() => setHLab((v) => !v)} className={`mb-4 ms-2 rounded-full px-4 py-2 text-sm font-bold border ${hLab ? "bg-white text-black border-white" : "border-white/20 text-white/70"}`}>H · Add a confirmation</button>
+        {hLab ? (
+          <div className="flex flex-wrap gap-8 justify-center" data-variants>
+            <Phone title="H1 · three ways in"><VariantH step="pick" /></Phone>
+            <Phone title="H2 · what we read, where it lands"><VariantH step="preview" /></Phone>
+          </div>
+        ) : gLab ? (
           <div className="flex flex-wrap gap-8 justify-center" data-variants>
             <Phone title={`G · ${mm.label}`}><VariantG m={m} /></Phone>
           </div>
