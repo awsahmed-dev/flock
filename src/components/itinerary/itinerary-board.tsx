@@ -263,10 +263,11 @@ export function ItineraryBoard({
   const localCurrency = inferLocalCurrency(destination);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    // Round 7: no hold — the grip is touch-none, so a finger moving 6px on it
-    // IS the drag (touch events, which Android delivers reliably).
-    useSensor(TouchSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // Round 8: the WHOLE row is the handle. A short hold (150ms) then move =
+    // reorder; a quick vertical flick still scrolls the list and a quick
+    // sideways swipe still reveals delete.
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -1314,9 +1315,15 @@ function SortableItemRow({
         </button>
       )}
       <div
+        {...(!isAnchor ? attributes : {})}
+        {...(!isAnchor ? listeners : {})}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        onPointerDown={canManage && !isAnchor ? onSwipeDown : undefined}
+        onPointerDown={(e) => {
+          // dnd-kit's activator AND the swipe tracker share the row.
+          if (!isAnchor) (listeners as Record<string, (ev: React.PointerEvent) => void> | undefined)?.onPointerDown?.(e);
+          if (canManage && !isAnchor) onSwipeDown(e);
+        }}
         onPointerMove={canManage && !isAnchor ? onSwipeMove : undefined}
         onPointerUp={canManage && !isAnchor ? onSwipeUp : undefined}
         onPointerCancel={canManage && !isAnchor ? onSwipeUp : undefined}
