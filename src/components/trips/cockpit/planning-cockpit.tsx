@@ -4,9 +4,11 @@ import Link from "next/link";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { diffDaysIso, toIsoDay } from "@/lib/today";
-import { tripMoment } from "@/lib/trip-moment";
+import { tripMoment, NEAR_DAYS, PACK_DAYS } from "@/lib/trip-moment";
+import { Ticket, QuietAction, type TicketHue } from "./ticket";
+import { Horizon, runwayPos, type HorizonMarkState } from "./horizon";
+import { FileText, Package } from "@phosphor-icons/react/dist/ssr";
 import { Star, CaretRight as ChevronRight, CheckSquareOffset as Vote, MapPin, Users, Wallet, Compass } from "@phosphor-icons/react/dist/ssr";
-import { ReadinessChecklist } from "./readiness-checklist";
 import { CrewPulse } from "./crew-pulse";
 import { docKindIcon } from "@/lib/document-kind";
 import { MetricGrid } from "./metric-grid";
@@ -61,23 +63,35 @@ export function PlanningCockpit(props: CockpitShared) {
   //   otherwise  a FLOOR: say nothing is due and point at Discover, instead
   //              of inventing a task.
   const moment = tripMoment({ startDate, endDate }, todayIso);
+  // Step 3: the action is a TICKET — boarding stub, hue = what it is.
   const primary = (() => {
     if (huddleOpen > 0)
       return {
-        key: "votes",
-        icon: Vote,
-        label: t("cockpit.votesWaiting", { count: huddleOpen }),
+        key: "votes", hue: "horizon" as TicketHue, icon: Vote,
+        kicker: t("cockpit.tk.decideKicker"),
+        label: t("cockpit.tk.decideTitle", { count: huddleOpen }),
+        sub: t("cockpit.tk.decideSub"),
         href: `${base}/huddle`,
       };
     if (items.length === 0)
-      return { key: "stops", icon: MapPin, label: t("cockpit.firstStops"), href: `${base}/itinerary` };
+      return { key: "stops", hue: "brand" as TicketHue, icon: MapPin, kicker: t("cockpit.tk.firstStopKicker"), label: t("cockpit.firstStops"), sub: t("cockpit.tk.firstStopSub"), href: `${base}/itinerary` };
     if (crew.length < 2)
-      return { key: "crew", icon: Users, label: t("cockpit.inviteCrew"), href: `${base}/members` };
+      return { key: "crew", hue: "brand" as TicketHue, icon: Users, kicker: t("cockpit.tk.crewKicker"), label: t("cockpit.inviteCrew"), sub: t("cockpit.tk.crewSub"), href: `${base}/members` };
     if (moment.due.budget && (budgetTotal == null || budgetTotal <= 0))
-      return { key: "budget", icon: Wallet, label: t("cockpit.setBudget"), href: `${base}/settings` };
-    return { key: "floor", icon: Compass, label: t("cockpit.nothingDue", { count: Math.max(0, moment.daysToStart) }), href: `${base}/discover` };
+      return { key: "budget", hue: "dune" as TicketHue, icon: Wallet, kicker: t("cockpit.tk.dueNow"), label: t("cockpit.setBudget"), sub: t("cockpit.tk.budgetSub", { count: crew.length }), href: `${base}/settings` };
+    return { key: "floor", hue: "brand" as TicketHue, icon: Compass, kicker: "", label: t("cockpit.nothingDue", { count: Math.max(0, moment.daysToStart) }), sub: null, href: `${base}/discover` };
   })();
-  const PrimaryIcon = primary.icon;
+
+  // The Horizon: days-to-departure as space; the due-items as marks.
+  const hasBudget = budgetTotal != null && budgetTotal > 0;
+  const hasDocs = documents.length > 0;
+  const packedHalf = packing.total > 0 && packing.packed / packing.total >= 0.5;
+  const markState = (satisfied: boolean, due: boolean): HorizonMarkState => (satisfied ? "done" : due ? "due" : "later");
+  const horizonMarks = [
+    { at: runwayPos(NEAR_DAYS), label: t("cockpit.hz.budget"), icon: Wallet, state: markState(hasBudget, moment.due.budget), href: `${base}/settings` },
+    { at: runwayPos(7), label: t("cockpit.hz.docs"), icon: FileText, state: markState(hasDocs, moment.due.docs), href: `${base}/huddle?tab=docs` },
+    { at: runwayPos(PACK_DAYS), label: t("cockpit.hz.pack"), icon: Package, state: markState(packedHalf, moment.due.packing), href: `${base}/pack` },
+  ];
   // The second real first move in a group app. Never shown when the primary
   // action already IS the invite — one job, one control.
   const showInvite = crew.length < 2 && primary.key !== "crew";
@@ -113,31 +127,13 @@ export function PlanningCockpit(props: CockpitShared) {
         className="flex flex-col gap-4 px-4 pt-4 max-w-2xl mx-auto"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
       >
-        {/* 2. THE ONE PRIMARY ACTION — 64px, unmissable. When nothing is due
-            (the floor) it is deliberately quiet: a card, not a button, with
+        {/* 2. THE ONE PRIMARY ACTION — a boarding stub in the hue of what it
+            asks for. When nothing is due (the floor) it is a quiet card with
             the Discover nudge — an invented task would be louder and wrong. */}
         {primary.key === "floor" ? (
-          <Link
-            href={primary.href}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 active:scale-[0.99] transition-transform"
-          >
-            <PrimaryIcon size={22} className="shrink-0 text-primary" />
-            <span className="flex-1 min-w-0">
-              <span className="block text-[15px] font-semibold">{primary.label}</span>
-              <span className="block text-[13px] font-semibold text-primary">{t("cockpit.nothingDueNudge")}</span>
-            </span>
-            <ChevronRight size={18} className="shrink-0 text-muted-foreground rtl:rotate-180" />
-          </Link>
+          <QuietAction icon={primary.icon} title={primary.label} nudge={t("cockpit.nothingDueNudge")} href={primary.href} />
         ) : (
-          <Link
-            href={primary.href}
-            className="flex items-center gap-3 h-16 px-4 rounded-2xl bg-primary text-primary-foreground active:scale-[0.99] transition-transform"
-            style={{ boxShadow: "0 4px 20px var(--clr-brand-dim)" }}
-          >
-            <PrimaryIcon size={22} className="shrink-0" />
-            <span className="flex-1 min-w-0 text-[17px] font-bold truncate">{primary.label}</span>
-            <ChevronRight size={20} className="shrink-0 rtl:rotate-180" />
-          </Link>
+          <Ticket hue={primary.hue} kicker={primary.kicker} title={primary.label} sub={primary.sub} icon={primary.icon} href={primary.href} go={t("cockpit.tk.go")} />
         )}
 
         {/* 2b. THE SECOND MOVE — get your people in. Outlined, not filled:
@@ -153,15 +149,13 @@ export function PlanningCockpit(props: CockpitShared) {
           </Link>
         )}
 
-        {/* 3. READINESS BAR — one line; the checklist hides behind the tap. */}
-        <ReadinessChecklist
-          base={base}
-          hasDates={!!startDate}
-          crewCount={crew.length}
-          stopsCount={items.length}
-          hasBudget={budgetTotal != null && budgetTotal > 0}
-          packedCount={packing.packed}
-          packTotal={packing.total}
+        {/* 3. THE HORIZON — replaces the "N% ready" bar (step 3). Readiness is
+            whatever is still ahead of the dot; each mark opens its thing. */}
+        <Horizon
+          title={t("cockpit.hz.title", { count: Math.max(0, moment.daysToStart), destination: destination.split(",")[0] })}
+          nowLabel={t("cockpit.hz.now", { count: Math.max(0, moment.daysToStart) })}
+          progress={runwayPos(moment.daysToStart)}
+          marks={horizonMarks}
         />
 
         {/* ── Below the fold ─────────────────────────────────────────── */}

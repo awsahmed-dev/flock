@@ -75,6 +75,7 @@
   --popover-foreground: #1a1720;
   /* Master color brief STEP 1 — the five semantic colors (light). */
   --clr-brand: #5B4BD9;
+  --ticket-fg: #ffffff;         /* text on a --clr-* filled ticket (light theme hues are deep) */
   --clr-brand-dim: rgba(91, 75, 217, 0.12);
   --clr-horizon: #BE4E1A;
   --clr-horizon-dim: rgba(190, 78, 26, 0.12);
@@ -212,6 +213,7 @@
   --popover-foreground: #f5f5f7;
   /* Master color brief STEP 1 — the five semantic colors (dark). */
   --clr-brand: #8B7CFF;
+  --ticket-fg: #111111;         /* dark theme hues are bright */
   --clr-brand-dim: rgba(139, 124, 255, 0.16);
   --clr-horizon: #FF8A5C;
   --clr-horizon-dim: rgba(255, 138, 92, 0.16);
