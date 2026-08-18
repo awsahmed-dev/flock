@@ -55,6 +55,8 @@ export interface NowItem {
   /** Phase 6 §3-C: ISO timestamp when checked off, null when not done. */
   completedAt?: string | null;
   photoUrl?: string | null;
+  /** step 4: lets the deck know a hearted place is already on the plan */
+  googlePlaceId?: string | null;
 }
 
 /**
