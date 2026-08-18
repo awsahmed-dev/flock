@@ -182,7 +182,7 @@ export function BookMode({
     <div className={embedded ? "space-y-5" : "max-w-2xl mx-auto p-4 sm:p-6 pb-20 space-y-5"}>
       {!embedded && (
         <header className="space-y-2">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-primary">
+          <p className="text-[12px] font-bold tracking-wider uppercase text-primary">
             {t("plan.bookHeader")}
           </p>
           <h2 className="text-xl font-extrabold leading-tight">
@@ -223,7 +223,7 @@ export function BookMode({
                 <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold tracking-widest uppercase text-amber-700 dark:text-amber-400 mb-0.5">
+                <p className="text-[12px] font-bold tracking-wider uppercase text-amber-700 dark:text-amber-400 mb-0.5">
                   {t("plan.bookConfirmHeader")}
                 </p>
                 <p className="font-bold text-sm leading-snug">
@@ -497,7 +497,7 @@ function Section({
           <Icon className={`w-4 h-4 ${c.text}`} />
         </div>
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+          <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
             {meta}
           </p>
           <p className="font-extrabold text-base leading-tight">{title}</p>

@@ -124,7 +124,7 @@ export function BookingsBoard(props: Props) {
         {/* The forward address as a copyable field — the primary CTA. */}
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
           <div className="flex-1 min-w-0 rounded-2xl bg-background/70 border border-border/60 px-4 py-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+            <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
               {t("bookings.heroAddressLabel")}
             </p>
             <p className="text-sm font-mono font-bold truncate" dir="ltr">

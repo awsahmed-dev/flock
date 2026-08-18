@@ -273,7 +273,7 @@ export function ExpensesBoard({
 
           <div className="grid grid-cols-2 gap-2.5 mt-4">
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white/80">
+              <div className="flex items-center gap-1.5 text-[12px] font-bold tracking-wider uppercase text-white/80">
                 <ArrowUpRight className="w-4 h-4" /> {t("expenses.youPaid")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
@@ -281,7 +281,7 @@ export function ExpensesBoard({
               </p>
             </div>
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white/80">
+              <div className="flex items-center gap-1.5 text-[12px] font-bold tracking-wider uppercase text-white/80">
                 <ArrowDownRight className="w-4 h-4" /> {t("expenses.youOwe")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
@@ -585,7 +585,7 @@ function SectionCard({
         </div>
         <Link
           href={viewAllHref}
-          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground transition-colors"
+          className="shrink-0 inline-flex items-center gap-0.5 h-9 px-2 text-[13px] font-bold transition-colors" style={{ color: "var(--clr-brand)" }}
         >
           {t("common.viewAll")} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
         </Link>

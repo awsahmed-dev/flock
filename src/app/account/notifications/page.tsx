@@ -79,13 +79,17 @@ export default async function NotificationPrefsPage() {
     // Video round 4: this page "looks totally different from Settings". Same
     // language as the account sheet now — 16px rows, one full-width primary
     // action, switches instead of bare checkboxes.
-    <div className="mx-auto max-w-md px-4 py-6">
-      <BackButton
-        className="inline-flex items-center gap-1 h-9 text-sm font-semibold text-foreground mb-4"
-        iconClassName="w-4 h-4 rtl:rotate-180"
-      />
-
-      <h1 className="text-xl font-bold mb-1">{t("notifications.prefsHeading")}</h1>
+    <div className="min-h-svh bg-background text-foreground">
+      {/* Same header as every trip route: Back · title — one shell language. */}
+      <header
+        className="sticky top-0 z-30 flex items-center gap-2 px-2 h-14 border-b border-border"
+        style={{ background: "var(--sheet-bg)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+      >
+        <BackButton className="flex items-center h-11 ps-1 pe-2 text-[13px] font-semibold text-foreground active:opacity-70" iconClassName="w-5 h-5 rtl:rotate-180" />
+        <p className="flex-1 min-w-0 text-center font-bold text-[15px] truncate">{t("notifications.prefsHeading")}</p>
+        <span className="w-16" />
+      </header>
+      <div className="mx-auto max-w-md px-4 py-6">
       <p className="text-sm text-muted-foreground mb-6">
         {t("notifications.prefsSub")}
       </p>
@@ -125,6 +129,7 @@ export default async function NotificationPrefsPage() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

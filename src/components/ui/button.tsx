@@ -12,7 +12,7 @@ const buttonVariants = cva(
         /* Video round 5: the reference is the account sheet — 48px pills;
            secondary actions are the quiet pill (secondary surface). */
         outline:
-          "border-border bg-secondary text-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
+          "border-border bg-card text-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:

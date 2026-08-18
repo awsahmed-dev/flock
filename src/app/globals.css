@@ -309,14 +309,37 @@
   /* Video round 5: the reference control is the account/create-trip pill —
      48px tall, fully rounded, quiet secondary surface, 15px text. Utility
      classes on a specific element still win (this is the @layer base floor). */
-  input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])),
-  select {
+  input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], .bg-transparent)),
+  select:where(:not(.bg-transparent)) {
     min-height: 3rem;
     border-radius: 9999px;
     background: var(--secondary);
     border: 1px solid var(--border);
     padding-inline: 1rem;
     font-size: 15px;
+  }
+  /* A field that sits INSIDE a styled wrapper (bg-transparent) is bare:
+     no second pill inside the pill. */
+  input.bg-transparent,
+  select.bg-transparent {
+    border: 0;
+    border-radius: 0;
+    min-height: 0;
+    padding-inline: 0;
+  }
+  /* Selects: no OS arrow jammed on the edge — our own chevron with 16px of
+     room, at inline-end in both directions. */
+  select:where(:not(.bg-transparent)) {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-inline-end: 2.75rem;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 16px;
+  }
+  [dir="rtl"] select:where(:not(.bg-transparent)) {
+    background-position: left 1rem center;
   }
   textarea {
     min-height: 3rem;

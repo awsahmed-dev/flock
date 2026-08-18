@@ -266,7 +266,7 @@ export function AddPlaceSearch({
         ) : (
           /* Search field with Google predictions */
           <div className="relative">
-            <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
+            <label className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5 block">
               {t("itinerary.whatAreYouAdding")}
             </label>
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 focus-within:border-primary/40">
@@ -357,7 +357,7 @@ export function AddPlaceSearch({
 
         {/* Day picker */}
         <div>
-          <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block inline-flex items-center gap-1.5">
+          <label className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5 block inline-flex items-center gap-1.5">
             <Calendar className="w-4 h-4" /> {t("itinerary.addToDay")}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
@@ -374,7 +374,7 @@ export function AddPlaceSearch({
                       : "border-border bg-card hover:border-foreground/20"
                   }`}
                 >
-                  <p className="text-[10px] font-bold tracking-widest uppercase">{t("itinerary.dayN", { n: idx + 1 })}</p>
+                  <p className="text-[12px] font-bold tracking-wider uppercase">{t("itinerary.dayN", { n: idx + 1 })}</p>
                   <p className="text-xs font-bold mt-0.5">{format(parseISO(d), "MMM d")}</p>
                 </button>
               );
@@ -389,7 +389,7 @@ export function AddPlaceSearch({
           </summary>
           <div className="px-3 pb-3 grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
+              <label className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
                 <Clock className="w-4 h-4" /> {t("itinerary.time")}
               </label>
               <input
@@ -400,7 +400,7 @@ export function AddPlaceSearch({
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
+              <label className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
                 <Tag className="w-4 h-4" /> {t("itinerary.cost")}
               </label>
               <input
@@ -413,7 +413,7 @@ export function AddPlaceSearch({
               />
             </div>
             <div className="col-span-2">
-              <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block">
+              <label className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1 block">
                 {t("expenses.notes")}
               </label>
               <input

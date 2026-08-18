@@ -56,7 +56,7 @@ export function PastTripsRow({ trips }: { trips: Trip[] }) {
                   <div className="w-full h-full bg-gradient-to-br from-slate-500 to-slate-700" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                <span className="absolute top-2.5 start-2.5 text-[10px] font-bold tracking-widest uppercase bg-white/20 backdrop-blur-md text-white rounded-full px-2 py-0.5">
+                <span className="absolute top-2.5 start-2.5 text-[12px] font-bold tracking-wider uppercase bg-white/20 backdrop-blur-md text-white rounded-full px-2 py-0.5">
                   {t("trip.past")}
                 </span>
                 <div className="absolute bottom-3 start-3 end-3">

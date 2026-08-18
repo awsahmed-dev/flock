@@ -134,7 +134,7 @@ export function ExpenseSheet({
     >
       {/* Amount card */}
       <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/5 to-background p-4 mb-4">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1">
+        <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1">
           {t("expenses.amount")}
         </p>
         <p className="text-2xl font-bold tabular-nums tracking-tight">
@@ -160,7 +160,7 @@ export function ExpenseSheet({
       {/* Splits */}
       {expense.splits.length > 0 ? (
         <div className="mb-4">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-2 px-1">
+          <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-2 px-1">
             {t("expenses.splitBetween", { count: expense.splits.length })}
           </p>
           <div className="space-y-1.5">
@@ -233,7 +233,7 @@ export function ExpenseSheet({
           simpler than a nested lightbox inside the sheet. */}
       {expense.receiptUrl && (
         <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground px-3 pt-2">
+          <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground px-3 pt-2">
             {t("expenses.receipt")}
           </p>
           <a
