@@ -25,8 +25,8 @@ import {
 type Mode = "pick" | "paste" | "type" | "reading" | "preview";
 
 export function AddConfirmationSheet({
-  open, onClose, tripId, tripStart, tripEnd,
-}: { open: boolean; onClose: () => void; tripId: string; tripStart: string; tripEnd: string }) {
+  open, onClose, tripId, tripStart, tripEnd, inboundAddress = null,
+}: { open: boolean; onClose: () => void; tripId: string; tripStart: string; tripEnd: string; inboundAddress?: string | null }) {
   const t = useT();
   const [mode, setMode] = useState<Mode>("pick");
   const [items, setItems] = useState<ParsedConfirmation[]>([]);
@@ -66,13 +66,12 @@ export function AddConfirmationSheet({
       const { error } = await supabase.storage.from("trip-documents").upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || undefined });
       if (error) throw new Error(error.message);
       setFile({ url: protectedFileUrl("trip-documents", path), title: f.name.replace(/\.[^.]+$/, "") });
-      // read locally for the extractor (images only; PDFs → text fallback later)
-      if (f.type.startsWith("image/")) {
-        const b64 = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(f); });
-        await parse({ image: b64, mediaType: f.type });
-      } else {
-        setItems([]); setReason(t("confirm.pdfNotReadYet")); setMode("preview");
-      }
+      // read locally for the extractor: images go to vision, PDFs have their
+      // text extracted server-side (scans fall back to paste/type).
+      const b64 = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(f); });
+      if (f.type.startsWith("image/")) await parse({ image: b64, mediaType: f.type });
+      else if (f.type === "application/pdf") await parse({ pdf: b64 });
+      else { setItems([]); setReason(t("confirm.pdfNotReadYet")); setMode("preview"); }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("common.failed"));
       setMode("pick");
@@ -118,6 +117,15 @@ export function AddConfirmationSheet({
           <ModeRow icon={Camera} hue="var(--clr-horizon)" title={t("confirm.snap")} sub={t("confirm.snapSub")} onClick={() => fileInput.current?.click()} />
           <ModeRow icon={ClipboardText} hue="var(--clr-brand)" title={t("confirm.paste")} sub={t("confirm.pasteSub")} onClick={() => setMode("paste")} />
           <ModeRow icon={Ticket} hue="var(--clr-wayfind)" title={t("confirm.type")} sub={t("confirm.typeSub")} onClick={() => setMode("type")} />
+          {inboundAddress && (
+            <button
+              type="button"
+              onClick={() => { void navigator.clipboard?.writeText(inboundAddress); toast.success(t("common.copied")); }}
+              className="w-full text-start text-[12px] text-muted-foreground pt-1 px-1"
+            >
+              {t("confirm.forwardTo")} <span className="font-semibold text-foreground">{inboundAddress}</span> — {t("confirm.forwardSame")}
+            </button>
+          )}
         </div>
       )}
 

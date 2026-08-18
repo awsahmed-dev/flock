@@ -80,9 +80,18 @@ export function DocsPanel({ tripId, docs }: { tripId: string; docs: DocumentCard
       </div>
 
       {docs.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-          {t("docs.empty")}
-        </p>
+        <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+          <p>{t("docs.empty")}</p>
+          {/* Now-redesign follow-up: the fastest way to fill this tab is the
+              confirmation reader, not a blank upload. */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("paxawa:openConfirmation"))}
+            className="mt-3 h-10 px-4 rounded-full bg-primary text-primary-foreground text-[13px] font-bold"
+          >
+            {t("confirm.title")}
+          </button>
+        </div>
       ) : view === "list" ? (
         <ul className="space-y-2">
           {docs.map((d) => (

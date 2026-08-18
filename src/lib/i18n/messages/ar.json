@@ -1212,6 +1212,10 @@
     "departureTonightBy": "المغادرة الليلة · اخرج قبل {time}",
     "todayDayN": "اليوم · اليوم {n}",
     "leaveBy": "اخرج إلى المطار قبل {time}",
+    "rainFrom": "مطر من {time}",
+    "sunsetAt": "الغروب {time}",
+    "plan": "الخطة",
+    "presenceLine": "أنهى {place} · {time}",
     "upNext": "التالي",
     "navigate": "الاتجاهات",
     "done": "تم",
@@ -1464,6 +1468,8 @@
     "declineAria": "رفض التحليلات"
   },
   "confirm": {
+    "forwardTo": "أو أعد توجيه الإيميل إلى",
+    "forwardSame": "نفس النتيجة · اضغط للنسخ",
       "title": "أضف تأكيد حجز",
       "subtitle": "طيران، فندق، قطار، تذكرة — تُثبَّت على الخطة ولوحة المغادرة ومستنداتك.",
       "snap": "صوّرها",

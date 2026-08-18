@@ -9,6 +9,7 @@
 
 export const revalidate = 60;
 
+import { inboundAddress } from "@/lib/inbound/address";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
@@ -55,6 +56,7 @@ export default async function TripLayout({ children, params }: Props) {
       isOwner={checkOwner(trip, user.id)}
       crew={crew}
       todayIso={await getToday()}
+      inboundAddress={inboundAddress(trip.id)}
     >
       {children}
     </TripShell>

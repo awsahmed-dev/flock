@@ -4,8 +4,8 @@ import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { Suitcase as Luggage, Users } from "@phosphor-icons/react/dist/ssr";
 import { TripPrepChecklist } from "@/components/trips/trip-prep-checklist";
-import { MetricGrid } from "./metric-grid";
-import { CrewPulse } from "./crew-pulse";
+import { buildDeck } from "@/lib/deck";
+import { HeroCard, NoteRow, DeckFooter } from "./deck";
 import { DepartureHead } from "./departure-head";
 import { tripMoment } from "@/lib/trip-moment";
 import type { CockpitShared } from "./types";
@@ -24,8 +24,19 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
     tripId, name, destination, startDate, endDate, heroImageUrl, currency,
     budgetTotal, days, items, crew, packing, ticker, t, todayIso,
   } = props;
-  const moment = tripMoment({ startDate, endDate }, todayIso);
   const base = `/trips/${tripId}`;
+  const moment = tripMoment({ startDate, endDate }, todayIso);
+  const planPlaceIds = new Set(items.map((it) => it.googlePlaceId).filter(Boolean));
+  const day1Items = items.filter((it) => it.dayDate === startDate).sort((a, b) => (a.startTime ?? "99").localeCompare(b.startTime ?? "99"));
+  const deck = buildDeck({
+    moment, base, destinationCity: destination.split(",")[0].trim(), startDate, heroImageUrl,
+    crewCount: crew.length, primaryKey: "departure",
+    hearts: props.teaser.map((p) => ({ placeId: p.placeId, name: p.name, hearts: p.hearts, photoUrl: p.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=800` : null, onPlan: planPlaceIds.has(p.placeId) })),
+    day1: { count: day1Items.length, firstTime: day1Items[0]?.startTime?.slice(0, 5) ?? null, firstTitle: day1Items[0]?.title ?? null },
+    weather: props.weather, fx: props.fx,
+    money: { currency, budget: budgetTotal, perPerson: budgetTotal != null && crew.length > 1 ? budgetTotal / crew.length : null, spent: props.spent },
+    docsCount: props.documents.length, ticker: ticker ? { text: ticker.text } : null,
+  });
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
   const dateLabel = dfFormat(parseDateOnly(startDate), "EEE d MMM");
 
@@ -103,8 +114,6 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
           docs={{ count: props.documents.length, due: moment.due.docs }}
           packing={{ packed: packing.packed, total: packing.total, due: moment.due.packing }}
         />
-
-        <CrewPulse tripId={tripId} crew={crew} ticker={ticker} />
 
         {/* 2. DEPARTURE BOARD. */}
         <section className="rounded-3xl bg-card border border-border overflow-hidden" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -211,14 +220,21 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
           collapsedOnly
         />
 
-        {/* 5. METRIC ROW. */}
-        <MetricGrid
-          tripId={tripId}
-          placesCount={items.length}
-          budgetTotal={budgetTotal}
-          currency={currency}
-          crewCount={crew.length}
-          packing={packing}
+        {/* 5. THE DECK (follow-up): the same hero → notes → footer as
+            PLANNING, replacing the crew card above and the metric row here. */}
+        {deck.hero && <HeroCard card={deck.hero} />}
+        {deck.notes.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {deck.notes.map((c) => <NoteRow key={c.kind} card={c} />)}
+          </div>
+        )}
+        <DeckFooter
+          crew={crew}
+          text={t("cockpit.deck.footer", {
+            crew: crew.length,
+            stops: items.length,
+            budget: budgetTotal != null && budgetTotal > 0 ? `${currency} ${Math.round(budgetTotal).toLocaleString()}` : "",
+          }).replace(/\s·\s$/, "")}
         />
       </div>
     </main>
