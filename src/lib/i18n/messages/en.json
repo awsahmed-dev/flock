@@ -1544,6 +1544,6 @@
     "forward": {"title": "Forward a booking email", "body": "send the confirmation to your trip's address and the flight or hotel lands on the plan by itself."},
     "hearts": {"title": "Heart places in Discover", "body": "the crew's hearts become the free-day ideas on the Now page."},
     "pocket": {"title": "Pocket Day works offline", "body": "today's plan, tickets and the map stay open with no signal."},
-    "split": {"title": "Point and split", "body": "snap a bill in Money and it's split across the crew in one tap."}
+    "split": {"title": "Log it, split it", "body": "add a bill in Money and it's split across the crew in one tap — receipt photo optional."}
   }
 }

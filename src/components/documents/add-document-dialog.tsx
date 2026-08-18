@@ -165,11 +165,11 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
         size="md"
       >
         {/* Upload / Link toggle */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-fit">
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/60 w-full mt-2">
           <button
             type="button"
             onClick={() => setMode("upload")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-full text-sm font-bold transition-colors ${
               mode === "upload"
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -181,7 +181,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
           <button
             type="button"
             onClick={() => setMode("link")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-full text-sm font-bold transition-colors ${
               mode === "link"
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -193,12 +193,12 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
         </div>
 
         {mode === "upload" ? (
-          <form onSubmit={handleUploadSubmit} className="space-y-4">
+          <form onSubmit={handleUploadSubmit} className="space-y-5 mt-5">
             <div className="space-y-1.5">
               <Label htmlFor="doc-file">{t("docs.fileLabel")}</Label>
               <label
                 htmlFor="doc-file"
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 cursor-pointer hover:bg-muted/60 transition-colors text-center"
+                className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-7 cursor-pointer hover:bg-muted/60 transition-colors text-center"
               >
                 <FileUp className="w-6 h-6 text-muted-foreground" />
                 {file ? (
@@ -249,14 +249,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             {/* Sprint 5 §3a: kind picker — scan your documents by icon. */}
             <div className="space-y-1.5">
               <Label>{t("docs.whatIsIt")}</Label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {DOCUMENT_KINDS.map((k) => (
                   <button
                     key={k.value}
                     type="button"
                     onClick={() => setKind(k.value)}
                     aria-pressed={kind === k.value}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-all ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 h-10 text-sm font-bold border transition-all ${
                       kind === k.value
                         ? "bg-primary/10 border-primary/30 text-primary"
                         : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -274,7 +274,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
               <Input id="doc-day-up" name="dayDate" type="date" />
             </div>
 
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -293,7 +293,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             </div>
           </form>
         ) : (
-          <form onSubmit={handleLinkSubmit} className="space-y-4">
+          <form onSubmit={handleLinkSubmit} className="space-y-5 mt-5">
             <input type="hidden" name="tripId" value={tripId} />
 
             <div className="space-y-1.5">
@@ -329,14 +329,14 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             {/* Sprint 5 §3a: kind picker (link mode) — scan your documents by icon. */}
             <div className="space-y-1.5">
               <Label>{t("docs.whatIsIt")}</Label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {DOCUMENT_KINDS.map((k) => (
                   <button
                     key={k.value}
                     type="button"
                     onClick={() => setKind(k.value)}
                     aria-pressed={kind === k.value}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-all ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 h-10 text-sm font-bold border transition-all ${
                       kind === k.value
                         ? "bg-primary/10 border-primary/30 text-primary"
                         : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -355,7 +355,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
             </div>
             <input type="hidden" name="type" value={kind} />
 
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"

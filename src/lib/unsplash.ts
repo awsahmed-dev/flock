@@ -52,7 +52,9 @@ export async function getDestinationHero(
   // Free-typed destinations ("الاتنصثقمثsaudi arabia") returned a chalkboard —
   // search on the recognisable place inside the text (lib/geocode placeKeyword).
   const place = placeKeyword(destination);
-  const query = `${place} landmark skyline travel`;
+  // Video round 5: prefer WIDE shots — a lone tower crop reads "stretched" in
+  // a 220px landscape hero. Ask for skyline/cityscape/panorama first.
+  const query = `${place} skyline cityscape panorama wide`;
 
   const params = new URLSearchParams({
     query,
