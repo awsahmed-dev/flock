@@ -1333,6 +1333,8 @@
     "metricStops": "{count, plural, one {1 stop} other {# stops}}",
     "metricStart": "Start →",
     "metricPackingOpens": "Opens T−2",
+    "tk": {"go": "GO", "dueNow": "Due now", "decideTitle": "{count, plural, one {1 decision waiting} other {# decisions waiting}}", "decideKicker": "Your vote's missing", "decideSub": "The crew is deciding · tap to vote", "firstStopKicker": "First stop", "firstStopSub": "Add one place · we'll draft the rest", "crewKicker": "Better together", "crewSub": "One link · no account needed", "budgetSub": "{count, plural, one {Just you for now} other {# of you — set the number once}}"},
+    "hz": {"title": "Horizon · {count, plural, =0 {departure day} one {1 day to {destination}} other {# days to {destination}}}", "now": "T−{count}", "budget": "budget", "docs": "docs", "pack": "pack"},
     "metricSetBudget": "Set a budget",
     "metricInviteCrew": "Invite crew",
     "metricStartPacking": "Start packing",
