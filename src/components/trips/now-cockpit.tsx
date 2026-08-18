@@ -9,6 +9,9 @@ import { type CrewMember } from "@/components/trips/share-trip-sheet";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { dayMoment } from "@/lib/trip-moment";
+import { Ticket } from "@/components/trips/cockpit/ticket";
+import { Horizon, type HorizonMark } from "@/components/trips/cockpit/horizon";
+import { ForkKnife, Camera, Bus, Moon } from "@phosphor-icons/react/dist/ssr";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -108,7 +111,28 @@ export function NowCockpit({
   // disagreed.
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? todayIso;
   const [selectedDay, setSelectedDay] = useState(defaultDay);
-  const [detent, setDetent] = useState<Detent>("peek");
+  // Step 5: open to HALF only when something is imminent (≤ 2h) — the map
+  // keeps the screen otherwise. Decided once, from props, at mount.
+  const [detent, setDetent] = useState<Detent>(() => {
+    const d = dayMoment(
+      items.filter((i) => i.dayDate === todayIso).map((i) => ({ id: i.id, startTime: i.startTime, done: i.completedAt != null })),
+      isoFmt(new Date(), "HH:mm"),
+    );
+    return d.total > 0 && d.minutesToNext != null && d.minutesToNext <= 120 ? "half" : "peek";
+  });
+  // Step 5: the peek is CONTENT-SIZED — as tall as the ticket + today-line
+  // need, never a fixed 172px that clipped Navigate/Done (audit headline).
+  const peekRef = useRef<HTMLDivElement | null>(null);
+  const [peekPx, setPeekPx] = useState<number>(PEEK_PX + 60);
+  useEffect(() => {
+    const el = peekRef.current;
+    if (!el) return;
+    const measure = () => setPeekPx(Math.max(PEEK_PX, Math.ceil(el.getBoundingClientRect().height)) + 40);
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
   // Sprint 8 Item 1: uploaded day-docs open the in-app viewer.
   const [docViewerIdx, setDocViewerIdx] = useState<number | null>(null);
   const fileDocs = documents.filter((d) => isFileDoc(d.url));
@@ -193,6 +217,9 @@ export function NowCockpit({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayItems, nowTick, optimisticDone]);
   const upNext = useMemo(() => todayItems.find((i) => i.id === today.nextId) ?? null, [todayItems, today.nextId]);
+  // Step 5: open to HALF only when something is imminent (≤ 2h) — the map
+  // keeps the screen otherwise. Once, on mount.
+
 
   const doneCount = todayItems.filter((i) => isDone(i)).length;
   const regularToday = todayItems.filter((i) => !isAnchor(i));
@@ -200,6 +227,36 @@ export function NowCockpit({
   const isTravelDay = anchors.some((a) => a.dayDate === todayIso && a.stopType === "booking_flight");
   const isLastDay = endDate != null && todayIso === endDate;
   const eveningRecap = today.eveningRecap;
+
+  // Step 5: TODAY as a horizon — the stops are the marks. The axis spans the
+  // day's stops (first − 1h → last + 1h, and always includes now), min 6h,
+  // so marks spread instead of bunching at a fixed 06:00.
+  const nowHm = isoFmt(new Date(nowTick), "HH:mm");
+  const toMin = (hm: string) => { const [h, m] = hm.slice(0, 5).split(":").map(Number); return h * 60 + m; };
+  const timedMins = regularToday.filter((i) => i.startTime).map((i) => toMin(i.startTime!));
+  const axisLo = Math.min(...timedMins, toMin(nowHm)) - 60;
+  const axisHiRaw = Math.max(...timedMins, toMin(nowHm)) + 60;
+  const axisHi = Math.max(axisHiRaw, axisLo + 360);
+  const clockPos = (hm: string | null) => (hm ? Math.max(0, Math.min(100, Math.round(((toMin(hm) - axisLo) / (axisHi - axisLo)) * 100))) : null);
+  const typeIcon = (type: string) => (type === "meal" ? ForkKnife : type === "transport" ? Bus : type === "accommodation" ? BedDouble : type === "activity" ? Camera : MapIcon);
+  const todayMarks: HorizonMark[] = regularToday
+    .filter((i) => i.startTime)
+    .sort((a, b) => (a.startTime ?? "").localeCompare(b.startTime ?? ""))
+    .map((i) => ({
+      at: clockPos(i.startTime) ?? 0,
+      label: i.startTime!.slice(0, 5),
+      icon: typeIcon(i.type),
+      state: isDone(i) ? "done" : i.id === today.nextId ? "now" : (i.startTime!.slice(0, 5) < nowHm ? "due" : "later"),
+    }));
+  const flightToday = anchors.find((a) => a.dayDate === todayIso && a.stopType === "booking_flight");
+  const leaveBy = (() => {
+    const it = flightToday ? items.find((i) => i.id === flightToday.id) : null;
+    if (!it?.startTime) return null;
+    const [h, m] = it.startTime.slice(0, 5).split(":").map(Number);
+    const mins = h * 60 + m - 180;
+    if (mins <= 0) return null;
+    return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+  })();
 
   const mapItems = useMemo<PlanMapItem[]>(
     () =>
@@ -291,7 +348,7 @@ export function NowCockpit({
   const [dragH, setDragH] = useState<number | null>(null);
 
   const detentPx = (d: Detent, vh: number) =>
-    d === "peek" ? PEEK_PX + 60 : d === "half" ? HALF_FRAC * vh : FULL_FRAC * vh;
+    d === "peek" ? peekPx : d === "half" ? Math.max(peekPx, HALF_FRAC * vh) : FULL_FRAC * vh;
 
   function onHandleDown(e: React.PointerEvent) {
     const vh = window.innerHeight;
@@ -304,7 +361,7 @@ export function NowCockpit({
     const vh = window.innerHeight;
     const dy = e.clientY - d.startY;
     if (Math.abs(dy) > 4) d.moved = true;
-    setDragH(Math.min(FULL_FRAC * vh, Math.max(PEEK_PX + 60, d.startH - dy)));
+    setDragH(Math.min(FULL_FRAC * vh, Math.max(peekPx, d.startH - dy)));
   }
   function onHandleUp(e: React.PointerEvent) {
     const d = sheetDrag.current;
@@ -317,7 +374,7 @@ export function NowCockpit({
       setDragH(null);
       return;
     }
-    const h = Math.min(FULL_FRAC * vh, Math.max(PEEK_PX + 60, d.startH - (e.clientY - d.startY)));
+    const h = Math.min(FULL_FRAC * vh, Math.max(peekPx, d.startH - (e.clientY - d.startY)));
     // Snap to the nearest detent (velocity fling approximated by distance).
     const candidates: Detent[] = ["peek", "half", "full"];
     let best: Detent = "peek";
@@ -340,7 +397,7 @@ export function NowCockpit({
 
   const sheetHeight = (() => {
     if (dragH != null) return `${dragH}px`;
-    if (detent === "peek") return `${PEEK_PX + 60}px`;
+    if (detent === "peek") return `${peekPx}px`;
     if (detent === "half") return "55svh";
     return "85svh";
   })();
@@ -426,12 +483,8 @@ export function NowCockpit({
           }
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
         >
-          {/* Special banners. */}
-          {isLastDay && selectedDay === todayIso && (
-            <div className="mb-2 rounded-xl bg-card border border-border px-3 py-2 text-[13px] font-semibold">
-              {t("now.finalDay")} 🌅
-            </div>
-          )}
+          {/* Step 5: the peek is ticket + today-line, measured for height. */}
+          <div ref={peekRef}>
           {eveningRecap && !recapDismissed && selectedDay === todayIso && regularToday.length > 0 && (
             <div className="mb-2 rounded-2xl bg-card border border-border px-4 py-3">
               <div className="flex items-start justify-between gap-2">
@@ -448,41 +501,45 @@ export function NowCockpit({
             </div>
           )}
 
-          {/* UP NEXT (peek content). */}
+          {/* THE TICKET — up next (wayfind) or, on the last day with a flight,
+              departure tonight (horizon). GO navigates; Done is the small
+              secondary under it and the row swipe. */}
           {selectedDay === todayIso && upNext ? (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-tertiary">
-                {isTravelDay ? t("now.gettingThere") : `${t("now.upNext")}${upNext.startTime ? ` · ${upNext.startTime.slice(0, 5)}` : ""}`}
-              </p>
-              <p className="text-[17px] font-bold text-foreground mt-0.5 truncate">{upNext.title}</p>
-              {upNext.locationName && (
-                <p className="text-[15px] text-muted-foreground truncate">{upNext.locationName}</p>
+            <div className="flex flex-col gap-2">
+              <Ticket
+                hue={isLastDay && flightToday ? "horizon" : "wayfind"}
+                kicker={
+                  isLastDay && flightToday
+                    ? (leaveBy ? t("now.departureTonightBy", { time: leaveBy }) : t("now.finalDay"))
+                    : isTravelDay ? t("now.gettingThere")
+                    : `${t("now.upNext")}${upNext.startTime ? ` · ${upNext.startTime.slice(0, 5)}` : ""}${today.minutesToNext != null && today.minutesToNext > 0 ? ` · ${t("now.inMinutes", { count: today.minutesToNext })}` : ""}`
+                }
+                title={upNext.title}
+                sub={upNext.locationName}
+                icon={isLastDay && flightToday ? Plane : Navigation}
+                onClick={() => (upNext.lat != null ? navigateTo(upNext) : markDone(upNext))}
+                go={t("cockpit.tk.go")}
+              />
+              <button
+                type="button"
+                onClick={() => markDone(upNext)}
+                className="self-start inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border text-[13px] font-bold text-foreground"
+              >
+                <Check size={14} weight="bold" /> {t("now.markDone")}
+              </button>
+              {todayMarks.length > 0 && (
+                <Horizon
+                  title={isLastDay ? `${t("now.today")} · ${t("now.finalDay")}` : t("now.todayDayN", { n: days.indexOf(todayIso) + 1 })}
+                  nowLabel={nowHm}
+                  progress={clockPos(nowHm) ?? 0}
+                  marks={todayMarks}
+                  endIcon={isLastDay && flightToday ? Plane : Moon}
+                  className="!py-2"
+                />
               )}
-              <div className="flex gap-2 mt-2.5">
-                {/* Page 8 tier rule: one solid purple per screen (the camera
-                    FAB). Navigate = tinted secondary — brand-dim + brand
-                    text; wayfind stays with map/route/status only. */}
-                <button
-                  type="button"
-                  onClick={() => navigateTo(upNext)}
-                  disabled={upNext.lat == null}
-                  className="flex-1 h-12 rounded-2xl font-bold text-[14px] flex items-center justify-center gap-1.5 border disabled:opacity-40"
-                  style={{
-                    background: "var(--clr-brand-dim)",
-                    color: "var(--clr-brand)",
-                    borderColor: "color-mix(in srgb, var(--clr-brand) 35%, transparent)",
-                  }}
-                >
-                  <Navigation size={16} /> {t("now.navigate")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => markDone(upNext)}
-                  className="flex-1 h-12 rounded-2xl border border-border text-foreground font-bold text-[14px] flex items-center justify-center gap-1.5"
-                >
-                  <Check size={16} /> {t("now.done")}
-                </button>
-              </div>
+              {leaveBy && isLastDay && (
+                <p className="text-[13px] text-muted-foreground px-1">✈ {t("now.leaveBy", { time: leaveBy })}</p>
+              )}
             </div>
           ) : selectedDay === todayIso && regularToday.length === 0 ? (
             /* Free day (§3-C empty state): Discover sales moment. */
@@ -532,6 +589,8 @@ export function NowCockpit({
               {t("now.stops", { count: dayItems.length })}
             </p>
           )}
+
+          </div>
 
           {/* HALF+ content: spend strip, day progress, stop rows. */}
           <div className={detent === "peek" && dragH == null ? "hidden" : "block"}>
