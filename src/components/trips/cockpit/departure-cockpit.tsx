@@ -6,6 +6,8 @@ import { Suitcase as Luggage, Users } from "@phosphor-icons/react/dist/ssr";
 import { TripPrepChecklist } from "@/components/trips/trip-prep-checklist";
 import { MetricGrid } from "./metric-grid";
 import { CrewPulse } from "./crew-pulse";
+import { DepartureHead } from "./departure-head";
+import { tripMoment } from "@/lib/trip-moment";
 import type { CockpitShared } from "./types";
 import { docKindIcon } from "@/lib/document-kind";
 
@@ -20,8 +22,9 @@ type T = (key: string, params?: Record<string, string | number>) => string;
 export async function DepartureCockpit(props: CockpitShared & { t: T }) {
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl, currency,
-    budgetTotal, days, items, crew, packing, ticker, t,
+    budgetTotal, days, items, crew, packing, ticker, t, todayIso,
   } = props;
+  const moment = tripMoment({ startDate, endDate }, todayIso);
   const base = `/trips/${tripId}`;
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
   const dateLabel = dfFormat(parseDateOnly(startDate), "EEE d MMM");
@@ -89,6 +92,18 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
         className="flex flex-col gap-4 px-4 pt-4 max-w-2xl mx-auto"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
       >
+        {/* Step 6: the same ticket + horizon language as PLANNING and LIVE,
+            above the board. */}
+        <DepartureHead
+          base={base}
+          destinationCity={destination.split(",")[0].trim()}
+          daysToStart={moment.daysToStart}
+          startDate={startDate}
+          budget={{ has: budgetTotal != null && budgetTotal > 0, due: moment.due.budget }}
+          docs={{ count: props.documents.length, due: moment.due.docs }}
+          packing={{ packed: packing.packed, total: packing.total, due: moment.due.packing }}
+        />
+
         <CrewPulse tripId={tripId} crew={crew} ticker={ticker} />
 
         {/* 2. DEPARTURE BOARD. */}
