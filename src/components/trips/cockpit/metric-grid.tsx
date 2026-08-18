@@ -17,6 +17,7 @@ export function MetricGrid({
   crewCount,
   packing,
   showPlanned = true,
+  packingDue = true,
 }: {
   tripId: string;
   placesCount: number;
@@ -27,6 +28,8 @@ export function MetricGrid({
   /** PLANNING hides this cell — it duplicates the screen's primary action.
    *  DEPARTURE keeps it: there the primary action is the departure board. */
   showPlanned?: boolean;
+  /** step 2: before PACK_DAYS the cell says when packing opens instead of nagging. */
+  packingDue?: boolean;
 }) {
   const t = useT();
   const base = `/trips/${tripId}`;
@@ -64,8 +67,10 @@ export function MetricGrid({
       label: t("cockpit.metricPacking"),
       // "0/18" referred to 18 items the app created silently — the first
       // reaction was "what 18 items?". Show the count only once packing began.
-      value: packing.total > 0 && packing.packed > 0 ? t("cockpit.metricItems", { packed: packing.packed, total: packing.total }) : t("cockpit.metricStartPacking"),
-      invite: !(packing.total > 0 && packing.packed > 0),
+      value: packing.total > 0 && packing.packed > 0
+        ? t("cockpit.metricItems", { packed: packing.packed, total: packing.total })
+        : packingDue ? t("cockpit.metricStartPacking") : t("cockpit.metricPackingOpens"),
+      invite: packingDue && !(packing.total > 0 && packing.packed > 0),
       href: `${base}/pack`,
     },
   ];
