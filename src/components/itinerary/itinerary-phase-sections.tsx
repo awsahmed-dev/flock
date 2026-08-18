@@ -128,7 +128,7 @@ export function LiveDayTimeline({
                 {stateLabel}
               </span>
               <Link
-                href={`/trips/${tripId}/money/expense-camera`}
+                href={`/trips/${tripId}/money?add=expense`}
                 aria-label={t("now.logExpense")}
                 className="shrink-0 text-muted-foreground"
               >

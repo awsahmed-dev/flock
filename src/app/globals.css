@@ -89,7 +89,9 @@
   /* Design-system Step 2: nav glass joins the neutral ladder — warm paper
      tint instead of pure #DEDEDE gray; hairline = border-glass black@10%. */
   --nav-glass: rgba(250, 250, 248, 0.72);
-  --nav-chip: rgba(255, 255, 255, 1);
+  /* Video round 3: the active tab was a white pill on paper — "I cannot see
+     that it is active". Brand tint instead. */
+  --nav-chip: rgba(91, 75, 217, 0.14);
   --nav-border: rgba(0, 0, 0, 0.10);
   --nav-pad: 18px;
   --pill-border: rgba(0, 0, 0, 0.10);
@@ -228,7 +230,7 @@
      gray); hairline white@10% (was #343333@80% — too heavy); active chip
      lifts with white@12% instead of sinking with #0E0E0E. */
   --nav-glass: rgba(26, 26, 26, 0.72);
-  --nav-chip: rgba(255, 255, 255, 0.12);
+  --nav-chip: rgba(139, 124, 255, 0.28);
   --nav-border: rgba(255, 255, 255, 0.10);
   --nav-pad: 16px;
   --pill-border: rgba(255, 255, 255, 0.10);
@@ -300,6 +302,14 @@
   html,
   body {
     overscroll-behavior-y: none;
+  }
+  /* Video round 3 — ONE design system for controls: every text-like input and
+     select is at least 36px tall (some dialogs shipped 28px fields next to
+     44px ones). Buttons follow via ui/button sizes. */
+  input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])),
+  select,
+  textarea {
+    min-height: 2.25rem;
   }
   /* Inputs sometimes inherit overflow-wrap and start wrapping on caret —
      keep them on a single line unless they're explicitly multiline. */

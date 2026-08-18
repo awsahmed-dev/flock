@@ -34,6 +34,9 @@
     "location": "Location",
     "costEstimate": "Cost estimate",
     "bookingLink": "Booking link",
+    "titlePlaceholder": "e.g. Visit the Colosseum",
+    "locationPlaceholder": "e.g. Rome, Italy",
+    "notesPlaceholder": "Any details…",
     "notes": "Notes",
     "manage": "Manage",
     "clear": "Clear",
@@ -537,7 +540,7 @@
     "addManuallyNamed": "Add “{name}” manually",
     "notesPlaceholder": "anything to remember",
     "aiEntry": "AI plan",
-    "addNote": "Add a note",
+    "addNote": "Add manually — a note or a timed slot",
     "addTimeBlock": "Add a time block",
     "logExpenseDay": "Log an expense for this day",
     "nowLabel": "NOW",
@@ -1223,6 +1226,10 @@
     "done": "Done",
     "markDone": "Mark done",
     "freeDay": "Free day.",
+    "freeDayIdeasTitle": "Today you could visit",
+    "addToToday": "Add to today",
+    "addedToToday": "On today's plan",
+    "addedToTodayToast": "{name} added to today",
     "freeDayIdeas": "Nearby and loved by the crew:",
     "openNearby": "Open Nearby",
     "planDone": "That's the plan, done — evening's yours",
@@ -1530,5 +1537,11 @@
     "clearing": "Clearing…",
     "cleared": "Cached data cleared",
     "clearFailed": "Couldn't clear the cache"
+  },
+  "tips": {
+    "forward": {"title": "Forward a booking email", "body": "send the confirmation to your trip's address and the flight or hotel lands on the plan by itself."},
+    "hearts": {"title": "Heart places in Discover", "body": "the crew's hearts become the free-day ideas on the Now page."},
+    "pocket": {"title": "Pocket Day works offline", "body": "today's plan, tickets and the map stay open with no signal."},
+    "split": {"title": "Point and split", "body": "snap a bill in Money and it's split across the crew in one tap."}
   }
 }

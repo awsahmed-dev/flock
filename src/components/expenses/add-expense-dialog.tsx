@@ -351,7 +351,9 @@ export function AddExpenseDialog({
                 value={currencyInput}
                 onChange={(e) => setCurrencyInput(e.target.value)}
                 dir={isRtl ? "rtl" : "ltr"}
-                className="shrink-0 rounded-lg bg-background border border-border px-2 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
+                /* Video round 3: the native chevron sat flush against the
+                   edge in RTL — give the arrow side real padding. */
+                className="shrink-0 rounded-lg bg-background border border-border ps-3 pe-7 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {currencyOptions.map((c) => (
                   <option key={c} value={c}>{c}</option>

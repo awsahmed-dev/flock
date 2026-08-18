@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { geocodeDestination } from "@/lib/geocode";
+import type { TeaserPlace } from "@/components/trips/cockpit/types";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
@@ -160,7 +161,7 @@ export default async function TripPage({ params }: Props) {
   const likeCounts = new Map<string, number>();
   for (const l of likeRows) likeCounts.set(l.placeId, (likeCounts.get(l.placeId) ?? 0) + 1);
   const topLiked = [...likeCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  let teaser: { placeId: string; name: string; photoRef: string | null; rating: number | null; hearts: number }[] = [];
+  let teaser: TeaserPlace[] = [];
   if (topLiked.length) {
     const snaps = await db
       .select({ placeId: cachedPlaces.placeId, snapshot: cachedPlaces.snapshot })
@@ -169,14 +170,19 @@ export default async function TripPage({ params }: Props) {
     teaser = topLiked
       .map(([placeId, hearts]) => {
         const snap = snaps.find((s) => s.placeId === placeId)?.snapshot as
-          | { name?: string; photoRef?: string | null; rating?: number | null }
+          | { name?: string; photoRef?: string | null; rating?: number | null; category?: string; placeTypes?: string[]; coords?: [number, number]; address?: string | null; priceLevel?: number | null; userRatingsTotal?: number | null; hoursSummary?: string | null; topTip?: string | null }
           | undefined;
         return snap?.name
-          ? { placeId, name: snap.name, photoRef: snap.photoRef ?? null, rating: snap.rating ?? null, hearts }
+          ? {
+              placeId, name: snap.name, photoRef: snap.photoRef ?? null, rating: snap.rating ?? null, hearts,
+              category: snap.category, placeTypes: snap.placeTypes, coords: snap.coords ?? null, address: snap.address ?? null,
+              priceLevel: snap.priceLevel ?? null, userRatingsTotal: snap.userRatingsTotal ?? null,
+              hoursSummary: snap.hoursSummary ?? null, topTip: snap.topTip ?? null,
+            }
           : null;
       })
       .filter(Boolean)
-      .slice(0, 3) as typeof teaser;
+      .slice(0, 3) as TeaserPlace[];
   }
 
   const dict = getDictionary(await getLocale());

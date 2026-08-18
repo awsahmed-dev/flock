@@ -63,6 +63,15 @@ export function TripShell({ trip, isOwner, crew = [], todayIso, inboundAddress =
   const supabase = createClient();
   // Phase 7 §4: Crew sheet — header stack + the nav's left circle both open it.
   const [crewOpen, setCrewOpen] = useState(false);
+  // Mode roots = the trip home + the pages the bottom nav can land on.
+  // Anything deeper shows Back instead of "All trips".
+  const isDeepRoute = (() => {
+    const rest = (pathname ?? "").split(`/trips/${trip.id}`)[1] ?? "";
+    const segs = rest.split("/").filter(Boolean);
+    if (segs.length === 0) return false;
+    if (segs.length > 1) return true;
+    return !["itinerary", "discover", "money", "bookings"].includes(segs[0]);
+  })();
   useEffect(() => {
     const open = () => setCrewOpen(true);
     window.addEventListener("paxawa:openCrewSheet", open);
@@ -179,14 +188,32 @@ export function TripShell({ trip, isOwner, crew = [], todayIso, inboundAddress =
             WebkitBackdropFilter: "blur(10px) saturate(180%)",
           }}
         >
-          <Link
-            href="/dashboard"
-            className="shrink-0 flex items-center h-11 ps-1 pe-2 text-foreground active:opacity-70"
-            aria-label="All trips"
-          >
-            <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-            <span className="text-[13px] font-semibold hidden min-[380px]:inline">{t("nav.allTrips")}</span>
-          </Link>
+          {isDeepRoute ? (
+            /* Video round 3: inside something that is not a main tab (Huddle,
+               Pack, Settings, camera…) the header offers BACK — "All trips"
+               threw people out of the trip. Roots keep the direct jump. */
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined" && window.history.length > 1) router.back();
+                else router.push(`/trips/${trip.id}`);
+              }}
+              className="shrink-0 flex items-center h-11 ps-1 pe-2 text-foreground active:opacity-70"
+              aria-label={t("common.back")}
+            >
+              <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+              <span className="text-[13px] font-semibold hidden min-[380px]:inline">{t("common.back")}</span>
+            </button>
+          ) : (
+            <Link
+              href="/dashboard"
+              className="shrink-0 flex items-center h-11 ps-1 pe-2 text-foreground active:opacity-70"
+              aria-label="All trips"
+            >
+              <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+              <span className="text-[13px] font-semibold hidden min-[380px]:inline">{t("nav.allTrips")}</span>
+            </Link>
+          )}
           <p className="flex-1 min-w-0 text-center font-bold text-[15px] truncate">{trip.name}</p>
 
           {/* Crew avatar stack (3 max) → Crew sheet. Brief F: Animate UI

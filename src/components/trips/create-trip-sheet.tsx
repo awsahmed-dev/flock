@@ -17,6 +17,8 @@ import {
   format as dfFormat,
 } from "date-fns";
 import { createTrip } from "@/lib/actions/trips";
+import { format as lfFormat } from "@/lib/i18n/date-fns";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { useT } from "@/components/i18n/locale-provider";
 
 /**
@@ -125,7 +127,7 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
 
   const datesLabel = useMemo(() => {
     if (!start || !end) return null;
-    return `${dfFormat(start, "d MMM")} – ${dfFormat(end, "d MMM")}`;
+    return `${lfFormat(start, "d MMM")} – ${lfFormat(end, "d MMM")}`;
   }, [start, end]);
 
   const canNextStep1 = destination.trim().length > 1 && start && end && name.trim().length > 0;
@@ -598,57 +600,103 @@ function RangeCalendar({
     }
   }
 
+  // Video round 3: weekday header ("Sat Sun Mon…"), localized month names,
+  // and a month/year picker — tap the month label to jump.
+  const { isRtl } = useLocale();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(month.getFullYear());
+  const weekdays = useMemo(() => days.slice(0, 7).map((d) => lfFormat(d, "EEEEE")), [days]);
+  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => new Date(pickerYear, i, 1)), [pickerYear]);
+  const thisMonth = startOfMonth(today);
+
   return (
     <div className="rounded-2xl bg-secondary/50 p-3">
       <div className="flex items-center justify-between mb-2">
         <button
           type="button"
-          onClick={() => setMonth(addMonths(month, -1))}
+          onClick={() => (pickerOpen ? setPickerYear((y) => y - 1) : setMonth(addMonths(month, -1)))}
           className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-secondary"
-          aria-label="Previous month"
+          aria-label="Previous"
         >
-          <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+          <ChevronLeft className={`w-4 h-4 ${isRtl ? "rotate-180" : ""}`} />
         </button>
-        <span className="text-sm font-bold">{dfFormat(month, "MMMM yyyy")}</span>
         <button
           type="button"
-          onClick={() => setMonth(addMonths(month, 1))}
-          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-secondary"
-          aria-label="Next month"
+          onClick={() => { setPickerYear(month.getFullYear()); setPickerOpen((o) => !o); }}
+          className="h-9 px-3 rounded-full text-sm font-bold hover:bg-secondary inline-flex items-center gap-1"
+          aria-expanded={pickerOpen}
         >
-          <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+          {pickerOpen ? pickerYear : lfFormat(month, "MMMM yyyy")}
+          <span className="text-muted-foreground text-[10px]">▾</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => (pickerOpen ? setPickerYear((y) => y + 1) : setMonth(addMonths(month, 1)))}
+          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-secondary"
+          aria-label="Next"
+        >
+          <ChevronRight className={`w-4 h-4 ${isRtl ? "rotate-180" : ""}`} />
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-1">
-        {days.map((d) => {
-          const inMonth = isSameMonth(d, month);
-          const isStart = start && isSameDay(d, start);
-          const isEnd = end && isSameDay(d, end);
-          const inRange = start && end && d > start && d < end;
-          const disabled = isBefore(d, today);
-          return (
-            <button
-              key={d.toISOString()}
-              type="button"
-              disabled={disabled}
-              onClick={() => tap(d)}
-              className={`h-9 rounded-lg text-[13px] font-semibold transition-colors ${
-                isStart || isEnd
-                  ? "bg-primary text-primary-foreground"
-                  : inRange
-                    ? "bg-primary/15 text-foreground"
-                    : disabled
-                      ? "text-muted-foreground/30"
-                      : inMonth
-                        ? "text-foreground hover:bg-secondary"
-                        : "text-muted-foreground/50"
-              }`}
-            >
-              {dfFormat(d, "d")}
-            </button>
-          );
-        })}
-      </div>
+      {pickerOpen ? (
+        <div className="grid grid-cols-3 gap-2 py-1">
+          {months.map((m) => {
+            const past = isBefore(m, thisMonth);
+            const active = isSameMonth(m, month);
+            return (
+              <button
+                key={m.toISOString()}
+                type="button"
+                disabled={past}
+                onClick={() => { setMonth(m); setPickerOpen(false); }}
+                className={`h-10 rounded-xl text-[13px] font-semibold ${
+                  active ? "bg-primary text-primary-foreground" : past ? "text-muted-foreground/30" : "hover:bg-secondary text-foreground"
+                }`}
+              >
+                {lfFormat(m, "MMM")}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {weekdays.map((w, i) => (
+              <span key={i} className="h-6 flex items-center justify-center text-[11px] font-bold text-muted-foreground uppercase">{w}</span>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((d) => {
+              const inMonth = isSameMonth(d, month);
+              const isStart = start && isSameDay(d, start);
+              const isEnd = end && isSameDay(d, end);
+              const inRange = start && end && d > start && d < end;
+              const disabled = isBefore(d, today);
+              return (
+                <button
+                  key={d.toISOString()}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => tap(d)}
+                  className={`h-9 rounded-lg text-[13px] font-semibold transition-colors ${
+                    isStart || isEnd
+                      ? "bg-primary text-primary-foreground"
+                      : inRange
+                        ? "bg-primary/15 text-foreground"
+                        : disabled
+                          ? "text-muted-foreground/30"
+                          : inMonth
+                            ? "text-foreground hover:bg-secondary"
+                            : "text-muted-foreground/50"
+                  }`}
+                >
+                  {lfFormat(d, "d")}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

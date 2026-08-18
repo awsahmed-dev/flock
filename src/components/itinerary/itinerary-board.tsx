@@ -212,17 +212,22 @@ export function ItineraryBoard({
   const [sheetTravel, setSheetTravel] = useState(0);
   const sheetTravelRef = useRef(0);
   const toggleSheet = () => setSheetOpen((o) => !o);
+  // Video round 3: collapsed used to show a fixed 60px — the chip rail was
+  // "chopped". The peek is measured: pill + chips + day title, all visible.
+  const sheetPeek = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = sheetEl.current;
     if (!el) return;
     const measure = () => {
-      const v = Math.max(0, el.offsetHeight - 60); // 60px = 3.75rem strip
+      const peek = sheetPeek.current?.offsetHeight ?? 60;
+      const v = Math.max(0, el.offsetHeight - peek);
       sheetTravelRef.current = v;
       setSheetTravel(v);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
+    if (sheetPeek.current) ro.observe(sheetPeek.current);
     return () => ro.disconnect();
   }, []);
   // Touch-safe drag (lib/use-sheet-drag): the pill and the day-title row are
@@ -685,6 +690,7 @@ export function ItineraryBoard({
           {/* B21: drag handle (small) — the previous double-strip header
               was busy. The drag handle is now just the slim pill at the
               top; tapping it still toggles the sheet. */}
+          <div ref={sheetPeek}>
           <button
             type="button"
             onClick={toggleSheet}
@@ -712,6 +718,9 @@ export function ItineraryBoard({
           {/* Day chips — Sprint 8 Items 2+4: the unified DayChip (planning
               tokens at LIVE size, leading day-color dot) in a ChipRail
               whose trailing fade signals there's more to scroll. */}
+          {/* The chip rail scrolls sideways AND drags the sheet vertically:
+              touch-action pan-x leaves vertical moves to us. */}
+          <div {...sheetZone} style={{ ...sheetZone.style, touchAction: "pan-x" }}>
           <ChipRail className="flex items-center gap-1.5 px-3 pb-2" fadeColor="var(--card)">
             <DayChip
               label={t("itinerary.all")}
@@ -735,6 +744,7 @@ export function ItineraryBoard({
               />
             ))}
           </ChipRail>
+          </div>
 
           {/* Row 3: day title (tap to expand sheet) — Add controls moved
               to a floating + FAB at bottom-right which opens a picker
@@ -761,6 +771,7 @@ export function ItineraryBoard({
               {sheetOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
             </span>
           </button>
+          </div>
 
           {/* Scrollable list — trimmed from 55vh to 45vh so map gets
               the larger share of the viewport when sheet is expanded. */}
@@ -1038,20 +1049,12 @@ export function ItineraryBoard({
               openAddFor(focusedDay ?? days[0] ?? null);
             }}
           />
+          {/* Video round 3: "note" and "time block" opened the same form —
+              "what's the difference?" One row now: add manually. */}
           {(focusedDay ?? days[0]) && (
             <AddActionRow
               icon={StickyNote}
               label={t("itinerary.addNote")}
-              onClick={() => {
-                setAddActionsOpen(false);
-                setManualAdd({ day: focusedDay ?? days[0], type: "other" });
-              }}
-            />
-          )}
-          {(focusedDay ?? days[0]) && (
-            <AddActionRow
-              icon={Clock}
-              label={t("itinerary.addTimeBlock")}
               onClick={() => {
                 setAddActionsOpen(false);
                 setManualAdd({ day: focusedDay ?? days[0], type: "activity" });
@@ -1312,7 +1315,7 @@ function SortableItemRow({
           transform: `translateX(${dx * (isRtl ? -1 : 1)}px)`,
           transition: swipeStartX.current == null ? "transform 150ms ease" : "none",
         }}
-        className={`group relative flex items-stretch ring-1 bg-card shadow-sm hover:shadow-md transition-[box-shadow] touch-pan-y ${
+        className={`group relative flex items-stretch ring-1 bg-card shadow-sm hover:shadow-md transition-[box-shadow] touch-pan-y select-none ${
           highlighted ? "ring-primary/60 shadow-md shadow-primary/20" : "ring-border/60 hover:ring-border"
         }`}
       >
