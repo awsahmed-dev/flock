@@ -1315,15 +1315,14 @@ function SortableItemRow({
         </button>
       )}
       <div
-        {...(!isAnchor ? attributes : {})}
-        {...(!isAnchor ? listeners : {})}
+        /* Round 9: the row body is a TOUCH activator only (hold 150ms → drag).
+           dnd-kit's PointerSensor on the body registered a non-passive
+           pointermove that made Chrome cancel the pointer stream — which
+           killed the swipe AND the drag. Mouse/pen still drag from the grip. */
+        onTouchStart={!isAnchor ? (listeners as Record<string, (ev: React.TouchEvent) => void> | undefined)?.onTouchStart : undefined}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        onPointerDown={(e) => {
-          // dnd-kit's activator AND the swipe tracker share the row.
-          if (!isAnchor) (listeners as Record<string, (ev: React.PointerEvent) => void> | undefined)?.onPointerDown?.(e);
-          if (canManage && !isAnchor) onSwipeDown(e);
-        }}
+        onPointerDown={canManage && !isAnchor ? onSwipeDown : undefined}
         onPointerMove={canManage && !isAnchor ? onSwipeMove : undefined}
         onPointerUp={canManage && !isAnchor ? onSwipeUp : undefined}
         onPointerCancel={canManage && !isAnchor ? onSwipeUp : undefined}
