@@ -141,7 +141,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
                 id="type"
                 name="type"
                 defaultValue={defaultValues?.type ?? "activity"}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="w-full text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               >
                 {TYPES.map((ty) => (
                   <option key={ty.value} value={ty.value}>{t(ty.labelKey)}</option>

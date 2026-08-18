@@ -81,7 +81,7 @@ function ExpenseForm({
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="flex-1 rounded-md border bg-background px-2 py-1 text-sm h-8"
+          className="flex-1 text-sm"
         >
           {EXPENSE_CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>{c.emoji} {t(c.labelKey)}</option>

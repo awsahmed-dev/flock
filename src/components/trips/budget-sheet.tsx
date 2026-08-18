@@ -55,7 +55,7 @@ export function BudgetSheet({
             onChange={(e) => setCur(e.target.value)}
             aria-label="Currency"
             dir={isRtl ? "rtl" : "ltr"}
-            className="rounded-xl border border-border bg-card px-3 h-14 text-sm font-bold outline-none"
+            className="text-sm font-bold outline-none"
           >
             {CURRENCIES.map((c) => (
               <option key={c} value={c}>{c}</option>

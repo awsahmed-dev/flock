@@ -1240,7 +1240,7 @@ function WishlistCard({
           defaultValue=""
           onChange={(e) => addToDay(e.target.value)}
           aria-label={t("itinerary.addToDay")}
-          className="rounded-lg bg-card ring-1 ring-border text-xs font-bold px-2 h-9 shrink-0 max-w-[96px] disabled:opacity-50"
+          className="text-sm font-bold shrink-0 max-w-[120px] disabled:opacity-50"
         >
           <option value="" disabled>{t("itinerary.addToDay")}</option>
           {days.map((d, i) => (

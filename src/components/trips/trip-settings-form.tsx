@@ -181,7 +181,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
               id="currency"
               name="currency"
               defaultValue={currency}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm h-10"
+              className="w-full text-sm"
             >
               {["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "SAR", "AED"].map((c) => (
                 <option key={c} value={c}>{c}</option>
