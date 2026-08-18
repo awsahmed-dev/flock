@@ -13,7 +13,7 @@ import { eachDayOfInterval, parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { isOwner as checkOwner } from "@/lib/permissions";
-import { geocode } from "@/lib/geocode";
+import { geocode, geocodeDestination } from "@/lib/geocode";
 import { getRates } from "@/lib/fx";
 
 interface Props {
@@ -38,7 +38,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       .from(itineraryItems)
       .where(eq(itineraryItems.tripId, id))
       .orderBy(asc(itineraryItems.sortOrder), asc(itineraryItems.startTime)),
-    geocode(trip.destination, trip.destination).catch(() => null),
+    geocodeDestination(trip.destination).catch(() => null),
     getRates(trip.currency),
   ]);
 

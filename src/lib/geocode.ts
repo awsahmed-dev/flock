@@ -37,6 +37,29 @@ export async function geocode(
   return geocodeMapbox(query, contextCity);
 }
 
+const COUNTRY_NAME: Record<string, string> = {
+  my: "Malaysia", sa: "Saudi Arabia", jp: "Japan", ae: "United Arab Emirates", tr: "Turkey",
+  us: "United States", th: "Thailand", id: "Indonesia", eg: "Egypt", gb: "United Kingdom",
+  it: "Italy", fr: "France", es: "Spain", de: "Germany", nl: "Netherlands",
+};
+
+/**
+ * Geocode a TRIP DESTINATION for framing a map — a place, not a venue.
+ * The create-trip box accepts free text, so this must survive
+ * "الاتنصثقمثsaudi arabia": Nominatim (country-restricted) → Mapbox limited
+ * to place-level types → the guessed country itself, framed. Never a street.
+ */
+export async function geocodeDestination(destination: string): Promise<GeocodeResult | null> {
+  if (!destination.trim()) return null;
+  const nom = await geocodeNominatim(destination, destination);
+  if (nom) return nom;
+  const mb = await geocodeMapbox(destination, destination, "country,region,place,locality");
+  if (mb) return mb;
+  const cc = guessCountryCode(destination);
+  const name = cc ? COUNTRY_NAME[cc] : null;
+  return name ? geocodeNominatim(name) : null;
+}
+
 async function geocodeNominatim(
   query: string,
   contextCity?: string,
@@ -91,6 +114,7 @@ async function geocodeNominatim(
 async function geocodeMapbox(
   query: string,
   contextCity?: string,
+  types = "poi,address,place,locality,neighborhood",
 ): Promise<GeocodeResult | null> {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
@@ -112,7 +136,7 @@ async function geocodeMapbox(
     access_token: token,
     limit: "1",
     language: "en",
-    types: "poi,address,place,locality,neighborhood",
+    types,
   });
   if (country) params.set("country", country);
   const url =
