@@ -48,6 +48,7 @@ const MOMENTS = [
   { key: "t49", label: "planning · T−49", seed: { start: day(49), end: day(55), stops: [{ day: day(49), title: "Shibuya", time: "15:00" }, { day: day(50), title: "TeamLab", time: "14:00" }], decision: true } },
   { key: "t3", label: "departure · T−3", seed: { start: day(3), end: day(9), stops: [{ day: day(3), title: "Shibuya", time: "15:00" }], packed: 4 } },
   { key: "live", label: "live · day 2", seed: { start: day(-1), end: day(3), stops: [{ day: day(0), title: "Breakfast", time: hm(H - 2), type: "meal", done: true }, { day: day(0), title: "Palace", time: hm(H + 1, 30) }, { day: day(0), title: "Bukchon", time: hm(H + 4) }, { day: day(0), title: "Market", time: hm(H + 9), type: "meal" }] } },
+  { key: "free", label: "live · free day (no stops today)", seed: { start: day(-3), end: day(10), stops: [{ day: day(-3), title: "St James Park" }, { day: day(-3), title: "London Eye" }] } },
   { key: "last", label: "live · final day", seed: { start: day(-4), end: day(0), stops: [{ day: day(0), title: "Checkout", time: "10:00", type: "accommodation", done: true }, { day: day(0), title: "Namsan", time: hm(H - 3) }, { day: day(0), title: "Sunset", time: hm(H - 1), type: "activity" }, { day: day(0), title: "Flight KE 957", time: hm(H + 1, 10), type: "transport" }] } },
   { key: "recap", label: "home · +2 days", seed: { start: day(-9), end: day(-2), stops: [{ day: day(-8), title: "Palace", time: "11:00", done: true }, { day: day(-5), title: "Market", time: "19:00", type: "meal", done: true }] } },
 ];
@@ -63,7 +64,7 @@ for (const m of MOMENTS) {
     await ctx.addInitScript(() => { try { localStorage.setItem("paxawa:analytics-consent", "denied"); } catch {} });
     const page = await ctx.newPage();
     await page.goto(`${BASE}/trips/${TRIP}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await page.waitForTimeout(m.key.startsWith("l") ? 6000 : 4500);
+    await page.waitForTimeout(m.key === "live" || m.key === "last" || m.key === "free" ? 6000 : 4500);
     await page.evaluate(() => { document.querySelectorAll('nextjs-portal,[class*="tsqd"]').forEach((e) => e.remove()); [...document.querySelectorAll("button")].filter((e) => /tanstack/i.test(e.getAttribute("aria-label") || "")).forEach((e) => e.remove()); });
     const r = await page.evaluate((isLive) => {
       const nav = document.querySelector("[data-bottom-nav]"); const navTop = nav ? nav.getBoundingClientRect().top : 844;
@@ -82,7 +83,7 @@ for (const m of MOMENTS) {
       // headline), exactly one of it, and the horizon exists.
       const why = []; if (!ticket) why.push("no ticket/floor"); if (tickets.length > 1) why.push("2 tickets"); if (!horizon) why.push("no horizon"); if (goIn === false) why.push("primary action clipped"); if (leak) why.push("i18n key leak");
       return { ticket, horizon, underNav, goIn, rtl, leak, ok: why.length === 0, why };
-    }, m.key === "live" || m.key === "last");
+    }, m.key === "live" || m.key === "last" || m.key === "free");
     if (lang === "ar" && !r.rtl) { r.ok = false; r.why.push("not rtl"); }
     row(m.key, lang, r); if (!r.ok) failures++;
     await page.screenshot({ path: `${OUT}/${m.key}-${lang}.png` });

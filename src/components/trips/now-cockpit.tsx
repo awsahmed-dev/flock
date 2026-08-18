@@ -11,7 +11,7 @@ import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { dayMoment } from "@/lib/trip-moment";
 import { Ticket } from "@/components/trips/cockpit/ticket";
 import { Horizon, type HorizonMark } from "@/components/trips/cockpit/horizon";
-import { ForkKnife, Camera, Bus, Moon, Sun } from "@phosphor-icons/react/dist/ssr";
+import { ForkKnife, Camera, Bus, Moon, Sun, Compass } from "@phosphor-icons/react/dist/ssr";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -565,9 +565,20 @@ export function NowCockpit({
               )}
             </div>
           ) : selectedDay === todayIso && regularToday.length === 0 ? (
-            /* Free day (§3-C empty state): Discover sales moment. */
-            <div>
-              <p className="text-[17px] font-bold">{t("now.freeDay")}</p>
+            /* Free day (§3-C empty state): the same ticket language — a
+               brand ticket into Discover, with the crew's shortlist under it.
+               (Was a bare "Free day." line over an empty sheet — the "weird"
+               live page on a trip with nothing planned today.) */
+            <div className="flex flex-col gap-2">
+              <Ticket
+                hue="brand"
+                kicker={t("now.todayDayN", { n: days.indexOf(todayIso) + 1 })}
+                title={t("now.freeDay")}
+                sub={items.length > 0 ? t("now.freeDaySub", { count: items.length }) : t("now.freeDaySubEmpty")}
+                icon={Compass}
+                href={`/trips/${tripId}/discover`}
+                go={t("cockpit.tk.go")}
+              />
               {teaser.length > 0 ? (
                 <>
                   <p className="text-[13px] text-muted-foreground mt-0.5">{t("now.freeDayIdeas")}</p>
@@ -593,11 +604,7 @@ export function NowCockpit({
                     ))}
                   </div>
                 </>
-              ) : (
-                <Link href={`/trips/${tripId}/discover`} className="inline-block mt-1 text-[14px] font-bold text-primary">
-                  {t("now.openNearby")} →
-                </Link>
-              )}
+              ) : null}
             </div>
           ) : selectedDay === todayIso && allDoneToday ? (
             <div>

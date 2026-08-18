@@ -1216,6 +1216,8 @@
     "sunsetAt": "الغروب {time}",
     "plan": "الخطة",
     "presenceLine": "أنهى {place} · {time}",
+    "freeDaySub": "{count, plural, one {محطة} two {محطتان} few {# محطات} many {# محطة} other {# محطة}} في أيام أخرى · ابحث عن شيء قريب",
+    "freeDaySubEmpty": "لا شيء مخطط بعد · ابحث عن شيء قريب",
     "upNext": "التالي",
     "navigate": "الاتجاهات",
     "done": "تم",
