@@ -14,7 +14,9 @@ import { effectiveTripBudget } from "@/lib/budget";
 import { eq, asc, desc, inArray, and, sql } from "drizzle-orm";
 import { eachDayOfInterval, format as isoFormat, differenceInCalendarDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { getRates } from "@/lib/fx";
+import { getRates, convert } from "@/lib/fx";
+import { getDailyWeather, weatherDateFor } from "@/lib/weather";
+import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { totalInCurrency, totalInCurrencyBy } from "@/lib/money-total";
 import { convert as convertOrNull } from "@/lib/fx";
 import { ensureTripHeroImage } from "@/lib/actions/ensure-trip-hero";
@@ -82,6 +84,7 @@ export default async function TripPage({ params }: Props) {
     stopType: r.stopType,
     completedAt: r.completedAt ? r.completedAt.toISOString() : null,
     photoUrl: r.photoUrl,
+    googlePlaceId: r.googlePlaceId,
   }));
 
   const tripCurrency = trip.currency ?? "USD";
@@ -199,6 +202,22 @@ export default async function TripPage({ params }: Props) {
     .from(huddleDecisions)
     .where(and(eq(huddleDecisions.tripId, id), eq(huddleDecisions.status, "open")));
 
+  // Step 4 (Now deck): two outside facts, both soft-failing.
+  // Weather at the first stop with coordinates (or nothing) — arrival day when
+  // within Open-Meteo's range, else "there right now". FX: one unit of the
+  // trip currency in the destination's local currency.
+  const wxCoords = items.find((i) => i.lat != null && i.lng != null);
+  const wxWhen = weatherDateFor(trip.startDate, todayIso);
+  const wx = wxCoords ? await getDailyWeather(wxCoords.lat as number, wxCoords.lng as number, wxWhen.date) : null;
+  const weather = wx ? { tempMax: wx.tempMax, tempMin: wx.tempMin, key: wx.key, sunset: wx.sunset, isTripDay: wxWhen.isTripDay } : null;
+  const localCcy = inferLocalCurrency(trip.destination);
+  let fx: { local: string; symbol: string; perUnit: number; base: string } | null = null;
+  if (localCcy && localCcy !== tripCurrency) {
+    const fxRates = rates ?? (await getRates(tripCurrency).catch(() => null));
+    const one = convert(1, tripCurrency, localCcy, fxRates);
+    if (one != null) fx = { local: localCcy, symbol: currencySymbol(localCcy), perUnit: one >= 10 ? Math.round(one) : Math.round(one * 100) / 100, base: tripCurrency };
+  }
+
   const shared = {
     todayIso,
     tripId: id,
@@ -223,6 +242,8 @@ export default async function TripPage({ params }: Props) {
     teaser,
     documents: tripDocs,
     huddleOpen,
+    weather,
+    fx,
   };
 
 

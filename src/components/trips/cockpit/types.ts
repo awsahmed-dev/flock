@@ -57,4 +57,7 @@ export interface CockpitShared {
   documents: { id: string; title: string; type: string | null; url: string; dayDate: string | null }[];
   /** Phase 7 §5: open Huddle decisions — drives the ONE primary action. */
   huddleOpen: number;
+  /** Step 4 deck facts (soft, may be null). */
+  weather: { tempMax: number; tempMin: number | null; key: string; sunset: string | null; isTripDay: boolean } | null;
+  fx: { local: string; symbol: string; perUnit: number; base: string } | null;
 }
