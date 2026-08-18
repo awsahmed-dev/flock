@@ -121,13 +121,31 @@ export function NowCockpit({
   const [selectedDay, setSelectedDay] = useState(defaultDay);
   // Step 5: open to HALF only when something is imminent (≤ 2h) — the map
   // keeps the screen otherwise. Decided once, from props, at mount.
-  const [detent, setDetent] = useState<Detent>(() => {
+  const detentKey = `paxawa-now-detent:${tripId}`;
+  const [detent, setDetentState] = useState<Detent>(() => {
+    // Video round 5: after "Add to today" the refresh remounted the cockpit
+    // and the sheet fell back to PEEK — "it pushed me out". The detent the
+    // person chose survives a remount within the session.
     const d = dayMoment(
       items.filter((i) => i.dayDate === todayIso).map((i) => ({ id: i.id, startTime: i.startTime, done: i.completedAt != null })),
       isoFmt(new Date(), "HH:mm"),
     );
     return d.total > 0 && d.minutesToNext != null && d.minutesToNext <= 120 ? "half" : "peek";
   });
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(detentKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore once after mount (no SSR mismatch)
+      if (saved === "peek" || saved === "half" || saved === "full") setDetentState(saved);
+    } catch { /* ignore */ }
+  }, [detentKey]);
+  const setDetent = (next: Detent | ((cur: Detent) => Detent)) => {
+    setDetentState((cur) => {
+      const v = typeof next === "function" ? next(cur) : next;
+      try { sessionStorage.setItem(detentKey, v); } catch { /* ignore */ }
+      return v;
+    });
+  };
   // Step 5: the peek is CONTENT-SIZED — as tall as the ticket + today-line
   // need, never a fixed 172px that clipped Navigate/Done (audit headline).
   const peekRef = useRef<HTMLDivElement | null>(null);
@@ -604,13 +622,17 @@ export function NowCockpit({
                 onClick={() => (upNext.lat != null ? navigateTo(upNext) : markDone(upNext))}
                 go={t("cockpit.tk.go")}
               />
-              <button
-                type="button"
-                onClick={() => markDone(upNext)}
-                className="self-start inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border text-[13px] font-bold text-foreground"
-              >
-                <Check size={16} weight="bold" /> {t("now.markDone")}
-              </button>
+              {/* Video round 5: at half/full the schedule row already carries
+                  Done — the chip only earns its place in the peek. */}
+              {detent === "peek" && dragH == null && (
+                <button
+                  type="button"
+                  onClick={() => markDone(upNext)}
+                  className="self-start inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border text-[13px] font-bold text-foreground"
+                >
+                  <Check size={16} weight="bold" /> {t("now.markDone")}
+                </button>
+              )}
               {todayMarks.length > 0 && (
                 <Horizon
                   title={isLastDay ? `${t("now.today")} · ${t("now.finalDay")}` : t("now.todayDayN", { n: days.indexOf(todayIso) + 1 })}
@@ -627,14 +649,15 @@ export function NowCockpit({
               {/* ONE context line: weather (rain from …) → link to the plan; and
                   crew presence when someone else checked off a stop today. */}
               {todayWeather && (
-                <Link href={`/trips/${tripId}/itinerary?day=${todayIso}`} className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-[13px]">
+                /* Video round 5: information only — the "Plan" button here was
+                   redundant next to the schedule's own Add. */
+                <p className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-[13px]">
                   <Sun size={16} weight="fill" className="shrink-0" style={{ color: "var(--clr-wayfind)" }} />
                   <span className="flex-1 truncate">
                     {todayWeather.tempMax}° · {t(todayWeather.key)}
                     {todayWeather.rainFrom ? ` — ${t("now.rainFrom", { time: todayWeather.rainFrom })}` : todayWeather.sunset ? ` · ${t("now.sunsetAt", { time: todayWeather.sunset })}` : ""}
                   </span>
-                  <span className="font-bold shrink-0" style={{ color: "var(--clr-wayfind)" }}>{t("now.plan")}</span>
-                </Link>
+                </p>
               )}
               {presence && (
                 <p className="text-[13px] text-muted-foreground px-1 truncate">

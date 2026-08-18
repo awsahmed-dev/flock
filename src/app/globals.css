@@ -306,10 +306,25 @@
   /* Video round 3 — ONE design system for controls: every text-like input and
      select is at least 36px tall (some dialogs shipped 28px fields next to
      44px ones). Buttons follow via ui/button sizes. */
+  /* Video round 5: the reference control is the account/create-trip pill —
+     48px tall, fully rounded, quiet secondary surface, 15px text. Utility
+     classes on a specific element still win (this is the @layer base floor). */
   input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])),
-  select,
+  select {
+    min-height: 3rem;
+    border-radius: 9999px;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    padding-inline: 1rem;
+    font-size: 15px;
+  }
   textarea {
-    min-height: 2.25rem;
+    min-height: 3rem;
+    border-radius: 1rem;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    font-size: 15px;
   }
   /* Inputs sometimes inherit overflow-wrap and start wrapping on caret —
      keep them on a single line unless they're explicitly multiline. */
