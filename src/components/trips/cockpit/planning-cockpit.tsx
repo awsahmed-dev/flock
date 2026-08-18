@@ -4,7 +4,8 @@ import Link from "next/link";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { diffDaysIso, toIsoDay } from "@/lib/today";
-import { Star, CaretRight as ChevronRight, CheckSquareOffset as Vote, MapPin, Users, Wallet, Package } from "@phosphor-icons/react/dist/ssr";
+import { tripMoment } from "@/lib/trip-moment";
+import { Star, CaretRight as ChevronRight, CheckSquareOffset as Vote, MapPin, Users, Wallet, Compass } from "@phosphor-icons/react/dist/ssr";
 import { ReadinessChecklist } from "./readiness-checklist";
 import { CrewPulse } from "./crew-pulse";
 import { docKindIcon } from "@/lib/document-kind";
@@ -51,8 +52,15 @@ export function PlanningCockpit(props: CockpitShared) {
   const stopCountByDay: Record<string, number> = {};
   for (const it of items) stopCountByDay[it.dayDate] = (stopCountByDay[it.dayDate] ?? 0) + 1;
 
-  // §5: THE one primary action — priority vote > stops > crew > budget > packing.
-  const packingPercent = packing.total > 0 ? Math.round((packing.packed / packing.total) * 100) : 0;
+  // §5 → step 2 of the Now redesign: THE one primary action now asks "what is
+  // DUE?", not just "what is missing?". The ladder used to fall through to
+  // packing on a well-planned trip 49 days out (audit Finding 3). Now:
+  //   always     decisions → first stops → crew
+  //   ≤ 14 days  + budget
+  //   packing    never here — the DEPARTURE cockpit owns it (≤ 7 days)
+  //   otherwise  a FLOOR: say nothing is due and point at Discover, instead
+  //              of inventing a task.
+  const moment = tripMoment({ startDate, endDate }, todayIso);
   const primary = (() => {
     if (huddleOpen > 0)
       return {
@@ -65,16 +73,9 @@ export function PlanningCockpit(props: CockpitShared) {
       return { key: "stops", icon: MapPin, label: t("cockpit.firstStops"), href: `${base}/itinerary` };
     if (crew.length < 2)
       return { key: "crew", icon: Users, label: t("cockpit.inviteCrew"), href: `${base}/members` };
-    if (budgetTotal == null || budgetTotal <= 0)
+    if (moment.due.budget && (budgetTotal == null || budgetTotal <= 0))
       return { key: "budget", icon: Wallet, label: t("cockpit.setBudget"), href: `${base}/settings` };
-    if (packingPercent < 50)
-      return {
-        key: "pack",
-        icon: Package,
-        label: packing.total === 0 ? t("cockpit.startPacking") : t("cockpit.keepPacking", { percent: packingPercent }),
-        href: `${base}/pack`,
-      };
-    return { key: "shape", icon: MapPin, label: t("cockpit.keepShaping"), href: `${base}/itinerary` };
+    return { key: "floor", icon: Compass, label: t("cockpit.nothingDue", { count: Math.max(0, moment.daysToStart) }), href: `${base}/discover` };
   })();
   const PrimaryIcon = primary.icon;
   // The second real first move in a group app. Never shown when the primary
@@ -112,16 +113,32 @@ export function PlanningCockpit(props: CockpitShared) {
         className="flex flex-col gap-4 px-4 pt-4 max-w-2xl mx-auto"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
       >
-        {/* 2. THE ONE PRIMARY ACTION — 64px, unmissable. */}
-        <Link
-          href={primary.href}
-          className="flex items-center gap-3 h-16 px-4 rounded-2xl bg-primary text-primary-foreground active:scale-[0.99] transition-transform"
-          style={{ boxShadow: "0 4px 20px var(--clr-brand-dim)" }}
-        >
-          <PrimaryIcon size={22} className="shrink-0" />
-          <span className="flex-1 min-w-0 text-[17px] font-bold truncate">{primary.label}</span>
-          <ChevronRight size={20} className="shrink-0 rtl:rotate-180" />
-        </Link>
+        {/* 2. THE ONE PRIMARY ACTION — 64px, unmissable. When nothing is due
+            (the floor) it is deliberately quiet: a card, not a button, with
+            the Discover nudge — an invented task would be louder and wrong. */}
+        {primary.key === "floor" ? (
+          <Link
+            href={primary.href}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 active:scale-[0.99] transition-transform"
+          >
+            <PrimaryIcon size={22} className="shrink-0 text-primary" />
+            <span className="flex-1 min-w-0">
+              <span className="block text-[15px] font-semibold">{primary.label}</span>
+              <span className="block text-[13px] font-semibold text-primary">{t("cockpit.nothingDueNudge")}</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-muted-foreground rtl:rotate-180" />
+          </Link>
+        ) : (
+          <Link
+            href={primary.href}
+            className="flex items-center gap-3 h-16 px-4 rounded-2xl bg-primary text-primary-foreground active:scale-[0.99] transition-transform"
+            style={{ boxShadow: "0 4px 20px var(--clr-brand-dim)" }}
+          >
+            <PrimaryIcon size={22} className="shrink-0" />
+            <span className="flex-1 min-w-0 text-[17px] font-bold truncate">{primary.label}</span>
+            <ChevronRight size={20} className="shrink-0 rtl:rotate-180" />
+          </Link>
+        )}
 
         {/* 2b. THE SECOND MOVE — get your people in. Outlined, not filled:
             clearly secondary to the one primary action above it. */}
@@ -253,6 +270,7 @@ export function PlanningCockpit(props: CockpitShared) {
           currency={currency}
           crewCount={crew.length}
           packing={packing}
+          packingDue={moment.due.packing}
         />
       </div>
     </main>

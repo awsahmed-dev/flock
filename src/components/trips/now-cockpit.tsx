@@ -8,6 +8,7 @@ import { CaretRight as ChevronRight, Trash as Trash2, NavigationArrow as Navigat
 import { type CrewMember } from "@/components/trips/share-trip-sheet";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
+import { dayMoment } from "@/lib/trip-moment";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -175,24 +176,28 @@ export function NowCockpit({
     const id = setInterval(() => setNowTick(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
-  const upNext = useMemo(() => {
-    const remaining = todayItems
-      .filter((i) => !isDone(i) && !isAnchor(i))
-      .sort((a, b) => (a.startTime ?? "99").localeCompare(b.startTime ?? "99"));
-    if (remaining.length === 0) return null;
+  // Step 2 of the Now redesign: ONE time-of-day clock for today (lib/trip-moment
+  // dayMoment). It picks UP NEXT (auto-advancing past stops > 5 min gone) and —
+  // the fix for the audit's Finding 1 — decides the evening recap: it fires
+  // when everything is done, or when it is late AND nothing timed is still
+  // ahead. It can no longer declare the day over at 21:00 with a 23:10 flight
+  // outstanding; the itinerary asserts, the clock only suggests.
+  const today = useMemo(() => {
     const nowHm = isoFmt(new Date(nowTick), "HH:mm");
-    // Auto-advance: skip stops > 5 min past their scheduled time.
-    const upcoming = remaining.find((i) => !i.startTime || i.startTime.slice(0, 5) >= nowHm || minutesPast(i.startTime, nowHm) <= 5);
-    return upcoming ?? remaining[remaining.length - 1];
+    return dayMoment(
+      todayItems.map((i) => ({ id: i.id, startTime: i.startTime, done: isDone(i), anchor: isAnchor(i) })),
+      nowHm,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayItems, nowTick, optimisticDone]);
+  const upNext = useMemo(() => todayItems.find((i) => i.id === today.nextId) ?? null, [todayItems, today.nextId]);
 
   const doneCount = todayItems.filter((i) => isDone(i)).length;
   const regularToday = todayItems.filter((i) => !isAnchor(i));
-  const allDoneToday = regularToday.length > 0 && regularToday.every((i) => isDone(i));
+  const allDoneToday = today.allDone;
   const isTravelDay = anchors.some((a) => a.dayDate === todayIso && a.stopType === "booking_flight");
   const isLastDay = endDate != null && todayIso === endDate;
-  const eveningRecap = allDoneToday || new Date(nowTick).getHours() >= 21;
+  const eveningRecap = today.eveningRecap;
 
   const mapItems = useMemo<PlanMapItem[]>(
     () =>
@@ -635,12 +640,6 @@ export function NowCockpit({
       )}
     </div>
   );
-}
-
-function minutesPast(scheduled: string, nowHm: string): number {
-  const [sh, sm] = scheduled.slice(0, 5).split(":").map(Number);
-  const [nh, nm] = nowHm.split(":").map(Number);
-  return nh * 60 + nm - (sh * 60 + sm);
 }
 
 /* ── Stop row: swipe right = done, swipe left = delete (never on anchors) ── */
