@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { geocode } from "@/lib/geocode";
+import { geocodeDestination } from "@/lib/geocode";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
@@ -120,7 +120,7 @@ export default async function TripPage({ params }: Props) {
   let center: [number, number] | null = withCoords ? [withCoords.lng as number, withCoords.lat as number] : null;
   let centerZoom = 12;
   if (!center) {
-    const g = await geocode(trip.destination, trip.destination).catch(() => null);
+    const g = await geocodeDestination(trip.destination).catch(() => null);
     if (g) { center = [g.lng, g.lat]; centerZoom = g.zoom ?? 12; }
   }
 

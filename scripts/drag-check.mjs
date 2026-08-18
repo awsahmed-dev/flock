@@ -14,7 +14,7 @@ const mode = process.argv[2] ?? "itin"; // itin | now
 sql(`delete from trips where id='${TRIP}';`);
 sql(`insert into profiles (id, display_name, email) values ('${ME}','Marco','dev@flock.local') on conflict do nothing;`);
 if (mode === "itin") {
-  sql(`insert into trips (id,name,destination,start_date,end_date,created_by,currency) values ('${TRIP}','Saudi','Saudi Arabia','${day(20)}','${day(24)}','${ME}','USD');`);
+  sql(`insert into trips (id,name,destination,start_date,end_date,created_by,currency) values ('${TRIP}','Saudi','الاتنصثقمثsaudi arabia','${day(20)}','${day(24)}','${ME}','USD');`);
 } else {
   sql(`insert into trips (id,name,destination,start_date,end_date,created_by,currency) values ('${TRIP}','Tokyo','Tokyo, Japan','${day(-1)}','${day(3)}','${ME}','USD');`);
   sql(`insert into itinerary_items (trip_id,day_date,title,created_by,start_time,type,location_name,location_lat,location_lng) values ('${TRIP}','${day(0)}','Palace','${ME}','23:30','activity','Tokyo',35.68,139.76);`);
