@@ -6,10 +6,25 @@
  * trip's destination as context so a "Central Market" search in a KL
  * trip doesn't land in London.
  */
+export type GeocodeResult = {
+  lat: number;
+  lng: number;
+  displayName: string;
+  /** A sensible map zoom for this result's extent — a country ≈ 5, a city ≈ 11,
+   *  a venue ≈ 14. Undefined when the provider gave no extent. */
+  zoom?: number;
+};
+
+/** Zoom that frames a bbox (degrees) at roughly one screen. */
+function zoomForExtent(latSpan: number, lngSpan: number): number {
+  const span = Math.max(latSpan, lngSpan, 0.0005);
+  return Math.max(3, Math.min(15, Math.round(Math.log2(360 / span) - 0.5)));
+}
+
 export async function geocode(
   query: string,
   contextCity?: string
-): Promise<{ lat: number; lng: number; displayName: string } | null> {
+): Promise<GeocodeResult | null> {
   if (!query.trim()) return null;
 
   // 1) Try Nominatim — free and good for well-known landmarks.
@@ -25,8 +40,11 @@ export async function geocode(
 async function geocodeNominatim(
   query: string,
   contextCity?: string,
-): Promise<{ lat: number; lng: number; displayName: string } | null> {
-  const q = contextCity ? `${query}, ${contextCity}` : query;
+): Promise<GeocodeResult | null> {
+  // Geocoding the destination itself passes it as its own context; "Japan,
+  // Japan" made Nominatim return a random POI (an embassy in Tokyo, a museum
+  // in Riyadh) instead of the place. Never double the query.
+  const q = contextCity && !sameText(contextCity, query) ? `${query}, ${contextCity}` : query;
   const country = contextCity ? guessCountryCode(contextCity) : null;
   // B18: countrycodes restricts results to the trip's country so
   // generic names like "Pavilion KL Food Court" don't drift to a same-
@@ -49,10 +67,14 @@ async function geocodeNominatim(
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.length) return null;
-    const result = {
+    const bb: string[] | undefined = data[0].boundingbox; // [south, north, west, east]
+    const result: GeocodeResult = {
       lat: parseFloat(data[0].lat),
       lng: parseFloat(data[0].lon),
       displayName: data[0].display_name,
+      zoom: bb && bb.length === 4
+        ? zoomForExtent(Math.abs(parseFloat(bb[1]) - parseFloat(bb[0])), Math.abs(parseFloat(bb[3]) - parseFloat(bb[2])))
+        : undefined,
     };
     // Verify the result is in the expected country — defends against
     // Nominatim treating countrycodes as a hint rather than a filter.
@@ -69,12 +91,15 @@ async function geocodeNominatim(
 async function geocodeMapbox(
   query: string,
   contextCity?: string,
-): Promise<{ lat: number; lng: number; displayName: string } | null> {
+): Promise<GeocodeResult | null> {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
   // Stuff the city into the query — Mapbox doesn't have a city-context
   // param, but appending the city name reliably anchors the search.
-  const q = contextCity ? `${query}, ${contextCity}` : query;
+  // Geocoding the destination itself passes it as its own context; "Japan,
+  // Japan" made Nominatim return a random POI (an embassy in Tokyo, a museum
+  // in Riyadh) instead of the place. Never double the query.
+  const q = contextCity && !sameText(contextCity, query) ? `${query}, ${contextCity}` : query;
 
   // B18: anchor by country when we can detect it from the context — this
   // is the fix for the "Pavilion KL Food Court → coords in Northern
@@ -97,18 +122,27 @@ async function geocodeMapbox(
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = (await res.json()) as {
-      features?: Array<{ place_name?: string; center?: [number, number] }>;
+      features?: Array<{ place_name?: string; center?: [number, number]; bbox?: number[]; place_type?: string[] }>;
     };
     const f = data.features?.[0];
     if (!f?.center || f.center.length !== 2) return null;
+    const pt = f.place_type?.[0];
+    const zoom = f.bbox && f.bbox.length === 4
+      ? zoomForExtent(Math.abs(f.bbox[3] - f.bbox[1]), Math.abs(f.bbox[2] - f.bbox[0]))
+      : pt === "country" ? 5 : pt === "region" ? 7 : pt === "place" ? 11 : 14;
     return {
       lat: f.center[1],
       lng: f.center[0],
       displayName: f.place_name ?? query,
+      zoom,
     };
   } catch {
     return null;
   }
+}
+
+function sameText(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
 // Crude country-code lookup from a context string. We only need to
@@ -127,6 +161,14 @@ const CITY_TO_COUNTRY: Record<string, string> = {
   "riyadh": "sa", "jeddah": "sa", "dammam": "sa", "khobar": "sa",
   "medina": "sa", "mecca": "sa", "abha": "sa", "tabuk": "sa",
   "alula": "sa", "neom": "sa", "saudi arabia": "sa",
+  // Arabic-typed destinations (the create-trip box accepts free text)
+  "السعودية": "sa", "الرياض": "sa", "جدة": "sa", "مكة": "sa", "المدينة المنورة": "sa",
+  "اليابان": "jp", "طوكيو": "jp", "أوساكا": "jp", "كيوتو": "jp",
+  "الإمارات": "ae", "دبي": "ae", "أبوظبي": "ae", "أبو ظبي": "ae",
+  "تركيا": "tr", "إسطنبول": "tr", "اسطنبول": "tr",
+  "تايلاند": "th", "بانكوك": "th", "ماليزيا": "my", "كوالالمبور": "my",
+  "إندونيسيا": "id", "بالي": "id", "مصر": "eg", "القاهرة": "eg",
+  "لندن": "gb", "بريطانيا": "gb", "باريس": "fr", "فرنسا": "fr",
   // UAE
   "dubai": "ae", "abu dhabi": "ae", "sharjah": "ae", "ras al khaimah": "ae",
   "ajman": "ae", "fujairah": "ae", "uae": "ae", "united arab emirates": "ae",

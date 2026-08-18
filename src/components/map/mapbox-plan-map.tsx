@@ -47,6 +47,9 @@ interface Props {
   items: PlanMapItem[];
   /** Destination text — used only as a fallback if items have no coords yet. */
   destinationCenter: [number, number] | null;
+  /** Zoom for the destination fallback — a whole country needs ~5, a city ~11.
+   *  Default 12 (city). Ignored once stops have coordinates. */
+  destinationZoom?: number;
   focusedDay: string | null;
   highlightedItemId: string | null;
   onItemClick?: (itemId: string) => void;
@@ -84,6 +87,7 @@ function colorForDay(day: string, dayIndex: Map<string, number>): string {
 export function MapboxPlanMap({
   items,
   destinationCenter,
+  destinationZoom = 12,
   focusedDay,
   highlightedItemId,
   onItemClick,
@@ -143,7 +147,7 @@ export function MapboxPlanMap({
         // and lets Mapbox process the style JSON normally.
         style: `https://api.mapbox.com/styles/v1/mapbox/${mapStyle}?access_token=${token}`,
         center: initialCenter,
-        zoom: 12,
+        zoom: destinationCenter && items.length === 0 ? destinationZoom : 12,
         attributionControl: true,
         accessToken: token,
         // B7c-fix4: bulletproof token injection. Mapbox v3.24 bundled by
@@ -269,8 +273,8 @@ export function MapboxPlanMap({
   // ── Center on destination once we know it ─────────────────────────
   useEffect(() => {
     if (!destinationCenter || !mapRef.current || items.length > 0) return;
-    mapRef.current.flyTo({ center: destinationCenter, zoom: 12, duration: 800 });
-  }, [destinationCenter, items.length]);
+    mapRef.current.flyTo({ center: destinationCenter, zoom: destinationZoom, duration: 800 });
+  }, [destinationCenter, destinationZoom, items.length]);
 
   // ── Fetch Mapbox Directions for a day's route (cached) ────────────
   // Async + best-effort. Falls back to straight lines if the API trips.

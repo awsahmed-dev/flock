@@ -118,9 +118,10 @@ export default async function TripPage({ params }: Props) {
   // (center null → the sheet floated over a white void). Fall back to the
   // destination itself — geocode is cached (Nominatim first).
   let center: [number, number] | null = withCoords ? [withCoords.lng as number, withCoords.lat as number] : null;
+  let centerZoom = 12;
   if (!center) {
     const g = await geocode(trip.destination, trip.destination).catch(() => null);
-    if (g) center = [g.lng, g.lat];
+    if (g) { center = [g.lng, g.lat]; centerZoom = g.zoom ?? 12; }
   }
 
   // §10.3: live profile name over the join-time cached copy.
@@ -362,6 +363,7 @@ export default async function TripPage({ params }: Props) {
       tripId={id}
       tripName={trip.name}
       center={center}
+      centerZoom={centerZoom}
       days={days}
       items={items}
       budget={{
