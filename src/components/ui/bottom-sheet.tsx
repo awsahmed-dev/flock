@@ -121,7 +121,7 @@ export function BottomSheet({
 
             {/* Header (also a grab zone) */}
             {(title || subtitle) && (
-              <div {...gripProps} className="flex items-start gap-3 px-5 pt-2 pb-3 sm:pt-5 shrink-0">
+              <div {...gripProps} className="flex items-start gap-3 px-5 pt-1 pb-4 sm:pt-5 shrink-0">
                 <button
                   type="button"
                   onClick={onClose}
@@ -146,7 +146,7 @@ export function BottomSheet({
             )}
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-5 pb-4">{children}</div>
+            <div className="flex-1 overflow-y-auto px-5 pb-6">{children}</div>
 
             {/* Sticky footer */}
             {footer && (

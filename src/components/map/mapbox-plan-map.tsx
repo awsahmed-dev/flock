@@ -441,17 +441,23 @@ export function MapboxPlanMap({
         const el = document.createElement("button");
         el.type = "button";
         el.className = "mapbox-pin";
-        el.style.width = highlightedItemId === item.id ? "36px" : "30px";
-        el.style.height = highlightedItemId === item.id ? "36px" : "30px";
+        // Video round 3 (Discover): un-numbered pins are dots — small when
+        // idle, clearly bigger when active — so "where I'm standing" reads at
+        // a glance instead of a shadow difference between 30px and 36px.
+        const hi = highlightedItemId === item.id;
+        const dotSize = numbered ? (hi ? 36 : 30) : (hi ? 30 : 16);
+        el.style.width = `${dotSize}px`;
+        el.style.height = `${dotSize}px`;
         el.style.borderRadius = "50%";
         el.style.background = color;
         el.style.color = "white";
         el.style.border = "2px solid white";
-        el.style.boxShadow = highlightedItemId === item.id
-          ? "0 4px 14px rgba(0,0,0,.5)"
+        el.style.boxShadow = hi
+          ? "0 0 0 4px rgba(249,115,22,.30), 0 4px 14px rgba(0,0,0,.45)"
           : "0 2px 6px rgba(0,0,0,.3)";
         el.style.fontWeight = "800";
-        el.style.fontSize = highlightedItemId === item.id ? "14px" : "12px";
+        el.style.fontSize = hi ? "14px" : "12px";
+        if (hi) el.style.zIndex = "5";
         el.style.display = "flex";
         el.style.alignItems = "center";
         el.style.justifyContent = "center";

@@ -28,6 +28,15 @@ export interface TeaserPlace {
   photoRef: string | null;
   rating: number | null;
   hearts: number;
+  /** Enough of the cached snapshot to add the place to today in one tap. */
+  category?: string;
+  placeTypes?: string[];
+  coords?: [number, number] | null;
+  address?: string | null;
+  priceLevel?: number | null;
+  userRatingsTotal?: number | null;
+  hoursSummary?: string | null;
+  topTip?: string | null;
 }
 
 /** Props shared by all four phase cockpits (assembled by the trip page). */

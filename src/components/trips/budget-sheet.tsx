@@ -47,7 +47,8 @@ export function BudgetSheet({
 
   return (
     <BottomSheet open={open} onClose={onClose} title={t("now.budgetSheetTitle")} subtitle={t("now.budgetSheetHint")} size="sm">
-      <div className="space-y-3 pb-1">
+      {/* Video round 3: 16px between elements, 24px before the primary action. */}
+      <div className="space-y-4 pt-2 pb-2">
         <div className="flex gap-2">
           <select
             value={cur}
@@ -73,7 +74,7 @@ export function BudgetSheet({
           type="button"
           disabled={saving}
           onClick={save}
-          className="w-full h-12 rounded-full bg-primary text-primary-foreground font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
+          className="!mt-6 w-full h-12 rounded-full bg-primary text-primary-foreground font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
         >
           {t("now.saveBudget")}
         </button>

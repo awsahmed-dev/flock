@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, Camera, MagnifyingGlass as Search, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
+import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, MagnifyingGlass as Search, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
 import type { Icon as LucideIcon } from "@phosphor-icons/react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
@@ -261,22 +261,19 @@ export function DynamicBottomNav({
     ? { icon: Search, accent: false, label: t("nav.search"), action: () => dispatch("discover:toggleSearch") }
     : isMoneyPage
       ? {
-          // Phase-aware expense entry: typing pre-trip, camera on the ground.
-          icon: phase === "LIVE" || phase === "RECAP" ? Camera : Plus,
+          // Video round 3: the camera-first path asked for a permission people
+          // decline ("no need to ask for a camera") — the typed form is the
+          // entry everywhere; the receipt photo is a field inside it.
+          icon: Plus,
           accent: true,
           label: t("nav.add"),
-          action: () =>
-            phase === "LIVE" || phase === "RECAP"
-              ? router.push(`${base}/money/expense-camera`)
-              : dispatch("paxawa:logExpense"),
+          action: () => dispatch("paxawa:logExpense"),
         }
       : isItineraryPage
         // Sprint 8 Item 3: opens the itinerary's add-actions sheet
         // (place/note/time block/expense/document), not just add-place.
         ? { icon: Plus, accent: true, label: t("nav.add"), action: () => dispatch("paxawa:addStop") }
-        : phase === "LIVE"
-          ? { icon: Camera, accent: true, label: t("nav.add"), action: () => router.push(`${base}/money/expense-camera`) }
-          : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };
+        : { icon: Plus, accent: true, label: t("nav.add"), action: () => setPlusOpen(true) };
 
   return (
     <div>
@@ -374,13 +371,14 @@ export function DynamicBottomNav({
                             the reason for the icon-library switch. */}
                         <Icon
                           size={24}
-                          className="text-foreground"
+                          className={active ? "" : "text-foreground"}
+                          style={active ? { color: "var(--clr-brand)" } : undefined}
                           weight={active ? "fill" : "regular"}
                         />
                       </span>
                       <span
-                        className="truncate max-w-full text-foreground"
-                        style={{ fontSize: desktop ? 12 : 10, lineHeight: desktop ? "16px" : "14px", fontWeight: active ? 700 : 400 }}
+                        className={`truncate max-w-full ${active ? "" : "text-foreground"}`}
+                        style={{ fontSize: desktop ? 12 : 10, lineHeight: desktop ? "16px" : "14px", fontWeight: active ? 700 : 400, color: active ? "var(--clr-brand)" : undefined }}
                       >
                         {tab.label}
                       </span>
@@ -439,7 +437,7 @@ export function DynamicBottomNav({
             label={t("now.logExpense")}
             onClick={() => {
               setPlusOpen(false);
-              router.push(phase === "PLANNING" ? `${base}/money?add=expense` : `${base}/money/expense-camera`);
+              router.push(`${base}/money?add=expense`);
             }}
           />
           <ActionRow icon={Ticket} label={t("confirm.title")} onClick={() => { setPlusOpen(false); setConfirmOpen(true); }} />

@@ -131,7 +131,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
         <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="title">{t("common.title")} *</Label>
-            <Input id="title" name="title" placeholder="e.g. Visit the Colosseum" required autoFocus defaultValue={defaultValues?.title} />
+            <Input id="title" name="title" placeholder={t("common.titlePlaceholder")} required autoFocus defaultValue={defaultValues?.title} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -155,24 +155,24 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="locationName">Location</Label>
-            <Input id="locationName" name="locationName" placeholder="e.g. Rome, Italy" defaultValue={defaultValues?.locationName} />
+            <Label htmlFor="locationName">{t("common.location")}</Label>
+            <Input id="locationName" name="locationName" placeholder={t("common.locationPlaceholder")} defaultValue={defaultValues?.locationName} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="costEstimate">Cost estimate</Label>
+              <Label htmlFor="costEstimate">{t("common.costEstimate")}</Label>
               <Input id="costEstimate" name="costEstimate" type="number" min="0" step="0.01" placeholder="0.00" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bookingUrl">Booking link</Label>
+              <Label htmlFor="bookingUrl">{t("common.bookingLink")}</Label>
               <Input id="bookingUrl" name="bookingUrl" type="url" placeholder="https://..." />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="notes">Notes</Label>
-            <Input id="notes" name="notes" placeholder="Any details..." />
+            <Label htmlFor="notes">{t("common.notes")}</Label>
+            <Input id="notes" name="notes" placeholder={t("common.notesPlaceholder")} />
           </div>
 
         </form>

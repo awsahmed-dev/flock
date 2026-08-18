@@ -16,7 +16,7 @@ import { ForkKnife, Camera, Bus, Moon, Sun, Compass } from "@phosphor-icons/reac
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
-import { deleteItineraryItem, setStopCompleted } from "@/lib/actions/itinerary";
+import { deleteItineraryItem, setStopCompleted, createItineraryItemFromGooglePlace } from "@/lib/actions/itinerary";
 import { enqueue } from "@/lib/offline-queue";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { useTheme } from "next-themes";
@@ -133,6 +133,21 @@ export function NowCockpit({
   // need, never a fixed 172px that clipped Navigate/Done (audit headline).
   const peekRef = useRef<HTMLDivElement | null>(null);
   const [peekPx, setPeekPx] = useState<number>(PEEK_PX + 60);
+  // Video round 3: "it should not be showing [blank] like this" — FULL was
+  // always 85vh even when the sheet held one ticket and a chip row. The
+  // sheet is now content-sized: FULL = the content, capped at 85vh; HALF
+  // never exceeds FULL.
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [contentPx, setContentPx] = useState<number>(0);
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const measure = () => setContentPx(Math.ceil(el.getBoundingClientRect().height));
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
   useEffect(() => {
     const el = peekRef.current;
     if (!el) return;
@@ -144,6 +159,34 @@ export function NowCockpit({
   }, []);
   // Sprint 8 Item 1: uploaded day-docs open the in-app viewer.
   const [docViewerIdx, setDocViewerIdx] = useState<number | null>(null);
+  // Free-day one-tap add (video round 3).
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const [addedIds, setAddedIds] = useState<Set<string>>(() => new Set());
+  function addToToday(p: TeaserPlace) {
+    if (!p.coords) return;
+    setAddingId(p.placeId);
+    startTransition(async () => {
+      try {
+        await createItineraryItemFromGooglePlace({
+          tripId,
+          dayDate: todayIso,
+          place: {
+            placeId: p.placeId, name: p.name, category: p.category ?? "other", placeTypes: p.placeTypes ?? [],
+            rating: p.rating, userRatingsTotal: p.userRatingsTotal ?? null, priceLevel: p.priceLevel ?? null,
+            coords: p.coords as [number, number], address: p.address ?? null, photoRef: p.photoRef,
+            hoursSummary: p.hoursSummary ?? null, topTip: p.topTip ?? null,
+          },
+        });
+        setAddedIds((prev) => new Set(prev).add(p.placeId));
+        toast.success(t("now.addedToTodayToast", { name: p.name }));
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed");
+      } finally {
+        setAddingId(null);
+      }
+    });
+  }
   const fileDocs = documents.filter((d) => isFileDoc(d.url));
   const openDocViewer = (docId: string) => {
     const i = fileDocs.findIndex((f) => f.id === docId);
@@ -355,8 +398,13 @@ export function NowCockpit({
   // ── 3-detent draggable sheet ───────────────────────────────────────────
   const [dragH, setDragH] = useState<number | null>(null);
 
-  const detentPx = (d: Detent, vh: number) =>
-    d === "peek" ? peekPx : d === "half" ? Math.max(peekPx, HALF_FRAC * vh) : FULL_FRAC * vh;
+  const CHROME_PX = 28 + 24; // pill row + bottom breathing room
+  const detentPx = (d: Detent, vh: number) => {
+    const fullPx = contentPx > 0 ? Math.min(FULL_FRAC * vh, Math.max(peekPx, contentPx + CHROME_PX)) : FULL_FRAC * vh;
+    if (d === "peek") return peekPx;
+    if (d === "half") return Math.min(fullPx, Math.max(peekPx, HALF_FRAC * vh));
+    return fullPx;
+  };
 
   // Shared touch-safe drag: the pill AND the whole peek block (ticket +
   // today-line) are grab surfaces — a finger anywhere on the top of the
@@ -372,7 +420,7 @@ export function NowCockpit({
     onMove: (dy) => {
       const vh = window.innerHeight;
       const want = dragStartH.current - dy;
-      const max = FULL_FRAC * vh;
+      const max = detentPx("full", vh);
       setDragH(Math.min(max, Math.max(peekPx, want)));
       // Past full, keep the finger's motion: the excess scrolls the list, so
       // a swipe up on the ticket at FULL still reads as "show me more".
@@ -394,7 +442,7 @@ export function NowCockpit({
       // Fling: project the finger's velocity ~150ms ahead, then snap to the
       // nearest detent — a quick flick reaches the next stop, a slow drag
       // settles where it is.
-      const h = Math.min(FULL_FRAC * vh, Math.max(peekPx, dragStartH.current - dy - vy * 0.15));
+      const h = Math.min(detentPx("full", vh), Math.max(peekPx, dragStartH.current - dy - vy * 0.15));
       const candidates: Detent[] = ["peek", "half", "full"];
       let best: Detent = "peek";
       let bestDist = Infinity;
@@ -418,8 +466,8 @@ export function NowCockpit({
   const sheetHeight = (() => {
     if (dragH != null) return `${dragH}px`;
     if (detent === "peek") return `${peekPx}px`;
-    if (detent === "half") return "55svh";
-    return "85svh";
+    if (typeof window === "undefined" || contentPx === 0) return detent === "half" ? "55svh" : "85svh";
+    return `${detentPx(detent, window.innerHeight)}px`;
   })();
 
   return (
@@ -501,8 +549,9 @@ export function NowCockpit({
               ? "flex-1 min-h-0 overflow-hidden px-4"
               : "flex-1 min-h-0 overflow-y-auto px-4"
           }
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+          style={{ paddingBottom: "16px" }}
         >
+          <div ref={contentRef}>
           {/* Step 5: the peek is ticket + today-line, measured for height. */}
           <div ref={peekRef} className="cursor-grab" {...sheetZone}>
           {eveningRecap && !recapDismissed && selectedDay === todayIso && regularToday.length > 0 && (
@@ -594,30 +643,46 @@ export function NowCockpit({
                 go={t("cockpit.tk.go")}
               />
               {teaser.length > 0 ? (
-                <>
+                /* Video round 3: the three thumbnails read as decoration. This
+                   is a recommendation — "today you could visit" — so it is a
+                   labelled block with room, and each card adds itself to
+                   today in one tap. */
+                <div className="mt-4">
+                  <p className="text-[11px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.2 }}>{t("now.freeDayIdeasTitle")}</p>
                   <p className="text-[13px] text-muted-foreground mt-0.5">{t("now.freeDayIdeas")}</p>
-                  <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-none">
+                  <div className="flex gap-2.5 mt-3 overflow-x-auto scrollbar-none -mx-4 px-4">
                     {teaser.map((p) => (
-                      <Link
-                        key={p.placeId}
-                        href={`/trips/${tripId}/discover`}
-                        className="shrink-0 w-32 rounded-xl overflow-hidden bg-card border border-border"
-                      >
-                        <div className="relative aspect-[4/3] bg-muted">
+                      <div key={p.placeId} className="shrink-0 w-[152px] rounded-2xl overflow-hidden bg-card border border-border">
+                        <Link href={`/trips/${tripId}/discover`} className="block relative aspect-[4/3] bg-muted">
                           {p.photoRef && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={`/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=256`}
+                              src={`/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=320`}
                               alt={p.name}
                               className="absolute inset-0 w-full h-full object-cover"
                             />
                           )}
+                          {p.hearts > 0 && (
+                            <span className="absolute top-1.5 start-1.5 rounded-full bg-black/50 backdrop-blur px-1.5 py-0.5 text-[10px] font-bold text-white">♥ {p.hearts}</span>
+                          )}
+                        </Link>
+                        <div className="p-2">
+                          <p className="text-[12.5px] font-bold leading-tight line-clamp-1">{p.name}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{p.rating ? `★ ${p.rating}` : "\u00a0"}</p>
+                          <button
+                            type="button"
+                            disabled={!p.coords || addingId === p.placeId || addedIds.has(p.placeId)}
+                            onClick={() => addToToday(p)}
+                            className="mt-2 w-full h-9 rounded-xl text-[12.5px] font-bold border border-border disabled:opacity-60"
+                            style={addedIds.has(p.placeId) ? { color: "var(--clr-moss)" } : { color: "var(--clr-brand)" }}
+                          >
+                            {addedIds.has(p.placeId) ? `✓ ${t("now.addedToToday")}` : addingId === p.placeId ? "…" : `+ ${t("now.addToToday")}`}
+                          </button>
                         </div>
-                        <p className="p-1.5 text-[12px] font-bold line-clamp-1">{p.name}</p>
-                      </Link>
+                      </div>
                     ))}
                   </div>
-                </>
+                </div>
               ) : null}
             </div>
           ) : selectedDay === todayIso && allDoneToday ? (
@@ -741,13 +806,14 @@ export function NowCockpit({
 
             {/* Quick actions (full detent). */}
             <div className="flex gap-2 mt-3">
-              <Link href={`/trips/${tripId}/money/expense-camera`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
+              <Link href={`/trips/${tripId}/money?add=expense`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
                 <Wallet size={15} /> {t("now.logExpense")}
               </Link>
               <Link href={`/trips/${tripId}/huddle`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
                 <MessageSquare size={15} /> {t("nav.huddle")}
               </Link>
             </div>
+          </div>
           </div>
         </div>
       </div>

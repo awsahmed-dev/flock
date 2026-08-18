@@ -18,6 +18,7 @@ import { AccountAvatarButton } from "@/components/account/account-avatar-button"
 import { NewTripTrigger } from "@/components/trips/new-trip-trigger";
 import { OnboardingCard } from "@/components/dashboard/onboarding-card";
 import { ColdStartRedirect } from "@/components/dashboard/cold-start-redirect";
+import { TipBanner } from "@/components/dashboard/tip-banner";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
 import { diffDaysIso, toIsoDay } from "@/lib/today";
@@ -309,6 +310,9 @@ export default async function DashboardPage() {
             </section>
           )}
 
+          {/* Video round 3: one small educational line between the zones. */}
+          <TipBanner tripHref={(ongoing[0] ?? future[0] ?? allTrips[0]) ? `/trips/${(ongoing[0] ?? future[0] ?? allTrips[0]).id}` : null} />
+
           {/* ZONE 2 — COMING UP. */}
           {upcomingTrips.length > 0 && (
             <section>
@@ -354,39 +358,44 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {/* ZONE 3 — MEMORIES. Phone video 2026-08-19: the 2-up square grid
-              grew into four rows for seven past trips and pushed everything
-              else off the screen. Memories are one film strip now: a single
-              swipeable row of small tiles under a count — the past takes one
-              row, never the page. */}
+          {/* ZONE 3 — MEMORIES. Video round 3: the film strip hugged the
+              bottom nav and clipped at the edge. Now: up to three quiet rows
+              (cover · name · dates) and "See all" → /dashboard/memories. */}
           {pastTrips.length > 0 && (
-            <section>
-              <div className="flex items-baseline gap-2 px-4 mt-1 mb-2">
-                <p className="text-[11px] font-semibold tracking-wider uppercase text-tertiary">{t("dashboard.memories")}</p>
-                <span className="text-[11px] text-muted-foreground tabular-nums">· {pastTrips.length}</span>
+            <section className="px-4">
+              <div className="flex items-baseline justify-between mt-1 mb-2">
+                <p className="text-[11px] font-semibold tracking-wider uppercase text-tertiary">
+                  {t("dashboard.memories")} <span className="text-muted-foreground normal-case tracking-normal tabular-nums">· {pastTrips.length}</span>
+                </p>
+                {pastTrips.length > 3 && (
+                  <Link href="/dashboard/memories" className="text-[12px] font-bold" style={{ color: "var(--clr-brand)" }}>
+                    {t("cockpit.seeAll")}
+                  </Link>
+                )}
               </div>
-              <div className="flex gap-2.5 overflow-x-auto scrollbar-none snap-x px-4 pb-1">
-                {pastTrips.map((trip) => (
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                {pastTrips.slice(0, 3).map((trip, i) => (
                   <Link
                     key={trip.id}
                     href={`/trips/${trip.id}`}
                     prefetch
-                    className="snap-start shrink-0 w-[92px] active:scale-[0.97] transition-transform"
+                    className={`flex items-center gap-3 px-3 py-2.5 active:bg-muted/40 ${i > 0 ? "border-t border-border/60" : ""}`}
                   >
-                    <div className="relative w-[92px] h-[92px] rounded-2xl overflow-hidden">
+                    <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-muted">
                       {trip.heroImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={trip.heroImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                       ) : (
-                        <div className="absolute inset-0 bg-card border border-border rounded-2xl flex items-center justify-center">
-                          <span className="font-extrabold" style={{ fontSize: 28, color: "var(--clr-brand)", opacity: 0.45 }}>
-                            {(trip.destination || trip.name || "?").charAt(0).toUpperCase()}
-                          </span>
+                        <div className="absolute inset-0 flex items-center justify-center font-extrabold" style={{ color: "var(--clr-brand)", opacity: 0.5 }}>
+                          {(trip.destination || trip.name || "?").charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <p className="mt-1.5 text-[11px] font-bold leading-tight line-clamp-1">{trip.name}</p>
-                    <p className="text-[10px] text-muted-foreground leading-tight line-clamp-1">{datesLabel(trip)}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-bold leading-tight truncate">{trip.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{trip.destination} · {datesLabel(trip)}</p>
+                    </div>
+                    <span className="text-muted-foreground/60 text-[16px] rtl:rotate-180">›</span>
                   </Link>
                 ))}
               </div>
