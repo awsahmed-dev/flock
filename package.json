@@ -16,7 +16,8 @@
     "test:authz": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/authz.test.ts",
     "test:tz": "for tz in UTC America/Los_Angeles Asia/Kuala_Lumpur Asia/Riyadh Pacific/Kiritimati; do echo \"--- TZ=$tz ---\"; TZ=$tz vitest run src/lib/__tests__/tz.test.ts || exit 1; done",
     "tz:repro": "for tz in UTC America/Los_Angeles Asia/Kuala_Lumpur; do TZ=$tz node scripts/tz-repro.mjs; done",
-    "test:db": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/email-fanout.test.ts src/lib/__tests__/confirmations-db.test.ts"
+    "test:db": "RUN_DB_TESTS=1 NODE_ENV=development vitest run src/lib/__tests__/email-fanout.test.ts src/lib/__tests__/confirmations-db.test.ts",
+    "measure:now": "node scripts/measure-now.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
@@ -78,6 +79,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "playwright-core": "^1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { diffDaysIso, toIsoDay } from "@/lib/today";
@@ -10,7 +9,7 @@ import { Horizon, runwayPos, type HorizonMarkState } from "./horizon";
 import { buildDeck } from "@/lib/deck";
 import { HeroCard, NoteRow, DeckFooter } from "./deck";
 import { FileText, Package } from "@phosphor-icons/react/dist/ssr";
-import { CaretRight as ChevronRight, CheckSquareOffset as Vote, MapPin, Users, Wallet, Compass } from "@phosphor-icons/react/dist/ssr";
+import { CheckSquareOffset as Vote, MapPin, Users, Wallet, Compass } from "@phosphor-icons/react/dist/ssr";
 import { useT } from "@/components/i18n/locale-provider";
 import type { CockpitShared } from "./types";
 
@@ -70,7 +69,7 @@ export function PlanningCockpit(props: CockpitShared) {
         href: `${base}/huddle`,
       };
     if (items.length === 0)
-      return { key: "stops", hue: "brand" as TicketHue, icon: MapPin, kicker: t("cockpit.tk.firstStopKicker"), label: t("cockpit.firstStops"), sub: t("cockpit.tk.firstStopSub"), href: `${base}/itinerary` };
+      return { key: "stops", hue: "brand" as TicketHue, icon: MapPin, kicker: t("cockpit.tk.firstStopKicker"), label: t("cockpit.tk.firstStopTitle"), sub: t("cockpit.tk.firstStopSub"), href: `${base}/itinerary` };
     if (crew.length < 2)
       return { key: "crew", hue: "brand" as TicketHue, icon: Users, kicker: t("cockpit.tk.crewKicker"), label: t("cockpit.inviteCrew"), sub: t("cockpit.tk.crewSub"), href: `${base}/members` };
     if (moment.due.budget && (budgetTotal == null || budgetTotal <= 0))
@@ -113,9 +112,6 @@ export function PlanningCockpit(props: CockpitShared) {
     docsCount: documents.length,
     ticker: ticker ? { text: ticker.text } : null,
   });
-  // The second real first move in a group app. Never shown when the primary
-  // action already IS the invite — one job, one control.
-  const showInvite = crew.length < 2 && primary.key !== "crew";
 
   return (
     <main className="bg-background text-foreground min-h-svh">
@@ -155,19 +151,6 @@ export function PlanningCockpit(props: CockpitShared) {
           <QuietAction icon={primary.icon} title={primary.label} nudge={t("cockpit.nothingDueNudge")} href={primary.href} />
         ) : (
           <Ticket hue={primary.hue} kicker={primary.kicker} title={primary.label} sub={primary.sub} icon={primary.icon} href={primary.href} go={t("cockpit.tk.go")} />
-        )}
-
-        {/* 2b. THE SECOND MOVE — get your people in. Outlined, not filled:
-            clearly secondary to the one primary action above it. */}
-        {showInvite && (
-          <Link
-            href={`${base}/members`}
-            className="flex items-center gap-3 h-[52px] px-4 rounded-2xl border-[1.5px] border-primary text-foreground active:scale-[0.99] transition-transform"
-          >
-            <Users size={20} className="shrink-0 text-primary" />
-            <span className="flex-1 min-w-0 text-[15px] font-bold truncate">{t("cockpit.inviteCrew")}</span>
-            <ChevronRight size={18} className="shrink-0 text-muted-foreground rtl:rotate-180" />
-          </Link>
         )}
 
         {/* 3. THE HORIZON — replaces the "N% ready" bar (step 3). Readiness is

@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { parseDateOnly } from "@/lib/date-only";
-import { ShareNetwork as Share2, Check, X } from "@phosphor-icons/react/dist/ssr";
+import { ShareNetwork as Share2, Check, X, Wallet, Camera, Airplane, MapPin, Sun, House } from "@phosphor-icons/react/dist/ssr";
+import { Ticket, QuietAction } from "./ticket";
+import { Horizon, type HorizonMark } from "./horizon";
 import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -84,6 +86,44 @@ export function RecapCockpit(
         className="flex flex-col gap-6 px-4 pt-6 max-w-2xl mx-auto"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
       >
+        {/* Step 6: the same ticket + horizon language. Ticket = settle up
+            when you owe someone; otherwise a quiet "share the Wrap". The
+            horizon flips: it is the whole trip now, day marks all done. */}
+        {(() => {
+          const owe = settlePairs.find((p) => p.fromUserId === currentUserId);
+          const owed = settlePairs.find((p) => p.toUserId === currentUserId);
+          const nameOf = (id: string) => crew.find((c) => c.userId === id)?.displayName ?? "";
+          const money = (n: number) => `${currency} ${Math.round(n).toLocaleString()}`;
+          const stopsByDay = new Map<string, number>();
+          for (const i of items) stopsByDay.set(i.dayDate, (stopsByDay.get(i.dayDate) ?? 0) + 1);
+          const n = Math.max(1, days.length);
+          const marks: HorizonMark[] = days.map((d, idx) => ({
+            at: n === 1 ? 50 : Math.round(6 + (idx / (n - 1)) * 82),
+            label: idx === 0 ? t("cockpit.hz.day1") : idx === n - 1 ? t("cockpit.hz.last") : String(idx + 1),
+            icon: idx === 0 ? Airplane : idx === n - 1 ? Sun : (stopsByDay.get(d) ?? 0) > 0 ? MapPin : Camera,
+            state: "done" as const,
+            href: `${base}/itinerary?day=${d}`,
+          }));
+          return (
+            <>
+              {owe ? (
+                <Ticket hue="dune" kicker={t("cockpit.tk.settleKicker")} title={t("expenses.youOweLine", { name: nameOf(owe.toUserId), amount: money(owe.amount) })} sub={t("cockpit.tk.settleSub", { count: settlePairs.length })} icon={Wallet} href={`${base}/money`} go={t("cockpit.tk.go")} />
+              ) : owed ? (
+                <Ticket hue="dune" kicker={t("cockpit.tk.settleKicker")} title={t("expenses.owesYouLine", { name: nameOf(owed.fromUserId), amount: money(owed.amount) })} sub={t("cockpit.tk.settleSub", { count: settlePairs.length })} icon={Wallet} href={`${base}/money`} go={t("cockpit.tk.go")} />
+              ) : (
+                <QuietAction icon={Share2} title={t("cockpit.tk.allSquare")} nudge={t("cockpit.tk.shareWrapNudge")} href={`${base}/recap/photos`} />
+              )}
+              <Horizon
+                title={t("cockpit.hz.wholeTrip", { count: days.length })}
+                nowLabel={t("cockpit.hz.home")}
+                progress={100}
+                marks={marks}
+                endIcon={House}
+              />
+            </>
+          );
+        })()}
+
         {completedStops.length === 0 ? (
           /* EMPTY STATE — the retro-mark editor, RECAP's one sanctioned edit. */
           <section className="rounded-3xl bg-card border border-border p-4">
