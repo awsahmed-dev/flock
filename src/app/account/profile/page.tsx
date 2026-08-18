@@ -42,7 +42,7 @@ export default async function ProfilePage() {
             iconClassName="w-4 h-4 rtl:rotate-180"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+            <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
               {t("profile.section")}
             </p>
             <h1 className="text-base font-extrabold truncate">

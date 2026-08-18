@@ -185,7 +185,7 @@ export function BookingsRail({ currency }: Props) {
                 >
                   <Icon className={`w-4 h-4 ${meta.text}`} />
                 </div>
-                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                <span className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
                   {t(meta.labelKey)}
                 </span>
                 <span className="ms-auto inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">

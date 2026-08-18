@@ -353,7 +353,7 @@ export function AddExpenseDialog({
                 dir={isRtl ? "rtl" : "ltr"}
                 /* Video round 3: the native chevron sat flush against the
                    edge in RTL — give the arrow side real padding. */
-                className="shrink-0 rounded-lg bg-background border border-border ps-3 pe-7 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
+                className="shrink-0 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {currencyOptions.map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -391,7 +391,7 @@ export function AddExpenseDialog({
                 aria-expanded={payerOpen}
                 className="w-full flex items-center gap-2 px-3 py-2.5 text-start"
               >
-                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.paidBy")}</span>
+                <span className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">{t("expenses.paidBy")}</span>
                 <span className="flex-1 inline-flex items-center gap-1.5 justify-end text-sm font-bold">
                   <PayerAvatar name={payer?.displayName ?? t("expenses.you")} avatarUrl={payer?.avatarUrl ?? null} />
                   {payer?.userId === currentUserId || !payer ? t("expenses.you") : payer.displayName}
@@ -499,7 +499,7 @@ export function AddExpenseDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label htmlFor="expenseDate" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+              <Label htmlFor="expenseDate" className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
                 {t("expenses.date")} <span aria-hidden className="text-destructive">*</span>
               </Label>
               {/* Sprint 9 FIX-8: a repeatedly-filled form defaults to today
@@ -520,7 +520,7 @@ export function AddExpenseDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="notes" className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{t("expenses.notes")}</Label>
+              <Label htmlFor="notes" className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">{t("expenses.notes")}</Label>
               <Input id="notes" name="notes" placeholder={t("expenses.notesOptional")} className="h-9" />
             </div>
           </div>
@@ -529,7 +529,7 @@ export function AddExpenseDialog({
               the trip-documents bucket, stashes the public URL on the
               expense. Thumbnail preview with an X to remove. */}
           <div>
-            <Label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block">
+            <Label className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5 block">
               {t("expenses.receipt")}
             </Label>
             {receiptUrl ? (
@@ -541,8 +541,8 @@ export function AddExpenseDialog({
                   className="w-10 h-10 rounded-lg object-cover shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold truncate">Receipt attached</p>
-                  <p className="text-[10px] text-muted-foreground">Will show on the expense detail</p>
+                  <p className="text-sm font-bold truncate">{t("expenses.receiptAttached")}</p>
+                  <p className="text-xs text-muted-foreground">{t("expenses.receiptAttachedHint")}</p>
                 </div>
                 <button
                   type="button"
@@ -554,18 +554,20 @@ export function AddExpenseDialog({
                 </button>
               </div>
             ) : (
+              /* Video round 6: same dropzone as Add document — one language. */
               <label
                 htmlFor="receipt-file"
-                className="flex items-center gap-2 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-accent/30 px-3 py-2.5 cursor-pointer transition-colors"
+                className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-6 cursor-pointer hover:bg-muted/60 transition-colors text-center"
               >
                 {receiptUploading ? (
-                  <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                  <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                 ) : (
-                  <Receipt className="w-4 h-4 text-muted-foreground" />
+                  <Receipt className="w-6 h-6 text-muted-foreground" />
                 )}
-                <span className="text-xs font-bold text-muted-foreground">
+                <span className="text-sm font-medium">
                   {receiptUploading ? t("common.loading") : t("expenses.addReceipt")}
                 </span>
+                <span className="text-xs text-muted-foreground">JPG · PNG · WEBP</span>
                 <input
                   id="receipt-file"
                   type="file"

@@ -253,7 +253,7 @@ function StatTile({
         <div className={`w-7 h-7 rounded-lg ${c.bg} flex items-center justify-center`}>
           <Icon className={`w-4 h-4 ${c.text}`} />
         </div>
-        <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+        <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
           {label}
         </p>
       </div>

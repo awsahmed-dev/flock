@@ -416,6 +416,8 @@
     "notesOptional": "optional",
     "receipt": "Receipt",
     "addReceipt": "Add receipt photo",
+    "receiptAttached": "Receipt attached",
+    "receiptAttachedHint": "Shows on the expense detail",
     "loggingToast": "Logging…",
     "loggedToast": "Expense logged",
     "settle": "Settle",

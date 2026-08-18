@@ -355,7 +355,7 @@ export function PlaceDetailPanel({
                           key={d} type="button" onClick={() => setSelectedDay(d)}
                           className={`shrink-0 rounded-2xl px-3.5 py-2 text-center transition-all ${active ? "bg-primary text-primary-foreground" : "bg-muted/60 text-foreground hover:bg-muted"}`}
                         >
-                          <p className="text-[10px] font-bold tracking-widest uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
+                          <p className="text-[12px] font-bold tracking-wider uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
                           <p className="text-[13px] font-bold mt-0.5 whitespace-nowrap">{format(parseISO(d), "MMM d")}</p>
                         </button>
                       );

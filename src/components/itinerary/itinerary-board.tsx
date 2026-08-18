@@ -424,7 +424,7 @@ export function ItineraryBoard({
         <div className="px-5 pt-5 pb-3 border-b border-border/40">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+              <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
                 {focusedDay
                   ? format(parseISO(focusedDay), "EEEE, MMMM d")
                   : t("itinerary.all")}
@@ -552,7 +552,7 @@ export function ItineraryBoard({
                         <p className="font-bold text-sm">
                           {t("itinerary.dayN", { n: dayIdx + 1 })}
                           {today && (
-                            <span className="ms-1.5 text-[10px] font-bold tracking-widest uppercase text-primary">
+                            <span className="ms-1.5 text-[12px] font-bold tracking-wider uppercase text-primary">
                               {t("itinerary.today")}
                             </span>
                           )}
@@ -821,7 +821,7 @@ export function ItineraryBoard({
                           <p className="font-bold text-sm">
                             {t("itinerary.dayN", { n: dayIdx + 1 })}
                             {today && (
-                              <span className="ms-1.5 text-[10px] font-bold tracking-widest uppercase text-primary">
+                              <span className="ms-1.5 text-[12px] font-bold tracking-wider uppercase text-primary">
                                 {t("itinerary.today")}
                               </span>
                             )}
@@ -1382,7 +1382,7 @@ function SortableItemRow({
             {item.title}
           </p>
           <span
-            className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase`}
+            className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[12px] font-bold tracking-wider uppercase`}
           >
             <TypeIcon className="w-4 h-4" />
             <span className="hidden sm:inline">{t(TypeCfg.labelKey)}</span>

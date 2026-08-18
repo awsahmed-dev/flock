@@ -256,7 +256,7 @@ export function TransactionsPage({
                 <p className="text-xs font-bold">
                   {format(parseISO(key), "EEE, MMM d")}
                 </p>
-                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                <span className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
                   {t("expenses.outsideTripDays")}
                 </span>
               </div>
@@ -312,7 +312,7 @@ export function TransactionsPage({
                     }`}
                   >
                     <span
-                      className={`text-[10px] font-bold tracking-widest uppercase leading-none ${
+                      className={`text-[12px] font-bold tracking-wider uppercase leading-none ${
                         today ? "" : "text-muted-foreground"
                       }`}
                     >
@@ -327,7 +327,7 @@ export function TransactionsPage({
                       <p className="text-xs font-bold inline-flex items-center gap-1.5">
                         {today ? t("nav.today") : format(d.date, "EEE, MMM d")}
                         {today && (
-                          <span className="text-[10px] font-bold tracking-widest uppercase text-primary">
+                          <span className="text-[12px] font-bold tracking-wider uppercase text-primary">
                             {t("expenses.liveBadge")}
                           </span>
                         )}

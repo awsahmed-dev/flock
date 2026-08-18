@@ -47,7 +47,7 @@ export function TipBanner({ tripHref }: { tripHref: string | null }) {
         <Lightbulb size={22} weight="fill" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[10px] font-bold tracking-widest uppercase text-white/75">{t("tips.kicker")}</span>
+        <span className="block text-[12px] font-bold tracking-wider uppercase text-white/75">{t("tips.kicker")}</span>
         <span className="block text-[14px] font-bold leading-tight mt-0.5">{t(`tips.${tip.key}.title`)}</span>
         <span className="block text-[12px] text-white/85 leading-snug mt-0.5 line-clamp-2">{t(`tips.${tip.key}.body`)}</span>
       </span>

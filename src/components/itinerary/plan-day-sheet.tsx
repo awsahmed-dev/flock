@@ -266,7 +266,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
                     <Icon className="w-4 h-4" />
                   </span>
                   <div className="mb-0.5 flex items-baseline gap-2">
-                    <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                    <span className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground">
                       {t(meta.key)}
                     </span>
                     <span className="text-[12px] tabular-nums text-muted-foreground/70">{s.time}</span>

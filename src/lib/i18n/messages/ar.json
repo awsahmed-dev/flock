@@ -416,6 +416,8 @@
     "notesOptional": "اختياري",
     "receipt": "الإيصال",
     "addReceipt": "أضف صورة الإيصال",
+    "receiptAttached": "تم إرفاق الإيصال",
+    "receiptAttachedHint": "يظهر في تفاصيل المصروف",
     "loggingToast": "جارٍ التسجيل…",
     "loggedToast": "تم تسجيل المصروف",
     "settle": "سدّد",

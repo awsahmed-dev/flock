@@ -102,7 +102,7 @@ function HealthCard({
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-1.5">
           <span className={colors.icon}>{icon}</span>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
         </div>
@@ -215,7 +215,7 @@ function PersonalCard({
           <span className={colors.icon}>
             <User className="w-4 h-4" />
           </span>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
             Your budget
           </p>
         </div>
