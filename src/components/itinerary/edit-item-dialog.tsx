@@ -97,7 +97,7 @@ export function EditItemDialog({ item, tripId, onClose, onUpdated }: Props) {
                 id="edit-type"
                 name="type"
                 defaultValue={item.type}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="w-full text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               >
                 {TYPES.map((o) => (
                   <option key={o.value} value={o.value}>{t(o.key)}</option>

@@ -305,7 +305,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               aria-label="Category"
-              className="shrink-0 max-w-[104px] bg-muted/40 text-xs font-semibold rounded-lg px-2 h-10 outline-none border border-border"
+              className="shrink-0 max-w-[140px] text-sm font-semibold outline-none"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>

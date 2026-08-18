@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSheetDrag } from "@/lib/use-sheet-drag";
+import { createPortal } from "react-dom";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
@@ -262,9 +263,10 @@ export function ItineraryBoard({
   const localCurrency = inferLocalCurrency(destination);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    // touch: a short hold before drag so the grip doesn't fight list scroll
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // Round 7: no hold — the grip is touch-none, so a finger moving 6px on it
+    // IS the drag (touch events, which Android delivers reliably).
+    useSensor(TouchSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -1014,13 +1016,20 @@ export function ItineraryBoard({
                 );
               })}
 
-              <DragOverlay>
-                {activeItem && (
-                  <div className="rounded-xl bg-card border border-primary/40 shadow-2xl px-3 py-2">
-                    <p className="text-sm font-bold">{activeItem.title}</p>
-                  </div>
-                )}
-              </DragOverlay>
+              {/* Round 7: the overlay is position:fixed — inside the sheet
+                  (a transformed ancestor: translateY) "fixed" is measured from
+                  the sheet, so the ghost flew away from the finger. Portal it
+                  to <body>. */}
+              {typeof document !== "undefined" && createPortal(
+                <DragOverlay dropAnimation={null} zIndex={80}>
+                  {activeItem && (
+                    <div className="rounded-2xl bg-card border border-primary/40 shadow-2xl px-3.5 py-2.5">
+                      <p className="text-sm font-bold">{activeItem.title}</p>
+                    </div>
+                  )}
+                </DragOverlay>,
+                document.body,
+              )}
             </DndContext>
           </div>
         </div>

@@ -219,7 +219,7 @@ function SortableLeg({
           <select
             value={leg.travel?.mode ?? "car"}
             onChange={(e) => onTravelMode(index, e.target.value as TravelMode)}
-            className="rounded-full border border-border bg-background px-2 py-1 text-[12px] font-semibold"
+            className="text-sm font-semibold"
             aria-label={t("aiPlan.travelMode")}
           >
             {TRAVEL_MODES.map((m) => (

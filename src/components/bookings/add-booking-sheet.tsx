@@ -77,7 +77,7 @@ export function AddBookingSheet({ tripId, days }: { tripId: string; days: string
   }
 
   const field =
-    "w-full h-12 rounded-2xl border border-border bg-background px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+    "w-full text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
   return (
     <BottomSheet open={open} onClose={() => setOpen(false)} title="Add a booking" size="md">
@@ -102,7 +102,7 @@ export function AddBookingSheet({ tripId, days }: { tripId: string; days: string
         <input value={provider} onChange={(e) => setProvider(e.target.value)} placeholder={type === "stay" ? "Mandarin Oriental" : "Provider (optional)"} className={field} />
 
         <div className="flex gap-2">
-          <select value={dayDate} onChange={(e) => setDayDate(e.target.value)} className={`${field} flex-1 appearance-none`}>
+          <select value={dayDate} onChange={(e) => setDayDate(e.target.value)} className={`${field} flex-1`}>
             {days.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}

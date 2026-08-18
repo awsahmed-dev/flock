@@ -799,7 +799,7 @@ function Step3({
         <select
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
-          className="h-12 rounded-xl bg-secondary px-3 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/40"
+          className="text-sm font-bold outline-none focus:ring-2 focus:ring-primary/40"
         >
           {CURRENCIES.map((c) => (
             <option key={c} value={c}>

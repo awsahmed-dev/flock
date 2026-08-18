@@ -330,16 +330,22 @@
   /* Selects: no OS arrow jammed on the edge — our own chevron with 16px of
      room, at inline-end in both directions. */
   select:where(:not(.bg-transparent)) {
-    appearance: none;
-    -webkit-appearance: none;
-    padding-inline-end: 2.75rem;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 16px 16px;
+    /* !important on purpose: a stray px-* utility on one select must never put
+       the arrow back on the edge (round 7: "some good, some not"). */
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    padding-inline-start: 1rem !important;
+    padding-inline-end: 2.75rem !important;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 16px 16px !important;
+    background-color: var(--secondary);
+    border-radius: 9999px !important;
+    min-height: 3rem !important;
   }
   [dir="rtl"] select:where(:not(.bg-transparent)) {
-    background-position: left 1rem center;
+    background-position: left 1rem center !important;
   }
   textarea {
     min-height: 3rem;
