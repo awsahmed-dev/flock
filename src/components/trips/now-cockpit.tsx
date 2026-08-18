@@ -9,6 +9,7 @@ import { type CrewMember } from "@/components/trips/share-trip-sheet";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { dayMoment } from "@/lib/trip-moment";
+import { useSheetDrag } from "@/lib/use-sheet-drag";
 import { Ticket } from "@/components/trips/cockpit/ticket";
 import { Horizon, type HorizonMark } from "@/components/trips/cockpit/horizon";
 import { ForkKnife, Camera, Bus, Moon, Sun, Compass } from "@phosphor-icons/react/dist/ssr";
@@ -73,6 +74,7 @@ export function NowCockpit({
   tripId,
   tripName,
   center,
+  centerZoom,
   days,
   items,
   budget,
@@ -88,6 +90,7 @@ export function NowCockpit({
   tripId: string;
   tripName: string;
   center: [number, number] | null;
+  centerZoom?: number;
   days: string[];
   items: NowItem[];
   budget: { total: number | null; spent: number; currency: string };
@@ -350,48 +353,59 @@ export function NowCockpit({
   }
 
   // ── 3-detent draggable sheet ───────────────────────────────────────────
-  const sheetDrag = useRef<{ startY: number; startH: number; moved: boolean } | null>(null);
   const [dragH, setDragH] = useState<number | null>(null);
 
   const detentPx = (d: Detent, vh: number) =>
     d === "peek" ? peekPx : d === "half" ? Math.max(peekPx, HALF_FRAC * vh) : FULL_FRAC * vh;
 
-  function onHandleDown(e: React.PointerEvent) {
-    const vh = window.innerHeight;
-    sheetDrag.current = { startY: e.clientY, startH: detentPx(detent, vh), moved: false };
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-  }
-  function onHandleMove(e: React.PointerEvent) {
-    const d = sheetDrag.current;
-    if (!d) return;
-    const vh = window.innerHeight;
-    const dy = e.clientY - d.startY;
-    if (Math.abs(dy) > 4) d.moved = true;
-    setDragH(Math.min(FULL_FRAC * vh, Math.max(peekPx, d.startH - dy)));
-  }
-  function onHandleUp(e: React.PointerEvent) {
-    const d = sheetDrag.current;
-    sheetDrag.current = null;
-    if (!d) return;
-    const vh = window.innerHeight;
-    if (!d.moved) {
-      // Tap cycles peek → half → peek.
-      setDetent((cur) => (cur === "peek" ? "half" : "peek"));
+  // Shared touch-safe drag: the pill AND the whole peek block (ticket +
+  // today-line) are grab surfaces — a finger anywhere on the top of the
+  // sheet moves it, immediately, no long-press.
+  const dragStartH = useRef(0);
+  const dragStartScroll = useRef(0);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const { zoneProps: sheetZone } = useSheetDrag({
+    onStart: () => {
+      dragStartH.current = detentPx(detent, window.innerHeight);
+      dragStartScroll.current = scrollerRef.current?.scrollTop ?? 0;
+    },
+    onMove: (dy) => {
+      const vh = window.innerHeight;
+      const want = dragStartH.current - dy;
+      const max = FULL_FRAC * vh;
+      setDragH(Math.min(max, Math.max(peekPx, want)));
+      // Past full, keep the finger's motion: the excess scrolls the list, so
+      // a swipe up on the ticket at FULL still reads as "show me more".
+      if (scrollerRef.current) {
+        scrollerRef.current.scrollTop = want > max ? dragStartScroll.current + (want - max) : dragStartScroll.current;
+      }
+    },
+    onEnd: ({ dy, vy, moved, target }) => {
+      const vh = window.innerHeight;
+      if (!moved) {
+        // A tap on the pill row cycles peek ↔ half; taps elsewhere are the
+        // element's own click (ticket, horizon mark).
+        if (target instanceof HTMLElement && target.closest("[data-sheet-pill]")) {
+          setDetent((cur) => (cur === "peek" ? "half" : "peek"));
+        }
+        setDragH(null);
+        return;
+      }
+      // Fling: project the finger's velocity ~150ms ahead, then snap to the
+      // nearest detent — a quick flick reaches the next stop, a slow drag
+      // settles where it is.
+      const h = Math.min(FULL_FRAC * vh, Math.max(peekPx, dragStartH.current - dy - vy * 0.15));
+      const candidates: Detent[] = ["peek", "half", "full"];
+      let best: Detent = "peek";
+      let bestDist = Infinity;
+      for (const c of candidates) {
+        const dist = Math.abs(detentPx(c, vh) - h);
+        if (dist < bestDist) { bestDist = dist; best = c; }
+      }
+      setDetent(best);
       setDragH(null);
-      return;
-    }
-    const h = Math.min(FULL_FRAC * vh, Math.max(peekPx, d.startH - (e.clientY - d.startY)));
-    // Snap to the nearest detent (velocity fling approximated by distance).
-    const candidates: Detent[] = ["peek", "half", "full"];
-    let best: Detent = "peek";
-    let bestDist = Infinity;
-    for (const c of candidates) {
-      const dist = Math.abs(detentPx(c, vh) - h);
-      if (dist < bestDist) { bestDist = dist; best = c; }
-    }
-    setDetent(best);
-    setDragH(null);
-  }
+    },
+  });
 
   const fitPadding = useMemo(() => {
     const vh = typeof window !== "undefined" ? window.innerHeight : 800;
@@ -418,6 +432,7 @@ export function NowCockpit({
         <MapboxPlanMap
           items={mapItems}
           destinationCenter={center}
+          destinationZoom={centerZoom}
           focusedDay={selectedDay}
           highlightedItemId={null}
           days={days}
@@ -468,13 +483,11 @@ export function NowCockpit({
       >
         {/* Drag handle. */}
         <div
-          className="shrink-0 pt-3 pb-1 flex justify-center cursor-grab touch-none"
-          onPointerDown={onHandleDown}
-          onPointerMove={onHandleMove}
-          onPointerUp={onHandleUp}
-          onPointerCancel={onHandleUp}
+          data-sheet-pill
+          className="shrink-0 pt-3 pb-2 flex justify-center cursor-grab"
+          {...sheetZone}
         >
-          <div className="w-9 h-1 rounded-full bg-foreground/20" />
+          <div className="w-10 h-1 rounded-full bg-foreground/25 pointer-events-none" />
         </div>
 
         {/* Sprint 8 Item 5: half detent used to be overflow-hidden like peek,
@@ -482,6 +495,7 @@ export function NowCockpit({
             fixed-height summary) suppresses scroll now; min-h-0 keeps the
             flex child from refusing to shrink below its content height. */}
         <div
+          ref={scrollerRef}
           className={
             detent === "peek" && dragH == null
               ? "flex-1 min-h-0 overflow-hidden px-4"
@@ -490,7 +504,7 @@ export function NowCockpit({
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
         >
           {/* Step 5: the peek is ticket + today-line, measured for height. */}
-          <div ref={peekRef}>
+          <div ref={peekRef} className="cursor-grab" {...sheetZone}>
           {eveningRecap && !recapDismissed && selectedDay === todayIso && regularToday.length > 0 && (
             <div className="mb-2 rounded-2xl bg-card border border-border px-4 py-3">
               <div className="flex items-start justify-between gap-2">

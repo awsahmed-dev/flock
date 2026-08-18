@@ -38,7 +38,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       .from(itineraryItems)
       .where(eq(itineraryItems.tripId, id))
       .orderBy(asc(itineraryItems.sortOrder), asc(itineraryItems.startTime)),
-    geocode(trip.destination).catch(() => null),
+    geocode(trip.destination, trip.destination).catch(() => null),
     getRates(trip.currency),
   ]);
 
@@ -91,6 +91,9 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
   const destinationCenter: [number, number] | null = destinationGeo
     ? [destinationGeo.lng, destinationGeo.lat]
     : null;
+  // A whole-country destination ("Japan") used to open at city zoom on the
+  // country's centroid — a blank map over mountains. Frame the extent.
+  const destinationZoom = destinationGeo?.zoom ?? 12;
 
   // Phase 6 §6-B: booking meta for anchor rows (PDF chip, confirmation #,
   // multi-night repetition).
@@ -149,6 +152,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       currency={trip.currency}
       destination={trip.destination}
       destinationCenter={destinationCenter}
+      destinationZoom={destinationZoom}
       fxRates={fxRates}
       userId={user.id}
       isOwner={checkOwner(trip, user.id)}

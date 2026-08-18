@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { motion, useAnimationControls, useDragControls } from "motion/react";
+import { useSheetDrag } from "@/lib/use-sheet-drag";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
@@ -56,6 +56,7 @@ interface Props {
   currency: string;
   destination: string;
   destinationCenter: [number, number] | null;
+  destinationZoom?: number;
   fxRates: RateBundle | null;
   userId: string;
   isOwner: boolean;
@@ -132,6 +133,7 @@ export function ItineraryBoard({
   currency,
   destination,
   destinationCenter,
+  destinationZoom,
   fxRates,
   userId,
   isOwner,
@@ -209,14 +211,7 @@ export function ItineraryBoard({
   const sheetEl = useRef<HTMLDivElement | null>(null);
   const [sheetTravel, setSheetTravel] = useState(0);
   const sheetTravelRef = useRef(0);
-  const sheetAnim = useAnimationControls();
-  const sheetDrag = useDragControls();
-  // a real drag must not double-fire the handle's onClick fallback on release
-  const sheetJustDragged = useRef(false);
-  const toggleSheet = () => {
-    if (sheetJustDragged.current) return;
-    setSheetOpen((o) => !o);
-  };
+  const toggleSheet = () => setSheetOpen((o) => !o);
   useEffect(() => {
     const el = sheetEl.current;
     if (!el) return;
@@ -230,13 +225,33 @@ export function ItineraryBoard({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  useEffect(() => {
-    if (sheetTravel <= 0) return;
-    sheetAnim.start({
-      y: sheetOpen ? 0 : sheetTravel,
-      transition: { type: "spring", damping: 28, stiffness: 280 },
-    });
-  }, [sheetOpen, sheetTravel, sheetAnim]);
+  // Touch-safe drag (lib/use-sheet-drag): the pill and the day-title row are
+  // grab surfaces; the sheet follows the finger and snaps by distance or
+  // fling. Taps on those rows still toggle (their onClick), a real drag
+  // swallows the click.
+  const [sheetDragY, setSheetDragY] = useState<number | null>(null);
+  const sheetStartY = useRef(0);
+  const { zoneProps: sheetZone } = useSheetDrag({
+    onStart: () => { sheetStartY.current = sheetOpen ? 0 : sheetTravelRef.current; },
+    onMove: (dy) => {
+      setSheetDragY(Math.min(sheetTravelRef.current, Math.max(0, sheetStartY.current + dy)));
+    },
+    onEnd: ({ dy, vy, moved }) => {
+      if (moved) {
+        const projected = sheetStartY.current + dy + vy * 0.15;
+        setSheetOpen(projected < sheetTravelRef.current / 2);
+      }
+      setSheetDragY(null);
+    },
+  });
+  const sheetY =
+    sheetDragY != null
+      ? `translateY(${sheetDragY}px)`
+      : sheetOpen
+        ? "translateY(0px)"
+        : sheetTravel > 0
+          ? `translateY(${sheetTravel}px)`
+          : "translateY(calc(100% - 3.75rem))";
   const [, startTransition] = useTransition();
 
   const localCurrency = inferLocalCurrency(destination);
@@ -383,6 +398,7 @@ export function ItineraryBoard({
         <MapboxPlanMap
           items={mapItems}
           destinationCenter={destinationCenter}
+          destinationZoom={destinationZoom}
           focusedDay={focusedDay}
           highlightedItemId={highlightedItemId}
           onItemClick={handleMarkerClick}
@@ -649,38 +665,12 @@ export function ItineraryBoard({
           summary strip is the drag handle: pan up to expand, pan down
           to collapse. Click still works as a fallback for fat-finger
           users / non-touch devices. */}
-      <motion.div
+      <div
         ref={sheetEl}
-        className="absolute left-0 right-0 bottom-0 z-20 lg:hidden"
-        initial={{ y: "calc(100% - 3.75rem)" }}
-        animate={sheetAnim}
-        drag="y"
-        dragListener={false}
-        dragControls={sheetDrag}
-        dragConstraints={{ top: 0, bottom: sheetTravel }}
-        dragElastic={{ top: 0.05, bottom: 0.05 }}
-        dragMomentum={false}
-        onDragStart={() => {
-          sheetJustDragged.current = true;
-        }}
-        onDragEnd={(_, info) => {
-          setTimeout(() => {
-            sheetJustDragged.current = false;
-          }, 120);
-          // decide by how far/fast the finger travelled from the snap it left
-          const next = sheetOpen
-            ? !(info.offset.y > 40 || info.velocity.y > 400)
-            : info.offset.y < -40 || info.velocity.y < -400;
-          if (next === sheetOpen) {
-            // threshold not crossed — spring back to the current snap
-            sheetAnim.start({
-              y: sheetOpen ? 0 : sheetTravelRef.current,
-              transition: { type: "spring", damping: 28, stiffness: 280 },
-            });
-          } else {
-            setSheetOpen(next);
-          }
-        }}
+        className={`absolute left-0 right-0 bottom-0 z-20 lg:hidden will-change-transform ${
+          sheetDragY == null ? "transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]" : ""
+        }`}
+        style={{ transform: sheetY }}
       >
         {/* Design-review Page 8: the sheet token (--sheet-bg @ 92% + blur 10),
             blur INLINE — Lightning CSS strips backdrop classes (§0 rule 1). */}
@@ -698,11 +688,11 @@ export function ItineraryBoard({
           <button
             type="button"
             onClick={toggleSheet}
-            onPointerDown={(e) => sheetDrag.start(e)}
-            className="w-full pt-2.5 pb-1.5 flex justify-center cursor-grab active:cursor-grabbing touch-none"
+            {...sheetZone}
+            className="w-full pt-3 pb-2 flex justify-center cursor-grab active:cursor-grabbing"
             aria-label={sheetOpen ? "Collapse" : "Expand"}
           >
-            <span className="block w-10 h-1 rounded-full bg-muted-foreground/30" />
+            <span className="block w-10 h-1 rounded-full bg-muted-foreground/30 pointer-events-none" />
           </button>
 
           {/* B23: three rows instead of one cramped row. Each control
@@ -752,8 +742,8 @@ export function ItineraryBoard({
           <button
             type="button"
             onClick={toggleSheet}
-            onPointerDown={(e) => sheetDrag.start(e)}
-            className="w-full px-4 pb-3 flex items-center justify-between gap-3 text-left hover:bg-accent/20 transition-colors touch-none"
+            {...sheetZone}
+            className="w-full px-4 pb-3 flex items-center justify-between gap-3 text-left hover:bg-accent/20 transition-colors cursor-grab active:cursor-grabbing"
           >
             <div className="min-w-0">
               <p className="font-extrabold text-base truncate">
@@ -1023,7 +1013,7 @@ export function ItineraryBoard({
             </DndContext>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Sheets / dialogs */}
       {/* Sprint 8 Item 3: everything addable to the focused day, one sheet.
