@@ -241,7 +241,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
       <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 bg-gradient-to-r from-primary/5 to-primary/5">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-sm">
-            <MessageSquare className="w-3.5 h-3.5 text-white" />
+            <MessageSquare className="w-4 h-4 text-white" />
           </div>
           <div>
             <p className="text-sm font-semibold leading-tight">Chat</p>
@@ -265,7 +265,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             title="Refresh"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
@@ -305,7 +305,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
             className="flex items-center gap-2 w-full border-b bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/30 px-4 py-2 shrink-0 transition-colors text-left"
             title="Jump to pinned message"
           >
-            <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <Pin className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold tracking-wider text-amber-700 dark:text-amber-400 uppercase">
                 Pinned {pinnedMessages.length > 1 && `· ${idx + 1}/${pinnedMessages.length}`}
@@ -327,7 +327,7 @@ export function ChatSidebar({ tripId, tripName, isOpen, onClose }: Props) {
                 className="p-1 rounded-md text-amber-700 dark:text-amber-400 hover:bg-amber-200/50 dark:hover:bg-amber-900/30 shrink-0"
                 title="Next pinned"
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4" />
               </span>
             )}
           </button>

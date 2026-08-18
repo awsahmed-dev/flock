@@ -408,7 +408,7 @@ export function AddExpenseDialog({
                         type="button"
                         onClick={() => { setPaidBy(m.userId); setPayerOpen(false); }}
                         aria-pressed={active}
-                        className={`inline-flex items-center gap-1.5 rounded-full ps-1 pe-3 py-1 text-xs font-bold transition-all ${
+                        className={`inline-flex items-center gap-1.5 rounded-full ps-1 pe-3 h-9 text-[13px] font-bold transition-all ${
                           active
                             ? "bg-primary/10 border border-primary/30 text-primary"
                             : "border border-border bg-card text-muted-foreground hover:text-foreground"
@@ -429,13 +429,13 @@ export function AddExpenseDialog({
             <button
               type="button"
               onClick={() => { setScope("shared"); setSplitMode("equal"); }}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold transition-all ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 h-9 text-[13px] font-bold transition-all ${
                 scope === "shared" && splitMode === "equal"
                   ? "bg-primary/10 border border-primary/30 text-primary"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Users className="w-3.5 h-3.5" /> {t("expenses.splitEqual")}
+              <Users className="w-4 h-4" /> {t("expenses.splitEqual")}
             </button>
             <button
               type="button"
@@ -444,7 +444,7 @@ export function AddExpenseDialog({
                 setSplitMode("custom");
                 if (Object.keys(customAmounts).length === 0) resetCustomToEqual();
               }}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold transition-all ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 h-9 text-[13px] font-bold transition-all ${
                 scope === "shared" && splitMode === "custom"
                   ? "bg-primary/10 border border-primary/30 text-primary"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
@@ -455,13 +455,13 @@ export function AddExpenseDialog({
             <button
               type="button"
               onClick={() => setScope("personal")}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold transition-all ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 h-9 text-[13px] font-bold transition-all ${
                 scope === "personal"
                   ? "bg-primary/10 border border-primary/30 text-primary"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <User className="w-3.5 h-3.5" /> {t("expenses.justMe")}
+              <User className="w-4 h-4" /> {t("expenses.justMe")}
             </button>
           </div>
 
@@ -513,10 +513,10 @@ export function AddExpenseDialog({
                 defaultValue={localDateIso()}
                 onInvalid={(e) => { e.preventDefault(); setDateError(true); e.currentTarget.focus(); }}
                 onChange={() => setDateError(false)}
-                className={`h-9 ${dateError ? "border-destructive ring-1 ring-destructive" : ""}`}
+                className={`h-9 pe-2 ${dateError ? "border-destructive ring-1 ring-destructive" : ""}`}
               />
               {dateError && (
-                <p className="text-[11px] font-semibold text-destructive">{t("expenses.dateRequired")}</p>
+                <p className="text-[12px] font-semibold text-destructive">{t("expenses.dateRequired")}</p>
               )}
             </div>
             <div className="space-y-1">
@@ -550,7 +550,7 @@ export function AddExpenseDialog({
                   className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
                   aria-label="Remove receipt"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
@@ -559,9 +559,9 @@ export function AddExpenseDialog({
                 className="flex items-center gap-2 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-accent/30 px-3 py-2.5 cursor-pointer transition-colors"
               >
                 {receiptUploading ? (
-                  <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+                  <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
                 ) : (
-                  <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Receipt className="w-4 h-4 text-muted-foreground" />
                 )}
                 <span className="text-xs font-bold text-muted-foreground">
                   {receiptUploading ? t("common.loading") : t("expenses.addReceipt")}
@@ -636,7 +636,7 @@ function BudgetProjection({
     const converted = convert(parsed, currencyInput, baseCurrency, fxRates);
     if (converted == null) {
       return (
-        <p className="text-[11px] text-muted-foreground bg-muted/40 rounded-md px-3 py-1.5">
+        <p className="text-[12px] text-muted-foreground bg-muted/40 rounded-md px-3 py-1.5">
           Live FX unavailable — projection skipped. Submitting still works.
         </p>
       );
@@ -707,7 +707,7 @@ function ProjectionLine({
   const { bg, border, text, dot } = projectionColors(pct);
   return (
     <div
-      className={`flex items-center justify-between gap-2 rounded-md border ${border} ${bg} px-3 py-1.5 text-[11px]`}
+      className={`flex items-center justify-between gap-2 rounded-md border ${border} ${bg} px-3 py-1.5 text-[12px]`}
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className={`w-1.5 h-1.5 rounded-full ${dot} shrink-0`} />
@@ -821,7 +821,7 @@ function CategoryPicker({
                   c.value === value ? "bg-accent" : "hover:bg-accent/50"
                 }`}
               >
-                <CIcon className={`w-3.5 h-3.5 ${c.color}`} />
+                <CIcon className={`w-4 h-4 ${c.color}`} />
                 {t(c.labelKey)}
               </button>
             );
@@ -856,7 +856,7 @@ function LiveFxHint({
   const converted = convert(parsed, currency, baseCurrency, fxRates);
   if (converted == null) return null;
   return (
-    <p className="mt-1 text-[11px] text-muted-foreground tabular-nums">
+    <p className="mt-1 text-[12px] text-muted-foreground tabular-nums">
       ≈ {baseCurrency} {fmtAmount(converted)}{" "}
       <span className="opacity-60">· live FX</span>
     </p>
@@ -877,7 +877,7 @@ function PayerAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | nu
 
 function SlidersIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
       <line x1="4" y1="8" x2="20" y2="8" /><circle cx="9" cy="8" r="2" fill="currentColor" stroke="none" />
       <line x1="4" y1="16" x2="20" y2="16" /><circle cx="15" cy="16" r="2" fill="currentColor" stroke="none" />
     </svg>

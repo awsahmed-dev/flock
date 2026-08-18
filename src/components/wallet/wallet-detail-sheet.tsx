@@ -109,12 +109,12 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-4xl font-extrabold tabular-nums">{booking.flight.fromCode}</p>
-                  <p className="text-[11px] opacity-80">{booking.flight.fromCity}</p>
+                  <p className="text-[12px] opacity-80">{booking.flight.fromCity}</p>
                 </div>
                 <Plane className="w-7 h-7 opacity-90 rtl:rotate-180" />
                 <div className="text-end">
                   <p className="text-4xl font-extrabold tabular-nums">{booking.flight.toCode}</p>
-                  <p className="text-[11px] opacity-80">{booking.flight.toCity}</p>
+                  <p className="text-[12px] opacity-80">{booking.flight.toCity}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm font-medium opacity-90 mb-3">
@@ -173,7 +173,7 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
                   href={photo.creditLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[9px] opacity-50 hover:opacity-90 mt-2 inline-block"
+                  className="text-[10px] opacity-50 hover:opacity-90 mt-2 inline-block"
                 >
                   📸 {photo.creditName}
                 </a>
@@ -245,7 +245,7 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
                     href={photo.creditLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[9px] opacity-50 hover:opacity-90 mt-2 inline-block"
+                    className="text-[10px] opacity-50 hover:opacity-90 mt-2 inline-block"
                   >
                     📸 {photo.creditName}
                   </a>
@@ -273,7 +273,7 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
                 <FakeBarcode seed={booking.reference} />
               )}
             </div>
-            <p className="text-center text-[11px] font-mono tabular-nums tracking-widest text-muted-foreground">
+            <p className="text-center text-[12px] font-mono tabular-nums tracking-widest text-muted-foreground">
               {booking.reference}
             </p>
           </div>
@@ -354,12 +354,12 @@ function RouteHero({ booking }: { booking: MockBooking }) {
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-3xl font-extrabold tabular-nums">{fromCode}</p>
-          <p className="text-[11px] opacity-80 truncate">{fromCity}</p>
+          <p className="text-[12px] opacity-80 truncate">{fromCity}</p>
         </div>
         <Icon className="w-6 h-6 opacity-90" />
         <div className="text-end">
           <p className="text-3xl font-extrabold tabular-nums">{toCode}</p>
-          <p className="text-[11px] opacity-80 truncate">{toCity}</p>
+          <p className="text-[12px] opacity-80 truncate">{toCity}</p>
         </div>
       </div>
       <div className="flex items-center justify-between text-sm font-medium opacity-90 mb-1">
@@ -367,7 +367,7 @@ function RouteHero({ booking }: { booking: MockBooking }) {
         <p className="text-xs bg-white/15 rounded-full px-2 py-0.5 tabular-nums">{r.durationLabel}</p>
         <p className="tabular-nums">{r.arrTime}</p>
       </div>
-      <p className="text-[11px] opacity-80 text-center mt-2">
+      <p className="text-[12px] opacity-80 text-center mt-2">
         {r.operator} {(("trainNumber" in r) ? `· ${r.trainNumber}` : "")}
       </p>
       {void t}

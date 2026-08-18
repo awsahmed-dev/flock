@@ -197,7 +197,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
               disabled={isPending}
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold px-3 py-1.5 transition-colors disabled:opacity-50"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4" />
               {t("pack.startWithSuggestions")}
             </button>
           </div>
@@ -214,7 +214,7 @@ export function PackingBoard({ tripId, userId, items, members, embedded }: Props
                 disabled={isPending}
                 className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold px-3 py-1.5 transition-colors disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-4 h-4" />
                 Start with suggestions
               </button>
             ) : null
@@ -358,7 +358,7 @@ function TabButton({
       <Icon className="w-4 h-4" />
       {label}
       <span
-        className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
+        className={`text-[12px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
           active ? "bg-primary/15 text-primary" : "bg-muted-foreground/15"
         }`}
       >
@@ -435,8 +435,8 @@ function CategoryList({
         return (
           <section key={cat} className="space-y-1.5">
             <div className="flex items-center gap-1.5 px-1">
-              <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
-              <p className="text-[11px] font-extrabold tracking-wider text-muted-foreground uppercase">
+              <Icon className={`w-4 h-4 ${meta.color}`} />
+              <p className="text-[12px] font-extrabold tracking-wider text-muted-foreground uppercase">
                 {t(`pack.categories.${meta.i18nKey}`)} · {list.length}
               </p>
             </div>
@@ -528,7 +528,7 @@ function PackingRow({
                 : "border-2 border-muted-foreground/40 hover:border-primary"
             }`}
           >
-            {item.packed && <Check className="w-3.5 h-3.5" />}
+            {item.packed && <Check className="w-4 h-4" />}
           </span>
         </button>
         <div className="flex-1 min-w-0">
@@ -608,7 +608,7 @@ function CrewView({
                     className="flex items-center gap-2 text-xs"
                   >
                     <span
-                      className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 ${
+                      className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${
                         i.packed
                           ? "bg-emerald-500 text-white"
                           : "border border-muted-foreground/30"

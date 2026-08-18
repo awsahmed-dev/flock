@@ -36,7 +36,7 @@ export function PageHeader({ backHref, title, subtitle, action }: Props) {
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[11px] text-muted-foreground truncate leading-snug mt-0.5">
+            <p className="text-[12px] text-muted-foreground truncate leading-snug mt-0.5">
               {subtitle}
             </p>
           )}

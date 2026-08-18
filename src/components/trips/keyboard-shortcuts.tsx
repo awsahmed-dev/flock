@@ -171,7 +171,7 @@ export function KeyboardShortcuts({ tripId, onToggleChat }: Props) {
             </div>
             <div>
               <p className="text-sm font-bold leading-tight">Keyboard shortcuts</p>
-              <p className="text-[11px] text-muted-foreground">Press ? anytime to reopen</p>
+              <p className="text-[12px] text-muted-foreground">Press ? anytime to reopen</p>
             </div>
           </div>
           <button
@@ -193,7 +193,7 @@ export function KeyboardShortcuts({ tripId, onToggleChat }: Props) {
                 {s.keys.split(" ").map((k, i) => (
                   <kbd
                     key={i}
-                    className="px-2 py-1 text-[11px] font-bold font-mono rounded-md bg-muted border border-border text-foreground"
+                    className="px-2 py-1 text-[12px] font-bold font-mono rounded-md bg-muted border border-border text-foreground"
                   >
                     {k === "Esc" ? "Esc" : k}
                   </kbd>

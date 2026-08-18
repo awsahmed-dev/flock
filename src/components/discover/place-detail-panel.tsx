@@ -245,7 +245,7 @@ export function PlaceDetailPanel({
             {/* Counter + arrows */}
             {photos.length > 1 && (
               <>
-                <div className="absolute bottom-3 end-3 rounded-full bg-black/55 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 tabular-nums">
+                <div className="absolute bottom-3 end-3 rounded-full bg-black/55 backdrop-blur text-white text-[12px] font-semibold px-2.5 py-1 tabular-nums">
                   {photoIdx + 1} / {photos.length}
                 </div>
                 <div className="absolute bottom-3 start-3 hidden sm:flex items-center gap-1.5">
@@ -272,12 +272,12 @@ export function PlaceDetailPanel({
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {scored?.tags.includes("ai_pick") && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[11px] font-bold">
-                    <Sparkles className="w-3.5 h-3.5" />{t("discover.tagAiPick")}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[12px] font-bold">
+                    <Sparkles className="w-4 h-4" />{t("discover.tagAiPick")}
                   </span>
                 )}
                 {scored?.tags.includes("hidden_gem") && (
-                  <span className="rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2.5 py-1 text-[11px] font-bold">{t("discover.tagHiddenGem")}</span>
+                  <span className="rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2.5 py-1 text-[12px] font-bold">{t("discover.tagHiddenGem")}</span>
                 )}
               </div>
               <h2 className="text-2xl font-extrabold tracking-[-0.01em] leading-tight">{p?.name}</h2>
@@ -345,7 +345,7 @@ export function PlaceDetailPanel({
           ) : (
             <>
               <div>
-                <p className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5">{t("itinerary.addToDay")}</p>
+                <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5">{t("itinerary.addToDay")}</p>
                 <div className="-mx-1 px-1 overflow-x-auto scrollbar-none">
                   <div className="inline-flex items-center gap-1.5">
                     {days.map((d, idx) => {
@@ -355,7 +355,7 @@ export function PlaceDetailPanel({
                           key={d} type="button" onClick={() => setSelectedDay(d)}
                           className={`shrink-0 rounded-2xl px-3.5 py-2 text-center transition-all ${active ? "bg-primary text-primary-foreground" : "bg-muted/60 text-foreground hover:bg-muted"}`}
                         >
-                          <p className="text-[9px] font-bold tracking-widest uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
+                          <p className="text-[10px] font-bold tracking-widest uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
                           <p className="text-[13px] font-bold mt-0.5 whitespace-nowrap">{format(parseISO(d), "MMM d")}</p>
                         </button>
                       );

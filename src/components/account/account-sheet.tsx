@@ -380,9 +380,9 @@ function LanguageRow() {
               }`}
             >
               {switching === l ? (
-                <Loader2 size={13} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
               ) : active ? (
-                <Check size={13} weight="bold" style={{ color: ACCENT }} />
+                <Check size={16} weight="bold" style={{ color: ACCENT }} />
               ) : null}
               {l === "en" ? t("language.english") : t("language.arabic")}
             </button>

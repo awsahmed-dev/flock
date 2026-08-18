@@ -98,11 +98,11 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
-              <Plane className="w-3.5 h-3.5 rtl:rotate-180" />
+              <Plane className="w-4 h-4 rtl:rotate-180" />
             </div>
             <div className="min-w-0">
               <p className="font-bold text-sm leading-tight truncate">{f.airlineName}</p>
-              <p className="text-[11px] opacity-80 truncate">
+              <p className="text-[12px] opacity-80 truncate">
                 {t("wallet.flightNo")} {f.flightNumber}
               </p>
             </div>
@@ -134,7 +134,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
           <p className="font-bold text-base truncate">{r.operator}</p>
           {r.rating != null && (
             <span className="inline-flex items-center gap-1 text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full shrink-0">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span className="tabular-nums">{r.rating}</span>
             </span>
           )}
@@ -159,7 +159,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
                 strokeDasharray="3 3"
               />
             </svg>
-            <span className="relative bg-card px-2 text-[11px] font-bold text-muted-foreground tabular-nums">
+            <span className="relative bg-card px-2 text-[12px] font-bold text-muted-foreground tabular-nums">
               {r.durationLabel}
             </span>
           </div>
@@ -174,12 +174,12 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
         <div className="h-px bg-border" />
 
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/8 px-2.5 py-1 rounded-full">
-            <Ticket className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/8 px-2.5 py-1 rounded-full">
+            <Ticket className="w-4 h-4" />
             {t("wallet.mTicket")}
           </span>
           {r.seat && (
-            <span className="text-[11px] font-bold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
+            <span className="text-[12px] font-bold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
               {t("wallet.seat")} {r.seat}
             </span>
           )}
@@ -219,11 +219,11 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-full bg-rose-500/15 flex items-center justify-center shrink-0">
-              <Plane className="w-3.5 h-3.5 text-rose-500 rtl:rotate-180" />
+              <Plane className="w-4 h-4 text-rose-500 rtl:rotate-180" />
             </div>
             <div className="min-w-0">
               <p className="font-bold text-sm truncate">{f.airlineName}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
+              <p className="text-[12px] text-muted-foreground truncate">
                 {t("wallet.flightNo")} {f.flightNumber}
               </p>
             </div>
@@ -254,7 +254,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
               <p className="font-bold text-base truncate">{booking.title}</p>
               <VisibilityChip visibility={booking.visibility} />
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">{booking.partner}</p>
+            <p className="text-[12px] text-muted-foreground truncate">{booking.partner}</p>
           </div>
           <p className="text-lg font-extrabold tabular-nums shrink-0">
             {booking.currency} {booking.price.toLocaleString()}
@@ -285,7 +285,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
             </div>
             <div className="min-w-0">
               <p className="font-bold text-base truncate">{e.country}</p>
-              <p className="text-[11px] text-muted-foreground truncate">{booking.partner}</p>
+              <p className="text-[12px] text-muted-foreground truncate">{booking.partner}</p>
             </div>
           </div>
           <VisibilityChip visibility={booking.visibility} />
@@ -317,7 +317,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
               <p className="font-bold text-base truncate">{booking.title}</p>
               <VisibilityChip visibility={booking.visibility} />
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-[12px] text-muted-foreground truncate">
               {booking.partner} · {a.duration} · {a.guests} {t("wallet.guests")}
             </p>
           </div>
@@ -325,7 +325,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
             {booking.currency} {booking.price.toLocaleString()}
           </p>
         </div>
-        <p className="text-[11px] text-muted-foreground truncate">{a.startTime}</p>
+        <p className="text-[12px] text-muted-foreground truncate">{a.startTime}</p>
       </button>
     );
   }
@@ -348,7 +348,7 @@ export function WalletCard({ booking, variant = "default", onOpen }: Props) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-muted/40 px-2 py-1.5">
-      <p className="text-[9px] font-bold tracking-wider text-muted-foreground uppercase">
+      <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
         {label}
       </p>
       <p className="text-xs font-extrabold tabular-nums truncate">{value}</p>

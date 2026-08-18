@@ -40,7 +40,7 @@ export function HeroCard({ card }: { card: DeckCard }) {
     >
       <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,.08) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.85) 100%)" }} />
       <span className="absolute top-3 start-3 rounded-full bg-black/45 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-white/90 flex items-center gap-1">
-        <Icon size={12} weight="fill" style={{ color: hue }} />
+        <Icon size={16} weight="fill" style={{ color: hue }} />
         {purpose}
       </span>
       <div className="absolute inset-x-0 bottom-0 p-3.5 flex items-end justify-between gap-3 text-white">
@@ -69,7 +69,7 @@ export function NoteRow({ card, index = 0 }: { card: DeckCard; index?: number })
         <span className="block text-[12px] text-muted-foreground truncate">{body}</span>
       </span>
       <span className="text-[12px] font-bold shrink-0 flex items-center gap-0.5" style={{ color: hue }}>
-        {action} <CaretRight size={11} weight="bold" className="rtl:rotate-180" />
+        {action} <CaretRight size={16} weight="bold" className="rtl:rotate-180" />
       </span>
     </Link>
   );

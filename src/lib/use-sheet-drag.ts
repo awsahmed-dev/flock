@@ -50,11 +50,14 @@ export function useSheetDrag(opts: {
     st.current = null;
     try { d.el.releasePointerCapture(e.pointerId); } catch { /* not captured */ }
     if (d.moved) suppressUntil.current = performance.now() + 400;
+    // A cancelled gesture (the browser took it — e.g. a sideways pan on a
+    // pan-x chip rail) is NOT a drag: report it as unmoved so the sheet
+    // settles back where it was instead of jumping to a detent.
     optsRef.current.onEnd({
-      dy: e.clientY - d.startY,
+      dy: cancelled ? 0 : e.clientY - d.startY,
       vy: cancelled ? 0 : d.vy,
-      moved: d.moved,
-      target: d.moved ? null : e.target,
+      moved: cancelled ? false : d.moved,
+      target: cancelled || d.moved ? null : e.target,
     });
   }
 

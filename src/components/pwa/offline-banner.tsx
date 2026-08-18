@@ -40,7 +40,7 @@ export function OfflineBanner() {
       role="status"
       className="fixed top-0 inset-x-0 z-[100] flex items-center justify-center gap-2 bg-amber-500 text-amber-950 px-4 py-1.5 text-xs font-bold shadow-md"
     >
-      <WifiOff className="w-3.5 h-3.5" />
+      <WifiOff className="w-4 h-4" />
       {status
         ? stale
           ? t("offline.bannerStale", { banner: t("offline.banner") })

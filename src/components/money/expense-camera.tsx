@@ -208,7 +208,7 @@ export function ExpenseCamera({
                   className="inline-flex items-center gap-1.5 rounded-full bg-black/50 text-white text-[13px] font-semibold px-4 py-2"
                   style={{ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
                 >
-                  <Keyboard size={14} /> Type instead
+                  <Keyboard size={16} /> Type instead
                 </button>
               </div>
             </>
@@ -247,7 +247,7 @@ export function ExpenseCamera({
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t("expenses.camCategory")}</p>
+            <p className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t("expenses.camCategory")}</p>
             <div className="flex gap-2 flex-wrap">
               {CATEGORIES.map((c) => (
                 <button
@@ -266,7 +266,7 @@ export function ExpenseCamera({
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t("expenses.camDescription")}</p>
+            <p className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t("expenses.camDescription")}</p>
             <input
               value={description}
               onChange={(e) => {

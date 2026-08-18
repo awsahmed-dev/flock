@@ -47,13 +47,13 @@ export function DocumentCard({
       <span className="flex-1 min-w-0">
         <span className="block text-[14px] font-semibold truncate">{doc.title}</span>
         {(dayLabel || doc.uploaderName) && (
-          <span className="block text-[11px] text-muted-foreground truncate">
+          <span className="block text-[12px] text-muted-foreground truncate">
             {[dayLabel, doc.uploaderName].filter(Boolean).join(" · ")}
           </span>
         )}
       </span>
       {doc.dayDate && !dayLabel && (
-        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold tabular-nums">
+        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[12px] font-bold tabular-nums">
           {format(parseDateOnly(doc.dayDate), "d MMM")}
         </span>
       )}
@@ -65,9 +65,9 @@ export function DocumentCard({
         {isFile ? t("docs.badgeFile") : t("docs.badgeLink")}
       </span>
       {inApp ? (
-        <CaretRight size={14} className="text-tertiary shrink-0 rtl:rotate-180" />
+        <CaretRight size={16} className="text-tertiary shrink-0 rtl:rotate-180" />
       ) : (
-        <ExternalLink size={14} className="text-tertiary shrink-0" />
+        <ExternalLink size={16} className="text-tertiary shrink-0" />
       )}
     </>
   );

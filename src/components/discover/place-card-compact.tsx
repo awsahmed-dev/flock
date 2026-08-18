@@ -102,12 +102,12 @@ export function PlaceCardCompact({
         </span>
         {p.rating != null && (
           <span className="absolute bottom-2 start-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur px-2 py-0.5 text-white text-xs font-bold tabular-nums">
-            <Star className="w-3 h-3 fill-amber-300 text-amber-300" />{p.rating.toFixed(1)}
+            <Star className="w-4 h-4 fill-amber-300 text-amber-300" />{p.rating.toFixed(1)}
           </span>
         )}
         {added && (
           <span className="absolute bottom-2 end-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-white" aria-label={t("discover.save")}>
-            <Check className="w-3.5 h-3.5" />
+            <Check className="w-4 h-4" />
           </span>
         )}
       </div>
@@ -116,7 +116,7 @@ export function PlaceCardCompact({
         <div className="mt-1 flex items-center gap-x-2 text-xs text-muted-foreground min-w-0">
           {price && <span className="text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">{price}</span>}
           <span className="inline-flex items-center gap-1 min-w-0">
-            <MapPin className="w-3 h-3 shrink-0" />
+            <MapPin className="w-4 h-4 shrink-0" />
             {/* §10.6: derived "{locality} · {type}" — never the raw Google
                 address string. Full address lives in the detail drawer. */}
             <span className="line-clamp-1">

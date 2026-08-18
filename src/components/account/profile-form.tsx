@@ -144,14 +144,14 @@ export function ProfileForm({
           className="hidden"
           onChange={handleAvatarPick}
         />
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-[12px] text-muted-foreground">
           {uploading ? t("profile.uploading") : t("profile.avatarHint")}
         </p>
       </div>
 
       {/* Display name */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
+        <label className="text-[12px] font-bold tracking-widest uppercase text-muted-foreground">
           {t("profile.nameLabel")}
         </label>
         <input
@@ -167,7 +167,7 @@ export function ProfileForm({
 
       {/* Bio */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
+        <label className="text-[12px] font-bold tracking-widest uppercase text-muted-foreground">
           {t("profile.bioLabel")}
         </label>
         <textarea
@@ -186,7 +186,7 @@ export function ProfileForm({
       {/* Email (read-only) */}
       {email && (
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
+          <label className="text-[12px] font-bold tracking-widest uppercase text-muted-foreground">
             {t("profile.emailLabel")}
           </label>
           <input
@@ -203,7 +203,7 @@ export function ProfileForm({
       <div className="flex items-center justify-end gap-2 pt-2">
         {showSavedTick && (
           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-            <Check className="w-3.5 h-3.5" />
+            <Check className="w-4 h-4" />
             {t("profile.savedJustNow")}
           </span>
         )}

@@ -114,7 +114,7 @@ export function ShareTripSheet({
           {/* §7: current crew — avatars + first names + a count. */}
           {crew.length > 0 && (
             <div className="pt-3 mt-1 border-t border-border">
-              <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-muted-foreground mb-2.5">
+              <p className="text-[12px] font-bold tracking-[0.08em] uppercase text-muted-foreground mb-2.5">
                 {t("share.peopleCount", { count: crew.length })}
               </p>
               <div className="flex flex-wrap gap-3">

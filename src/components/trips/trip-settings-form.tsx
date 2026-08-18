@@ -220,7 +220,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             onClick={handleEnableShare}
             disabled={isPending}
           >
-            <Link2 className="w-3.5 h-3.5" />
+            <Link2 className="w-4 h-4" />
             {t("trip.settingsGenerateLink")}
           </Button>
         ) : (
@@ -236,7 +236,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
                 className="shrink-0 gap-1.5"
                 onClick={handleCopy}
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                 {copied ? t("common.copied") : t("common.copy")}
               </Button>
             </div>
@@ -250,7 +250,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
                 onClick={handleRegenerate}
                 disabled={isPending}
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className="w-4 h-4" />
                 {t("trip.settingsNewLink")}
               </Button>
               <Button
@@ -261,7 +261,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
                 onClick={handleDisableShare}
                 disabled={isPending}
               >
-                <EyeOff className="w-3 h-3" />
+                <EyeOff className="w-4 h-4" />
                 {t("trip.settingsDisableSharing")}
               </Button>
             </div>
@@ -290,7 +290,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             onClick={handleClearPlan}
             disabled={isPending}
           >
-            <Eraser className="w-3.5 h-3.5 me-1.5" />
+            <Eraser className="w-4 h-4 me-1.5" />
             {isPending
               ? t("trip.clearingPlan")
               : confirmClear
@@ -319,7 +319,7 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
             className="text-destructive border-destructive/30 hover:bg-destructive/10"
             onClick={() => setShowDeleteConfirm(true)}
           >
-            <Trash2 className="w-3.5 h-3.5 me-1.5" />
+            <Trash2 className="w-4 h-4 me-1.5" />
             {t("trip.settingsDeleteTrip")}
           </Button>
         )}

@@ -90,7 +90,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
           <h1 className="text-white" style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.4 }}>
             {name}
           </h1>
-          <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 shrink-0" style={{ fontSize: 11, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}>
+          <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 shrink-0" style={{ fontSize: 12, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}>
             {daysUntil <= 0 ? t("cockpit.badgeTodayFly") : t("cockpit.badgeInDays", { count: daysUntil })}
             {daysUntil > 0 && (
               <span className="w-1.5 h-1.5 rounded-full" style={{ animation: "pulse 2s ease-in-out infinite", background: "var(--clr-horizon)" }} />
@@ -118,7 +118,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
         {/* 2. DEPARTURE BOARD. */}
         <section className="rounded-3xl bg-card border border-border overflow-hidden" style={{ fontVariantNumeric: "tabular-nums" }}>
           <div className="px-4 pt-3 pb-2">
-            <p className="text-[11px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">{t("cockpit.departure")}</p>
+            <p className="text-[12px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">{t("cockpit.departure")}</p>
             <p className="text-[15px] font-bold text-foreground mt-0.5">
               {destination} · {dateLabel}
             </p>
@@ -157,7 +157,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
           <BoardRow>
             <span className="flex items-center justify-between w-full">
               <span className={packUrgent ? "font-semibold" : ""}>
-                <Luggage size={14} className="inline me-1.5 -mt-0.5" />
+                <Luggage size={16} className="inline me-1.5 -mt-0.5" />
                 {t("cockpit.packingLine", { packed: packing.packed, total: packing.total })}
                 {packLeft > 0 ? ` — ${t("cockpit.packLeft", { count: packLeft })}` : " ✓"}
               </span>
@@ -170,7 +170,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
           {crew.length > 1 && (
             <BoardRow>
               <span className="text-muted-foreground text-[13px]">
-                <Users size={14} className="inline me-1.5 -mt-0.5" />
+                <Users size={16} className="inline me-1.5 -mt-0.5" />
                 {crew
                   .slice(0, 3)
                   .map((m) => t("cockpit.joined", { name: m.displayName.split(" ")[0] }))

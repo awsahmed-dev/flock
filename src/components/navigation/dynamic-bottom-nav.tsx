@@ -322,8 +322,10 @@ export function DynamicBottomNav({
             className="relative flex flex-col items-center gap-px"
             style={{ animation: "fadeIn 200ms ease" }}
           >
-            <left.icon size={20} className="text-foreground" />
-            <span className="text-[10px] font-bold leading-none text-foreground whitespace-nowrap">
+            {/* Video round 4: same active language as the pill tabs — brand
+                colour + filled glyph. */}
+            <left.icon size={20} weight={isItineraryPage ? "fill" : "regular"} className={isItineraryPage ? "" : "text-foreground"} style={isItineraryPage ? { color: "var(--clr-brand)" } : undefined} />
+            <span className={`text-[10px] font-bold leading-none whitespace-nowrap ${isItineraryPage ? "" : "text-foreground"}`} style={isItineraryPage ? { color: "var(--clr-brand)" } : undefined}>
               {left.label}
             </span>
           </span>

@@ -138,9 +138,9 @@ export function MemberStatsSheet({ open, onClose, tripId, member }: Props) {
             <p className="font-extrabold text-lg leading-tight">
               {member.displayName}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-1">
+            <p className="text-[12px] text-muted-foreground mt-0.5 inline-flex items-center gap-1">
               {member.role === "owner" && (
-                <Crown className="w-3 h-3 text-amber-500" />
+                <Crown className="w-4 h-4 text-amber-500" />
               )}
               {member.role === "owner"
                 ? t("memberStats.owner")
@@ -210,7 +210,7 @@ export function MemberStatsSheet({ open, onClose, tripId, member }: Props) {
             </div>
 
             {/* Plain-English summary */}
-            <p className="text-[11px] text-muted-foreground text-center px-2 leading-relaxed">
+            <p className="text-[12px] text-muted-foreground text-center px-2 leading-relaxed">
               {t("memberStats.summary", {
                 items: stats.itemsAdded,
                 expenses: stats.expensesPaid,
@@ -251,7 +251,7 @@ function StatTile({
     <div className="rounded-2xl border border-border bg-card p-3">
       <div className="flex items-center gap-2 mb-1.5">
         <div className={`w-7 h-7 rounded-lg ${c.bg} flex items-center justify-center`}>
-          <Icon className={`w-3.5 h-3.5 ${c.text}`} />
+          <Icon className={`w-4 h-4 ${c.text}`} />
         </div>
         <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
           {label}

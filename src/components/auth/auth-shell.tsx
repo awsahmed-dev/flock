@@ -49,7 +49,7 @@ export function AuthShell({
             <Logo variant="full" size="xs" />
           </Link>
           <span className="w-px h-4 bg-[#141414]/15" aria-hidden />
-          <span className="text-[11px] font-bold text-[#141414]/55">{tagline}</span>
+          <span className="text-[12px] font-bold text-[#141414]/55">{tagline}</span>
         </div>
       </header>
 
@@ -91,7 +91,7 @@ export function AuthShell({
       </div>
 
       {/* ground-crew footer */}
-      <footer className="absolute bottom-5 inset-x-0 flex justify-center gap-5 text-[11px] font-medium text-[#141414]/45">
+      <footer className="absolute bottom-5 inset-x-0 flex justify-center gap-5 text-[12px] font-medium text-[#141414]/45">
         <Link href="/terms" className="hover:text-[#141414] transition-colors">
           Terms
         </Link>

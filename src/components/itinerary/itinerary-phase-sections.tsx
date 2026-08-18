@@ -103,7 +103,7 @@ export function LiveDayTimeline({
                     : { borderColor: "var(--border)" }
                 }
               >
-                {done && <Check size={14} weight="bold" />}
+                {done && <Check size={16} weight="bold" />}
               </button>
               <div className="flex-1 min-w-0">
                 <p className={`text-[14px] font-bold truncate ${done ? "line-through text-muted-foreground" : ""}`}>
@@ -232,12 +232,12 @@ export function DepartureStrip({
                           : { borderColor: "var(--border)" }
                       }
                     >
-                      {isPacked && <Check size={12} weight="bold" />}
+                      {isPacked && <Check size={16} weight="bold" />}
                     </span>
                     <span className={`flex-1 text-[14px] font-semibold ${isPacked ? "line-through text-muted-foreground" : ""}`}>
                       {p.label}
                     </span>
-                    <span className="text-[11px] text-tertiary capitalize">{p.category}</span>
+                    <span className="text-[12px] text-tertiary capitalize">{p.category}</span>
                   </button>
                 </li>
               );
@@ -247,7 +247,7 @@ export function DepartureStrip({
             href={`/trips/${tripId}/pack`}
             className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-primary"
           >
-            <Package size={14} /> {t("itinerary.openPackList")}
+            <Package size={16} /> {t("itinerary.openPackList")}
           </Link>
         </div>
       )}
@@ -400,7 +400,7 @@ export function RecapStopCard({
           onClick={() => fileRef.current?.click()}
           className="mt-2.5 w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 px-3 py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
         >
-          {uploading ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={16} />}
           {t("itinerary.dropPhotos")}
           {totalPhotos > 0 && (
             <span className="font-bold text-foreground tabular-nums">· {totalPhotos}</span>

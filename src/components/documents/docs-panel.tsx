@@ -71,7 +71,7 @@ export function DocsPanel({ tripId, docs }: { tripId: string; docs: DocumentCard
                   view === v ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
               >
-                <Icon size={15} weight={view === v ? "fill" : "regular"} />
+                <Icon size={16} weight={view === v ? "fill" : "regular"} />
               </button>
             ))}
           </div>
@@ -118,7 +118,7 @@ export function DocsPanel({ tripId, docs }: { tripId: string; docs: DocumentCard
                 </span>
                 <span className="block px-2.5 py-2">
                   <span className="block text-[13px] font-semibold truncate">{d.title}</span>
-                  <span className="block text-[11px] text-muted-foreground truncate">
+                  <span className="block text-[12px] text-muted-foreground truncate">
                     {[kindLabel(d.type), d.dayDate ? format(parseDateOnly(d.dayDate), "d MMM") : null]
                       .filter(Boolean)
                       .join(" · ")}

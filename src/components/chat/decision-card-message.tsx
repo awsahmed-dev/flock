@@ -89,8 +89,8 @@ export function DecisionCardMessage({ meta, onActionDone }: { meta: DecisionCard
             {meta.snapshot.name.charAt(0)}
           </div>
         )}
-        <span className="absolute top-2.5 start-2.5 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur text-white px-2.5 py-1 text-[11px] font-bold">
-          <Sparkles className="w-3.5 h-3.5" />{t("decisions.label")}
+        <span className="absolute top-2.5 start-2.5 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur text-white px-2.5 py-1 text-[12px] font-bold">
+          <Sparkles className="w-4 h-4" />{t("decisions.label")}
         </span>
       </div>
 
@@ -100,13 +100,13 @@ export function DecisionCardMessage({ meta, onActionDone }: { meta: DecisionCard
           <div className="mt-1 flex items-center gap-x-2 gap-y-0.5 flex-wrap text-xs text-muted-foreground">
             {meta.snapshot.rating != null && (
               <span className="inline-flex items-center gap-1 font-bold text-foreground">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />{meta.snapshot.rating.toFixed(1)}
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />{meta.snapshot.rating.toFixed(1)}
               </span>
             )}
             {price && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{price}</span>}
             {meta.proposedDay && (
               <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />{meta.proposedDay}
+                <Calendar className="w-4 h-4" />{meta.proposedDay}
               </span>
             )}
           </div>
@@ -131,7 +131,7 @@ export function DecisionCardMessage({ meta, onActionDone }: { meta: DecisionCard
               />
             </div>
             {/* Tally + countdown */}
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between text-[12px] text-muted-foreground">
               <span>{t("decisions.votedOf", { voted: state.yes + state.no, total: state.memberCount })}</span>
               {meta.closesAt && <Countdown closesAt={meta.closesAt} t={t} />}
             </div>

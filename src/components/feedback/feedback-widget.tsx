@@ -94,7 +94,7 @@ export function FeedbackWidget() {
         className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background hover:opacity-90 shadow-lg shadow-black/30 px-3.5 py-2 text-xs font-bold transition-opacity"
         aria-label="Send feedback"
       >
-        <MessageSquarePlus className="w-3.5 h-3.5" />
+        <MessageSquarePlus className="w-4 h-4" />
         Feedback
       </button>
 
@@ -130,7 +130,7 @@ export function FeedbackWidget() {
                   <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     <div>
                       <p className="text-sm font-bold">Send feedback</p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-[12px] text-muted-foreground">
                         Goes straight to the founder
                       </p>
                     </div>
@@ -166,7 +166,7 @@ export function FeedbackWidget() {
                             title={r.label}
                           >
                             <span>{r.emoji}</span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                               {r.label}
                             </span>
                           </button>
@@ -213,7 +213,7 @@ export function FeedbackWidget() {
                         "Sending…"
                       ) : (
                         <>
-                          <Send className="w-3.5 h-3.5" />
+                          <Send className="w-4 h-4" />
                           Send to founder
                         </>
                       )}

@@ -188,12 +188,12 @@ export function BookMode({
           <h2 className="text-xl font-extrabold leading-tight">
             {t("plan.bookSubtitle", { destination: cities[0] ?? destination })}
           </h2>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[12px] text-muted-foreground">
             {t("plan.bookExplainer")}
           </p>
           {toBookCount > 0 && (
             <div className="rounded-xl border border-border bg-card p-2.5">
-              <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
+              <div className="flex items-center justify-between text-[12px] font-bold mb-1.5">
                 <span className="text-muted-foreground">
                   {t("plan.progressLine", { booked: bookedCount, total: toBookCount })}
                 </span>
@@ -229,22 +229,22 @@ export function BookMode({
                 <p className="font-bold text-sm leading-snug">
                   {t("plan.bookConfirmTitle", { name: intent.title })}
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
                   {intent.meta}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     type="button"
                     onClick={() => confirmBooking(intent.id)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background text-[11px] font-bold px-3 py-1.5 hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background text-[12px] font-bold px-3 py-1.5 hover:opacity-90 transition-opacity"
                   >
-                    <Check className="w-3 h-3" />
+                    <Check className="w-4 h-4" />
                     {t("plan.confirmAdd")}
                   </button>
                   <button
                     type="button"
                     onClick={() => dismissIntent(intent.id)}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground px-2"
+                    className="inline-flex items-center gap-1 text-[12px] font-bold text-muted-foreground hover:text-foreground px-2"
                   >
                     {t("plan.confirmNotYet")}
                   </button>
@@ -256,7 +256,7 @@ export function BookMode({
                 className="w-6 h-6 rounded-full hover:bg-foreground/10 flex items-center justify-center shrink-0"
                 aria-label={t("affiliate.dismiss")}
               >
-                <X className="w-3 h-3 text-muted-foreground" />
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           ))}
@@ -448,7 +448,7 @@ export function BookMode({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm">{t("plan.walletLinkTitle")}</p>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[12px] text-muted-foreground">
                 {t("plan.walletLinkSub")}
               </p>
             </div>
@@ -459,7 +459,7 @@ export function BookMode({
 
       {!embedded && (
         <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground px-1 leading-relaxed">
-          <Info className="w-3 h-3 mt-0.5 shrink-0" />
+          <Info className="w-4 h-4 mt-0.5 shrink-0" />
           <span>{t("plan.disclosure")}</span>
         </p>
       )}
@@ -540,13 +540,13 @@ function NeedRow({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-sm truncate">{title}</p>
-          <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+          <p className="text-[12px] text-emerald-700 dark:text-emerald-400">
             {t("plan.booked")}
           </p>
         </div>
         <Link
           href="#wallet"
-          className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline shrink-0"
+          className="text-[12px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline shrink-0"
         >
           {t("plan.openInWallet")}
         </Link>
@@ -564,7 +564,7 @@ function NeedRow({
             so multi-word activity names ("Traditional Terengganu cuisine
             cooking class") stay readable. Subtitle still truncates. */}
         <p className="font-bold text-sm leading-snug line-clamp-2">{title}</p>
-        <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+        <p className="text-[12px] text-muted-foreground truncate">{subtitle}</p>
         {privateChip && (
           <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">
             {t("plan.personalNote")}
@@ -579,7 +579,7 @@ function NeedRow({
         className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br ${c.btn} text-white text-xs font-bold px-3 py-2 hover:opacity-90 transition-opacity shrink-0`}
       >
         {ctaLabel}
-        <ArrowUpRight className="w-3 h-3 rtl:rotate-180" />
+        <ArrowUpRight className="w-4 h-4 rtl:rotate-180" />
       </a>
     </div>
   );

@@ -59,11 +59,11 @@ function ExpenseForm({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-sm font-medium text-orange-600 dark:text-orange-400">
-          <ReceiptText className="w-3.5 h-3.5" />
+          <ReceiptText className="w-4 h-4" />
           Log an expense
         </div>
         <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-          <X className="w-3.5 h-3.5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
       <div className="flex gap-2">
@@ -142,11 +142,11 @@ function ItineraryForm({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400">
-          <MapPin className="w-3.5 h-3.5" />
+          <MapPin className="w-4 h-4" />
           Suggest an activity
         </div>
         <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-          <X className="w-3.5 h-3.5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
       <div className="flex gap-2">
@@ -281,7 +281,7 @@ export function MessageInput({ tripId, replyTo, onClearReply, onAfterSend, onTyp
             <span className="text-muted-foreground truncate">{replyTo.body}</span>
           </div>
           <button onClick={onClearReply} className="text-muted-foreground hover:text-foreground shrink-0">
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}

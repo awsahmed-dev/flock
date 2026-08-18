@@ -200,7 +200,7 @@ export function TransactionsPage({
       {/* ── Search + add ───────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
         <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
-          <Search className="w-3.5 h-3.5 text-muted-foreground" />
+          <Search className="w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={query}
@@ -256,7 +256,7 @@ export function TransactionsPage({
                 <p className="text-xs font-bold">
                   {format(parseISO(key), "EEE, MMM d")}
                 </p>
-                <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground">
+                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
                   {t("expenses.outsideTripDays")}
                 </span>
               </div>
@@ -312,7 +312,7 @@ export function TransactionsPage({
                     }`}
                   >
                     <span
-                      className={`text-[9px] font-bold tracking-widest uppercase leading-none ${
+                      className={`text-[10px] font-bold tracking-widest uppercase leading-none ${
                         today ? "" : "text-muted-foreground"
                       }`}
                     >
@@ -327,7 +327,7 @@ export function TransactionsPage({
                       <p className="text-xs font-bold inline-flex items-center gap-1.5">
                         {today ? t("nav.today") : format(d.date, "EEE, MMM d")}
                         {today && (
-                          <span className="text-[9px] font-bold tracking-widest uppercase text-primary">
+                          <span className="text-[10px] font-bold tracking-widest uppercase text-primary">
                             {t("expenses.liveBadge")}
                           </span>
                         )}
@@ -427,7 +427,7 @@ function SlimRow({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{expense.title}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-[12px] text-muted-foreground truncate">
             {payerName}
             {iOwe && (
               <span className="ms-1.5 text-orange-600 dark:text-orange-400 font-semibold">
@@ -446,7 +446,7 @@ function SlimRow({
             </p>
           )}
         </div>
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+        <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
       </button>
     </li>
   );

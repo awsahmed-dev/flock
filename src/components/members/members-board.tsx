@@ -169,7 +169,7 @@ function MemberRow({
       {/* Role chip — accent purple for owner, muted for member. */}
       {isOwner ? (
         <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase shrink-0">
-          <Crown className="w-3 h-3" />
+          <Crown className="w-4 h-4" />
           {t("crew.owner")}
         </span>
       ) : onRemove ? (

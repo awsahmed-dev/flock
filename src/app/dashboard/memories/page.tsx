@@ -60,7 +60,7 @@ export default async function MemoriesPage() {
             )}
             <div className="absolute inset-x-0 bottom-0 p-3">
               <p className={`text-[14px] font-bold leading-tight line-clamp-1 ${trip.heroImageUrl ? "text-white" : "text-foreground"}`}>{trip.name}</p>
-              <p className={`text-[11px] mt-0.5 ${trip.heroImageUrl ? "text-white/70" : "text-muted-foreground"}`}>
+              <p className={`text-[12px] mt-0.5 ${trip.heroImageUrl ? "text-white/70" : "text-muted-foreground"}`}>
                 {format(parseDateOnly(trip.startDate), "d MMM yyyy")} – {format(parseDateOnly(trip.endDate), "d MMM yyyy")}
               </p>
             </div>

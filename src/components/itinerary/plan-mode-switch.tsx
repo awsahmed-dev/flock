@@ -118,7 +118,7 @@ function SegmentButton({
           : "text-muted-foreground hover:text-foreground"
       }`}
     >
-      <Icon className="w-3.5 h-3.5" />
+      <Icon className="w-4 h-4" />
       {label}
     </button>
   );

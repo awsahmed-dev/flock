@@ -78,7 +78,7 @@ export function Horizon({
             const body = (
               <>
                 <span className="w-7 h-7 rounded-full flex items-center justify-center border" style={{ background: chip, borderColor: m.state === "later" ? "color-mix(in srgb, var(--foreground) 15%, transparent)" : col }}>
-                  <I size={13} weight={m.state === "done" ? "fill" : "regular"} style={{ color: col }} />
+                  <I size={16} weight={m.state === "done" ? "fill" : "regular"} style={{ color: col }} />
                 </span>
                 <span className="mt-[15px] w-1.5 h-1.5 rounded-full" style={{ background: col }} />
                 <span className="mt-1 text-[10px] whitespace-nowrap font-semibold" style={{ color: col }}>{m.label}</span>
@@ -91,7 +91,7 @@ export function Horizon({
           })}
         </div>
         <div className="absolute right-0 top-[18px] w-8 h-8 rounded-full border border-border bg-foreground/[0.06] flex items-center justify-center">
-          <End size={14} weight="fill" className="text-foreground/80" />
+          <End size={16} weight="fill" className="text-foreground/80" />
         </div>
       </div>
     </section>

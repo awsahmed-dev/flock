@@ -23,7 +23,6 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { CockpitAnchor, TeaserPlace } from "@/components/trips/cockpit/types";
 import { getDayColor } from "@/lib/day-colors";
-import { Progress } from "@/components/animate-ui/components/radix/progress";
 import { ChipRail } from "@/components/ui/chip-rail";
 import { DayChip } from "@/components/trips/day-chip";
 import { DocumentCard } from "@/components/documents/document-card";
@@ -162,6 +161,22 @@ export function NowCockpit({
   // Free-day one-tap add (video round 3).
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addedIds, setAddedIds] = useState<Set<string>>(() => new Set());
+  // Truth = the plan itself: a place is "on today" iff a stop with its
+  // placeId exists today. The optimistic set only bridges the refresh; once
+  // the plan says otherwise (deleted), it clears — "I deleted it and it still
+  // says added" (video round 4).
+  const onTodayIds = useMemo(
+    () => new Set(items.filter((i) => i.dayDate === todayIso && i.googlePlaceId).map((i) => i.googlePlaceId as string)),
+    [items, todayIso],
+  );
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciles optimistic set with the plan
+    setAddedIds((prev) => {
+      const next = new Set([...prev].filter((id) => onTodayIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [onTodayIds]);
+  const isOnToday = (placeId: string) => onTodayIds.has(placeId) || addedIds.has(placeId);
   function addToToday(p: TeaserPlace) {
     if (!p.coords) return;
     setAddingId(p.placeId);
@@ -514,7 +529,7 @@ export function NowCockpit({
           pointerEvents: "auto",
         }}
       >
-        <MapIcon size={15} /> {t("nav.map")}
+        <MapIcon size={16} /> {t("nav.map")}
       </button>
 
       {/* ── Bottom sheet — 3 detents. ───────────────────────────────────── */}
@@ -594,7 +609,7 @@ export function NowCockpit({
                 onClick={() => markDone(upNext)}
                 className="self-start inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border text-[13px] font-bold text-foreground"
               >
-                <Check size={14} weight="bold" /> {t("now.markDone")}
+                <Check size={16} weight="bold" /> {t("now.markDone")}
               </button>
               {todayMarks.length > 0 && (
                 <Horizon
@@ -648,7 +663,7 @@ export function NowCockpit({
                    labelled block with room, and each card adds itself to
                    today in one tap. */
                 <div className="mt-4">
-                  <p className="text-[11px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.2 }}>{t("now.freeDayIdeasTitle")}</p>
+                  <p className="text-[12px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.2 }}>{t("now.freeDayIdeasTitle")}</p>
                   <p className="text-[13px] text-muted-foreground mt-0.5">{t("now.freeDayIdeas")}</p>
                   <div className="flex gap-2.5 mt-3 overflow-x-auto scrollbar-none -mx-4 px-4">
                     {teaser.map((p) => (
@@ -667,16 +682,16 @@ export function NowCockpit({
                           )}
                         </Link>
                         <div className="p-2">
-                          <p className="text-[12.5px] font-bold leading-tight line-clamp-1">{p.name}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{p.rating ? `★ ${p.rating}` : "\u00a0"}</p>
+                          <p className="text-[13px] font-bold leading-tight line-clamp-1">{p.name}</p>
+                          <p className="text-[12px] text-muted-foreground mt-0.5">{p.rating ? `★ ${p.rating}` : "\u00a0"}</p>
                           <button
                             type="button"
-                            disabled={!p.coords || addingId === p.placeId || addedIds.has(p.placeId)}
+                            disabled={!p.coords || addingId === p.placeId || isOnToday(p.placeId)}
                             onClick={() => addToToday(p)}
-                            className="mt-2 w-full h-9 rounded-xl text-[12.5px] font-bold border border-border disabled:opacity-60"
-                            style={addedIds.has(p.placeId) ? { color: "var(--clr-moss)" } : { color: "var(--clr-brand)" }}
+                            className="mt-2 w-full h-9 rounded-xl text-[13px] font-bold border border-border disabled:opacity-60"
+                            style={isOnToday(p.placeId) ? { color: "var(--clr-moss)" } : { color: "var(--clr-brand)" }}
                           >
-                            {addedIds.has(p.placeId) ? `✓ ${t("now.addedToToday")}` : addingId === p.placeId ? "…" : `+ ${t("now.addToToday")}`}
+                            {isOnToday(p.placeId) ? `✓ ${t("now.addedToToday")}` : addingId === p.placeId ? "…" : `+ ${t("now.addToToday")}`}
                           </button>
                         </div>
                       </div>
@@ -701,116 +716,104 @@ export function NowCockpit({
 
           </div>
 
-          {/* HALF+ content — restructured from the phone video (2026-08-19):
-              the sheet reads top-down as "now → ahead → money → do":
-                1. day chips: TODAY and the days ahead only (the past is in
-                   the Plan tab; here it just crowded the rail),
-                2. the selected day's schedule + its documents,
-                3. one honest money row (was a 12px line jammed under the
-                   crew thumbnails), 4. quick actions. Breathing room between. */}
+          {/* HALF+ content — video round 4: the lower half "looked like two
+              screens merged". It is now ONE visual language with the top:
+                • an "Ahead" card — day chips inside, then that day's schedule
+                  (or an empty row with an Add), documents under it;
+                • a 3-tile action strip — money / log expense / huddle —
+                  equal tiles, icon over label. */}
           <div className={detent === "peek" && dragH == null ? "hidden" : "block"}>
-            {selectedDay === todayIso && regularToday.length > 0 && (
-              <p className="mt-4 text-[13px] text-muted-foreground">
-                {t("now.dayProgress", { done: doneCount, total: regularToday.length })}
-              </p>
-            )}
-
-            <p className="mt-5 mb-1 text-[11px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.2 }}>
-              {t("now.ahead")}
-            </p>
-            <ChipRail wrapperClassName="-mx-4" className="flex gap-2 px-4 py-2" fadeColor="var(--sheet-bg)">
-              {days.filter((d) => d >= todayIso).map((d) => {
-                const isToday = d === todayIso;
-                return (
-                  <DayChip
-                    key={d}
-                    chipRef={isToday ? todayPillRef : undefined}
-                    active={d === selectedDay}
-                    dayColor={getDayColor(days.indexOf(d))}
-                    onClick={() => setSelectedDay(d)}
-                    label={isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
-                  />
-                );
-              })}
-            </ChipRail>
-
-            {/* Item list. */}
-            {dayItems.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground text-sm">{t("now.noStops")}</div>
-            ) : (
-              <ul className="space-y-2">
-                {dayItems.map((item, idx) => (
-                  <StopRow
-                    key={item.id}
-                    item={item}
-                    index={idx + 1}
-                    done={isDone(item)}
-                    anchor={isAnchor(item)}
-                    anchorMeta={anchors.find((a) => a.id === item.id) ?? null}
-                    onDelete={() => remove(item.id)}
-                    onToggleDone={() => markDone(item, !isDone(item))}
-                    onNavigate={() => navigateTo(item)}
-                    t={t}
-                  />
-                ))}
-              </ul>
-            )}
-
-            {/* Sprint 4 FIX-5b: documents pinned to this day. Sprint 8
-                Item 1: uploaded files open the in-app viewer — critical
-                on the ground, where leaving the app to a browser tab is
-                worst-case (boarding passes, tickets). */}
-            {documents.filter((d) => d.dayDate === selectedDay).length > 0 && (
-              <div className="mt-4">
-                <p className="text-[12px] font-bold uppercase text-tertiary mb-2" style={{ letterSpacing: 1.2 }}>
-                  {t("now.docsForDay")}
-                </p>
-                <ul className="space-y-2">
-                  {documents
-                    .filter((d) => d.dayDate === selectedDay)
-                    .map((d) => (
-                      <li key={d.id}>
-                        <DocumentCard doc={d} dayLabel={null} onOpen={() => openDocViewer(d.id)} />
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Money row — a real row, tap opens the budget sheet. */}
-            <button
-              type="button"
-              onClick={() => setBudgetOpen(true)}
-              className="mt-5 w-full text-start rounded-2xl border border-border bg-card px-3.5 py-3"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="inline-flex items-center gap-2 text-[13px]">
-                  <Wallet size={16} className="shrink-0" style={{ color: "var(--clr-moss)" }} />
-                  <span className="text-muted-foreground">{t("now.spent")}</span>
-                  <span className="font-bold text-foreground tabular-nums">{money(budget.spent)}</span>
-                </span>
-                {budget.total != null ? (
-                  <span className="text-[12px] text-muted-foreground tabular-nums">{budgetPct}% {t("now.ofBudget")}</span>
-                ) : (
-                  <span className="text-[13px] font-bold" style={{ color: "var(--clr-moss)" }}>{t("now.setBudget")} →</span>
+            <section className="mt-5 rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-3.5 pt-3">
+                <p className="text-[12px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.2 }}>{t("now.ahead")}</p>
+                {selectedDay === todayIso && regularToday.length > 0 && (
+                  <p className="text-[12px] text-muted-foreground tabular-nums">{t("now.dayProgress", { done: doneCount, total: regularToday.length })}</p>
                 )}
               </div>
-              {budget.total != null && (
-                <Progress
-                  value={budgetPct}
-                  className="h-1 bg-foreground/10 mt-2"
-                  style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
-                />
-              )}
-            </button>
+              <ChipRail className="flex gap-2 px-3.5 py-2.5" fadeColor="var(--card)">
+                {days.filter((d) => d >= todayIso).map((d) => {
+                  const isToday = d === todayIso;
+                  return (
+                    <DayChip
+                      key={d}
+                      chipRef={isToday ? todayPillRef : undefined}
+                      active={d === selectedDay}
+                      dayColor={getDayColor(days.indexOf(d))}
+                      onClick={() => setSelectedDay(d)}
+                      label={isToday ? t("now.today") : dfFormat(parseDateOnly(d), "EEE d MMM")}
+                    />
+                  );
+                })}
+              </ChipRail>
+              <div className="border-t border-border/60 px-3 py-3">
+                {dayItems.length === 0 ? (
+                  <div className="flex items-center justify-between gap-3 px-1">
+                    <p className="text-[13px] text-muted-foreground">{t("now.noStops")}</p>
+                    <Link
+                      href={`/trips/${tripId}/itinerary?day=${selectedDay}`}
+                      className="shrink-0 h-9 px-3.5 rounded-full text-[13px] font-bold inline-flex items-center gap-1"
+                      style={{ background: "color-mix(in srgb, var(--clr-brand) 12%, transparent)", color: "var(--clr-brand)" }}
+                    >
+                      + {t("now.plan")}
+                    </Link>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {dayItems.map((item, idx) => (
+                      <StopRow
+                        key={item.id}
+                        item={item}
+                        index={idx + 1}
+                        done={isDone(item)}
+                        anchor={isAnchor(item)}
+                        anchorMeta={anchors.find((a) => a.id === item.id) ?? null}
+                        onDelete={() => remove(item.id)}
+                        onToggleDone={() => markDone(item, !isDone(item))}
+                        onNavigate={() => navigateTo(item)}
+                        t={t}
+                      />
+                    ))}
+                  </ul>
+                )}
+                {documents.filter((d) => d.dayDate === selectedDay).length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-[12px] font-bold uppercase text-tertiary mb-2 px-1" style={{ letterSpacing: 1.2 }}>
+                      {t("now.docsForDay")}
+                    </p>
+                    <ul className="space-y-2">
+                      {documents
+                        .filter((d) => d.dayDate === selectedDay)
+                        .map((d) => (
+                          <li key={d.id}>
+                            <DocumentCard doc={d} dayLabel={null} onOpen={() => openDocViewer(d.id)} />
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </section>
 
-            {/* Quick actions (full detent). */}
-            <div className="flex gap-2 mt-3">
-              <Link href={`/trips/${tripId}/money?add=expense`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
-                <Wallet size={15} /> {t("now.logExpense")}
+            {/* Action strip — three equal tiles. */}
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => setBudgetOpen(true)}
+                className="rounded-2xl border border-border bg-card px-2 py-3 flex flex-col items-center justify-center gap-1.5 text-center min-h-[84px]"
+              >
+                <Wallet size={20} weight="fill" style={{ color: "var(--clr-moss)" }} />
+                <span className="text-[13px] font-bold tabular-nums leading-tight">{money(budget.spent)}</span>
+                <span className="text-[12px] text-muted-foreground leading-tight">
+                  {budget.total != null ? `${budgetPct}% ${t("now.ofBudget")}` : t("now.setBudget")}
+                </span>
+              </button>
+              <Link href={`/trips/${tripId}/money?add=expense`} className="rounded-2xl border border-border bg-card px-2 py-3 flex flex-col items-center justify-center gap-1.5 text-center min-h-[84px]">
+                <Wallet size={20} />
+                <span className="text-[13px] font-bold leading-tight">{t("now.logExpense")}</span>
               </Link>
-              <Link href={`/trips/${tripId}/huddle`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
-                <MessageSquare size={15} /> {t("nav.huddle")}
+              <Link href={`/trips/${tripId}/huddle`} className="rounded-2xl border border-border bg-card px-2 py-3 flex flex-col items-center justify-center gap-1.5 text-center min-h-[84px]">
+                <MessageSquare size={20} />
+                <span className="text-[13px] font-bold leading-tight">{t("nav.huddle")}</span>
               </Link>
             </div>
           </div>
@@ -916,7 +919,7 @@ function StopRow({
             }`}
             style={done ? undefined : { background: "var(--clr-wayfind)" }}
           >
-            {done ? <Check size={14} strokeWidth={3} /> : index}
+            {done ? <Check size={16} strokeWidth={3} /> : index}
           </button>
         )}
         <div className="flex-1 min-w-0">
@@ -936,10 +939,10 @@ function StopRow({
             href={anchorMeta.pdfUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-1 text-[11px] font-bold"
+            className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-1 text-[12px] font-bold"
             onClick={(e) => e.stopPropagation()}
           >
-            <FileText size={12} /> PDF
+            <FileText size={16} /> PDF
           </a>
         )}
         {!anchor && item.lat != null && (

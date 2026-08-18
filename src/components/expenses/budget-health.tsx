@@ -53,7 +53,7 @@ export function BudgetHealth({
     <div className="grid sm:grid-cols-2 gap-3">
       {/* Shared / trip-wide budget */}
       <HealthCard
-        icon={<Users className="w-3.5 h-3.5" />}
+        icon={<Users className="w-4 h-4" />}
         label="Trip budget"
         currency={baseCurrency}
         cap={tripBudget}
@@ -114,7 +114,7 @@ function HealthCard({
           <p className="text-lg font-bold tabular-nums">
             {currency} {fmtAmount(spent)}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="text-[12px] text-muted-foreground mt-0.5">
             No cap set · just tracking
           </p>
         </div>
@@ -134,7 +134,7 @@ function HealthCard({
               style={{ width: `${Math.min(100, pct)}%` }}
             />
           </div>
-          <div className="mt-1.5 flex items-center justify-between text-[11px]">
+          <div className="mt-1.5 flex items-center justify-between text-[12px]">
             <span className={`font-bold ${colors.label}`}>
               {fmtAmount(pct)}%
             </span>
@@ -148,7 +148,7 @@ function HealthCard({
       )}
 
       {multiCurrency && (
-        <span className="absolute top-2 right-2 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/70 rounded-full px-1.5 py-0.5">
+        <span className="absolute top-2 right-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/70 rounded-full px-1.5 py-0.5">
           <TrendingUp className="w-2.5 h-2.5" />
           {currency} only
         </span>
@@ -213,7 +213,7 @@ function PersonalCard({
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-1.5">
           <span className={colors.icon}>
-            <User className="w-3.5 h-3.5" />
+            <User className="w-4 h-4" />
           </span>
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Your budget
@@ -226,7 +226,7 @@ function PersonalCard({
             className="p-1 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Edit personal budget"
           >
-            <Pencil className="w-3 h-3" />
+            <Pencil className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -264,17 +264,17 @@ function PersonalCard({
                 type="button"
                 disabled={isPending}
                 onClick={commit}
-                className="flex-1 inline-flex items-center justify-center gap-1 rounded-md bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-[11px] font-bold py-1.5 transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-1 rounded-md bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-[12px] font-bold py-1.5 transition-colors"
               >
-                <Check className="w-3 h-3" />
+                <Check className="w-4 h-4" />
                 Save
               </button>
               <button
                 type="button"
                 onClick={cancel}
-                className="inline-flex items-center justify-center gap-1 rounded-md bg-muted/60 hover:bg-muted text-foreground text-[11px] font-bold py-1.5 px-3 transition-colors"
+                className="inline-flex items-center justify-center gap-1 rounded-md bg-muted/60 hover:bg-muted text-foreground text-[12px] font-bold py-1.5 px-3 transition-colors"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <p className="text-[10px] text-muted-foreground">
@@ -294,7 +294,7 @@ function PersonalCard({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+              className="mt-1 inline-flex items-center gap-1 text-[12px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
             >
               <Wallet className="w-2.5 h-2.5" />
               Set your personal budget
@@ -321,7 +321,7 @@ function PersonalCard({
                 style={{ width: `${Math.min(100, pct)}%` }}
               />
             </div>
-            <div className="mt-1.5 flex items-center justify-between text-[11px]">
+            <div className="mt-1.5 flex items-center justify-between text-[12px]">
               <span className={`font-bold ${colors.label}`}>
                 {fmtAmount(pct)}%
               </span>
@@ -336,7 +336,7 @@ function PersonalCard({
       </AnimatePresence>
 
       {multiCurrency && !editing && (
-        <span className="absolute top-2 right-9 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/70 rounded-full px-1.5 py-0.5">
+        <span className="absolute top-2 right-9 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/70 rounded-full px-1.5 py-0.5">
           {baseCurrency} only
         </span>
       )}

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Wallet, Users, ChatCircle as MessageCircle, MapTrifold as MapIcon, Receipt } from "@phosphor-icons/react/dist/ssr";
+import { MapPin, Wallet, Users, ChatCircle as MessageCircle, MapTrifold as MapIcon, Receipt, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { trips, tripMembers, profiles, itineraryItems, expenses } from "@/lib/db/schema";
@@ -281,7 +281,7 @@ export default async function DashboardPage() {
                 {/* LIVE badge */}
                 <div className="absolute top-3 end-3 z-20 rounded-full px-3 py-1 flex items-center gap-1.5" style={{ background: "var(--clr-moss)" }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse" />
-                  <span className="text-[11px] font-bold text-primary-foreground">{t("dashboard.live")}</span>
+                  <span className="text-[12px] font-bold text-primary-foreground">{t("dashboard.live")}</span>
                 </div>
 
                 {/* Bottom content — non-interactive except the action pills, so
@@ -344,7 +344,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="absolute inset-x-0 bottom-0 p-3">
                         <p className="text-[14px] font-bold text-white leading-tight line-clamp-2">{trip.name}</p>
-                        <p className="text-[11px] text-white/65 mt-0.5">{datesLabel(trip)}</p>
+                        <p className="text-[12px] text-white/65 mt-0.5">{datesLabel(trip)}</p>
                         <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.20)" }}>
                           <div className="h-full me-auto rounded-full" style={{ width: `${progress}%`, background: "var(--clr-dune)", minWidth: stops > 0 ? 6 : 0 }} />
                         </div>
@@ -364,7 +364,7 @@ export default async function DashboardPage() {
           {pastTrips.length > 0 && (
             <section className="px-4">
               <div className="flex items-baseline justify-between mt-1 mb-2">
-                <p className="text-[11px] font-semibold tracking-wider uppercase text-tertiary">
+                <p className="text-[12px] font-semibold tracking-wider uppercase text-tertiary">
                   {t("dashboard.memories")} <span className="text-muted-foreground normal-case tracking-normal tabular-nums">· {pastTrips.length}</span>
                 </p>
                 {pastTrips.length > 3 && (
@@ -393,9 +393,9 @@ export default async function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[14px] font-bold leading-tight truncate">{trip.name}</p>
-                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{trip.destination} · {datesLabel(trip)}</p>
+                      <p className="text-[12px] text-muted-foreground truncate mt-0.5">{trip.destination} · {datesLabel(trip)}</p>
                     </div>
-                    <span className="text-muted-foreground/60 text-[16px] rtl:rotate-180">›</span>
+                    <CaretRight size={16} weight="bold" className="text-muted-foreground/60 rtl:rotate-180 shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -418,7 +418,7 @@ export default async function DashboardPage() {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="mt-1 mb-3 px-4 text-[11px] font-semibold tracking-wider uppercase text-tertiary">
+    <p className="mt-1 mb-3 px-4 text-[12px] font-semibold tracking-wider uppercase text-tertiary">
       {label}
     </p>
   );
@@ -427,8 +427,8 @@ function SectionLabel({ label }: { label: string }) {
 function StatChip({ icon: Icon, value, title }: { icon: typeof MapPin; value: string; title?: string }) {
   return (
     <span title={title} aria-label={title} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: "rgba(255,255,255,0.15)" }}>
-      <Icon size={12} className="text-white" />
-      <span className="text-[11px] font-medium text-white">{value}</span>
+      <Icon size={16} className="text-white" />
+      <span className="text-[12px] font-medium text-white">{value}</span>
     </span>
   );
 }
@@ -443,7 +443,7 @@ function QuickActionPill({ href, icon: Icon, label }: { href: string; icon: type
       className="relative z-20 flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 active:scale-[0.97] transition-transform"
       style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
     >
-      <Icon size={14} className="text-white" />
+      <Icon size={16} className="text-white" />
       <span className="text-[12px] font-semibold text-white">{label}</span>
     </Link>
   );

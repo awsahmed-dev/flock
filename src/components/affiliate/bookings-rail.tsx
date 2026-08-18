@@ -142,10 +142,10 @@ export function BookingsRail({ currency }: Props) {
       <div className="flex items-center justify-between gap-2 px-0.5">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center">
-            <FileText className="w-3.5 h-3.5 text-primary" />
+            <FileText className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold tracking-widest uppercase text-muted-foreground">
+            <p className="text-[12px] font-extrabold tracking-widest uppercase text-muted-foreground">
               {t("bookings.section")}
             </p>
             <p className="text-sm font-bold">
@@ -159,10 +159,10 @@ export function BookingsRail({ currency }: Props) {
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:opacity-80"
+          className="inline-flex items-center gap-1 text-[12px] font-bold text-primary hover:opacity-80"
         >
           {t("bookings.viewAll")}
-          <ChevronRight className="w-3 h-3 rtl:rotate-180" />
+          <ChevronRight className="w-4 h-4 rtl:rotate-180" />
         </button>
       </div>
 
@@ -183,7 +183,7 @@ export function BookingsRail({ currency }: Props) {
                 <div
                   className={`w-7 h-7 rounded-lg ${meta.bg} flex items-center justify-center shrink-0`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${meta.text}`} />
+                  <Icon className={`w-4 h-4 ${meta.text}`} />
                 </div>
                 <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
                   {t(meta.labelKey)}
@@ -196,7 +196,7 @@ export function BookingsRail({ currency }: Props) {
               <p className="font-bold text-sm leading-snug truncate mb-0.5">
                 {b.title}
               </p>
-              <p className="text-[11px] text-muted-foreground truncate mb-2">
+              <p className="text-[12px] text-muted-foreground truncate mb-2">
                 {b.sub}
               </p>
               <div className="flex items-center justify-between gap-2">
@@ -209,7 +209,7 @@ export function BookingsRail({ currency }: Props) {
               </div>
               {b.autoAdded && (
                 <div className="mt-2 pt-2 border-t border-border/60 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-primary shrink-0" />
+                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
                   <p className="text-[10px] text-muted-foreground truncate">
                     {t("bookings.autoAdded")}
                   </p>
@@ -224,19 +224,19 @@ export function BookingsRail({ currency }: Props) {
           email-parser flow we'll build for real. */}
       <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-3 flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <Sparkles className="w-4 h-4 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold leading-snug">
             {t("bookings.forwardTitle")}
           </p>
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-[12px] text-muted-foreground truncate">
             {t("bookings.forwardSub")}
           </p>
         </div>
         <button
           type="button"
-          className="text-[11px] font-bold text-primary hover:opacity-80 shrink-0"
+          className="text-[12px] font-bold text-primary hover:opacity-80 shrink-0"
         >
           {t("bookings.copyAddress")}
         </button>

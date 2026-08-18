@@ -195,7 +195,7 @@ export function PlaceCard({
       {/* §10.7: "In plan" chip — the add is traceable without leaving the feed. */}
       {added && (
         <span
-          className="absolute top-3 start-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold pointer-events-none"
+          className="absolute top-3 start-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-bold pointer-events-none"
           style={{ background: "rgba(52,199,89,0.90)", color: "#fff" }}
         >
           ✓ {t("discover.inPlan")}
@@ -215,7 +215,7 @@ export function PlaceCard({
         {/* §5-G reason chip — why this card, in one phrase. */}
         {reason && (
           <span
-            className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+            className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold"
             style={
               reason.startsWith("Wild card")
                 ? { border: "1px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.7)" }
@@ -228,7 +228,7 @@ export function PlaceCard({
         <div className="mt-2.5 flex items-center gap-2 flex-wrap">
           {p.rating != null && (
             <Pill>
-              <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+              <Star className="w-4 h-4 fill-amber-300 text-amber-300" />
               <span className="font-bold tabular-nums">{p.rating.toFixed(1)}</span>
               {p.userRatingsTotal != null && (
                 <span className="text-white/60">· {compact(p.userRatingsTotal)}</span>
@@ -239,7 +239,7 @@ export function PlaceCard({
           {price && <Pill><span className="text-emerald-300 font-bold">{price}</span></Pill>}
           {dist != null && dist < 60 && (
             <Pill>
-              <MapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-4 h-4" />
               <span className="tabular-nums">{dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}</span>
             </Pill>
           )}
@@ -281,7 +281,7 @@ function ActionIcon({
         <Icon size={20} color={active ? activeColor : "white"} weight={active ? "fill" : "regular"} />
       </span>
       {count != null && (
-        <span className="text-[11px] font-semibold text-white leading-none">
+        <span className="text-[12px] font-semibold text-white leading-none">
           {count > 0 ? compact(count) : ""}
         </span>
       )}
@@ -291,7 +291,7 @@ function ActionIcon({
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-md text-white px-2.5 py-1 text-[12.5px] ring-1 ring-white/15">
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-md text-white px-2.5 py-1 text-[13px] ring-1 ring-white/15">
       {children}
     </span>
   );

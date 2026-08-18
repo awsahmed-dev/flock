@@ -72,7 +72,7 @@ export function PersonalCapSheet({
             className="flex-1 min-w-0 rounded-xl border border-border bg-card px-4 h-14 text-2xl font-extrabold tabular-nums outline-none focus:ring-2 focus:ring-primary/40"
           />
         </div>
-        <p className="text-[11px] text-muted-foreground">{t("expenses.capClearHint")}</p>
+        <p className="text-[12px] text-muted-foreground">{t("expenses.capClearHint")}</p>
         <button
           type="button"
           disabled={isPending}

@@ -128,7 +128,7 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
                     <p className="font-bold text-sm">
                       {t(CATEGORY_LABEL_KEY[cat] ?? CATEGORY_LABEL_KEY.other)}
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[12px] text-muted-foreground">
                       {t("expenses.transactionsCount", { count })}
                     </p>
                   </div>
@@ -140,7 +140,7 @@ export function BreakdownPage({ tripId, currency, expenses, fxRates }: Props) {
                 <p className="text-xl font-bold tabular-nums tracking-tight">
                   {currency} {fmt(total)}
                 </p>
-                <p className="text-[11px] text-muted-foreground tabular-nums">
+                <p className="text-[12px] text-muted-foreground tabular-nums">
                   {t("expenses.avgPerExpense", { currency, amount: fmt(avg) })}
                 </p>
 

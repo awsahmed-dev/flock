@@ -55,7 +55,7 @@ export function InvitePreviewActions({
         disabled={isPending}
         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/40 text-foreground font-bold text-sm px-4 py-3 hover:bg-muted/60 transition-colors disabled:opacity-50"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-4 h-4" />
         No thanks
       </button>
       <button

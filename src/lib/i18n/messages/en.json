@@ -1539,6 +1539,8 @@
     "clearFailed": "Couldn't clear the cache"
   },
   "tips": {
+    "kicker": "Did you know?",
+    "cta": "Try it",
     "forward": {"title": "Forward a booking email", "body": "send the confirmation to your trip's address and the flight or hotel lands on the plan by itself."},
     "hearts": {"title": "Heart places in Discover", "body": "the crew's hearts become the free-day ideas on the Now page."},
     "pocket": {"title": "Pocket Day works offline", "body": "today's plan, tickets and the map stay open with no signal."},

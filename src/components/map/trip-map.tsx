@@ -251,7 +251,7 @@ export function TripMap({ items, destination, tripId, onAddPoi, focusedDay = nul
         )}
         {poisLoading && (
           <span className="flex items-center gap-1 text-indigo-500 font-normal">
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
             Loading places…
           </span>
         )}
@@ -260,7 +260,7 @@ export function TripMap({ items, destination, tripId, onAddPoi, focusedDay = nul
         )}
         {isGeocoding && (
           <span className="flex items-center gap-1 text-primary font-normal">
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
             Locating {geocodingCount}/{geocodingTotal}
           </span>
         )}

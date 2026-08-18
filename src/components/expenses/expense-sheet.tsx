@@ -126,7 +126,7 @@ export function ExpenseSheet({
             disabled={isPending}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 text-destructive py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
             {t("common.delete")}
           </button>
         ) : null
@@ -142,7 +142,7 @@ export function ExpenseSheet({
         </p>
         {baseAmount !== null && expense.currency !== baseCurrency && (
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ArrowRightLeft className="w-3 h-3" />
+            <ArrowRightLeft className="w-4 h-4" />
             ≈ <bdi>{baseCurrency} {fmt(baseAmount)}</bdi> <span className="opacity-60">{t("expenses.liveRate")}</span>
           </p>
         )}
@@ -188,7 +188,7 @@ export function ExpenseSheet({
                   </span>
                   {split.settled ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                      <CheckCircle2 className="w-3 h-3" />
+                      <CheckCircle2 className="w-4 h-4" />
                       {t("common.youreSettled")}
                     </span>
                   ) : iOwe ? (
@@ -196,7 +196,7 @@ export function ExpenseSheet({
                       type="button"
                       onClick={() => handleSettle(split.id)}
                       disabled={isPending}
-                      className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-[11px] font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-[12px] font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
                       {t("expenses.settle")}
                     </button>
@@ -205,7 +205,7 @@ export function ExpenseSheet({
                       type="button"
                       onClick={() => handleSettle(split.id)}
                       disabled={isPending}
-                      className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 text-[11px] font-bold hover:bg-emerald-500/15 transition-colors disabled:opacity-50"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 text-[12px] font-bold hover:bg-emerald-500/15 transition-colors disabled:opacity-50"
                     >
                       {t("expenses.markPaid")}
                     </button>
@@ -217,7 +217,7 @@ export function ExpenseSheet({
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-border/60 p-3 mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-          <Receipt className="w-3.5 h-3.5" />
+          <Receipt className="w-4 h-4" />
           {t("expenses.personalNoSplits")}
         </div>
       )}
