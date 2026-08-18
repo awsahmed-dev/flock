@@ -17,7 +17,7 @@ export function FxIncompleteNote({ currencies, className = "" }: { currencies: s
       role="status"
       className={`flex items-center gap-1.5 text-xs text-warning ${className}`}
     >
-      <Warning weight="fill" className="w-3.5 h-3.5 shrink-0" aria-hidden />
+      <Warning weight="fill" className="w-4 h-4 shrink-0" aria-hidden />
       <span>{t("expenses.fxIncomplete", { currencies: currencies.join(", ") })}</span>
     </p>
   );

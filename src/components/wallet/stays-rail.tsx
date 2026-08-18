@@ -37,7 +37,7 @@ export function StaysRail({ tripId, destination }: { tripId: string; destination
           </div>
           <div className="min-w-0">
             <h3 className="font-bold text-sm leading-tight">{t("bookings.staysTitle")}</h3>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-[12px] text-muted-foreground truncate">
               {t("bookings.staysSubtitle", { destination })}
             </p>
           </div>
@@ -87,7 +87,7 @@ function StayCardItem({ stay }: { stay: StayCard }) {
           </div>
         )}
         <span className="absolute top-2 end-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur text-white px-2 py-1 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-4 h-4" />
           {t("bookings.staysView")}
         </span>
       </div>
@@ -98,8 +98,8 @@ function StayCardItem({ stay }: { stay: StayCard }) {
           <PriceLevel level={stay.priceLevel} className="text-xs" />
         </div>
         {stay.address && (
-          <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1 min-w-0">
-            <MapPin className="w-3 h-3 shrink-0" />
+          <p className="text-[12px] text-muted-foreground inline-flex items-center gap-1 min-w-0">
+            <MapPin className="w-4 h-4 shrink-0" />
             <span className="line-clamp-1">{stay.address}</span>
           </p>
         )}

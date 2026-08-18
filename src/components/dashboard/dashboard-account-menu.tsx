@@ -116,20 +116,20 @@ export function DashboardAccountMenu({ displayName, avatarUrl, userId, email = n
           </Link>
           {/* Theme switcher inline — tiny 3-button row */}
           <div className="flex items-center gap-1 px-3 py-2 border-y border-border/60 my-1">
-            <Globe className="w-3 h-3 text-muted-foreground me-1" />
+            <Globe className="w-4 h-4 text-muted-foreground me-1" />
             <button
               type="button"
               onClick={() => setTheme("light")}
               className={`p-1 rounded ${theme === "light" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              <Sun className="w-3 h-3" />
+              <Sun className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => setTheme("dark")}
               className={`p-1 rounded ${theme === "dark" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              <Moon className="w-3 h-3" />
+              <Moon className="w-4 h-4" />
             </button>
           </div>
           <button

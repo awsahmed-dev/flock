@@ -147,7 +147,7 @@ export function SmartActionChips({ tripId, messageId, body, createdAt }: Props) 
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 mt-1.5 -ms-0.5">
-      <Sparkles className="w-3 h-3 text-primary/60 ms-1" />
+      <Sparkles className="w-4 h-4 text-primary/60 ms-1" />
       {actions.map((action, idx) => {
         const meta = KIND_META[action.kind];
         if (!meta) return null;
@@ -167,7 +167,7 @@ export function SmartActionChips({ tripId, messageId, body, createdAt }: Props) 
             title={subtitle}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/10 text-xs font-semibold transition-colors disabled:opacity-50"
           >
-            <Icon className={`w-3 h-3 ${meta.color}`} />
+            <Icon className={`w-4 h-4 ${meta.color}`} />
             <span>{meta.label}</span>
           </button>
         );

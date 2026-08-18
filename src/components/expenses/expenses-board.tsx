@@ -248,7 +248,7 @@ export function ExpensesBoard({
 
         <div className="relative z-10 p-5 sm:p-6">
           <div className="flex items-start justify-between mb-1">
-            <span className="text-[11px] font-bold tracking-widest uppercase text-white/90">
+            <span className="text-[12px] font-bold tracking-widest uppercase text-white/90">
               {t("expenses.tripTotalSpent")}
             </span>
             <button
@@ -265,8 +265,8 @@ export function ExpensesBoard({
           </p>
           <FxIncompleteNote currencies={derived.fxMissing} className="mt-1 !text-white/85" />
           {derived.isMultiCurrency && fxRates && (
-            <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-white/70">
-              <ArrowRightLeft className="w-3 h-3" />
+            <p className="mt-1 inline-flex items-center gap-1 text-[12px] text-white/70">
+              <ArrowRightLeft className="w-4 h-4" />
               {t("expenses.liveFxApplied", { count: [...new Set(expenseList.map((e) => e.currency))].length })}
             </p>
           )}
@@ -274,7 +274,7 @@ export function ExpensesBoard({
           <div className="grid grid-cols-2 gap-2.5 mt-4">
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white/80">
-                <ArrowUpRight className="w-3 h-3" /> {t("expenses.youPaid")}
+                <ArrowUpRight className="w-4 h-4" /> {t("expenses.youPaid")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
                 {currency} {showAmounts ? fmt(derived.myPaidBase) : "•••••"}
@@ -282,7 +282,7 @@ export function ExpensesBoard({
             </div>
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white/80">
-                <ArrowDownRight className="w-3 h-3" /> {t("expenses.youOwe")}
+                <ArrowDownRight className="w-4 h-4" /> {t("expenses.youOwe")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
                 {currency} {showAmounts ? fmt(derived.myOwedBase) : "•••••"}
@@ -296,7 +296,7 @@ export function ExpensesBoard({
               row inside the hero with a single progress bar. */}
           {tripBudget && tripBudget > 0 && (
             <div className="mt-4 pt-3 border-t border-white/15">
-              <div className="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-white/80 mb-1.5">
+              <div className="flex items-center justify-between text-[12px] font-bold tracking-widest uppercase text-white/80 mb-1.5">
                 <span>{t("expenses.tripBudget")}</span>
                 <span className="tabular-nums">
                   {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••"}
@@ -462,7 +462,7 @@ export function ExpensesBoard({
               return (
                 <div key={cat} className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center shrink-0`}>
-                    <CatIcon className={`w-3.5 h-3.5 ${cfg.text}`} />
+                    <CatIcon className={`w-4 h-4 ${cfg.text}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
@@ -580,18 +580,18 @@ function SectionCard({
         <div className="min-w-0">
           <h3 className="text-sm font-bold">{title}</h3>
           {subtitle && (
-            <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+            <p className="text-[12px] text-muted-foreground">{subtitle}</p>
           )}
         </div>
         <Link
           href={viewAllHref}
           className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-card hover:border-primary/40 hover:text-primary px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground transition-colors"
         >
-          {t("common.viewAll")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
+          {t("common.viewAll")} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
         </Link>
       </div>
       {empty ? (
-        <p className="text-[11px] text-muted-foreground italic px-1 py-3">
+        <p className="text-[12px] text-muted-foreground italic px-1 py-3">
           {emptyLabel}
         </p>
       ) : (
@@ -636,7 +636,7 @@ function SlimExpenseRow({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{expense.title}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-[12px] text-muted-foreground truncate">
             {format(new Date(expense.expenseDate), "MMM d")} · {payerName}
             {iOwe && (
               <span className="ms-1.5 text-orange-600 dark:text-orange-400 font-semibold">
@@ -659,7 +659,7 @@ function SlimExpenseRow({
         <span className="shrink-0" title={payerName}>
           <UserAvatar name={expense.payer?.displayName ?? "?"} avatarUrl={expense.payer?.avatarUrl ?? null} size="xs" />
         </span>
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+        <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
       </button>
     </li>
   );

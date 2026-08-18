@@ -76,48 +76,50 @@ export default async function NotificationPrefsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    // Video round 4: this page "looks totally different from Settings". Same
+    // language as the account sheet now — 16px rows, one full-width primary
+    // action, switches instead of bare checkboxes.
+    <div className="mx-auto max-w-md px-4 py-6">
       <BackButton
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-6"
-        iconClassName="w-3.5 h-3.5 rtl:rotate-180"
+        className="inline-flex items-center gap-1 h-9 text-sm font-semibold text-foreground mb-4"
+        iconClassName="w-4 h-4 rtl:rotate-180"
       />
 
-      <h1 className="text-2xl font-bold mb-1">{t("notifications.prefsHeading")}</h1>
+      <h1 className="text-xl font-bold mb-1">{t("notifications.prefsHeading")}</h1>
       <p className="text-sm text-muted-foreground mb-6">
         {t("notifications.prefsSub")}
       </p>
 
-      <form action={updateNotificationPrefs} className="space-y-2">
+      <form action={updateNotificationPrefs} className="space-y-3">
         {rows.map((r) => {
           const Icon = r.icon;
           return (
             <label
               key={r.key}
-              className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 hover:bg-accent/30 transition-colors cursor-pointer"
+              className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 cursor-pointer"
             >
-              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-primary/12 flex items-center justify-center shrink-0">
                 <Icon className="w-4 h-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold">{r.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {r.caption}
-                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">{r.caption}</p>
               </div>
               <input
                 type="checkbox"
                 name={r.key}
                 defaultChecked={r.checked}
-                className="mt-1 w-5 h-5 accent-primary cursor-pointer shrink-0"
+                className="pax-switch shrink-0"
+                aria-label={r.title}
               />
             </label>
           );
         })}
 
-        <div className="pt-4 flex items-center justify-end">
+        <div className="pt-4">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity"
+            className="w-full h-11 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all"
           >
             {t("notifications.savePrefs")}
           </button>

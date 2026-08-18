@@ -27,7 +27,7 @@ export function RatingPill({
         className,
       )}
     >
-      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+      <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
       {rating.toFixed(1)}
       {showReviews && reviews != null && (
         <span className="font-normal text-muted-foreground">({compactCount(reviews)})</span>

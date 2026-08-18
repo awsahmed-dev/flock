@@ -134,7 +134,7 @@ export function PlanningCockpit(props: CockpitShared) {
         </div>
         <div
           className="absolute top-3 start-4 rounded-lg px-2.5 py-1"
-          style={{ fontSize: 11, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}
+          style={{ fontSize: 12, fontWeight: 700, background: "var(--clr-horizon-dim)", color: "var(--clr-horizon)", border: "1px solid var(--clr-horizon)" }}
         >
           {daysUntil <= 0 ? t("cockpit.badgeToday") : t("cockpit.badgeInDays", { count: daysUntil })}
         </div>

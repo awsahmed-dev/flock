@@ -154,7 +154,7 @@ export function HuddleBoard({
           }}
           className="fixed top-16 left-1/2 -translate-x-1/2 z-40 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2 flex items-center gap-1 shadow-lg"
         >
-          <ArrowUp size={14} /> {t("huddle.newActivity")}
+          <ArrowUp size={16} /> {t("huddle.newActivity")}
         </button>
       )}
 
@@ -252,7 +252,7 @@ export function HuddleBoard({
                     href={`/trips/${tripId}/members`}
                     className="inline-flex items-center gap-1.5 mt-3 rounded-full bg-primary text-primary-foreground text-[13px] font-bold px-4 py-2"
                   >
-                    <Users size={14} /> {t("huddle.inviteCrew")}
+                    <Users size={16} /> {t("huddle.inviteCrew")}
                   </Link>
                 </>
               ) : (
@@ -274,7 +274,7 @@ export function HuddleBoard({
             <div className="flex flex-col gap-2">
               {grouped.map((g) => (
                 <div key={g.day}>
-                  <p className="sticky top-[52px] z-10 py-1 text-[11px] font-semibold text-tertiary bg-background">
+                  <p className="sticky top-[52px] z-10 py-1 text-[12px] font-semibold text-tertiary bg-background">
                     {g.day}
                   </p>
                   <div className="rounded-3xl bg-card border border-border divide-y divide-border/60 overflow-hidden">
@@ -457,7 +457,7 @@ function DecisionCard({
         <p className="text-[13px] text-muted-foreground mt-0.5 inline-flex items-center gap-1">
           {decision.placeRating != null && (
             <>
-              <Star size={12} className="fill-amber-400 text-amber-400" /> {decision.placeRating.toFixed(1)} ·{" "}
+              <Star size={16} className="fill-amber-400 text-amber-400" /> {decision.placeRating.toFixed(1)} ·{" "}
             </>
           )}
           {[decision.placeCategory, decision.placeNeighborhood].filter(Boolean).join(" · ")}
@@ -635,13 +635,13 @@ function ActivityCard({ item, currency, tripId }: { item: PulseItem; currency: s
         <span className="text-[14px] font-bold tabular-nums shrink-0">
           {item.currency ?? currency} {item.amount.toLocaleString()}
           {item.amountBase != null && item.currency !== currency && (
-            <span className="block text-[11px] font-normal text-muted-foreground text-end">
+            <span className="block text-[12px] font-normal text-muted-foreground text-end">
               ≈ {currency} {item.amountBase.toLocaleString()}
             </span>
           )}
         </span>
       )}
-      <span className="text-[11px] text-tertiary shrink-0">{time}</span>
+      <span className="text-[12px] text-tertiary shrink-0">{time}</span>
     </>
   );
   return href ? (
@@ -697,7 +697,7 @@ function PollComposer({ tripId, open, onClose }: { tripId: string; open: boolean
           />
           {/* QA BUG-14: live counter — cap at 200 so a pasted wall of text
               can't spam the deck. */}
-          <p className={`mt-1 text-end text-[11px] tabular-nums ${question.length >= 200 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+          <p className={`mt-1 text-end text-[12px] tabular-nums ${question.length >= 200 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
             {question.length}/200
           </p>
         </div>

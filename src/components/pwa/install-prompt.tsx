@@ -80,7 +80,7 @@ export function InstallPrompt() {
               onClick={handleInstall}
               className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity"
             >
-              <Download className="w-3 h-3" />
+              <Download className="w-4 h-4" />
               Install app
             </button>
           </div>
@@ -102,7 +102,7 @@ export function InstallPrompt() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Install Paxawa on iPhone</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Tap <Share className="w-3 h-3 inline mx-0.5" /> then{" "}
+              Tap <Share className="w-4 h-4 inline mx-0.5" /> then{" "}
               <strong>"Add to Home Screen"</strong>
             </p>
           </div>

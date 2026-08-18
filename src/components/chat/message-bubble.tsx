@@ -203,7 +203,7 @@ function LinkCard({
         </span>
         {isConfirmed && (
           <Badge variant="secondary" className="ms-auto text-xs gap-1">
-            <CheckCircle2 className="w-3 h-3 text-green-500" />
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
             {meta.confirmedAction === "itinerary" ? "Added to itinerary" : "Vote created"}
           </Badge>
         )}
@@ -217,7 +217,7 @@ function LinkCard({
           rel="noopener noreferrer"
           className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 truncate"
         >
-          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+          <ExternalLink className="w-4 h-4 shrink-0" />
           {meta.url.replace(/^https?:\/\//, "").slice(0, 60)}
           {meta.url.length > 60 ? "…" : ""}
         </a>
@@ -246,7 +246,7 @@ function LinkCard({
                 onClick={handleAddToItinerary}
                 disabled={isPending}
               >
-                <Calendar className="w-3.5 h-3.5 me-1.5" />
+                <Calendar className="w-4 h-4 me-1.5" />
                 {showItineraryForm ? "Confirm add to itinerary" : "Add to itinerary"}
               </Button>
             </>
@@ -271,7 +271,7 @@ function LinkCard({
                 onClick={handleStartVote}
                 disabled={isPending}
               >
-                <Vote className="w-3.5 h-3.5 me-1.5" />
+                <Vote className="w-4 h-4 me-1.5" />
                 {showVoteForm ? "Confirm vote" : "Start vote on this"}
               </Button>
             </>
@@ -329,7 +329,7 @@ function ExpenseCard({
         </span>
         {isConfirmed && (
           <Badge variant="secondary" className="ms-auto text-xs gap-1">
-            <CheckCircle2 className="w-3 h-3 text-green-500" />
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
             Added to expenses
           </Badge>
         )}
@@ -358,7 +358,7 @@ function ExpenseCard({
             onClick={handleConfirm}
             disabled={isPending}
           >
-            <CheckCircle2 className="w-3.5 h-3.5 me-1.5" />
+            <CheckCircle2 className="w-4 h-4 me-1.5" />
             {isPending ? "Adding…" : "Add to expenses"}
           </Button>
         )}
@@ -406,7 +406,7 @@ function VoteCardMessage({
         </span>
         {isConfirmed && (
           <Badge variant="secondary" className="ms-auto text-xs gap-1">
-            <CheckCircle2 className="w-3 h-3 text-green-500" />
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
             Vote created
           </Badge>
         )}
@@ -436,7 +436,7 @@ function VoteCardMessage({
               </button>
             </div>
             <Button size="sm" className="w-full" onClick={handleConfirm} disabled={isPending}>
-              <Vote className="w-3.5 h-3.5 me-1.5" />
+              <Vote className="w-4 h-4 me-1.5" />
               {isPending ? "Creating…" : "Create vote"}
             </Button>
           </>
@@ -748,7 +748,7 @@ export function MessageBubble({
               render={<button className="w-full text-left" />}
               onClick={handleReply}
             >
-              <Reply className="w-3.5 h-3.5 me-2" />
+              <Reply className="w-4 h-4 me-2" />
               Reply
             </DropdownMenuItem>
             {isOwner && (
@@ -757,7 +757,7 @@ export function MessageBubble({
                 onClick={handlePin}
                 disabled={isPending}
               >
-                <Pin className="w-3.5 h-3.5 me-2" />
+                <Pin className="w-4 h-4 me-2" />
                 {message.pinned ? "Unpin" : "Pin"}
               </DropdownMenuItem>
             )}
@@ -767,7 +767,7 @@ export function MessageBubble({
                 onClick={handleDelete}
                 disabled={isPending}
               >
-                <Trash2 className="w-3.5 h-3.5 me-2" />
+                <Trash2 className="w-4 h-4 me-2" />
                 Delete
               </DropdownMenuItem>
             )}

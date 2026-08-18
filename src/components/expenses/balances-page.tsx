@@ -203,7 +203,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
             className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-primary-foreground px-3.5 py-2 text-xs font-bold hover:opacity-90 transition-opacity"
           >
             {t("expenses.inviteCrew")}
-            <ArrowRight className="w-3 h-3 rtl:rotate-180" />
+            <ArrowRight className="w-4 h-4 rtl:rotate-180" />
           </a>
         </div>
       ) : view === "net" ? (
@@ -227,7 +227,7 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                         is unambiguous when scanning. Wraps the amount and
                         currency directly into the verb phrase. */}
                     <p
-                      className={`text-[11px] font-medium ${
+                      className={`text-[12px] font-medium ${
                         b.net > 0.005
                           ? "text-emerald-600 dark:text-emerald-400"
                           : b.net < -0.005
@@ -287,11 +287,11 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                       <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>{" "}
                       <bdi>{toIsMe ? t("expenses.you") : tr.toName}</bdi>
                     </p>
-                    <p className="text-[11px] text-muted-foreground tabular-nums">
+                    <p className="text-[12px] text-muted-foreground tabular-nums">
                       {currency} {fmt(tr.amount)}
                     </p>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 rtl:rotate-180" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 rtl:rotate-180" />
                   <div className={`w-8 h-8 rounded-full ${avatarColor(tr.to)} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
                     {initials(tr.toName)}
                   </div>
@@ -306,9 +306,9 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                       <button
                         type="button"
                         onClick={() => remind(tr.fromName, tr.amount)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold py-1.5 transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-[12px] font-bold py-1.5 transition-colors"
                       >
-                        <Bell className="w-3 h-3" />
+                        <Bell className="w-4 h-4" />
                         {t("balances.remind")}
                       </button>
                     )}
@@ -316,12 +316,12 @@ export function BalancesPage({ tripId, userId, currency, expenses, members, fxRa
                       type="button"
                       onClick={() => markPaid(tr.from, tr.to)}
                       disabled={isSettling}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold py-1.5 transition-colors disabled:opacity-50"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[12px] font-bold py-1.5 transition-colors disabled:opacity-50"
                     >
                       {isSettling ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Check className="w-3 h-3" />
+                        <Check className="w-4 h-4" />
                       )}
                       {isSettling ? t("balances.settling") : t("balances.markPaid")}
                     </button>

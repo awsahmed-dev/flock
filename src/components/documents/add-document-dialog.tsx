@@ -175,7 +175,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Upload className="w-4 h-4" />
             {t("docs.uploadFile")}
           </button>
           <button
@@ -187,7 +187,7 @@ export function AddDocumentDialog({ tripId, open: controlledOpen, onClose }: Pro
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <LinkIcon className="w-3.5 h-3.5" />
+            <LinkIcon className="w-4 h-4" />
             {t("docs.pasteLink")}
           </button>
         </div>

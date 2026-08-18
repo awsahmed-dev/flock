@@ -161,7 +161,7 @@ export function AddConfirmationSheet({
         <div className="space-y-3">
           {items.length > 0 ? (
             <div className="rounded-2xl border border-[color:var(--clr-wayfind)]/40 bg-[color:var(--clr-wayfind-dim)] px-3.5 py-2.5 text-[12px] flex items-center gap-2">
-              <Check size={14} weight="bold" className="text-[color:var(--clr-wayfind)]" />
+              <Check size={16} weight="bold" className="text-[color:var(--clr-wayfind)]" />
               <span className="font-semibold">{t("confirm.found", { count: items.length })}</span>
             </div>
           ) : (
@@ -225,27 +225,27 @@ function PreviewCard({ it, onChange, onRemove }: { it: ParsedConfirmation; onCha
         <p className="text-[12px] font-semibold mt-2 opacity-85">
           {when || t("confirm.noDate")}{until}{it.confirmation ? ` · ${t("confirm.conf")} ${it.confirmation}` : ""}
         </p>
-        {(it.address || it.notes) && <p className="text-[11px] opacity-75 mt-0.5 truncate">{[it.address, it.notes].filter(Boolean).join(" · ")}</p>}
+        {(it.address || it.notes) && <p className="text-[12px] opacity-75 mt-0.5 truncate">{[it.address, it.notes].filter(Boolean).join(" · ")}</p>}
       </div>
       <div className="bg-card px-3.5 py-2 flex items-center gap-3 text-[12px]">
-        <button type="button" onClick={() => setEdit((v) => !v)} className="font-bold text-primary flex items-center gap-1"><PencilSimple size={13} />{edit ? t("common.close") : t("confirm.edit")}</button>
+        <button type="button" onClick={() => setEdit((v) => !v)} className="font-bold text-primary flex items-center gap-1"><PencilSimple size={16} />{edit ? t("common.close") : t("confirm.edit")}</button>
         <span className="flex-1" />
-        <button type="button" onClick={onRemove} className="text-muted-foreground flex items-center gap-1"><Trash size={13} />{t("common.remove")}</button>
+        <button type="button" onClick={onRemove} className="text-muted-foreground flex items-center gap-1"><Trash size={16} />{t("common.remove")}</button>
       </div>
       {edit && (
         <div className="bg-card border-t border-border p-3 grid grid-cols-2 gap-2">
-          <label className="col-span-2 text-[11px] text-muted-foreground">{t("confirm.f.title")}<input className={field} value={it.title} onChange={(e) => onChange({ title: e.target.value })} /></label>
-          <label className="text-[11px] text-muted-foreground">{t("confirm.f.date")}<input type="date" className={field} value={it.date ?? ""} onChange={(e) => onChange({ date: e.target.value || null })} /></label>
-          <label className="text-[11px] text-muted-foreground">{t("confirm.f.time")}<input type="time" className={field} value={it.time ?? ""} onChange={(e) => onChange({ time: e.target.value || null })} /></label>
+          <label className="col-span-2 text-[12px] text-muted-foreground">{t("confirm.f.title")}<input className={field} value={it.title} onChange={(e) => onChange({ title: e.target.value })} /></label>
+          <label className="text-[12px] text-muted-foreground">{t("confirm.f.date")}<input type="date" className={field} value={it.date ?? ""} onChange={(e) => onChange({ date: e.target.value || null })} /></label>
+          <label className="text-[12px] text-muted-foreground">{t("confirm.f.time")}<input type="time" className={field} value={it.time ?? ""} onChange={(e) => onChange({ time: e.target.value || null })} /></label>
           {it.kind === "hotel" ? (
-            <label className="text-[11px] text-muted-foreground">{t("confirm.f.checkout")}<input type="date" className={field} value={it.endDate ?? ""} onChange={(e) => onChange({ endDate: e.target.value || null })} /></label>
+            <label className="text-[12px] text-muted-foreground">{t("confirm.f.checkout")}<input type="date" className={field} value={it.endDate ?? ""} onChange={(e) => onChange({ endDate: e.target.value || null })} /></label>
           ) : (
             <>
-              <label className="text-[11px] text-muted-foreground">{t("confirm.f.from")}<input className={field} value={it.from ?? ""} onChange={(e) => onChange({ from: e.target.value || null })} /></label>
-              <label className="text-[11px] text-muted-foreground">{t("confirm.f.to")}<input className={field} value={it.to ?? ""} onChange={(e) => onChange({ to: e.target.value || null })} /></label>
+              <label className="text-[12px] text-muted-foreground">{t("confirm.f.from")}<input className={field} value={it.from ?? ""} onChange={(e) => onChange({ from: e.target.value || null })} /></label>
+              <label className="text-[12px] text-muted-foreground">{t("confirm.f.to")}<input className={field} value={it.to ?? ""} onChange={(e) => onChange({ to: e.target.value || null })} /></label>
             </>
           )}
-          <label className="text-[11px] text-muted-foreground">{t("confirm.f.conf")}<input className={field} value={it.confirmation ?? ""} onChange={(e) => onChange({ confirmation: e.target.value || null })} /></label>
+          <label className="text-[12px] text-muted-foreground">{t("confirm.f.conf")}<input className={field} value={it.confirmation ?? ""} onChange={(e) => onChange({ confirmation: e.target.value || null })} /></label>
         </div>
       )}
     </div>

@@ -119,7 +119,7 @@ export function TripPrepChecklist({
         className="w-full flex items-center justify-between text-start mb-4"
       >
         <div>
-          <p className="text-[11px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">Trip prep</p>
+          <p className="text-[12px] font-semibold tracking-[1.2px] uppercase text-muted-foreground">Trip prep</p>
           <p className="text-[15px] font-bold text-foreground mt-0.5">
             {allDone ? t("cockpit.allSet") : t("cockpit.doneOf", { done: completed, total: steps.length })}
           </p>
@@ -149,9 +149,9 @@ export function TripPrepChecklist({
                 }`}
               >
                 {step.done ? (
-                  <Check size={14} className="text-white" strokeWidth={2.5} />
+                  <Check size={16} className="text-white" strokeWidth={2.5} />
                 ) : (
-                  <Icon size={14} className="text-muted-foreground" />
+                  <Icon size={16} className="text-muted-foreground" />
                 )}
               </span>
               <span

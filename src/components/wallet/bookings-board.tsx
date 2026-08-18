@@ -89,16 +89,16 @@ export function BookingsBoard(props: Props) {
       <p className="text-sm text-muted-foreground pt-1">{t("bookings.jobLine")}</p>
 
       {/* Trip context breadcrumb. */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <MapPin className="w-3 h-3" />
+          <MapPin className="w-4 h-4" />
           <span className="font-bold text-foreground truncate">{props.tripName}</span>
         </span>
         <span>·</span>
         <span className="truncate">{props.destination}</span>
         <span>·</span>
         <span className="inline-flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
+          <Calendar className="w-4 h-4" />
           {dateRange}
         </span>
       </div>
@@ -140,7 +140,7 @@ export function BookingsBoard(props: Props) {
             {copied ? t("common.copied") : t("bookings.heroCopy")}
           </button>
         </div>
-        <p className="mt-2.5 text-[11px] text-muted-foreground leading-relaxed">
+        <p className="mt-2.5 text-[12px] text-muted-foreground leading-relaxed">
           {t("bookings.heroHint")}
         </p>
       </section>
@@ -213,10 +213,10 @@ function Checklist({
           <ClipboardList className="w-4 h-4" />
         </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-extrabold tracking-widest uppercase text-foreground">
+          <p className="text-[12px] font-extrabold tracking-widest uppercase text-foreground">
             {t("bookings.checklistTitle")}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{t("bookings.checklistSub")}</p>
+          <p className="text-[12px] text-muted-foreground mt-0.5">{t("bookings.checklistSub")}</p>
         </div>
       </div>
 
@@ -243,7 +243,7 @@ function Checklist({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-snug line-clamp-1">{g.title}</p>
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
                     <span className="truncate">{g.subtitle}</span>
                     {g.discoverCategory ? (
                       <>
@@ -278,9 +278,9 @@ function Checklist({
                 <button
                   type="button"
                   onClick={() => onMarkBooked(g.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/40 transition-colors text-[11px] font-bold px-3 py-2 min-h-[40px] shrink-0"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/40 transition-colors text-[12px] font-bold px-3 py-2 min-h-[40px] shrink-0"
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   <span className="hidden sm:inline">{t("bookings.markBooked")}</span>
                 </button>
               </li>

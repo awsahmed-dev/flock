@@ -480,7 +480,7 @@ export function ItineraryBoard({
               <button
                 type="button"
                 onClick={() => setFocusedDay(null)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold transition-all ${
                   focusedDay === null
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
@@ -497,7 +497,7 @@ export function ItineraryBoard({
                     key={day}
                     type="button"
                     onClick={() => setFocusedDay(day)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold transition-all ${
                       active
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"
@@ -644,7 +644,7 @@ export function ItineraryBoard({
                     <button
                       type="button"
                       onClick={() => openAddFor(day)}
-                      className="ms-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center"
+                      className="ms-2 mt-1 w-[calc(100%-0.5rem)] rounded-xl border border-dashed border-border/60 hover:border-primary/30 hover:bg-accent/20 px-3 py-3 text-[12px] text-muted-foreground hover:text-foreground transition-colors text-center"
                     >
                       {t("itinerary.nothingPlanned")}
                     </button>
@@ -695,7 +695,7 @@ export function ItineraryBoard({
             type="button"
             onClick={toggleSheet}
             {...sheetZone}
-            className="w-full pt-3 pb-2 flex justify-center cursor-grab active:cursor-grabbing"
+            className="w-full pt-3.5 pb-2.5 flex justify-center cursor-grab active:cursor-grabbing"
             aria-label={sheetOpen ? "Collapse" : "Expand"}
           >
             <span className="block w-10 h-1 rounded-full bg-muted-foreground/30 pointer-events-none" />
@@ -1384,7 +1384,7 @@ function SortableItemRow({
           <span
             className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase`}
           >
-            <TypeIcon className="w-3.5 h-3.5" />
+            <TypeIcon className="w-4 h-4" />
             <span className="hidden sm:inline">{t(TypeCfg.labelKey)}</span>
           </span>
         </div>
@@ -1419,7 +1419,7 @@ function SortableItemRow({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-0.5 text-[11px] font-bold text-foreground"
+                className="inline-flex items-center gap-1 rounded-lg bg-muted px-1.5 py-0.5 text-[12px] font-bold text-foreground"
               >
                 PDF
               </a>

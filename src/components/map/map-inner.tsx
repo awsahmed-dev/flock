@@ -286,7 +286,7 @@ export function MapInner({
             <div className="min-w-[180px] space-y-2 text-sm">
               <div>
                 <p className="font-semibold leading-tight">{poi.name}</p>
-                <p className="text-[11px] text-indigo-600 font-medium mt-0.5">{poi.categoryLabel}</p>
+                <p className="text-[12px] text-indigo-600 font-medium mt-0.5">{poi.categoryLabel}</p>
               </div>
               {onAddPoi && (
                 <button

@@ -36,27 +36,39 @@ export function TipBanner({ tripHref }: { tripHref: string | null }) {
     : tip.key === "hearts" ? (tripHref ? `${tripHref}/discover` : null)
     : tip.key === "split" ? (tripHref ? `${tripHref}/money` : null)
     : null;
-  const body = (
-    <>
-      <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, var(--clr-dune) 18%, transparent)" }}>
-        <Lightbulb size={16} weight="fill" style={{ color: "var(--clr-dune)" }} />
+  // Video round 4: "more of a note than a banner" — it is a banner now: a
+  // brand gradient card, a real icon, a 14px title, and a CTA.
+  const inner = (
+    <div
+      className="relative overflow-hidden rounded-2xl px-4 py-3.5 flex items-center gap-3 text-white"
+      style={{ background: "linear-gradient(135deg, var(--clr-brand) 0%, #7C6CFF 55%, #A78BFA 100%)" }}
+    >
+      <span className="w-11 h-11 rounded-2xl bg-white/18 backdrop-blur flex items-center justify-center shrink-0">
+        <Lightbulb size={22} weight="fill" />
       </span>
-      <span className="min-w-0 flex-1 text-[12.5px] leading-snug">
-        <span className="font-bold">{t(`tips.${tip.key}.title`)}</span>
-        <span className="text-muted-foreground"> — {t(`tips.${tip.key}.body`)}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10px] font-bold tracking-widest uppercase text-white/75">{t("tips.kicker")}</span>
+        <span className="block text-[14px] font-bold leading-tight mt-0.5">{t(`tips.${tip.key}.title`)}</span>
+        <span className="block text-[12px] text-white/85 leading-snug mt-0.5 line-clamp-2">{t(`tips.${tip.key}.body`)}</span>
       </span>
-    </>
+      {href && (
+        <span className="shrink-0 h-9 px-3.5 rounded-full bg-white text-[13px] font-bold inline-flex items-center" style={{ color: "var(--clr-brand)" }}>
+          {t("tips.cta")}
+        </span>
+      )}
+      <span aria-hidden className="absolute -end-6 -top-8 w-28 h-28 rounded-full bg-white/10" />
+    </div>
   );
   return (
-    <div className="mx-4 mb-4 flex items-center gap-2.5 rounded-2xl border border-border bg-card ps-2.5 pe-1.5 py-2">
-      {href ? <Link href={href} className="flex items-center gap-2.5 min-w-0 flex-1">{body}</Link> : <div className="flex items-center gap-2.5 min-w-0 flex-1">{body}</div>}
+    <div className="relative mx-4 mb-4">
+      {href ? <Link href={href} className="block">{inner}</Link> : inner}
       <button
         type="button"
         aria-label={t("common.close")}
         onClick={() => { try { localStorage.setItem(KEY, String(Date.now() + 7 * 86_400_000)); } catch { /* ignore */ } setIdx(null); }}
-        className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground shrink-0"
+        className="absolute top-1.5 end-1.5 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white"
       >
-        <X size={14} />
+        <X size={16} weight="bold" />
       </button>
     </div>
   );

@@ -99,7 +99,7 @@ export function MetricGrid({
                 {cell.label}
               </span>
               {showPlanned && (
-                <ChevronRight size={12} className="ms-auto text-tertiary rtl:rotate-180" />
+                <ChevronRight size={16} className="ms-auto text-tertiary rtl:rotate-180" />
               )}
             </div>
             {/* Invitations are a verb phrase, not a number — a step smaller and

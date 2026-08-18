@@ -269,7 +269,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
                     <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
                       {t(meta.key)}
                     </span>
-                    <span className="text-[11px] tabular-nums text-muted-foreground/70">{s.time}</span>
+                    <span className="text-[12px] tabular-nums text-muted-foreground/70">{s.time}</span>
                   </div>
                   <div
                     className={cn(
@@ -296,7 +296,7 @@ export function PlanDaySheet({ open, onClose, tripId, days, initialDay, crewSize
                       <div className="mt-0.5 flex items-center gap-x-2 text-xs text-muted-foreground">
                         {s.place.rating != null && (
                           <span className="inline-flex items-center gap-1 font-bold text-foreground">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                             {s.place.rating.toFixed(1)}
                           </span>
                         )}

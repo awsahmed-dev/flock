@@ -79,7 +79,7 @@ function DocumentCard({
             {doc.description}
           </p>
         )}
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground mt-0.5">
           <span className="truncate">{doc.url}</span>
           {doc.dayDate && (
             <>
@@ -157,7 +157,7 @@ function PhotoGrid({
             {p.title}
           </p>
           {p.description && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2 leading-snug">
+            <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2 leading-snug">
               {p.description}
             </p>
           )}
@@ -203,7 +203,7 @@ function Lightbox({ photo, onClose }: { photo: Document; onClose: () => void }) 
             </p>
           )}
           {photo.dayDate && (
-            <p className="mt-1 text-[11px] text-white/60">
+            <p className="mt-1 text-[12px] text-white/60">
               {format(new Date(photo.dayDate + "T00:00:00"), "EEE, MMM d")}
             </p>
           )}
@@ -278,7 +278,7 @@ export function DocumentsBoard({ tripId, userId, isOwner, documents: docs, embed
               <Icon className="w-4 h-4" />
               {t(tab.labelKey)}
               <span
-                className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
+                className={`text-[12px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
                   active ? "bg-primary/15 text-primary" : "bg-muted-foreground/15"
                 }`}
               >

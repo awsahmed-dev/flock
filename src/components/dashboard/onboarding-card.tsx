@@ -34,8 +34,8 @@ export function OnboardingCard() {
 
       <div className="relative">
         <div className="max-w-xl mb-8">
-          <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-3">
-            <Sparkles className="w-3 h-3" />
+          <p className="inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-3">
+            <Sparkles className="w-4 h-4" />
             {t("onboarding.eyebrow")}
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">{t("onboarding.title")}</h2>
@@ -64,12 +64,12 @@ export function OnboardingCard() {
 
         <NewTripTrigger variant="inline" label={t("onboarding.cta")} />
 
-        <p className="text-[11px] text-muted-foreground mt-3 inline-flex items-center gap-3 flex-wrap">
-          <span className="inline-flex items-center gap-1"><Vote className="w-3 h-3" /> {t("onboarding.tagVoting")}</span>
+        <p className="text-[12px] text-muted-foreground mt-3 inline-flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1"><Vote className="w-4 h-4" /> {t("onboarding.tagVoting")}</span>
           <span>·</span>
-          <span className="inline-flex items-center gap-1"><Wallet className="w-3 h-3" /> {t("onboarding.tagSplitting")}</span>
+          <span className="inline-flex items-center gap-1"><Wallet className="w-4 h-4" /> {t("onboarding.tagSplitting")}</span>
           <span>·</span>
-          <span className="inline-flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t("onboarding.tagAi")}</span>
+          <span className="inline-flex items-center gap-1"><Sparkles className="w-4 h-4" /> {t("onboarding.tagAi")}</span>
         </p>
       </div>
     </div>

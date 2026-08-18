@@ -277,7 +277,7 @@ function RetroMarkEditor({ tripId, items }: { tripId: string; items: CockpitShar
                 marked ? "bg-success" : "border-[1.5px] border-border"
               }`}
             >
-              {marked && <Check size={14} className="text-white" strokeWidth={2.5} />}
+              {marked && <Check size={16} className="text-white" strokeWidth={2.5} />}
             </span>
             <span className="flex-1 min-w-0 text-[14px] font-medium truncate">{i.title}</span>
           </button>

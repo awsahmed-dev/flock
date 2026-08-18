@@ -44,7 +44,7 @@ export function Ticket({
         <span aria-hidden className="absolute -top-2 -start-2 w-4 h-4 rounded-full bg-background" />
         <span aria-hidden className="absolute -bottom-2 -start-2 w-4 h-4 rounded-full bg-background" />
         <Icon size={22} weight="fill" />
-        <span className="text-[11px] font-black tracking-wider">{go}</span>
+        <span className="text-[12px] font-black tracking-wider">{go}</span>
       </div>
     </>
   );

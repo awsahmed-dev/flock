@@ -110,7 +110,7 @@ export function NotificationBell() {
           >
             <Bell className="w-4 h-4" />
             {unread > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold leading-4 text-center tabular-nums shadow ring-2 ring-background">
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold leading-4 text-center tabular-nums shadow ring-2 ring-background">
                 {unread > 9 ? "9+" : unread}
               </span>
             )}
@@ -156,14 +156,14 @@ export function NotificationBell() {
                         m.tint,
                       )}
                     >
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">
                         {r.title ?? r.kind}
                       </p>
                       {r.body && (
-                        <p className="text-[11px] text-muted-foreground truncate">
+                        <p className="text-[12px] text-muted-foreground truncate">
                           {r.body}
                         </p>
                       )}

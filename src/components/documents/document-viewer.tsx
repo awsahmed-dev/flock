@@ -167,7 +167,7 @@ export function DocumentViewer({
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-bold truncate">{doc.title}</p>
           {docs.length > 1 && (
-            <p className="text-[11px] text-muted-foreground tabular-nums">
+            <p className="text-[12px] text-muted-foreground tabular-nums">
               {index + 1} / {docs.length}
             </p>
           )}

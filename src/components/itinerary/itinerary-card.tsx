@@ -115,12 +115,12 @@ export function ItineraryCard({
           className="shrink-0 text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing mt-1 -m-1.5 p-2 touch-none select-none transition-colors"
           tabIndex={-1}
         >
-          <GripVertical className="w-3.5 h-3.5" />
+          <GripVertical className="w-4 h-4" />
         </button>
 
         {/* Type icon */}
         <div className={`w-8 h-8 rounded-lg ${typeCfg.bg} flex items-center justify-center shrink-0 mt-0.5`}>
-          <TypeIcon className={`w-3.5 h-3.5 ${typeCfg.text}`} />
+          <TypeIcon className={`w-4 h-4 ${typeCfg.text}`} />
         </div>
 
         {/* Content */}
@@ -161,13 +161,13 @@ export function ItineraryCard({
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                 {item.startTime && (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3 shrink-0" />
+                    <Clock className="w-4 h-4 shrink-0" />
                     {item.startTime.slice(0, 5)}
                   </span>
                 )}
                 {item.locationName && (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground max-w-[140px] truncate">
-                    <MapPin className="w-3 h-3 shrink-0" />
+                    <MapPin className="w-4 h-4 shrink-0" />
                     {item.locationName}
                   </span>
                 )}
@@ -184,7 +184,7 @@ export function ItineraryCard({
                     className="flex items-center gap-1 text-xs text-primary hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Link2 className="w-3 h-3" /> Booking
+                    <Link2 className="w-4 h-4" /> Booking
                   </a>
                 )}
               </div>
@@ -213,25 +213,25 @@ export function ItineraryCard({
               />
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem onClick={() => handleStatusChange("confirmed")} className="gap-2">
-                  <CheckCircle className="w-3.5 h-3.5 text-success" /> Lock in
+                  <CheckCircle className="w-4 h-4 text-success" /> Lock in
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange("proposed")} className="gap-2">
-                  <Circle className="w-3.5 h-3.5 text-[#FFD60A]" /> Mark suggested
+                  <Circle className="w-4 h-4 text-[#FFD60A]" /> Mark suggested
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange("rejected")} className="gap-2">
-                  <XCircle className="w-3.5 h-3.5 text-muted-foreground" /> Skip
+                  <XCircle className="w-4 h-4 text-muted-foreground" /> Skip
                 </DropdownMenuItem>
                 {canManage && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
-                      <Pencil className="w-3.5 h-3.5" /> Edit
+                      <Pencil className="w-4 h-4" /> Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleDelete}
                       className="gap-2 text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                      <Trash2 className="w-4 h-4" /> Delete
                     </DropdownMenuItem>
                   </>
                 )}

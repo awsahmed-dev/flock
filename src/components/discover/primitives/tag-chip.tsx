@@ -43,7 +43,7 @@ export function TagChip({ tag, className }: { tag: PlaceTag; className?: string 
         className,
       )}
     >
-      {meta.icon && <Sparkles className="w-3 h-3" />}
+      {meta.icon && <Sparkles className="w-4 h-4" />}
       {t(meta.labelKey)}
     </span>
   );

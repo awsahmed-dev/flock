@@ -14,7 +14,7 @@ export default function NotFound() {
         <div className="mx-auto mb-5 text-foreground inline-flex">
           <Logo variant="mark" size="xl" />
         </div>
-        <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase mb-1">
+        <p className="text-[12px] font-bold tracking-widest text-muted-foreground uppercase mb-1">
           404 — off the map
         </p>
         <h1 className="text-2xl font-bold tracking-tight mb-2">
@@ -29,14 +29,14 @@ export default function NotFound() {
             href="/"
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm px-4 py-2.5 hover:opacity-90 transition-opacity"
           >
-            <Home className="w-3.5 h-3.5" />
+            <Home className="w-4 h-4" />
             Home
           </Link>
           <Link
             href="/dashboard"
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/40 text-foreground font-bold text-sm px-4 py-2.5 hover:bg-muted/60 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             Dashboard
           </Link>
         </div>

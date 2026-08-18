@@ -84,7 +84,7 @@ export function SegmentedControl<T extends string>({
             {opt.count != null && opt.count > 0 && (
               <span
                 className={cn(
-                  "min-w-[20px] rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums leading-none",
+                  "min-w-[20px] rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums leading-none",
                   active ? "bg-primary/10 text-primary" : "bg-foreground/10 text-muted-foreground",
                 )}
               >

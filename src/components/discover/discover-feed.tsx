@@ -664,7 +664,7 @@ export function DiscoverFeed({
                     <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                   </div>
                 )}
-                <p className="mt-5 text-center text-[11px] text-muted-foreground">
+                <p className="mt-5 text-center text-[12px] text-muted-foreground">
                   {t("discover.poweredBy")} <span className="font-semibold">Google</span>
                 </p>
               </>
@@ -828,14 +828,14 @@ export function DiscoverFeed({
                       </button>
                       {s.place.rating != null && (
                         <span className="absolute bottom-2 start-2 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur px-2 py-0.5 text-white text-xs font-bold">
-                          <Star className="w-3 h-3 fill-amber-300 text-amber-300" />{s.place.rating.toFixed(1)}
+                          <Star className="w-4 h-4 fill-amber-300 text-amber-300" />{s.place.rating.toFixed(1)}
                         </span>
                       )}
                     </div>
                     <div className="p-3">
                       <p className="font-bold text-white text-[15px] line-clamp-1">{s.place.name}</p>
                       <p className="text-white/60 text-xs mt-1 inline-flex items-center gap-1 max-w-full">
-                        <MapPin className="w-3 h-3 shrink-0" />
+                        <MapPin className="w-4 h-4 shrink-0" />
                         {/* §10.6: derived locality, never the raw address. */}
                         <span className="line-clamp-1">
                           {[shortLocality(s.place.address), t(CAT_KEY[s.place.category] ?? CAT_KEY.eat)]
@@ -1091,7 +1091,7 @@ function CategoryStrip({
             activeFilterCount > 0 ? activeChip : restChip
           }`}
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <SlidersHorizontal className="w-4 h-4" />
           <span>{t("discover.filters")}</span>
           {activeFilterCount > 0 && (
             <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-black leading-none ${

@@ -73,7 +73,7 @@ export function DashboardTripCard({
           >
             {name}
           </p>
-          <p className="text-white/70 text-[11px] mt-0.5 tabular-nums">{dates}</p>
+          <p className="text-white/70 text-[12px] mt-0.5 tabular-nums">{dates}</p>
         </div>
         {variant === "full" && status && (
           <span

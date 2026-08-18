@@ -129,12 +129,12 @@ const BUDGETS = [
 const DIETARY = ["halal", "vegetarian", "vegan", "gluten-free"] as const;
 
 const TRAVEL_ICON: Record<TravelMode, React.ReactNode> = {
-  flight: <AirplaneTilt className="w-3.5 h-3.5" />,
-  train: <Train className="w-3.5 h-3.5" />,
-  bus: <Bus className="w-3.5 h-3.5" />,
-  car: <Car className="w-3.5 h-3.5" />,
-  ferry: <Boat className="w-3.5 h-3.5" />,
-  walk: <PersonSimpleWalk className="w-3.5 h-3.5" />,
+  flight: <AirplaneTilt className="w-4 h-4" />,
+  train: <Train className="w-4 h-4" />,
+  bus: <Bus className="w-4 h-4" />,
+  car: <Car className="w-4 h-4" />,
+  ferry: <Boat className="w-4 h-4" />,
+  walk: <PersonSimpleWalk className="w-4 h-4" />,
 };
 const TRAVEL_MODES = Object.keys(TRAVEL_ICON) as TravelMode[];
 
@@ -219,7 +219,7 @@ function SortableLeg({
           <select
             value={leg.travel?.mode ?? "car"}
             onChange={(e) => onTravelMode(index, e.target.value as TravelMode)}
-            className="rounded-full border border-border bg-background px-2 py-1 text-[11px] font-semibold"
+            className="rounded-full border border-border bg-background px-2 py-1 text-[12px] font-semibold"
             aria-label={t("aiPlan.travelMode")}
           >
             {TRAVEL_MODES.map((m) => (
@@ -229,7 +229,7 @@ function SortableLeg({
             ))}
           </select>
           {leg.travel?.note ? (
-            <span className="text-[11px] text-muted-foreground truncate">{leg.travel.note}</span>
+            <span className="text-[12px] text-muted-foreground truncate">{leg.travel.note}</span>
           ) : null}
         </div>
       )}
@@ -263,7 +263,7 @@ function SortableLeg({
                 className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
                 aria-label="-1"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
               </button>
               <span className="text-sm font-bold tabular-nums min-w-[4ch] text-center">
                 {t("aiPlan.nights", { count: leg.nights })}
@@ -274,7 +274,7 @@ function SortableLeg({
                 className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-muted"
                 aria-label="+1"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
               </button>
               {legsCount > 1 && (
                 <button
@@ -283,7 +283,7 @@ function SortableLeg({
                   className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive"
                   aria-label={t("common.delete")}
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -441,16 +441,16 @@ function SortablePlaceRow({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-semibold leading-snug truncate">{item.place.name}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+          <p className="text-[12px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
             {item.startTime && (
               <span className="inline-flex items-center gap-0.5">
-                <Clock className="w-3 h-3" />
+                <Clock className="w-4 h-4" />
                 {item.startTime}
               </span>
             )}
             {item.place.rating != null && (
               <span className="inline-flex items-center gap-0.5 font-bold text-foreground/80">
-                <Star className="w-3 h-3 text-amber-400" weight="fill" />
+                <Star className="w-4 h-4 text-amber-400" weight="fill" />
                 {item.place.rating.toFixed(1)}
                 {item.place.userRatingsTotal ? (
                   <span className="font-medium text-muted-foreground">({compact(item.place.userRatingsTotal)})</span>
@@ -475,10 +475,10 @@ function SortablePlaceRow({
               : "border-2 border-border text-transparent hover:border-primary/50"
           }`}
         >
-          <Check className="w-3.5 h-3.5" weight="bold" />
+          <Check className="w-4 h-4" weight="bold" />
         </button>
         <CaretDown
-          className={`w-3.5 h-3.5 text-muted-foreground/70 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-muted-foreground/70 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </div>
 
@@ -491,9 +491,9 @@ function SortablePlaceRow({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-[12px] font-bold text-primary hover:underline"
             >
-              <ArrowSquareOut className="w-3 h-3" />
+              <ArrowSquareOut className="w-4 h-4" />
               {t("aiPlan.openInGoogle")}
             </a>
             {item.alt && (
@@ -504,12 +504,12 @@ function SortablePlaceRow({
                   onDuel();
                 }}
                 disabled={busy !== null}
-                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-primary/35 bg-primary/[0.04] px-2.5 py-1 text-[11px] text-muted-foreground disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-primary/35 bg-primary/[0.04] px-2.5 py-1 text-[12px] text-muted-foreground disabled:opacity-50"
               >
                 {busy === `duel-${item.uid}` ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+                  <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
                 ) : (
-                  <Vote className="w-3 h-3 text-primary shrink-0" />
+                  <Vote className="w-4 h-4 text-primary shrink-0" />
                 )}
                 {t("aiPlan.orAlt")} <span className="font-semibold text-foreground">{item.alt.name}</span>
                 <span className="font-bold text-primary">{t("aiPlan.askCrew")}</span>
@@ -526,9 +526,9 @@ function SortablePlaceRow({
               className="ms-auto w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:text-foreground hover:border-primary/50 disabled:opacity-50"
             >
               {busy === `add-${item.uid}` ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
               )}
             </button>
           </div>
@@ -1118,7 +1118,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">{t("aiPlan.routeTitle")}</p>
               <span
-                className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                className={`rounded-full px-2.5 py-1 text-[12px] font-bold ${
                   daysBalanced
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
@@ -1131,14 +1131,14 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
 
             {/* gateway anchors */}
             {(startCity || endCity) && (
-              <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground px-1">
+              <div className="flex items-center justify-between text-[12px] font-bold text-muted-foreground px-1">
                 <span className="inline-flex items-center gap-1">
-                  <AirplaneTilt className="w-3.5 h-3.5" />
+                  <AirplaneTilt className="w-4 h-4" />
                   {startCity || "—"}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   {endCity || startCity || "—"}
-                  <AirplaneTilt className="w-3.5 h-3.5 -scale-x-100" />
+                  <AirplaneTilt className="w-4 h-4 -scale-x-100" />
                 </span>
               </div>
             )}
@@ -1251,13 +1251,13 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                   className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 shrink-0"
                   aria-label={t("aiPlan.back")}
                 >
-                  <CaretLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+                  <CaretLeft className="w-4 h-4 rtl:rotate-180" />
                 </button>
                 <div className="flex-1 text-center min-w-0">
                   <p className="text-sm font-bold truncate">
                     {t("aiPlan.dayLabel", { n: activeDay })} · {legs[activeLegIdx]?.cityLabel}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[12px] text-muted-foreground">
                     {t("aiPlan.placesCount", { count: dayItems.length })}
                     {dayItems[0]?.startTime ? <> · {t("aiPlan.startsAt", { time: dayItems[0].startTime })}</> : null}
                   </p>
@@ -1269,7 +1269,7 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                   className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 shrink-0"
                   aria-label={t("aiPlan.next")}
                 >
-                  <CaretRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                  <CaretRight className="w-4 h-4 rtl:rotate-180" />
                 </button>
               </div>
 
@@ -1323,13 +1323,13 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
                   type="button"
                   onClick={() => handleAdd(activeLegState.items, `add-leg-${activeLegIdx}`)}
                   disabled={busy !== null}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-[11px] font-bold text-primary hover:border-primary/50 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-[12px] font-bold text-primary hover:border-primary/50 disabled:opacity-50"
                 >
                   {busy === `add-leg-${activeLegIdx}` ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-4 h-4" />
                       {t("aiPlan.addLeg")}
                     </>
                   )}

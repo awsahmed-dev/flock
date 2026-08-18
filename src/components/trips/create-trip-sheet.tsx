@@ -274,7 +274,7 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
                 {t("create.next")} →
               </PrimaryBtn>
               {nextBlockedReason && (
-                <p className="mt-2 text-center text-[12.5px] text-muted-foreground">
+                <p className="mt-2 text-center text-[13px] text-muted-foreground">
                   {nextBlockedReason}
                 </p>
               )}
@@ -662,7 +662,7 @@ function RangeCalendar({
         <>
           <div className="grid grid-cols-7 gap-1 mb-1">
             {weekdays.map((w, i) => (
-              <span key={i} className="h-6 flex items-center justify-center text-[11px] font-bold text-muted-foreground uppercase">{w}</span>
+              <span key={i} className="h-6 flex items-center justify-center text-[12px] font-bold text-muted-foreground uppercase">{w}</span>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1">

@@ -116,8 +116,8 @@ export function WalletBoard({
   return (
     <div className={embedded ? "space-y-5" : "space-y-5 max-w-2xl mx-auto"}>
       {!embedded && tripName && (
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <MapPin className="w-3 h-3" />
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+          <MapPin className="w-4 h-4" />
           <span className="font-bold text-foreground truncate">{tripName}</span>
           {destination && <span>· {destination}</span>}
           {dateRange && <span>· {dateRange}</span>}
@@ -126,13 +126,13 @@ export function WalletBoard({
 
       {!embedded && (
         <div>
-          <p className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
+          <p className="text-[12px] font-bold tracking-widest uppercase text-muted-foreground">
             {t("wallet.section")}
           </p>
           <p className="text-3xl font-extrabold tabular-nums">
             {currency} {totalSpend.toLocaleString()}
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[12px] text-muted-foreground">
             {t("wallet.totalLine", { count: MOCK_BOOKINGS.length })}
           </p>
         </div>
@@ -142,8 +142,8 @@ export function WalletBoard({
       {crewItems.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <p className="text-[11px] font-extrabold tracking-widest uppercase text-blue-600 dark:text-blue-400">
+            <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <p className="text-[12px] font-extrabold tracking-widest uppercase text-blue-600 dark:text-blue-400">
               {t("wallet.crewSection")}
             </p>
             <span className="text-[10px] text-muted-foreground">· {t("wallet.crewSectionMeta")}</span>
@@ -165,8 +165,8 @@ export function WalletBoard({
       {yourItems.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <p className="text-[11px] font-extrabold tracking-widest uppercase text-amber-600 dark:text-amber-400">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <p className="text-[12px] font-extrabold tracking-widest uppercase text-amber-600 dark:text-amber-400">
               {t("wallet.yoursSection")}
             </p>
             <span className="text-[10px] text-muted-foreground">· {t("wallet.yoursSectionMeta")}</span>
@@ -194,11 +194,11 @@ export function WalletBoard({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold leading-snug">{t("wallet.forwardTitle")}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{t("wallet.forwardSub")}</p>
+            <p className="text-[12px] text-muted-foreground truncate">{t("wallet.forwardSub")}</p>
           </div>
           <button
             type="button"
-            className="text-[11px] font-bold text-primary hover:opacity-80 shrink-0"
+            className="text-[12px] font-bold text-primary hover:opacity-80 shrink-0"
           >
             {t("wallet.copyAddress")}
           </button>

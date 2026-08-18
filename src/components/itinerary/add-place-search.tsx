@@ -246,7 +246,7 @@ export function AddPlaceSearch({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold leading-snug">{picked.name}</p>
                 {picked.address && (
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{picked.address}</p>
+                  <p className="text-[12px] text-muted-foreground truncate mt-0.5">{picked.address}</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   <RatingPill rating={picked.rating} reviews={picked.userRatingsTotal} />
@@ -295,7 +295,7 @@ export function AddPlaceSearch({
                   onClick={() => { setQuery(""); setPredictions([]); }}
                   className="text-muted-foreground hover:text-foreground shrink-0"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -315,11 +315,11 @@ export function AddPlaceSearch({
                           }}
                           className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-accent/40 text-start transition-colors"
                         >
-                          <MapPin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                          <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate">{p.primary}</p>
                             {p.secondary && (
-                              <p className="text-[11px] text-muted-foreground truncate">{p.secondary}</p>
+                              <p className="text-[12px] text-muted-foreground truncate">{p.secondary}</p>
                             )}
                           </div>
                         </button>
@@ -336,7 +336,7 @@ export function AddPlaceSearch({
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 border-t border-border/60 hover:bg-accent/40 text-start transition-colors"
                 >
-                  <PencilLine className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <PencilLine className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-xs text-muted-foreground">
                     {t("itinerary.addManuallyNamed", { name: query.trim() })}
                   </span>
@@ -358,7 +358,7 @@ export function AddPlaceSearch({
         {/* Day picker */}
         <div>
           <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1.5 block inline-flex items-center gap-1.5">
-            <Calendar className="w-3 h-3" /> {t("itinerary.addToDay")}
+            <Calendar className="w-4 h-4" /> {t("itinerary.addToDay")}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             {days.map((d, idx) => {
@@ -374,7 +374,7 @@ export function AddPlaceSearch({
                       : "border-border bg-card hover:border-foreground/20"
                   }`}
                 >
-                  <p className="text-[9px] font-bold tracking-widest uppercase">{t("itinerary.dayN", { n: idx + 1 })}</p>
+                  <p className="text-[10px] font-bold tracking-widest uppercase">{t("itinerary.dayN", { n: idx + 1 })}</p>
                   <p className="text-xs font-bold mt-0.5">{format(parseISO(d), "MMM d")}</p>
                 </button>
               );
@@ -384,24 +384,24 @@ export function AddPlaceSearch({
 
         {/* Optional time + cost + notes */}
         <details className="rounded-xl border border-border bg-card/40">
-          <summary className="cursor-pointer px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 list-none">
-            <ChevronDown className="w-3 h-3" /> {t("itinerary.moreDetails")}
+          <summary className="cursor-pointer px-3 py-2 text-[12px] font-bold tracking-wider uppercase text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 list-none">
+            <ChevronDown className="w-4 h-4" /> {t("itinerary.moreDetails")}
           </summary>
           <div className="px-3 pb-3 grid grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" /> {t("itinerary.time")}
+                <Clock className="w-4 h-4" /> {t("itinerary.time")}
               </label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary/40"
+                className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:border-primary/40"
               />
             </div>
             <div>
               <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1 block inline-flex items-center gap-1">
-                <Tag className="w-2.5 h-2.5" /> {t("itinerary.cost")}
+                <Tag className="w-4 h-4" /> {t("itinerary.cost")}
               </label>
               <input
                 type="text"
@@ -409,7 +409,7 @@ export function AddPlaceSearch({
                 value={costEstimate}
                 onChange={(e) => setCostEstimate(e.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary/40"
+                className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:border-primary/40"
               />
             </div>
             <div className="col-span-2">
@@ -421,7 +421,7 @@ export function AddPlaceSearch({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={t("itinerary.notesPlaceholder")}
-                className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary/40"
+                className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:border-primary/40"
               />
             </div>
           </div>

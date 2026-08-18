@@ -132,7 +132,7 @@ export default function GlobalError({
                 cursor: "pointer",
               }}
             >
-              <RefreshCw size={14} />
+              <RefreshCw size={16} />
               {s.tryAgain}
             </button>
             <a
@@ -154,7 +154,7 @@ export default function GlobalError({
                 textDecoration: "none",
               }}
             >
-              <Home size={14} />
+              <Home size={16} />
               {s.dashboard}
             </a>
           </div>
