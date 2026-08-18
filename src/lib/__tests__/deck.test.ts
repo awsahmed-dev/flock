@@ -11,11 +11,13 @@ const base: DeckInput = {
 };
 
 describe("buildDeck — one photo, then notes, capped", () => {
-  it("a hearted place not on the plan is the hero; day 1 rides the trip photo only when nothing better exists", () => {
+  it("a hearted place not on the plan is the hero; day 1 only with its own stop photo", () => {
     const d = buildDeck({ ...base, hearts: [{ placeId: "p1", name: "TeamLab", photoUrl: "/p1.jpg", hearts: 2, onPlan: false }], day1: { count: 3, firstTime: "10:00", firstTitle: "Shibuya" } });
     expect(d.hero?.kind).toBe("crewHeart");
     expect(d.notes.map((n) => n.kind)).toEqual(["day1", "money"]);
-    const d2 = buildDeck({ ...base, day1: { count: 3, firstTime: "10:00", firstTitle: "Shibuya" } });
+    // day 1 earns a hero only with a stop's OWN photo — never the trip photo (that's already the page hero)
+    expect(buildDeck({ ...base, day1: { count: 3, firstTime: "10:00", firstTitle: "Shibuya" } }).hero).toBeNull();
+    const d2 = buildDeck({ ...base, day1: { count: 3, firstTime: "10:00", firstTitle: "Shibuya", photoUrl: "/shibuya.jpg" } });
     expect(d2.hero?.kind).toBe("day1");
   });
   it("no photo → no hero, all notes; never more than three", () => {

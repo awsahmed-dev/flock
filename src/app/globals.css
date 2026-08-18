@@ -536,3 +536,23 @@ html[dir="rtl"] body {
     bottom: calc(env(safe-area-inset-bottom) + 92px);
   }
 }
+
+/* ── Now page motion (polish) ─────────────────────────────────────────────
+   Small, physical, once-on-mount. Everything respects reduced motion. */
+@keyframes now-rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes now-track { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes now-pop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes now-shine { 0% { transform: translateX(-140%) skewX(-18deg); } 100% { transform: translateX(260%) skewX(-18deg); } }
+.now-rise { animation: now-rise 520ms cubic-bezier(.2,.8,.2,1) both; }
+.now-rise-1 { animation-delay: 60ms; } .now-rise-2 { animation-delay: 140ms; } .now-rise-3 { animation-delay: 220ms; } .now-rise-4 { animation-delay: 300ms; } .now-rise-5 { animation-delay: 380ms; }
+.now-track { transform-origin: left center; animation: now-track 900ms cubic-bezier(.2,.8,.2,1) 200ms both; }
+.now-pop { animation: now-pop 480ms cubic-bezier(.2,.8,.2,1) both; }
+.now-pop-1 { animation-delay: 420ms; } .now-pop-2 { animation-delay: 520ms; } .now-pop-3 { animation-delay: 620ms; } .now-pop-4 { animation-delay: 720ms; }
+.ticket { position: relative; }
+.ticket::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.28) 50%, transparent 60%); animation: now-shine 1400ms ease-out 700ms 1 both; }
+.ticket:active { transform: scale(.985); }
+.now-press { transition: transform 160ms cubic-bezier(.2,.8,.2,1), box-shadow 160ms; }
+.now-press:active { transform: scale(.985); }
+@media (prefers-reduced-motion: reduce) {
+  .now-rise, .now-track, .now-pop, .ticket::after { animation: none !important; }
+}

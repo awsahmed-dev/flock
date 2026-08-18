@@ -32,7 +32,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
     moment, base, destinationCity: destination.split(",")[0].trim(), startDate, heroImageUrl,
     crewCount: crew.length, primaryKey: "departure",
     hearts: props.teaser.map((p) => ({ placeId: p.placeId, name: p.name, hearts: p.hearts, photoUrl: p.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=800` : null, onPlan: planPlaceIds.has(p.placeId) })),
-    day1: { count: day1Items.length, firstTime: day1Items[0]?.startTime?.slice(0, 5) ?? null, firstTitle: day1Items[0]?.title ?? null },
+    day1: { count: day1Items.length, firstTime: day1Items[0]?.startTime?.slice(0, 5) ?? null, firstTitle: day1Items[0]?.title ?? null, photoUrl: day1Items.find((it) => it.photoUrl)?.photoUrl ?? null },
     weather: props.weather, fx: props.fx,
     money: { currency, budget: budgetTotal, perPerson: budgetTotal != null && crew.length > 1 ? budgetTotal / crew.length : null, spent: props.spent },
     docsCount: props.documents.length, ticker: ticker ? { text: ticker.text } : null,
@@ -225,7 +225,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
         {deck.hero && <HeroCard card={deck.hero} />}
         {deck.notes.length > 0 && (
           <div className="flex flex-col gap-2">
-            {deck.notes.map((c) => <NoteRow key={c.kind} card={c} />)}
+            {deck.notes.map((c, i) => <NoteRow key={c.kind} card={c} index={i} />)}
           </div>
         )}
         <DeckFooter

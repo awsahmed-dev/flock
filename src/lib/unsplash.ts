@@ -45,7 +45,10 @@ export async function getDestinationHero(
   // quality — "Kuala Lumpur, Malaysia" → "Kuala Lumpur"; if the model
   // emits "Tokyo, Osaka, Kyoto" we get a Tokyo photo, which still feels
   // representative.
-  const query = destination.split(",")[0].trim();
+  // "saudi arabia" alone returned a chalkboard; ask for the place as a
+  // destination — skyline / landmark / landscape — and take the top hit.
+  const place = destination.split(",")[0].trim();
+  const query = `${place} landmark skyline travel`;
 
   const params = new URLSearchParams({
     query,

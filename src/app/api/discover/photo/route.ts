@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { photoMediaUrl } from "@/lib/places/google";
+import { photoMediaUrl, details } from "@/lib/places/google";
+import { db } from "@/lib/db";
+import { cachedPlaces } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { isOverCap, trackCall } from "@/lib/places/meter";
 import { requireUser, placesError } from "../_helpers";
 
@@ -25,9 +28,22 @@ export async function GET(request: Request) {
   }
 
   try {
-    const upstream = await fetch(photoMediaUrl(ref, w), { cache: "no-store" });
+    let upstream = await fetch(photoMediaUrl(ref, w), { cache: "no-store" });
     if (!upstream.ok || !upstream.body) {
-      return NextResponse.json({ error: "Photo unavailable" }, { status: 502 });
+      // Google photo resource names EXPIRE. Cached snapshots from weeks ago
+      // (crew hearts on the Now page) 404 here and rendered as broken <img>.
+      // Refresh once: re-read the place, take its current first photo, retry,
+      // and repair the cached snapshot so the next render is clean.
+      const placeId = /^places\/([^/]+)\/photos\//.exec(ref)?.[1];
+      if (!placeId) return NextResponse.json({ error: "Photo unavailable" }, { status: 502 });
+      const fresh = await details(placeId).then((p) => p.photoRef ?? null).catch(() => null);
+      if (!fresh || fresh === ref) return NextResponse.json({ error: "Photo unavailable" }, { status: 502 });
+      upstream = await fetch(photoMediaUrl(fresh, w), { cache: "no-store" });
+      if (!upstream.ok || !upstream.body) return NextResponse.json({ error: "Photo unavailable" }, { status: 502 });
+      db.update(cachedPlaces)
+        .set({ snapshot: sql`jsonb_set(coalesce(${cachedPlaces.snapshot}, '{}'::jsonb), '{photoRef}', to_jsonb(${fresh}::text))` })
+        .where(eq(cachedPlaces.placeId, placeId))
+        .catch(() => {});
     }
     trackCall("photo"); // meter only real (uncached-at-edge) Google photo hits
     return new NextResponse(upstream.body, {

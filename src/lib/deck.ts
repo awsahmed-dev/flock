@@ -38,7 +38,7 @@ export interface DeckInput {
   crewCount: number;
   primaryKey: string;
   hearts: { placeId: string; name: string; photoUrl: string | null; hearts: number; onPlan: boolean }[];
-  day1: { count: number; firstTime: string | null; firstTitle: string | null };
+  day1: { count: number; firstTime: string | null; firstTitle: string | null; photoUrl?: string | null };
   weather: { tempMax: number; tempMin: number | null; key: string; sunset: string | null; isTripDay: boolean } | null;
   fx: { local: string; symbol: string; perUnit: number; base: string } | null;
   money: { currency: string; budget: number | null; perPerson: number | null; spent: number } ;
@@ -77,7 +77,9 @@ export function buildDeck(i: DeckInput): { hero: DeckCard | null; notes: DeckCar
       actionKey: "cockpit.deck.open",
       params: { count: i.day1.count, first: i.day1.firstTitle ?? "", time: i.day1.firstTime ?? "" },
       href: `${i.base}/itinerary?day=${i.startDate}`,
-      photoUrl: i.heroImageUrl, score: m.phase === "DEPARTURE" ? 80 : 60,
+      // The trip photo already IS the page hero — repeating it 400px lower
+      // read as a duplicate. Day 1 earns a hero only with a stop's own photo.
+      photoUrl: i.day1.photoUrl ?? null, score: m.phase === "DEPARTURE" ? 80 : 60,
     });
   }
   // Weather — "right now" far out, "on arrival" within 16 days
