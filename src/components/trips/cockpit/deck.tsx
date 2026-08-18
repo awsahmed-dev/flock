@@ -35,7 +35,7 @@ export function HeroCard({ card }: { card: DeckCard }) {
   return (
     <Link
       href={card.href}
-      className="relative block overflow-hidden rounded-3xl border border-border h-[176px] active:scale-[0.99] transition-transform"
+      className="now-rise now-rise-3 now-press relative block overflow-hidden rounded-3xl border border-border h-[176px]"
       style={{ backgroundImage: card.photoUrl ? `url(${card.photoUrl})` : undefined, backgroundSize: "cover", backgroundPosition: "center", backgroundColor: "var(--card)" }}
     >
       <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,.08) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.85) 100%)" }} />
@@ -55,12 +55,12 @@ export function HeroCard({ card }: { card: DeckCard }) {
   );
 }
 
-export function NoteRow({ card }: { card: DeckCard }) {
+export function NoteRow({ card, index = 0 }: { card: DeckCard; index?: number }) {
   const { purpose, title, body, action } = useCardCopy(card);
   const Icon = ICONS[card.icon];
   const hue = `var(--clr-${card.hue})`;
   return (
-    <Link href={card.href} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3.5 py-3 active:scale-[0.99] transition-transform" title={purpose}>
+    <Link href={card.href} className={`now-rise now-rise-${Math.min(5, 3 + index)} now-press flex items-center gap-3 rounded-2xl border border-border bg-card px-3.5 py-3`} title={purpose}>
       <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${hue} 14%, transparent)` }}>
         <Icon size={17} weight="fill" style={{ color: hue }} />
       </span>

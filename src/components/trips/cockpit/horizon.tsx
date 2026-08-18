@@ -49,41 +49,48 @@ export function Horizon({
 }) {
   const p = Math.max(0, Math.min(100, progress));
   return (
-    <section className={`rounded-3xl border border-border bg-card px-4 pt-3 pb-4 ${className}`} aria-label={title}>
-      <div className="flex items-center justify-between mb-5">
+    <section className={`now-rise now-rise-2 rounded-3xl border border-border bg-card px-4 pt-3 pb-3 ${className}`} aria-label={title}>
+      <div className="flex items-center justify-between mb-4">
         <p className="text-[10px] font-black tracking-[0.18em] uppercase text-muted-foreground">{title}</p>
-        <span className="text-[10px] font-bold" style={{ color: "var(--clr-horizon)" }}>● {nowLabel}</span>
+        <span className="text-[10px] font-bold inline-flex items-center gap-1" style={{ color: "var(--clr-horizon)" }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--clr-horizon)" }} />
+          {nowLabel}
+        </span>
       </div>
-      <div className="relative h-14 mx-2" dir="ltr">
-        <div className="absolute inset-x-0 top-[22px] h-1.5 rounded-full bg-foreground/[0.08]" />
-        <div
-          className="absolute top-[22px] h-1.5 rounded-full"
-          style={{ left: 0, width: `${p}%`, background: "linear-gradient(90deg, var(--clr-moss) 0%, var(--clr-moss) 60%, var(--clr-dune) 100%)", boxShadow: "0 0 14px color-mix(in srgb, var(--clr-moss) 40%, transparent)" }}
-        />
-        <div className="absolute top-[13px] -translate-x-1/2 z-10" style={{ left: `${p}%` }}>
-          <div className="relative w-6 h-6 rounded-full" style={{ background: "var(--clr-horizon)", boxShadow: "0 0 0 6px color-mix(in srgb, var(--clr-horizon) 22%, transparent), 0 0 20px color-mix(in srgb, var(--clr-horizon) 60%, transparent)" }}>
-            <span className="absolute inset-0 rounded-full animate-ping motion-reduce:animate-none" style={{ background: "color-mix(in srgb, var(--clr-horizon) 40%, transparent)" }} />
+      {/* The strip: marks above the track, labels below; the plane is the
+          track's own terminus (inside the panel), so nothing pokes out. */}
+      <div className="relative h-[68px] ps-3 pe-11" dir="ltr">
+        <div className="absolute inset-y-0 left-3 right-11">
+          <div className="absolute inset-x-0 top-[30px] h-1.5 rounded-full bg-foreground/[0.08]" />
+          <div
+            className="now-track absolute top-[30px] h-1.5 rounded-full"
+            style={{ left: 0, width: `${p}%`, background: "linear-gradient(90deg, var(--clr-moss) 0%, var(--clr-moss) 60%, var(--clr-dune) 100%)", boxShadow: "0 0 14px color-mix(in srgb, var(--clr-moss) 40%, transparent)" }}
+          />
+          <div className="now-pop absolute top-[21px] -translate-x-1/2 z-10" style={{ left: `${p}%`, animationDelay: "1050ms" }}>
+            <div className="relative w-6 h-6 rounded-full" style={{ background: "var(--clr-horizon)", boxShadow: "0 0 0 6px color-mix(in srgb, var(--clr-horizon) 22%, transparent), 0 0 20px color-mix(in srgb, var(--clr-horizon) 60%, transparent)" }}>
+              <span className="absolute inset-0 rounded-full animate-ping motion-reduce:animate-none" style={{ background: "color-mix(in srgb, var(--clr-horizon) 40%, transparent)" }} />
+            </div>
           </div>
+          {marks.map((m, i) => {
+            const I = m.icon;
+            const col = COLOR[m.state];
+            const chip = m.state === "due" ? "color-mix(in srgb, var(--clr-horizon) 15%, transparent)" : m.state === "done" ? "color-mix(in srgb, var(--clr-moss) 15%, transparent)" : "var(--card)";
+            const body = (
+              <>
+                <span className="w-7 h-7 rounded-full flex items-center justify-center border" style={{ background: chip, borderColor: m.state === "later" ? "color-mix(in srgb, var(--foreground) 15%, transparent)" : col }}>
+                  <I size={13} weight={m.state === "done" ? "fill" : "regular"} style={{ color: col }} />
+                </span>
+                <span className="mt-[15px] w-1.5 h-1.5 rounded-full" style={{ background: col }} />
+                <span className="mt-1 text-[10px] whitespace-nowrap font-semibold" style={{ color: col }}>{m.label}</span>
+              </>
+            );
+            const cls = `now-pop now-pop-${Math.min(4, i + 1)} absolute -translate-x-1/2 flex flex-col items-center px-2 -mx-2 py-1 -my-1`;
+            return m.href
+              ? <Link key={m.label} href={m.href} className={cls} style={{ left: `${m.at}%`, top: 0 }} aria-label={m.label}>{body}</Link>
+              : <div key={m.label} className={cls} style={{ left: `${m.at}%`, top: 0 }}>{body}</div>;
+          })}
         </div>
-        {marks.map((m) => {
-          const I = m.icon;
-          const col = COLOR[m.state];
-          const chip = m.state === "due" ? "color-mix(in srgb, var(--clr-horizon) 15%, transparent)" : m.state === "done" ? "color-mix(in srgb, var(--clr-moss) 15%, transparent)" : "var(--card)";
-          const body = (
-            <>
-              <span className="w-7 h-7 rounded-full flex items-center justify-center border" style={{ background: chip, borderColor: m.state === "later" ? "color-mix(in srgb, var(--foreground) 15%, transparent)" : col }}>
-                <I size={13} weight={m.state === "done" ? "fill" : "regular"} style={{ color: col }} />
-              </span>
-              <span className="mt-[9px] w-1.5 h-1.5 rounded-full" style={{ background: col }} />
-              <span className="mt-1 text-[10px] whitespace-nowrap font-semibold" style={{ color: col }}>{m.label}</span>
-            </>
-          );
-          const cls = "absolute -translate-x-1/2 flex flex-col items-center px-2 -mx-2 py-1 -my-1";
-          return m.href
-            ? <Link key={m.label} href={m.href} className={cls} style={{ left: `${m.at}%`, top: 0 }} aria-label={m.label}>{body}</Link>
-            : <div key={m.label} className={cls} style={{ left: `${m.at}%`, top: 0 }}>{body}</div>;
-        })}
-        <div className="absolute -end-2 top-[10px] w-8 h-8 rounded-full border border-border bg-foreground/[0.06] flex items-center justify-center">
+        <div className="absolute right-0 top-[18px] w-8 h-8 rounded-full border border-border bg-foreground/[0.06] flex items-center justify-center">
           <End size={14} weight="fill" className="text-foreground/80" />
         </div>
       </div>

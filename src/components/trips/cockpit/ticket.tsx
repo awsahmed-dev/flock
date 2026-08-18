@@ -48,7 +48,7 @@ export function Ticket({
       </div>
     </>
   );
-  const cls = `ticket flex overflow-hidden rounded-2xl text-[color:var(--ticket-fg)] active:scale-[0.99] transition-transform ${className}`;
+  const cls = `ticket now-rise now-rise-1 flex overflow-hidden rounded-2xl text-[color:var(--ticket-fg)] transition-transform ${className}`;
   const style = { boxShadow: `0 12px 34px color-mix(in srgb, ${bg} 32%, transparent)` };
   if (href) return <Link href={href} onClick={onClick} className={cls} style={style}>{inner}</Link>;
   return <button type="button" onClick={onClick} className={`${cls} w-full text-start`} style={style}>{inner}</button>;
@@ -59,7 +59,7 @@ export function QuietAction({
   icon: Icon, title, nudge, href,
 }: { icon: ComponentType<{ size?: number; className?: string }>; title: string; nudge: string; href: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 active:scale-[0.99] transition-transform">
+    <Link href={href} className="now-rise now-rise-1 now-press flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
       <Icon size={22} className="shrink-0 text-primary" />
       <span className="flex-1 min-w-0">
         <span className="block text-[15px] font-semibold">{title}</span>

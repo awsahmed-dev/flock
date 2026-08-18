@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { geocode } from "@/lib/geocode";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
@@ -113,9 +114,14 @@ export default async function TripPage({ params }: Props) {
   }).map((d) => isoFormat(d, "yyyy-MM-dd"));
 
   const withCoords = items.find((i) => i.lat != null && i.lng != null);
-  const center: [number, number] | null = withCoords
-    ? [withCoords.lng as number, withCoords.lat as number]
-    : null;
+  // Polish: a LIVE trip with no placed stops used to render an EMPTY map
+  // (center null → the sheet floated over a white void). Fall back to the
+  // destination itself — geocode is cached (Nominatim first).
+  let center: [number, number] | null = withCoords ? [withCoords.lng as number, withCoords.lat as number] : null;
+  if (!center) {
+    const g = await geocode(trip.destination, trip.destination).catch(() => null);
+    if (g) center = [g.lng, g.lat];
+  }
 
   // §10.3: live profile name over the join-time cached copy.
   const crew = trip.members.map((m) => ({
