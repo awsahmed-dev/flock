@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { normalizeParsed, type ParseResponse } from "@/lib/confirmations/types";
+import { extractPdfText } from "@/lib/pdf-text";
 
 export const maxDuration = 45;
 
 /**
  * "Add a confirmation" — extractor. POST one of:
- *   { image: base64, mediaType }   a screenshot / photo of the email or PDF page
+ *   { image: base64, mediaType }   a screenshot / photo of the email
+ *   { pdf: base64 }                the confirmation PDF (text extracted server-side)
  *   { text }                       pasted email body or a booking URL
  *   { hint }                       typed: "SV 826 6 Oct" / "Shinjuku Granbell 6-12 Oct"
  * plus { tripStart, tripEnd, tz } so dates without a year resolve inside the trip.
@@ -51,11 +53,15 @@ export async function POST(req: Request) {
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  let body: { image?: string; mediaType?: string; text?: string; hint?: string; tripStart?: string; tripEnd?: string; tz?: string };
+  let body: { image?: string; mediaType?: string; pdf?: string; text?: string; hint?: string; tripStart?: string; tripEnd?: string; tz?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "bad request" }, { status: 400 }); }
 
   const image = body.image?.replace(/^data:[\w/+.-]+;base64,/, "");
-  const text = body.text?.trim().slice(0, 12_000);
+  let text = body.text?.trim().slice(0, 12_000);
+  if (!text && body.pdf) {
+    text = await extractPdfText(body.pdf);
+    if (!text) return NextResponse.json({ items: [], reason: "Couldn't read text from that PDF — it may be a scan. Paste the details or type them." } satisfies ParseResponse, { status: 200 });
+  }
   const hint = body.hint?.trim().slice(0, 200);
   if (!image && !text && !hint) return NextResponse.json({ error: "nothing to read" }, { status: 400 });
 

@@ -39,6 +39,8 @@ interface Props {
    * a client that disagrees with the server swaps all four on hydration.
    */
   todayIso: string;
+  /** forward-the-email address for this trip (null when inbound isn't configured) */
+  inboundAddress?: string | null;
   children: React.ReactNode;
 }
 
@@ -54,7 +56,7 @@ interface Props {
  * right = avatar → account menu. Titles are left-aligned; no centered titles,
  * no hamburger, no drawer.
  */
-export function TripShell({ trip, isOwner, crew = [], todayIso, children }: Props) {
+export function TripShell({ trip, isOwner, crew = [], todayIso, inboundAddress = null, children }: Props) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -267,6 +269,7 @@ export function TripShell({ trip, isOwner, crew = [], todayIso, children }: Prop
           currency={trip.currency}
           budgetTotal={trip.budgetTotal}
           todayIso={todayIso}
+          inboundAddress={inboundAddress}
         />
       </div>
     </div>

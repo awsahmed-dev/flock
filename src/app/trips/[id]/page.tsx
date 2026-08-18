@@ -15,7 +15,7 @@ import { eq, asc, desc, inArray, and, sql } from "drizzle-orm";
 import { eachDayOfInterval, format as isoFormat, differenceInCalendarDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import { getRates, convert } from "@/lib/fx";
-import { getDailyWeather, weatherDateFor } from "@/lib/weather";
+import { getDailyWeather, weatherDateFor, getTodayWeather } from "@/lib/weather";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { totalInCurrency, totalInCurrencyBy } from "@/lib/money-total";
 import { convert as convertOrNull } from "@/lib/fx";
@@ -326,6 +326,22 @@ export default async function TripPage({ params }: Props) {
   }
 
   // LIVE — the map cockpit.
+  // Follow-ups: today's weather line (high + when rain starts) at the first
+  // stop with coordinates, and crew presence = the last stop another member
+  // checked off today ("Sami · Bukchon · 09:20").
+  const todayWx = wxCoords ? await getTodayWeather(wxCoords.lat as number, wxCoords.lng as number, todayIso) : null;
+  const presenceRows = await db
+    .select({ actorId: activities.actorId, placeName: activities.placeName, createdAt: activities.createdAt, eventType: activities.eventType })
+    .from(activities)
+    .where(and(eq(activities.tripId, id), eq(activities.eventType, "stop_done")))
+    .orderBy(desc(activities.createdAt))
+    .limit(10);
+  const presence = (() => {
+    const row = presenceRows.find((r) => r.actorId && r.actorId !== user.id && r.createdAt && r.createdAt.toISOString().slice(0, 10) === todayIso && r.placeName);
+    if (!row) return null;
+    const who = crew.find((c) => c.userId === row.actorId);
+    return who ? { name: who.displayName, place: row.placeName as string, at: row.createdAt!.toISOString() } : null;
+  })();
   return (
     <>
     <PocketDay
@@ -353,6 +369,8 @@ export default async function TripPage({ params }: Props) {
       teaser={teaser}
       documents={tripDocs.filter((d) => d.dayDate != null)}
       todayIso={todayIso}
+      todayWeather={todayWx}
+      presence={presence}
     />
     </>
   );

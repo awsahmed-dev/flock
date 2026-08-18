@@ -11,7 +11,7 @@ import { format as dfFormat } from "@/lib/i18n/date-fns";
 import { dayMoment } from "@/lib/trip-moment";
 import { Ticket } from "@/components/trips/cockpit/ticket";
 import { Horizon, type HorizonMark } from "@/components/trips/cockpit/horizon";
-import { ForkKnife, Camera, Bus, Moon } from "@phosphor-icons/react/dist/ssr";
+import { ForkKnife, Camera, Bus, Moon, Sun } from "@phosphor-icons/react/dist/ssr";
 import { format as isoFmt } from "date-fns";
 import { parseDateOnly } from "@/lib/date-only";
 import type { PlanMapItem } from "@/components/map/mapbox-plan-map";
@@ -80,6 +80,8 @@ export function NowCockpit({
   endDate,
   teaser = [],
   anchors = [],
+  todayWeather = null,
+  presence = null,
   documents = [],
   todayIso,
 }: {
@@ -93,6 +95,10 @@ export function NowCockpit({
   endDate?: string;
   teaser?: TeaserPlace[];
   anchors?: CockpitAnchor[];
+  /** follow-up: today's weather line (high + when rain starts) */
+  todayWeather?: { tempMax: number; key: string; rainFrom: string | null; sunset: string | null } | null;
+  /** follow-up: last stop another crew member checked off today */
+  presence?: { name: string; place: string; at: string } | null;
   /** Sprint 4 FIX-5b: day-pinned documents — a boarding pass surfaces on
    *  the day it's needed, not four taps deep in Pack. */
   documents?: { id: string; title: string; type: string; url: string; dayDate: string | null }[];
@@ -539,6 +545,23 @@ export function NowCockpit({
               )}
               {leaveBy && isLastDay && (
                 <p className="text-[13px] text-muted-foreground px-1">✈ {t("now.leaveBy", { time: leaveBy })}</p>
+              )}
+              {/* ONE context line: weather (rain from …) → link to the plan; and
+                  crew presence when someone else checked off a stop today. */}
+              {todayWeather && (
+                <Link href={`/trips/${tripId}/itinerary?day=${todayIso}`} className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-[13px]">
+                  <Sun size={16} weight="fill" className="shrink-0" style={{ color: "var(--clr-wayfind)" }} />
+                  <span className="flex-1 truncate">
+                    {todayWeather.tempMax}° · {t(todayWeather.key)}
+                    {todayWeather.rainFrom ? ` — ${t("now.rainFrom", { time: todayWeather.rainFrom })}` : todayWeather.sunset ? ` · ${t("now.sunsetAt", { time: todayWeather.sunset })}` : ""}
+                  </span>
+                  <span className="font-bold shrink-0" style={{ color: "var(--clr-wayfind)" }}>{t("now.plan")}</span>
+                </Link>
+              )}
+              {presence && (
+                <p className="text-[13px] text-muted-foreground px-1 truncate">
+                  <span className="font-semibold text-foreground">{presence.name}</span> · {t("now.presenceLine", { place: presence.place, time: isoFmt(new Date(presence.at), "HH:mm") })}
+                </p>
               )}
             </div>
           ) : selectedDay === todayIso && regularToday.length === 0 ? (

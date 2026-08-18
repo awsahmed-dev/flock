@@ -1212,6 +1212,10 @@
     "departureTonightBy": "Departure tonight · leave by {time}",
     "todayDayN": "Today · day {n}",
     "leaveBy": "Leave for the airport by {time}",
+    "rainFrom": "rain from {time}",
+    "sunsetAt": "sunset {time}",
+    "plan": "Plan",
+    "presenceLine": "checked off {place} · {time}",
     "upNext": "UP NEXT",
     "navigate": "Navigate",
     "done": "Done",
@@ -1464,6 +1468,8 @@
     "declineAria": "Decline analytics"
   },
   "confirm": {
+    "forwardTo": "Or forward the email to",
+    "forwardSame": "same result · tap to copy",
       "title": "Add a confirmation",
       "subtitle": "Flight, hotel, train, ticket — it lands on the plan, the departure board and your docs.",
       "snap": "Snap it",

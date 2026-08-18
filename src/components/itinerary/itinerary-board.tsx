@@ -979,6 +979,19 @@ export function ItineraryBoard({
                               <Compass size={17} className="shrink-0 text-primary" />
                               {t("itinerary.browseIdeas", { destination })}
                             </Link>
+                            {/* Now-redesign follow-up: day 1 usually starts with a
+                                flight or a check-in — third door opens the
+                                Add-a-confirmation sheet (owned by the nav). */}
+                            {day === days[0] && (
+                              <button
+                                type="button"
+                                onClick={() => window.dispatchEvent(new CustomEvent("paxawa:openConfirmation"))}
+                                className="mt-2 w-full h-11 rounded-2xl border border-border text-foreground font-semibold text-[14px] inline-flex items-center justify-center gap-2"
+                              >
+                                <Ticket size={17} className="shrink-0 text-[color:var(--clr-horizon)]" />
+                                {t("confirm.title")}
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <InlineAddRow

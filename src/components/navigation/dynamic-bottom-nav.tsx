@@ -100,6 +100,7 @@ export function DynamicBottomNav({
   days = [],
   startDate,
   endDate,
+  inboundAddress = null,
   currency = "USD",
   budgetTotal = null,
   todayIso,
@@ -109,6 +110,7 @@ export function DynamicBottomNav({
   days?: string[];
   startDate: string;
   endDate: string;
+  inboundAddress?: string | null;
   currency?: string;
   budgetTotal?: number | null;
   /**
@@ -460,7 +462,7 @@ export function DynamicBottomNav({
       <BudgetSheet open={budgetOpen} onClose={() => setBudgetOpen(false)} tripId={tripId} currency={currency} total={budgetTotal} />
       {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
       <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
-      <AddConfirmationSheet tripId={tripId} tripStart={startDate} tripEnd={endDate} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
+      <AddConfirmationSheet tripId={tripId} tripStart={startDate} tripEnd={endDate} inboundAddress={inboundAddress} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
     </div>
   );
 }
