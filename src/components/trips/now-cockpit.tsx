@@ -636,38 +636,25 @@ export function NowCockpit({
 
           </div>
 
-          {/* HALF+ content: spend strip, day progress, stop rows. */}
+          {/* HALF+ content — restructured from the phone video (2026-08-19):
+              the sheet reads top-down as "now → ahead → money → do":
+                1. day chips: TODAY and the days ahead only (the past is in
+                   the Plan tab; here it just crowded the rail),
+                2. the selected day's schedule + its documents,
+                3. one honest money row (was a 12px line jammed under the
+                   crew thumbnails), 4. quick actions. Breathing room between. */}
           <div className={detent === "peek" && dragH == null ? "hidden" : "block"}>
-            <button type="button" onClick={() => setBudgetOpen(true)} className="w-full text-start mt-4">
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-muted-foreground">
-                  {t("now.spent")} <span className="font-bold text-foreground tabular-nums">{money(budget.spent)}</span>
-                </span>
-                {budget.total != null ? (
-                  <span className="text-muted-foreground tabular-nums">{budgetPct}% {t("now.ofBudget")}</span>
-                ) : (
-                  <span className="text-primary font-semibold">{t("now.setBudget")}</span>
-                )}
-              </div>
-              {/* Brief E: spring-animated fill on value change. */}
-              <Progress
-                value={budgetPct}
-                className="h-1 bg-foreground/10"
-                style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
-              />
-            </button>
-
             {selectedDay === todayIso && regularToday.length > 0 && (
-              <p className="mt-3 text-[13px] text-muted-foreground">
+              <p className="mt-4 text-[13px] text-muted-foreground">
                 {t("now.dayProgress", { done: doneCount, total: regularToday.length })}
               </p>
             )}
 
-            {/* Day rail (full detent spec, shown from half for usefulness).
-                Sprint 8 Items 2+4: unified DayChip inside a ChipRail whose
-                trailing fade matches the sheet's glass surface. */}
-            <ChipRail wrapperClassName="-mx-4" className="flex gap-2 px-4 py-3" fadeColor="var(--sheet-bg)">
-              {days.map((d) => {
+            <p className="mt-5 mb-1 text-[11px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.2 }}>
+              {t("now.ahead")}
+            </p>
+            <ChipRail wrapperClassName="-mx-4" className="flex gap-2 px-4 py-2" fadeColor="var(--sheet-bg)">
+              {days.filter((d) => d >= todayIso).map((d) => {
                 const isToday = d === todayIso;
                 return (
                   <DayChip
@@ -725,8 +712,35 @@ export function NowCockpit({
               </div>
             )}
 
+            {/* Money row — a real row, tap opens the budget sheet. */}
+            <button
+              type="button"
+              onClick={() => setBudgetOpen(true)}
+              className="mt-5 w-full text-start rounded-2xl border border-border bg-card px-3.5 py-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-[13px]">
+                  <Wallet size={16} className="shrink-0" style={{ color: "var(--clr-moss)" }} />
+                  <span className="text-muted-foreground">{t("now.spent")}</span>
+                  <span className="font-bold text-foreground tabular-nums">{money(budget.spent)}</span>
+                </span>
+                {budget.total != null ? (
+                  <span className="text-[12px] text-muted-foreground tabular-nums">{budgetPct}% {t("now.ofBudget")}</span>
+                ) : (
+                  <span className="text-[13px] font-bold" style={{ color: "var(--clr-moss)" }}>{t("now.setBudget")} →</span>
+                )}
+              </div>
+              {budget.total != null && (
+                <Progress
+                  value={budgetPct}
+                  className="h-1 bg-foreground/10 mt-2"
+                  style={{ "--progress-foreground": "var(--clr-moss)" } as React.CSSProperties}
+                />
+              )}
+            </button>
+
             {/* Quick actions (full detent). */}
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-3">
               <Link href={`/trips/${tripId}/money/expense-camera`} className="flex-1 h-11 rounded-2xl border border-border flex items-center justify-center gap-1.5 text-[13px] font-bold">
                 <Wallet size={15} /> {t("now.logExpense")}
               </Link>

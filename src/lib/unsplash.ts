@@ -1,3 +1,5 @@
+import { placeKeyword } from "@/lib/geocode";
+
 /**
  * B19: Unsplash hero image fetcher for trips. We hit /search/photos once
  * per trip (when the destination is first persisted) and cache the
@@ -47,7 +49,9 @@ export async function getDestinationHero(
   // representative.
   // "saudi arabia" alone returned a chalkboard; ask for the place as a
   // destination — skyline / landmark / landscape — and take the top hit.
-  const place = destination.split(",")[0].trim();
+  // Free-typed destinations ("الاتنصثقمثsaudi arabia") returned a chalkboard —
+  // search on the recognisable place inside the text (lib/geocode placeKeyword).
+  const place = placeKeyword(destination);
   const query = `${place} landmark skyline travel`;
 
   const params = new URLSearchParams({

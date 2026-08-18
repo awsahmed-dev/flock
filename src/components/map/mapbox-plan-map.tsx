@@ -50,6 +50,8 @@ interface Props {
   /** Zoom for the destination fallback — a whole country needs ~5, a city ~11.
    *  Default 12 (city). Ignored once stops have coordinates. */
   destinationZoom?: number;
+  /** The device's location — a pulsing blue dot ("you are here"). */
+  userLocation?: [number, number] | null;
   focusedDay: string | null;
   highlightedItemId: string | null;
   onItemClick?: (itemId: string) => void;
@@ -88,6 +90,7 @@ export function MapboxPlanMap({
   items,
   destinationCenter,
   destinationZoom = 12,
+  userLocation = null,
   focusedDay,
   highlightedItemId,
   onItemClick,
@@ -275,6 +278,21 @@ export function MapboxPlanMap({
     if (!destinationCenter || !mapRef.current || items.length > 0) return;
     mapRef.current.flyTo({ center: destinationCenter, zoom: destinationZoom, duration: 800 });
   }, [destinationCenter, destinationZoom, items.length]);
+
+  // ── "You are here" dot ─────────────────────────────────────────────
+  const userMarkerRef = useRef<MapboxMarker | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    userMarkerRef.current?.remove();
+    userMarkerRef.current = null;
+    if (!userLocation) return;
+    const el = document.createElement("div");
+    el.className = "pax-here";
+    el.setAttribute("aria-label", "You are here");
+    userMarkerRef.current = new mapboxgl.Marker({ element: el }).setLngLat(userLocation).addTo(map);
+    return () => { userMarkerRef.current?.remove(); userMarkerRef.current = null; };
+  }, [userLocation, ready]);
 
   // ── Fetch Mapbox Directions for a day's route (cached) ────────────
   // Async + best-effort. Falls back to straight lines if the API trips.

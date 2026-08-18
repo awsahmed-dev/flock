@@ -1234,7 +1234,8 @@
     "ofBudget": "of budget",
     "gettingThere": "GETTING THERE",
     "stopRemoved": "Stop removed",
-    "docsForDay": "Documents for this day"
+    "docsForDay": "Documents for this day",
+    "ahead": "Ahead"
   },
   "manage": {
     "expenses": "Expenses",

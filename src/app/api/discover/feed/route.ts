@@ -22,6 +22,7 @@ export async function GET(request: Request) {
   const lat = num(searchParams.get("lat"));
   const lng = num(searchParams.get("lng"));
   const category = searchParams.get("category");
+  const near = searchParams.get("near") === "1" && lat != null && lng != null;
 
   try {
     const locale = await getLocale();
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
     const places = await buildSeedFeed({
       destination,
       center: lat != null && lng != null ? [lng, lat] : null,
+      near,
       category: category || null,
       languageCode: locale === "ar" ? "ar" : "en",
       cacheOnly: capped, // over cap → serve only an already-cached seed

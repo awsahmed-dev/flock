@@ -112,7 +112,7 @@ export function ItineraryCard({
         <button
           {...attributes}
           {...listeners}
-          className="shrink-0 text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing mt-1 touch-none transition-colors"
+          className="shrink-0 text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing mt-1 -m-1.5 p-2 touch-none select-none transition-colors"
           tabIndex={-1}
         >
           <GripVertical className="w-3.5 h-3.5" />

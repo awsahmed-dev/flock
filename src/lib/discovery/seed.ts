@@ -21,7 +21,7 @@ import "server-only";
  */
 
 import type { Place, PlaceCategory } from "@/lib/places/types";
-import { textSearch } from "@/lib/places/google";
+import { textSearch, nearby } from "@/lib/places/google";
 import { warmCache } from "@/lib/places/cache";
 
 /** Search phrasing per category — tuned to return famous anchors + a few gems. */
@@ -45,6 +45,9 @@ const SEED_TTL_MS = 6 * 60 * 60 * 1000; // 6h — the seed is stable per destina
 interface SeedOpts {
   destination: string;
   center?: [number, number] | null;
+  /** LIVE "near me": center is the device's location — restrict to a walkable
+   *  radius instead of resolving the whole destination. */
+  near?: boolean;
   category?: string | null;
   languageCode?: "en" | "ar";
   /** Over cap: serve only an already-cached seed, never call Google. */
@@ -54,8 +57,19 @@ interface SeedOpts {
 const seedCache = new Map<string, { places: Place[]; at: number }>();
 
 function cacheKey(o: SeedOpts): string {
-  return `${o.destination}|${o.category ?? "all"}|${o.languageCode ?? "en"}`;
+  const near = o.near && o.center ? `|near:${o.center[1].toFixed(2)},${o.center[0].toFixed(2)}` : "";
+  return `${o.destination}|${o.category ?? "all"}|${o.languageCode ?? "en"}${near}`;
 }
+
+const NEAR_RADIUS_M = 3_000;
+const NEAR_TYPES: Record<string, string[]> = {
+  eat: ["restaurant"],
+  coffee: ["cafe", "coffee_shop"],
+  sight: ["tourist_attraction", "museum", "park"],
+  nightlife: ["bar", "night_club"],
+  shopping: ["shopping_mall", "store"],
+  activity: ["amusement_park", "spa", "zoo"],
+};
 
 /**
  * Build (or serve cached) the seed feed for a destination. With a category →
@@ -85,6 +99,18 @@ export async function buildSeedFeed(opts: SeedOpts): Promise<Place[]> {
 /** One category's candidate set: text search (resolves the destination), plus a
  *  nearby refinement when we have a real center to localize around. */
 async function categoryFeed(category: string, opts: SeedOpts): Promise<Place[]> {
+  if (opts.near && opts.center) {
+    // Around the person, not around the country: a hard 3km circle.
+    const list = await nearby({
+      lat: opts.center[1],
+      lng: opts.center[0],
+      radius: NEAR_RADIUS_M,
+      includedTypes: NEAR_TYPES[category] ?? NEAR_TYPES.sight,
+      languageCode: opts.languageCode,
+      max: 15,
+    });
+    return list.map((p) => withCategory(p, category));
+  }
   const prompt = `${CATEGORY_PROMPT[category] ?? "top places"} in ${opts.destination}`;
   const text = await textSearch(prompt, {
     lat: opts.center?.[1],

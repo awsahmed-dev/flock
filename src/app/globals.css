@@ -294,6 +294,13 @@
     /* Smooth anchor scrolling for the landing-page in-page nav. */
     scroll-behavior: smooth;
   }
+  /* Phone video 2026-08-19: pulling the Now sheet down at FULL fired Chrome's
+     pull-to-refresh spinner ("the browser effect"). The app owns its vertical
+     gestures — never let an overscroll reach the browser chrome. */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
   /* Inputs sometimes inherit overflow-wrap and start wrapping on caret —
      keep them on a single line unless they're explicitly multiline. */
   input,
@@ -555,4 +562,30 @@ html[dir="rtl"] body {
 .now-press:active { transform: scale(.985); }
 @media (prefers-reduced-motion: reduce) {
   .now-rise, .now-track, .now-pop, .ticket::after { animation: none !important; }
+}
+
+/* "You are here" — LIVE Discover / Now map. Blue dot with a soft pulse. */
+.pax-here {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #2f80ff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(47, 128, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+.pax-here::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 9999px;
+  background: rgba(47, 128, 255, 0.25);
+  animation: pax-here-pulse 2s ease-out infinite;
+}
+@keyframes pax-here-pulse {
+  0% { transform: scale(0.5); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pax-here::after { animation: none; }
 }

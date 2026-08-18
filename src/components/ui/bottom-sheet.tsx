@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { motion, type PanInfo } from "motion/react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { motion } from "motion/react";
+import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { X } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 
@@ -64,9 +66,16 @@ export function BottomSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  function handleDragEnd(_: unknown, info: PanInfo) {
-    if (info.offset.y > 100 || info.velocity.y > 500) onClose();
-  }
+  // The track: pill + header are the grab zone; the sheet follows the finger
+  // and a 100px pull / flick dismisses (lib/use-sheet-drag — motion's drag
+  // never followed a real touch).
+  const { gripProps, sheetStyle } = useDismissDrag(onClose);
+  // Portal to <body>: rendered inside an animated/transformed ancestor (the
+  // Now cockpit), `fixed` was scoped to that ancestor and the sheet slid in
+  // UNDER the bottom nav — the budget sheet "crashing" into the nav bar.
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only portal host
+  useEffect(() => { setHost(document.body); }, []);
 
   // Sprint 3 FIX-1 (BUG-10, survived two QA rounds): close = INSTANT unmount.
   // The old AnimatePresence exit kept the sheet mounted until its slide-down
@@ -76,7 +85,8 @@ export function BottomSheet({
   // stayed visible AND interactive indefinitely — a second tap on the
   // still-rendered Submit created the duplicate polls/expenses QA logged.
   // Entrance animation stays; correctness no longer depends on exit frames.
-  return (
+  if (!host) return null;
+  return createPortal(
     <>
       {open && (
         <>
@@ -98,10 +108,7 @@ export function BottomSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.4 }}
-            onDragEnd={handleDragEnd}
+            style={sheetStyle}
             className={cn(
               "fixed left-0 right-0 bottom-0 z-[60] mx-auto bg-card border-t border-border rounded-t-2xl shadow-2xl shadow-black/40",
               "sm:left-1/2 sm:right-auto sm:bottom-auto sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:w-full",
@@ -110,13 +117,11 @@ export function BottomSheet({
             )}
           >
             {/* Drag handle — mobile only */}
-            <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
-              <span className="block w-10 h-1.5 rounded-full bg-muted-foreground/30" />
-            </div>
+            <SheetGrip {...gripProps} className="sm:hidden" />
 
-            {/* Header */}
+            {/* Header (also a grab zone) */}
             {(title || subtitle) && (
-              <div className="flex items-start gap-3 px-5 pt-2 pb-3 sm:pt-5 shrink-0">
+              <div {...gripProps} className="flex items-start gap-3 px-5 pt-2 pb-3 sm:pt-5 shrink-0">
                 <button
                   type="button"
                   onClick={onClose}
@@ -152,6 +157,7 @@ export function BottomSheet({
           </motion.div>
         </>
       )}
-    </>
+    </>,
+    host,
   );
 }

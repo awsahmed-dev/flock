@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { useEffect, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -131,6 +132,7 @@ export function AccountSheet({
     router.refresh();
   }
 
+  const { gripProps, sheetStyle } = useDismissDrag(onClose);
   return (
     // Brief B: the Radix-managed animated Sheet replaces the custom bottom
     // sheet — spring entry/exit per the brief's config, library-owned state.
@@ -144,8 +146,9 @@ export function AccountSheet({
           <SheetTitle>Account</SheetTitle>
         </SheetHeader>
       <div
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)", ...sheetStyle }}
       >
+        <SheetGrip {...gripProps} className="pt-2" />
         {/* 1. Avatar (§6-B: tap to change photo) + name + @username + email. */}
         <div className="flex items-center gap-4 px-6 py-4">
           <button

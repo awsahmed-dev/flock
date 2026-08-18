@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { PaperPlaneTilt as Send, X } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
@@ -124,19 +125,18 @@ export function ThreadSheet({
     setMentionOpen(v.endsWith("@"));
   }
 
+  const { gripProps, sheetStyle } = useDismissDrag(onClose);
   return (
     <>
       <div className="fixed inset-0 z-[60] bg-black/50" onClick={onClose} />
       <div
         className="fixed inset-x-0 bottom-0 z-[70] flex flex-col rounded-t-[20px] bg-background border-t border-border"
-        style={{ height: "85svh", paddingBottom: kbOffset }}
+        style={{ height: "85svh", paddingBottom: kbOffset, ...sheetStyle }}
       >
-        <div className="shrink-0 pt-3 pb-1 flex justify-center">
-          <div className="w-9 h-1 rounded-full bg-foreground/20" />
-        </div>
+        <SheetGrip {...gripProps} />
 
-        {/* Anchor header. */}
-        <div className="shrink-0 flex items-center gap-3 px-4 pb-3 border-b border-border">
+        {/* Anchor header (also drags). */}
+        <div {...gripProps} className="shrink-0 flex items-center gap-3 px-4 pb-3 border-b border-border">
           {photoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoUrl} alt="" className="w-[72px] h-[54px] rounded-xl object-cover" />

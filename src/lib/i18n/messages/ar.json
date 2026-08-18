@@ -1234,7 +1234,8 @@
     "ofBudget": "من الميزانية",
     "gettingThere": "في الطريق",
     "stopRemoved": "أُزيلت المحطة",
-    "docsForDay": "مستندات هذا اليوم"
+    "docsForDay": "مستندات هذا اليوم",
+    "ahead": "القادم"
   },
   "manage": {
     "expenses": "المصاريف",

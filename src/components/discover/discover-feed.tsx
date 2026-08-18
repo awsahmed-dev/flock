@@ -89,8 +89,8 @@ export interface SavedPlace {
 }
 
 export function DiscoverFeed({
-  tripId, tripName = "", destination, center, days, crewSize = 1, isOwner = false, initialCategory = null,
-  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false,
+  tripId, tripName = "", destination, center: destinationCenter, days, crewSize = 1, isOwner = false, initialCategory = null,
+  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false, live = false,
 }: {
   tripId: string;
   /** §2: shown in the floating back-to-dashboard header on the mobile feed. */
@@ -112,6 +112,9 @@ export function DiscoverFeed({
   /** Phase 7 §3-B: LIVE "Nearby" opens in map view — on the ground you need
    *  the map, not a list. */
   defaultMapView?: boolean;
+  /** LIVE: Discover becomes "around you" — the device's location centers the
+   *  map and the feed is a 3km circle, not the whole destination. */
+  live?: boolean;
 }) {
   const t = useT();
   // Sprint 9 FIX-2B: the search hint names YOUR city, not a KL food ref.
@@ -139,6 +142,21 @@ export function DiscoverFeed({
   const [openPlace, setOpenPlace] = useState<ScoredPlace | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [view, setView] = useState<"stream" | "map">(defaultMapView ? "map" : "stream");
+  // Phone video (LIVE Discover): "there is no location of where I am — it shows
+  // the whole country." During LIVE, ask the device once; while we wait (or if
+  // denied) fall back to the destination center.
+  const [here, setHere] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    if (!live || typeof navigator === "undefined" || !navigator.geolocation) return;
+    let alive = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { if (alive) setHere([pos.coords.longitude, pos.coords.latitude]); },
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 },
+    );
+    return () => { alive = false; };
+  }, [live]);
+  const center = here ?? destinationCenter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const isDesktop = useIsDesktop();
@@ -332,6 +350,7 @@ export function DiscoverFeed({
           const p = new URLSearchParams({ destination });
           if (cat) p.set("category", cat);
           if (center) { p.set("lng", String(center[0])); p.set("lat", String(center[1])); }
+          if (here) p.set("near", "1");
           url = `/api/discover/feed?${p}`;
         }
         const res = await fetch(url);
@@ -346,14 +365,14 @@ export function DiscoverFeed({
         setState("error");
       }
     },
-    [center, destination],
+    [center, here, destination],
   );
 
   useEffect(() => {
     if (searching) return;
     void fetchFeed("", category);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
+  }, [category, here]);
 
   // §9: the dynamic bottom nav (a sibling route component) drives the Saved
   // sheet + Search input via window events, and reads the wishlist count for
@@ -657,6 +676,8 @@ export function DiscoverFeed({
             <MapboxPlanMap
               items={mapItems}
               destinationCenter={center}
+              destinationZoom={here ? 14 : 12}
+              userLocation={here}
               focusedDay={DISCOVER_DAY}
               highlightedItemId={highlightedId}
               onItemClick={(id) => { const s = ranked.find((r) => r.place.placeId === id); if (s) onOpen(s); }}
@@ -768,7 +789,7 @@ export function DiscoverFeed({
       {view === "map" ? (
         <div className="relative h-full">
           <MapboxPlanMap
-            items={mapItems} destinationCenter={center} focusedDay={DISCOVER_DAY}
+            items={mapItems} destinationCenter={center} destinationZoom={here ? 14 : 12} userLocation={here} focusedDay={DISCOVER_DAY}
             highlightedItemId={highlightedId} onItemClick={focusCarousel} days={[DISCOVER_DAY]}
             showRoutes={false} pinColor="#f97316" numbered={false} mapStyle={themedMapStyle}
           />

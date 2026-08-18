@@ -354,43 +354,39 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {/* ZONE 3 — MEMORIES. */}
+          {/* ZONE 3 — MEMORIES. Phone video 2026-08-19: the 2-up square grid
+              grew into four rows for seven past trips and pushed everything
+              else off the screen. Memories are one film strip now: a single
+              swipeable row of small tiles under a count — the past takes one
+              row, never the page. */}
           {pastTrips.length > 0 && (
             <section>
-              <SectionLabel label={t("dashboard.memories")} />
-              {/* §4-C / §10.10: compact square tiles — the past takes a quarter
-                  of the pixels; 2-up on mobile, 4-up on md+, capped ~180px.
-                  Coverless trips get a calm surface tile with the destination
-                  initial — not a giant raw purple gradient. */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 px-4">
+              <div className="flex items-baseline gap-2 px-4 mt-1 mb-2">
+                <p className="text-[11px] font-semibold tracking-wider uppercase text-tertiary">{t("dashboard.memories")}</p>
+                <span className="text-[11px] text-muted-foreground tabular-nums">· {pastTrips.length}</span>
+              </div>
+              <div className="flex gap-2.5 overflow-x-auto scrollbar-none snap-x px-4 pb-1">
                 {pastTrips.map((trip) => (
                   <Link
                     key={trip.id}
                     href={`/trips/${trip.id}`}
                     prefetch
-                    className="relative rounded-2xl overflow-hidden active:scale-[0.98] transition-transform mx-auto w-full"
-                    style={{ aspectRatio: "1 / 1", maxWidth: 180, maxHeight: 180 }}
+                    className="snap-start shrink-0 w-[92px] active:scale-[0.97] transition-transform"
                   >
-                    {trip.heroImageUrl ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={trip.heroImageUrl} alt={trip.name} className="absolute inset-0 w-full h-full object-cover" />
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.80) 100%)" }} />
-                      </>
-                    ) : (
-                      <div className="absolute inset-0 bg-card border border-border rounded-2xl flex items-center justify-center">
-                        <span
-                          className="font-extrabold"
-                          style={{ fontSize: 40, fontWeight: 800, color: "var(--clr-brand)", opacity: 0.45 }}
-                        >
-                          {(trip.destination || trip.name || "?").charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 p-2.5">
-                      <p className={`text-[13px] font-bold leading-tight line-clamp-1 ${trip.heroImageUrl ? "text-white" : "text-foreground"}`}>{trip.name}</p>
-                      <p className={`text-[10px] mt-0.5 ${trip.heroImageUrl ? "text-white/60" : "text-muted-foreground"}`}>{datesLabel(trip)}</p>
+                    <div className="relative w-[92px] h-[92px] rounded-2xl overflow-hidden">
+                      {trip.heroImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={trip.heroImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="absolute inset-0 bg-card border border-border rounded-2xl flex items-center justify-center">
+                          <span className="font-extrabold" style={{ fontSize: 28, color: "var(--clr-brand)", opacity: 0.45 }}>
+                            {(trip.destination || trip.name || "?").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                     </div>
+                    <p className="mt-1.5 text-[11px] font-bold leading-tight line-clamp-1">{trip.name}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight line-clamp-1">{datesLabel(trip)}</p>
                   </Link>
                 ))}
               </div>
