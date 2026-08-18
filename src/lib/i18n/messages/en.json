@@ -1216,6 +1216,8 @@
     "sunsetAt": "sunset {time}",
     "plan": "Plan",
     "presenceLine": "checked off {place} · {time}",
+    "freeDaySub": "{count, plural, one {1 stop} other {# stops}} on other days · find something nearby",
+    "freeDaySubEmpty": "Nothing planned yet · find something nearby",
     "upNext": "UP NEXT",
     "navigate": "Navigate",
     "done": "Done",
