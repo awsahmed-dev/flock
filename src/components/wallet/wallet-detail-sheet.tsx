@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { useEffect, useState } from "react";
 import { X, DownloadSimple as Download, ShareNetwork as Share2, Airplane as Plane, Buildings as Hotel, Train, Bus, WifiHigh as Wifi, Ticket, Calendar } from "@phosphor-icons/react/dist/ssr";
 import type { MockBooking } from "./mock-bookings";
@@ -72,13 +73,16 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
         ? `${booking.activity?.venue ?? booking.title}`
         : null;
   const photo = useWalletImage(imageQuery);
+  const { gripProps, sheetStyle } = useDismissDrag(onClose);
   if (!booking) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-150">
-      <div className="bg-background w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto relative animate-in slide-in-from-bottom duration-200">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 py-3">
+      <div style={sheetStyle} className="bg-background w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto relative animate-in slide-in-from-bottom duration-200">
+        {/* Header (the track: grip + header row drag to dismiss) */}
+        <div {...gripProps} className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 pb-3">
+        <SheetGrip className="sm:hidden pt-2 pb-1" />
+        <div className="flex items-center justify-between pt-1">
           <button
             type="button"
             onClick={onClose}
@@ -94,6 +98,7 @@ export function WalletDetailSheet({ booking, onClose }: Props) {
           >
             <Share2 className="w-4 h-4" />
           </button>
+        </div>
         </div>
 
         {/* Ticket body */}

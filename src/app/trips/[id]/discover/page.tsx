@@ -6,7 +6,7 @@ import { parseDateOnly } from "@/lib/date-only";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { isOwner } from "@/lib/permissions";
-import { geocode } from "@/lib/geocode";
+import { geocodeDestination } from "@/lib/geocode";
 import { db } from "@/lib/db";
 import { tripWishlist, placeLikes } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -78,7 +78,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const likeCounts: Record<string, number> = {};
   for (const r of likeRows) likeCounts[r.placeId] = (likeCounts[r.placeId] ?? 0) + 1;
 
-  const geo = await geocode(trip.destination).catch(() => null);
+  const geo = await geocodeDestination(trip.destination).catch(() => null);
   const center: [number, number] | null = geo ? [geo.lng, geo.lat] : null;
 
   const days = eachDayOfInterval({
@@ -123,6 +123,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         likedPlaceIds={likedPlaceIds}
         likeCounts={likeCounts}
         defaultMapView={tripPhase(trip, todayIso) === "LIVE"}
+        live={tripPhase(trip, todayIso) === "LIVE"}
       />
     </div>
   );

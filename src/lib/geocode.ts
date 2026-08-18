@@ -220,6 +220,19 @@ const CITY_TO_COUNTRY: Record<string, string> = {
   "chicago": "us", "las vegas": "us", "boston": "us", "usa": "us", "united states": "us",
 };
 
+/**
+ * The recognisable place inside free text — for image searches. Free-typed
+ * "الاتنصثقمثsaudi arabia" → "saudi arabia"; Arabic "اليابان" → "Japan";
+ * unknown text → its first comma segment as typed.
+ */
+export function placeKeyword(destination: string): string {
+  const lower = destination.toLowerCase();
+  for (const [name, code] of Object.entries(CITY_TO_COUNTRY)) {
+    if (lower.includes(name)) return /^[a-z\s]+$/.test(name) ? name : (COUNTRY_NAME[code] ?? name);
+  }
+  return destination.split(",")[0].trim();
+}
+
 function guessCountryCode(context: string): string | null {
   const lower = context.toLowerCase();
   for (const [city, code] of Object.entries(CITY_TO_COUNTRY)) {

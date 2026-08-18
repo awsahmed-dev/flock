@@ -1329,7 +1329,10 @@ function SortableItemRow({
           <button
             {...attributes}
             {...listeners}
-            className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5"
+            /* Phone video: reorder never moved on touch — the row's touch-pan-y
+               let the browser scroll and cancel the gesture. The grip owns its
+               touches (touch-none) and is a real 36px target. */
+            className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing -m-1.5 p-2.5 touch-none select-none"
             aria-label="Drag to reorder"
           >
             <GripVertical className="w-4 h-4" />

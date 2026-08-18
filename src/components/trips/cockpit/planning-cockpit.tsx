@@ -167,12 +167,16 @@ export function PlanningCockpit(props: CockpitShared) {
             the Discover teaser and the metric cells. Every card answers
             "what's it like" or "what's next"; the ticket + horizon own chores.
             Capped at hero + 3 — a deck, not a feed. */}
-        {deck.hero && <HeroCard card={deck.hero} />}
-        {deck.notes.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {deck.notes.map((c, i) => <NoteRow key={c.kind} card={c} index={i} />)}
-          </div>
-        )}
+        {/* Phone video: the horizon's mark labels sat right on top of the
+            first note — the deck is its own group, with room to breathe. */}
+        <div className="flex flex-col gap-3 mt-3">
+          {deck.hero && <HeroCard card={deck.hero} />}
+          {deck.notes.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {deck.notes.map((c, i) => <NoteRow key={c.kind} card={c} index={i} />)}
+            </div>
+          )}
+        </div>
         <DeckFooter
           crew={crew}
           text={t("cockpit.deck.footer", {

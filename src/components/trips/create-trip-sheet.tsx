@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin, CalendarDots as CalendarDays } from "@phosphor-icons/react/dist/ssr";
 import {
@@ -163,6 +164,7 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
     });
   }
 
+  const { gripProps, sheetStyle } = useDismissDrag(onClose);
   if (!open) return null;
 
   return (
@@ -183,11 +185,11 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
       {/* Sheet */}
       <div
         className="relative w-full sm:max-w-lg bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl elev-lg max-h-[92svh] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300"
-        style={{ transition: "all 200ms cubic-bezier(0.4,0,0.2,1)" }}
+        style={sheetStyle}
       >
-        {/* Handle + progress dots */}
-        <div className="pt-3 pb-2 px-5 shrink-0">
-          <div className="mx-auto w-9 h-1 rounded-full bg-border" />
+        {/* Handle + progress dots — the track: grab here to pull the sheet down */}
+        <div {...gripProps} className="pt-1 pb-2 px-5 shrink-0">
+          <SheetGrip className="pt-2 pb-1" />
           <div className="mt-4 flex items-center justify-between">
             <button
               type="button"

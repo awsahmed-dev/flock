@@ -222,12 +222,14 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
 
         {/* 5. THE DECK (follow-up): the same hero → notes → footer as
             PLANNING, replacing the crew card above and the metric row here. */}
-        {deck.hero && <HeroCard card={deck.hero} />}
-        {deck.notes.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {deck.notes.map((c, i) => <NoteRow key={c.kind} card={c} index={i} />)}
-          </div>
-        )}
+        <div className="flex flex-col gap-3 mt-3">
+          {deck.hero && <HeroCard card={deck.hero} />}
+          {deck.notes.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {deck.notes.map((c, i) => <NoteRow key={c.kind} card={c} index={i} />)}
+            </div>
+          )}
+        </div>
         <DeckFooter
           crew={crew}
           text={t("cockpit.deck.footer", {

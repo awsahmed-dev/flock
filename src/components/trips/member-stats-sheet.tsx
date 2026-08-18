@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { useEffect, useState } from "react";
 import { X, Calendar, Wallet, MapPin, Backpack, CircleNotch as Loader2, Crown } from "@phosphor-icons/react/dist/ssr";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -97,6 +98,7 @@ export function MemberStatsSheet({ open, onClose, tripId, member }: Props) {
     return () => window.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
 
+  const { gripProps, sheetStyle } = useDismissDrag(onClose);
   if (!open || !member) return null;
 
   return (
@@ -106,10 +108,13 @@ export function MemberStatsSheet({ open, onClose, tripId, member }: Props) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        style={sheetStyle}
         className="bg-background w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),1rem)] animate-in slide-in-from-bottom duration-200"
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-end px-4 py-2">
+        {/* Header — the track */}
+        <div {...gripProps} className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 pb-2">
+        <SheetGrip className="sm:hidden pt-2 pb-1" />
+        <div className="flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
@@ -118,6 +123,7 @@ export function MemberStatsSheet({ open, onClose, tripId, member }: Props) {
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
         </div>
 
         {/* Identity block */}
