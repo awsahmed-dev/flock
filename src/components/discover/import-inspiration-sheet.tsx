@@ -64,9 +64,8 @@ export function ImportInspirationSheet({ tripId, open, onClose, initialInput }: 
   function submitText() {
     const v = input.trim();
     if (v.length < 4) return;
-    // One field for both: a lone URL goes as url, anything else as text.
-    if (/^https?:\/\/\S+$/i.test(v)) void parse({ url: v });
-    else void parse({ text: v });
+    // The server finds every URL in the text itself — one field, any mix.
+    void parse({ text: v });
   }
 
   async function onFile(f: File) {
