@@ -1547,5 +1547,27 @@
     "hearts": {"title": "Heart places in Discover", "body": "the crew's hearts become the free-day ideas on the Now page."},
     "pocket": {"title": "Pocket Day works offline", "body": "today's plan, tickets and the map stay open with no signal."},
     "split": {"title": "Log it, split it", "body": "add a bill in Money and it's split across the crew in one tap — receipt photo optional."}
+  },
+  "inspire": {
+    "entry": "Import places from a link or screenshot",
+    "title": "Import inspiration",
+    "subtitle": "A TikTok or Instagram link, a caption, an article — or a screenshot. We'll pull out the places.",
+    "placeholder": "Paste a link or any text with places in it…",
+    "extract": "Find the places",
+    "dropShot": "Or drop a screenshot",
+    "dropShotSub": "A saved post, a list, a map — JPG · PNG · WEBP",
+    "reading": "Reading… finding the places",
+    "found": "{count, plural, one {Found 1 place} other {Found # places}} on the map:",
+    "nothing": "No places found in that",
+    "failed": "Couldn't read that — try pasting the text instead",
+    "save": "Save",
+    "saved": "Saved",
+    "savedAll": "Saved to the crew's shortlist",
+    "saveAll": "{count, plural, one {Save 1 place} other {Save all # places}}",
+    "allSaved": "All saved",
+    "another": "Import another",
+    "misses": "Couldn't find on the map: {names}",
+    "whereTheyGo": "Saved places show in Discover, the crew's shortlist, and free-day ideas.",
+    "imagesOnly": "Images only — for a booking PDF use Add a confirmation"
   }
 }

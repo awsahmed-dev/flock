@@ -15,6 +15,7 @@ import {
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
 import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
 import { AddConfirmationSheet } from "@/components/confirmations/add-confirmation-sheet";
+import { ImportInspirationSheet } from "@/components/discover/import-inspiration-sheet";
 import { Ticket } from "@phosphor-icons/react/dist/ssr";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
@@ -133,6 +134,7 @@ export function DynamicBottomNav({
   // Sprint 4 FIX-5a: the document composer owned by the + menu.
   const [docOpen, setDocOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [inspireOpen, setInspireOpen] = useState(false);
   // Now-redesign step 1: any surface can open the confirmation sheet by event
   // (trip home "Add a confirmation", empty Day 1, docs tab).
   useEffect(() => {
@@ -434,6 +436,7 @@ export function DynamicBottomNav({
               (FIX-2 — paxawa:shareTrip only had a LIVE listener); documents
               get their first entry point (FIX-5a). */}
           <ActionRow icon={MapPin} label={t("nav.addPlace")} onClick={() => { setPlusOpen(false); setAddPlaceOpen(true); }} />
+          <ActionRow icon={Sparkles} label={t("inspire.entry")} onClick={() => { setPlusOpen(false); setInspireOpen(true); }} />
           <ActionRow
             icon={Wallet}
             label={t("now.logExpense")}
@@ -463,6 +466,7 @@ export function DynamicBottomNav({
       {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
       <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
       <AddConfirmationSheet tripId={tripId} tripStart={startDate} tripEnd={endDate} inboundAddress={inboundAddress} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
+      <ImportInspirationSheet tripId={tripId} open={inspireOpen} onClose={() => setInspireOpen(false)} />
     </div>
   );
 }
