@@ -41,19 +41,50 @@ const SCHEMA: Anthropic.Tool.InputSchema = {
   required: ["places"],
 };
 
+const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => { try { return String.fromCodePoint(parseInt(h, 16)); } catch { return " "; } })
+    .replace(/&#(\d+);/g, (_, d) => { try { return String.fromCodePoint(Number(d)); } catch { return " "; } })
+    .replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#39;|&apos;/g, "'");
+}
+
+/** TikTok serves crawlers an empty shell — but its public oEmbed returns the
+ *  full caption. Rate-limited per IP, so one retry after a short pause. */
+async function tiktokCaption(url: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(6000) });
+      if (res.ok) {
+        const j = (await res.json()) as { title?: string; author_name?: string };
+        if (j.title) return `TikTok video by ${j.author_name ?? "unknown"}:\n${j.title}`;
+      }
+    } catch { /* fall through to retry / HTML */ }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 800));
+  }
+  return null;
+}
+
 async function fetchUrlText(url: string): Promise<string | null> {
+  const isTikTok = /(^|\.)tiktok\.com\//i.test(url.replace(/^https?:\/\//i, ""));
+  if (isTikTok) {
+    const cap = await tiktokCaption(url);
+    if (cap) return cap;
+  }
   try {
     const res = await fetch(url, {
-      headers: {
-        // A plain browser UA — link previews (og tags) are served to anyone.
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-        "Accept-Language": "en,ar;q=0.8",
-      },
+      headers: { "User-Agent": UA, "Accept-Language": "en,ar;q=0.8" },
       redirect: "follow",
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
-    const html = (await res.text()).slice(0, 400_000);
+    const html = (await res.text()).slice(0, 600_000);
+    // TikTok fallback: the shell embeds the caption as JSON ("desc":"…").
+    if (isTikTok) {
+      const m = html.match(/"desc":"((?:[^"\\]|\\.){10,900})"/);
+      if (m) { try { return `TikTok caption:\n${JSON.parse(`"${m[1]}"`)}`; } catch { /* keep going */ } }
+    }
     const metas: string[] = [];
     for (const m of html.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:title|og:description|twitter:title|twitter:description|description)["'][^>]+content=["']([^"']{2,500})["']/gi)) metas.push(m[1]);
     for (const m of html.matchAll(/<meta[^>]+content=["']([^"']{2,500})["'][^>]+(?:property|name)=["'](?:og:title|og:description|twitter:title|twitter:description|description)["']/gi)) metas.push(m[1]);
@@ -64,8 +95,11 @@ async function fetchUrlText(url: string): Promise<string | null> {
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .slice(0, 6000);
-    const out = [title, ...metas, body].filter(Boolean).join("\n").trim();
-    return out.length > 40 ? out : out || null;
+    // A bare shell title ("TikTok - Make Your Day", "Instagram") carries
+    // nothing — don't let it count as content.
+    const parts = [title, ...metas, body].filter((x): x is string => !!x).map(decodeEntities);
+    const out = parts.join("\n").replace(/TikTok - Make Your Day/g, " ").trim();
+    return out.replace(/\s/g, "").length > 60 ? out : null;
   } catch {
     return null;
   }
