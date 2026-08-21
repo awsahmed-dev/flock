@@ -1549,6 +1549,7 @@
     "split": {"title": "Log it, split it", "body": "add a bill in Money and it's split across the crew in one tap — receipt photo optional."}
   },
   "inspire": {
+    "seeShortlist": "See the crew's shortlist →",
     "chip": "Import from a link",
     "shareTitle": "Add to a trip",
     "sharePick": "Which trip should these places go to?",

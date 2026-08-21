@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 import { togglePlaceLike } from "@/lib/actions/place-likes";
@@ -16,6 +17,7 @@ import { Link as LinkIcon, Image as ImageIcon, CircleNotch, Heart, Check, Sparkl
  */
 export function ImportInspirationSheet({ tripId, open, onClose, initialInput }: { tripId: string; open: boolean; onClose: () => void; initialInput?: string }) {
   const t = useT();
+  const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
   // Share-target / deep-link prefill: fill once each time the sheet opens.
@@ -104,10 +106,22 @@ export function ImportInspirationSheet({ tripId, open, onClose, initialInput }: 
       title={t("inspire.title")}
       size="md"
       footer={mode === "results" && places.length > 0 ? (
-        <button type="button" onClick={() => void saveAll()} disabled={savingAll || places.every((p) => saved.has(p.placeId))} className="w-full h-12 rounded-full bg-primary text-primary-foreground font-bold text-[15px] disabled:opacity-60 flex items-center justify-center gap-2">
-          {savingAll && <CircleNotch className="w-4 h-4 animate-spin" />}
-          {places.every((p) => saved.has(p.placeId)) ? `✓ ${t("inspire.allSaved")}` : t("inspire.saveAll", { count: places.filter((p) => !saved.has(p.placeId)).length })}
-        </button>
+        places.every((p) => saved.has(p.placeId)) ? (
+          /* Round 12: after saving, TAKE the person to where the saves live —
+             "the like, where it goes? no access to it." */
+          <button
+            type="button"
+            onClick={() => { const dest = `/trips/${tripId}/discover?filter=saved`; close(); router.push(dest); }}
+            className="w-full h-12 rounded-full bg-primary text-primary-foreground font-bold text-[15px] flex items-center justify-center gap-2"
+          >
+            {t("inspire.seeShortlist")}
+          </button>
+        ) : (
+          <button type="button" onClick={() => void saveAll()} disabled={savingAll} className="w-full h-12 rounded-full bg-primary text-primary-foreground font-bold text-[15px] disabled:opacity-60 flex items-center justify-center gap-2">
+            {savingAll && <CircleNotch className="w-4 h-4 animate-spin" />}
+            {t("inspire.saveAll", { count: places.filter((p) => !saved.has(p.placeId)).length })}
+          </button>
+        )
       ) : undefined}
     >
       <p className="text-[13px] text-muted-foreground mb-4">{t("inspire.subtitle")}</p>
@@ -190,10 +204,15 @@ export function ImportInspirationSheet({ tripId, open, onClose, initialInput }: 
             <p className="text-[12px] text-muted-foreground px-1">{t("inspire.misses", { names: misses.join(" · ") })}</p>
           )}
           {places.length > 0 && (
-            <div className="flex items-center gap-2 text-[12px] text-muted-foreground px-1">
+            <button
+              type="button"
+              onClick={() => { const dest = `/trips/${tripId}/discover?filter=saved`; close(); router.push(dest); }}
+              className="flex items-center gap-2 text-[13px] font-bold px-1"
+              style={{ color: "var(--clr-brand)" }}
+            >
               <LinkIcon size={16} />
-              <span>{t("inspire.whereTheyGo")}</span>
-            </div>
+              {t("inspire.seeShortlist")}
+            </button>
           )}
           <button type="button" onClick={() => { setMode("pick"); setPlaces([]); setMisses([]); }} className="h-10 px-4 rounded-full border border-border text-[13px] font-bold">{t("inspire.another")}</button>
         </div>

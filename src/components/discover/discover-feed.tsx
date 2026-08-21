@@ -90,7 +90,7 @@ export interface SavedPlace {
 
 export function DiscoverFeed({
   tripId, tripName = "", destination, center: destinationCenter, days, crewSize = 1, isOwner = false, initialCategory = null,
-  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false, live = false,
+  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false, live = false, initialSpecialFilter = null,
 }: {
   tripId: string;
   /** §2: shown in the floating back-to-dashboard header on the mobile feed. */
@@ -115,6 +115,8 @@ export function DiscoverFeed({
   /** LIVE: Discover becomes "around you" — the device's location centers the
    *  map and the feed is a 3km circle, not the whole destination. */
   live?: boolean;
+  /** Deep link (?filter=saved|crew) — the import sheet's "See the shortlist". */
+  initialSpecialFilter?: "crew" | "saved" | null;
 }) {
   const t = useT();
   // Sprint 9 FIX-2B: the search hint names YOUR city, not a KL food ref.
@@ -167,7 +169,7 @@ export function DiscoverFeed({
   const [onboardDismissed, setOnboardDismissed] = useState(false);
   const [whySheetFor, setWhySheetFor] = useState<ScoredPlace | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [specialFilter, setSpecialFilter] = useState<"crew" | "saved" | null>(null);
+  const [specialFilter, setSpecialFilter] = useState<"crew" | "saved" | null>(initialSpecialFilter);
   const smarterToastFired = useRef(false);
 
   useEffect(() => {
