@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useT } from "@/components/i18n/locale-provider";
 import type { DeckCard } from "@/lib/deck";
-import { Heart, CalendarDots, Sun, CurrencyCircleDollar, Wallet, Users, FileText, ChatCircle, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { Heart, CalendarDots, Sun, CurrencyCircleDollar, Wallet, Users, FileText, ChatCircle, CaretRight, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 /**
@@ -14,7 +14,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
  * one-word action; the purpose line and long body stay hidden until tap.
  * DeckFooter: faces + the numbers that used to be three metric cells.
  */
-const ICONS = { Heart, CalendarDots, Sun, CurrencyCircleDollar, Wallet, Users, FileText, ChatCircle } as const;
+const ICONS = { Heart, CalendarDots, Sun, CurrencyCircleDollar, Wallet, Users, FileText, ChatCircle, Sparkle } as const;
 
 function useCardCopy(c: DeckCard) {
   const t = useT();

@@ -1,7 +1,7 @@
 {
-  "name": "Paxawa — Plan trips together",
+  "name": "Paxawa \u2014 Plan trips together",
   "short_name": "Paxawa",
-  "description": "Plan group trips, vote on options, split expenses — all in one place.",
+  "description": "Plan group trips, vote on options, split expenses \u2014 all in one place.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -63,15 +63,38 @@
       "short_name": "Trips",
       "description": "View all your trips",
       "url": "/dashboard",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "New trip",
       "short_name": "New",
       "description": "Plan a new group trip",
       "url": "/trips/new",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
-  "categories": ["travel", "lifestyle", "utilities"]
+  "categories": [
+    "travel",
+    "lifestyle",
+    "utilities"
+  ],
+  "share_target": {
+    "action": "/share-target",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

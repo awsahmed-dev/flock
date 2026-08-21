@@ -11,6 +11,14 @@ const base: DeckInput = {
 };
 
 describe("buildDeck — one photo, then notes, capped", () => {
+  it("the inspire door shows only while the plan AND shortlist are thin", () => {
+    expect(buildDeck(base).notes.some((n) => n.kind === "inspire")).toBe(true);
+    expect(buildDeck({ ...base, hearts: [
+      { placeId: "p1", name: "A", photoUrl: null, hearts: 1, onPlan: true },
+      { placeId: "p2", name: "B", photoUrl: null, hearts: 1, onPlan: true },
+    ] }).notes.some((n) => n.kind === "inspire")).toBe(false);
+    expect(buildDeck({ ...base, day1: { count: 3, firstTime: "10:00", firstTitle: "Shibuya" } }).notes.some((n) => n.kind === "inspire")).toBe(false);
+  });
   it("a hearted place not on the plan is the hero; day 1 only with its own stop photo", () => {
     const d = buildDeck({ ...base, hearts: [{ placeId: "p1", name: "TeamLab", photoUrl: "/p1.jpg", hearts: 2, onPlan: false }], day1: { count: 3, firstTime: "10:00", firstTitle: "Shibuya" } });
     expect(d.hero?.kind).toBe("crewHeart");
@@ -24,12 +32,12 @@ describe("buildDeck — one photo, then notes, capped", () => {
     const d = buildDeck({ ...base, heroImageUrl: null, weather: { tempMax: 27, tempMin: 20, key: "cockpit.weatherClear", sunset: "18:03", isTripDay: false }, fx: { local: "JPY", symbol: "¥", perUnit: 156, base: "USD" }, ticker: { text: "Rania hearted TeamLab" } });
     expect(d.hero).toBeNull();
     expect(d.notes.length).toBe(3);
-    expect(d.notes.map((n) => n.kind)).toEqual(["crewPulse", "weather", "fx"]); // money (30) falls off
+    expect(d.notes.map((n) => n.kind)).toEqual(["inspire", "crewPulse", "weather"]); // empty-ish trip: the camera-roll door outranks; fx+money fall off
   });
   it("docs note appears only once docs are due; invite only when the ticket isn't already the invite", () => {
     expect(buildDeck(base).notes.some((n) => n.kind === "docs")).toBe(false);
     const t3 = { ...base, moment: tripMoment(trip, "2026-10-03") };
-    expect(buildDeck(t3).notes[0].kind).toBe("docs");
+    expect(buildDeck(t3).notes.some((n) => n.kind === "docs")).toBe(true);
     expect(buildDeck({ ...base, crewCount: 1 }).notes.some((n) => n.kind === "invite")).toBe(true);
     expect(buildDeck({ ...base, crewCount: 1, primaryKey: "crew" }).notes.some((n) => n.kind === "invite")).toBe(false);
   });

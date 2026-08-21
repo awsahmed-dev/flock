@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useT } from "@/components/i18n/locale-provider";
 import { togglePlaceLike } from "@/lib/actions/place-likes";
@@ -14,10 +14,20 @@ import { Link as LinkIcon, Image as ImageIcon, CircleNotch, Heart, Check, Sparkl
  * saves to the crew shortlist (a heart), which already feeds Discover, the
  * Huddle suggestion, and the free-day ideas on Now.
  */
-export function ImportInspirationSheet({ tripId, open, onClose }: { tripId: string; open: boolean; onClose: () => void }) {
+export function ImportInspirationSheet({ tripId, open, onClose, initialInput }: { tripId: string; open: boolean; onClose: () => void; initialInput?: string }) {
   const t = useT();
   const fileInput = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
+  // Share-target / deep-link prefill: fill once each time the sheet opens.
+  const prefillKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (open && initialInput && prefillKey.current !== initialInput) {
+      prefillKey.current = initialInput;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot prefill on open
+      setInput(initialInput);
+    }
+    if (!open) prefillKey.current = null;
+  }, [open, initialInput]);
   const [mode, setMode] = useState<"pick" | "reading" | "results">("pick");
   const [places, setPlaces] = useState<Place[]>([]);
   const [misses, setMisses] = useState<string[]>([]);

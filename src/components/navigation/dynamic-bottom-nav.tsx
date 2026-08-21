@@ -135,6 +135,26 @@ export function DynamicBottomNav({
   const [docOpen, setDocOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [inspireOpen, setInspireOpen] = useState(false);
+  const [inspirePrefill, setInspirePrefill] = useState<string | undefined>(undefined);
+  // Deep link: /trips/<id>?import=1 (deck card) or ?import=<encoded text>
+  // (Android share target). Open the sheet, then strip the param so back/
+  // refresh don't reopen it.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const imp = q.get("import");
+    if (imp == null) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to a deep link once
+    setInspirePrefill(imp === "1" ? undefined : imp);
+    setInspireOpen(true);
+    q.delete("import");
+    const rest = q.toString();
+    window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
+  }, [pathname]);
+  useEffect(() => {
+    const open = () => setInspireOpen(true);
+    window.addEventListener("paxawa:openInspire", open);
+    return () => window.removeEventListener("paxawa:openInspire", open);
+  }, []);
   // Now-redesign step 1: any surface can open the confirmation sheet by event
   // (trip home "Add a confirmation", empty Day 1, docs tab).
   useEffect(() => {
@@ -466,7 +486,7 @@ export function DynamicBottomNav({
       {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
       <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
       <AddConfirmationSheet tripId={tripId} tripStart={startDate} tripEnd={endDate} inboundAddress={inboundAddress} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
-      <ImportInspirationSheet tripId={tripId} open={inspireOpen} onClose={() => setInspireOpen(false)} />
+      <ImportInspirationSheet tripId={tripId} open={inspireOpen} onClose={() => { setInspireOpen(false); setInspirePrefill(undefined); }} initialInput={inspirePrefill} />
     </div>
   );
 }

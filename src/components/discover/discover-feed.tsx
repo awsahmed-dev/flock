@@ -1049,6 +1049,15 @@ function CategoryStrip({
 
   return (
     <div className={`flex items-center gap-1.5 overflow-x-auto scrollbar-none ${className ?? ""}`}>
+      {/* The camera-roll door, where people hunt for places anyway. */}
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent("paxawa:openInspire"))}
+        className={`${baseChip} inline-flex items-center gap-1.5 ${restChip}`}
+      >
+        <Sparkles className="w-4 h-4" style={{ color: "var(--clr-brand)" }} />
+        {t("inspire.chip")}
+      </button>
       {onSpecialFilter &&
         (["crew", "saved"] as const).map((f) => {
           const active = specialFilter === f;
