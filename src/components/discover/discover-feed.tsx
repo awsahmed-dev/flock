@@ -160,7 +160,10 @@ export function DiscoverFeed({
   }, [live]);
   const center = here ?? destinationCenter;
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [wishlistOpen, setWishlistOpen] = useState(false);
+  // ?filter=saved opens the WISHLIST (the complete saved list, independent of
+  // what the feed happens to contain) — round 12: freshly imported places are
+  // not in the seed feed, so the feed-filter chip alone showed nothing.
+  const [wishlistOpen, setWishlistOpen] = useState(initialSpecialFilter === "saved");
   const isDesktop = useIsDesktop();
 
   // ── Phase 6 §5: taste state ───────────────────────────────────────────────
