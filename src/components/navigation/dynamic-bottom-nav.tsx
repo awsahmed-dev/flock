@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Compass, Plus, MapPin, CaretRight as ChevronRight, Users, CalendarDots as CalendarDays, Sparkle as Sparkles, Wallet, ShareNetwork as Share2, AirplaneTakeoff as PlaneTakeoff, NavigationArrow as Navigation, Image as ImageIcon, HandCoins, MagnifyingGlass as Search, Suitcase as Luggage, FileText, X } from "@phosphor-icons/react/dist/ssr";
 import type { Icon as LucideIcon } from "@phosphor-icons/react";
@@ -139,17 +139,20 @@ export function DynamicBottomNav({
   // Deep link: /trips/<id>?import=1 (deck card) or ?import=<encoded text>
   // (Android share target). Open the sheet, then strip the param so back/
   // refresh don't reopen it.
+  // Keyed on the SEARCH PARAMS: the deck card navigates to ?import=1
+  // client-side, where pathname doesn't change (round-10 e2e catch).
+  const searchParams = useSearchParams();
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
-    const imp = q.get("import");
+    const imp = searchParams.get("import");
     if (imp == null) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to a deep link once
     setInspirePrefill(imp === "1" ? undefined : imp);
     setInspireOpen(true);
+    const q = new URLSearchParams(window.location.search);
     q.delete("import");
     const rest = q.toString();
     window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
-  }, [pathname]);
+  }, [searchParams]);
   useEffect(() => {
     const open = () => setInspireOpen(true);
     window.addEventListener("paxawa:openInspire", open);
