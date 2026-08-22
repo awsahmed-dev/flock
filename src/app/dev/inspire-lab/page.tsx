@@ -49,21 +49,72 @@ function Phone({ children, label }: { children: React.ReactNode; label: string }
 }
 
 function Nav({ active }: { active: string }) {
-  const items = [
-    { k: "plan", l: "Plan" }, { k: "now", l: "Now" }, { k: "discover", l: "Discover" }, { k: "money", l: "Money" },
-  ];
+  const items = [{ k: "now", l: "Now" }, { k: "discover", l: "Discover" }, { k: "money", l: "Money" }];
   return (
-    <div className="absolute bottom-0 inset-x-0 h-[76px] flex items-center justify-center gap-2 px-4" style={{ background: "var(--nav-glass)", backdropFilter: "blur(10px)" }}>
-      {items.map((i) => (
-        <div key={i.k} className={`flex-1 h-12 rounded-full flex flex-col items-center justify-center ${active === i.k ? "" : ""}`} style={active === i.k ? { background: "var(--nav-chip)" } : {}}>
-          <span className="text-[12px] font-bold" style={active === i.k ? { color: "var(--clr-brand)" } : {}}>{i.l}</span>
-        </div>
-      ))}
+    <div className="absolute bottom-0 inset-x-0 h-[84px] flex items-center justify-center gap-2 px-3" style={{ background: "var(--nav-glass)", backdropFilter: "blur(10px)" }}>
+      <div className="w-14 h-14 rounded-full border border-border bg-card flex flex-col items-center justify-center shrink-0">
+        <span className="text-[12px] font-bold">Plan</span>
+      </div>
+      <div className="flex-1 max-w-[240px] h-14 rounded-full border border-border flex items-center px-1" style={{ background: "var(--nav-glass)" }}>
+        {items.map((i) => (
+          <div key={i.k} className="flex-1 h-12 rounded-full flex items-center justify-center" style={active === i.k ? { background: "var(--nav-chip)" } : {}}>
+            <span className="text-[12px] font-bold" style={active === i.k ? { color: "var(--clr-brand)" } : {}}>{i.l}</span>
+          </div>
+        ))}
+      </div>
+      <div className="w-14 h-14 rounded-full flex flex-col items-center justify-center shrink-0 text-white" style={{ background: "var(--clr-brand)" }}>
+        <Plus size={20} weight="bold" />
+        <span className="text-[11px] font-bold">Add</span>
+      </div>
     </div>
   );
 }
 
 /* A — Shortlist = a first-class Discover mode */
+
+/* A1 — Discover · For you: the chip entry (exists today, stays) */
+function VariantA1() {
+  return (
+    <>
+      <div className="px-4 pt-5">
+        <p className="text-[20px] font-extrabold">Discover</p>
+        <div className="mt-3 flex p-1 rounded-full bg-secondary border border-border">
+          <div className="flex-1 h-11 rounded-full flex items-center justify-center text-[14px] font-bold bg-card border border-border">For you</div>
+          <div className="flex-1 h-11 rounded-full flex items-center justify-center gap-1.5 text-[14px] font-bold text-muted-foreground">
+            <Heart size={16} /> Shortlist
+            <span className="min-w-5 h-5 px-1 rounded-full text-[11px] font-black flex items-center justify-center text-white" style={{ background: "var(--clr-brand)" }}>5</span>
+          </div>
+        </div>
+        <div className="mt-3 flex gap-2 overflow-hidden">
+          {/* ENTRY ➊ — the chip, first in the row (already shipped) */}
+          <span className="h-10 px-3.5 rounded-full border-2 flex items-center gap-1.5 text-[13px] font-bold shrink-0" style={{ borderColor: "var(--clr-brand)" }}>
+            <Sparkle size={16} weight="fill" style={{ color: "var(--clr-brand)" }} /> Import from a link
+          </span>
+          {["All", "Food", "Sights", "Stay"].map((c, i) => (
+            <span key={c} className={`h-10 px-3.5 rounded-full flex items-center text-[13px] font-bold shrink-0 ${i === 0 ? "bg-card border border-border" : "text-muted-foreground border border-border/50"}`}>{c}</span>
+          ))}
+        </div>
+      </div>
+      <div className="px-4 mt-4 grid grid-cols-2 gap-2.5">
+        {P.slice(0, 4).map((p) => (
+          <div key={p.name} className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="relative h-[96px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.img} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            </div>
+            <div className="p-2.5">
+              <p className="text-[13px] font-bold truncate">{p.name}</p>
+              <p className="text-[12px] text-muted-foreground">★ {p.rating} · {p.area}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="px-4 mt-3 text-[12px] text-muted-foreground">➊ the chip opens the Import journey (B)</p>
+      <Nav active="discover" />
+    </>
+  );
+}
+
 function VariantA() {
   return (
     <>
@@ -79,7 +130,13 @@ function VariantA() {
         </div>
       </div>
       <div className="px-4 mt-4 space-y-2.5 overflow-hidden">
-        <div className="flex items-center gap-2">
+        {/* ENTRY ➋ — a quiet import row at the top of the Shortlist */}
+        <div className="flex items-center gap-2.5 rounded-2xl border border-dashed px-3.5 py-3" style={{ borderColor: "color-mix(in srgb, var(--clr-brand) 45%, transparent)" }}>
+          <Sparkle size={18} weight="fill" style={{ color: "var(--clr-brand)" }} />
+          <p className="flex-1 text-[13px] font-bold">Import from a link or screenshot</p>
+          <CaretRight size={16} className="text-muted-foreground" />
+        </div>
+        <div className="flex items-center gap-2 pt-1">
           <Sparkle size={16} weight="fill" style={{ color: "var(--clr-brand)" }} />
           <p className="text-[12px] font-bold uppercase tracking-wider text-tertiary">3 new · from your TikTok import</p>
         </div>
@@ -119,6 +176,37 @@ function VariantA() {
         </div>
       </div>
       <Nav active="discover" />
+    </>
+  );
+}
+
+/* B0 — journey entry (what every entry point opens) */
+function VariantB0() {
+  return (
+    <>
+      <div className="px-4 pt-5 flex items-center justify-between">
+        <span className="text-[15px] font-bold text-muted-foreground">✕</span>
+        <p className="text-[15px] font-bold">Import inspiration</p>
+        <span className="w-4" />
+      </div>
+      <div className="px-4 mt-6">
+        <p className="text-[22px] font-extrabold leading-tight">Drop your saved posts.</p>
+        <p className="text-[14px] text-muted-foreground mt-1.5">TikTok or Instagram links, a caption, an article — we pull out the real places.</p>
+        <div className="mt-5 rounded-2xl border border-border bg-card px-4 py-3.5">
+          <p className="text-[14px] text-muted-foreground">Paste links or text…</p>
+        </div>
+        <button className="mt-4 w-full h-13 py-3.5 rounded-full text-[15px] font-bold text-white flex items-center justify-center gap-2" style={{ background: "var(--clr-brand)" }}>
+          <Sparkle size={18} weight="fill" /> Find the places
+        </button>
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-7 flex flex-col items-center gap-1.5">
+          <p className="text-[14px] font-bold">Or drop a screenshot</p>
+          <p className="text-[12px] text-muted-foreground">A saved post, a list, a map</p>
+        </div>
+        <div className="mt-6 rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ background: "color-mix(in srgb, var(--clr-brand) 10%, transparent)" }}>
+          <TiktokLogo size={22} weight="fill" />
+          <p className="flex-1 text-[13px] leading-snug"><span className="font-bold">Even faster:</span> in TikTok tap Share → <span className="font-bold">Paxawa</span>. Lands right here.</p>
+        </div>
+      </div>
     </>
   );
 }
@@ -254,7 +342,9 @@ function Lab() {
   const v = useSearchParams().get("v") ?? "a";
   return (
     <div className="min-h-svh bg-background text-foreground flex items-start justify-center gap-8 p-6 flex-wrap">
-      {v === "a" && <Phone label="A — Shortlist is a Discover mode"><VariantA /></Phone>}
+      {v === "a1" && <Phone label="A — Discover · For you (entry ➊)"><VariantA1 /></Phone>}
+      {v === "a" && <Phone label="A — Discover · Shortlist (entry ➋)"><VariantA /></Phone>}
+      {v === "b0" && <Phone label="B — Journey entry"><VariantB0 /></Phone>}
       {v === "b1" && <Phone label="B — Import journey: review deck"><VariantB1 /></Phone>}
       {v === "b2" && <Phone label="B — Journey done"><VariantB2 /></Phone>}
       {v === "c" && <Phone label="C — Ideas tray in the Plan"><VariantC /></Phone>}
