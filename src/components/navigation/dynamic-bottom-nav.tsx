@@ -15,7 +15,6 @@ import {
 import { AddPlaceSearch } from "@/components/itinerary/add-place-search";
 import { AddDocumentDialog } from "@/components/documents/add-document-dialog";
 import { AddConfirmationSheet } from "@/components/confirmations/add-confirmation-sheet";
-import { ImportInspirationSheet } from "@/components/discover/import-inspiration-sheet";
 import { Ticket } from "@phosphor-icons/react/dist/ssr";
 import { BudgetSheet } from "@/components/trips/budget-sheet";
 import { useT } from "@/components/i18n/locale-provider";
@@ -134,30 +133,19 @@ export function DynamicBottomNav({
   // Sprint 4 FIX-5a: the document composer owned by the + menu.
   const [docOpen, setDocOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [inspireOpen, setInspireOpen] = useState(false);
-  const [inspirePrefill, setInspirePrefill] = useState<string | undefined>(undefined);
-  // Deep link: /trips/<id>?import=1 (deck card) or ?import=<encoded text>
-  // (Android share target). Open the sheet, then strip the param so back/
-  // refresh don't reopen it.
-  // Keyed on the SEARCH PARAMS: the deck card navigates to ?import=1
-  // client-side, where pathname doesn't change (round-10 e2e catch).
+  // A+B: every import entry routes to the journey page. Legacy ?import=
+  // deep links (old bookmarks) forward there too.
   const searchParams = useSearchParams();
   useEffect(() => {
     const imp = searchParams.get("import");
     if (imp == null) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to a deep link once
-    setInspirePrefill(imp === "1" ? undefined : imp);
-    setInspireOpen(true);
-    const q = new URLSearchParams(window.location.search);
-    q.delete("import");
-    const rest = q.toString();
-    window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
-  }, [searchParams]);
+    router.replace(`${base}/import${imp !== "1" ? `?text=${encodeURIComponent(imp)}` : ""}`);
+  }, [searchParams, router, base]);
   useEffect(() => {
-    const open = () => setInspireOpen(true);
+    const open = () => router.push(`${base}/import`);
     window.addEventListener("paxawa:openInspire", open);
     return () => window.removeEventListener("paxawa:openInspire", open);
-  }, []);
+  }, [router, base]);
   // Now-redesign step 1: any surface can open the confirmation sheet by event
   // (trip home "Add a confirmation", empty Day 1, docs tab).
   useEffect(() => {
@@ -459,7 +447,7 @@ export function DynamicBottomNav({
               (FIX-2 — paxawa:shareTrip only had a LIVE listener); documents
               get their first entry point (FIX-5a). */}
           <ActionRow icon={MapPin} label={t("nav.addPlace")} onClick={() => { setPlusOpen(false); setAddPlaceOpen(true); }} />
-          <ActionRow icon={Sparkles} label={t("inspire.entry")} onClick={() => { setPlusOpen(false); setInspireOpen(true); }} />
+          <ActionRow icon={Sparkles} label={t("inspire.entry")} onClick={() => { setPlusOpen(false); router.push(`${base}/import`); }} />
           <ActionRow
             icon={Wallet}
             label={t("now.logExpense")}
@@ -489,7 +477,6 @@ export function DynamicBottomNav({
       {/* Sprint 4 FIX-5a: the documents entry point (controlled mode). */}
       <AddDocumentDialog tripId={tripId} open={docOpen} onClose={() => setDocOpen(false)} />
       <AddConfirmationSheet tripId={tripId} tripStart={startDate} tripEnd={endDate} inboundAddress={inboundAddress} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
-      <ImportInspirationSheet tripId={tripId} open={inspireOpen} onClose={() => { setInspireOpen(false); setInspirePrefill(undefined); }} initialInput={inspirePrefill} />
     </div>
   );
 }

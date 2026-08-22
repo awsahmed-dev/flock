@@ -573,6 +573,8 @@
     "loadingMap": "Loading map…"
   },
   "discover": {
+    "forYou": "For you",
+    "shortlist": "Shortlist",
     "eyebrow": "Discover",
     "title": "Find your {destination}",
     "subtitle": "Real places, ranked for your crew. The more you browse, the smarter it gets.",
@@ -1549,6 +1551,20 @@
     "split": {"title": "Log it, split it", "body": "add a bill in Money and it's split across the crew in one tap — receipt photo optional."}
   },
   "inspire": {
+    "journeyTitle": "Drop your saved posts.",
+    "deckProgress": "Import · {n} of {total}",
+    "skipAll": "Skip all",
+    "skip": "Skip",
+    "savedSoFar": "Saved: {names}",
+    "doneCount": "{count, plural, =0 {Nothing saved} one {1 place saved} other {# places saved}}",
+    "doneSub": "They're on the crew's shortlist — everyone can heart and vote.",
+    "openShortlist": "Open the shortlist",
+    "dropOnPlan": "Drop them on the plan",
+    "shareTipLead": "Even faster:",
+    "shareTipBody": "in TikTok tap Share → Paxawa. Lands right here.",
+    "freshCluster": "{count, plural, one {1 new · from your import} other {# new · from your import}}",
+    "earlier": "Earlier",
+    "shortlistEmptySub": "Import your saved TikToks, or heart places in For you.",
     "seeShortlist": "See the crew's shortlist →",
     "chip": "Import from a link",
     "shareTitle": "Add to a trip",
