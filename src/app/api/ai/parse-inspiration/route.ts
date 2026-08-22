@@ -50,28 +50,25 @@ function decodeEntities(s: string): string {
     .replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#39;|&apos;/g, "'");
 }
 
-/** TikTok serves crawlers an empty shell — but its public oEmbed returns the
- *  full caption. Rate-limited per IP, so one retry after a short pause. */
-async function tiktokCaption(url: string): Promise<string | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+/** TikTok's public oEmbed returns the full caption but rate-limits shared
+ *  IPs hard (Vercel!), so it is the FALLBACK; the HTML shell's embedded
+ *  JSON caption is the primary door. */
+async function tiktokOembed(url: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(6000) });
       if (res.ok) {
         const j = (await res.json()) as { title?: string; author_name?: string };
         if (j.title) return `TikTok video by ${j.author_name ?? "unknown"}:\n${j.title}`;
       }
-    } catch { /* fall through to retry / HTML */ }
-    if (attempt === 0) await new Promise((r) => setTimeout(r, 800));
+    } catch { /* retry */ }
+    await new Promise((r) => setTimeout(r, 600 + attempt * 500));
   }
   return null;
 }
 
 async function fetchUrlText(url: string): Promise<string | null> {
   const isTikTok = /(^|\.)tiktok\.com\//i.test(url.replace(/^https?:\/\//i, ""));
-  if (isTikTok) {
-    const cap = await tiktokCaption(url);
-    if (cap) return cap;
-  }
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": UA, "Accept-Language": "en,ar;q=0.8" },
@@ -80,10 +77,12 @@ async function fetchUrlText(url: string): Promise<string | null> {
     });
     if (!res.ok) return null;
     const html = (await res.text()).slice(0, 600_000);
-    // TikTok fallback: the shell embeds the caption as JSON ("desc":"…").
+    // TikTok primary: the shell embeds the caption as JSON ("desc":"…").
     if (isTikTok) {
       const m = html.match(/"desc":"((?:[^"\\]|\\.){10,900})"/);
       if (m) { try { return `TikTok caption:\n${JSON.parse(`"${m[1]}"`)}`; } catch { /* keep going */ } }
+      const oem = await tiktokOembed(res.url && res.url !== url ? res.url : url);
+      if (oem) return oem;
     }
     const metas: string[] = [];
     for (const m of html.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:title|og:description|twitter:title|twitter:description|description)["'][^>]+content=["']([^"']{2,500})["']/gi)) metas.push(m[1]);
@@ -99,9 +98,10 @@ async function fetchUrlText(url: string): Promise<string | null> {
     // nothing — don't let it count as content.
     const parts = [title, ...metas, body].filter((x): x is string => !!x).map(decodeEntities);
     const out = parts.join("\n").replace(/TikTok - Make Your Day/g, " ").trim();
-    return out.replace(/\s/g, "").length > 60 ? out : null;
+    if (out.replace(/\s/g, "").length > 60) return out;
+    return isTikTok ? tiktokOembed(url) : null;
   } catch {
-    return null;
+    return isTikTok ? tiktokOembed(url) : null;
   }
 }
 
@@ -124,8 +124,23 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ places: [], misses: [], reason: "AI extraction is not configured" }, { status: 200 });
   if (await isOverCap()) return NextResponse.json({ places: [], misses: [], reason: "Place search is at its daily cap — try again tomorrow" }, { status: 200 });
 
-  let fetched: string | null = null;
-  if (url && /^https?:\/\//i.test(url)) fetched = await fetchUrlText(url);
+  // People paste SEVERAL links at once (round-11: four TikToks in one go).
+  // Pull every URL out of both fields, fetch each, keep the leftover prose.
+  const urlSet: string[] = [];
+  for (const src of [url ?? "", text]) {
+    for (const m of src.matchAll(/https?:\/\/\S+/gi)) {
+      const u = m[0].replace(/[)\],.،]+$/, "");
+      if (!urlSet.includes(u)) urlSet.push(u);
+    }
+  }
+  const urls = urlSet.slice(0, 4);
+  const fetchedList = urls.length
+    ? await Promise.all(urls.map(async (u) => ({ u, t: await fetchUrlText(u) })))
+    : [];
+  const fetchedTexts = fetchedList.filter((f) => f.t).map((f) => f.t as string);
+  const unfetchable = fetchedList.filter((f) => !f.t).map((f) => f.u);
+  const prose = text.replace(/https?:\/\/\S+/gi, " ").replace(/\s+/g, " ").trim();
+  const fetched = fetchedTexts.length ? fetchedTexts.join("\n\n---\n\n") : null;
 
   const context = `Trip destination: ${trip.destination}.
 Extract every REAL, MAP-SEARCHABLE place (restaurant, café, sight, park, shop, hotel, viewpoint…) mentioned. Rules: proper names only, exactly as written — NEVER invent, translate, or "improve" a name; skip generic phrases ("a cute café"), cities alone, and places obviously outside the trip's destination country; max 8, order of appearance. If nothing is extractable, return places: [] with a short reason.`;
@@ -136,10 +151,10 @@ Extract every REAL, MAP-SEARCHABLE place (restaurant, café, sight, park, shop, 
   const source = image
     ? "Read the places in this screenshot."
     : fetched
-      ? `Read the places in this page content (from ${url}):\n\n${fetched}${text ? `\n\nThe traveller also pasted:\n${text}` : ""}`
-      : url && !text
-        ? `Only this URL is available (the page could not be fetched). Extract place names ONLY if the URL itself literally contains them; otherwise return places: [].\n\n${url}`
-        : `Read the places in this text:\n\n${text}`;
+      ? `Read the places in this content (fetched from ${fetchedTexts.length} link${fetchedTexts.length > 1 ? "s" : ""}):\n\n${fetched}${prose ? `\n\nThe traveller also wrote:\n${prose}` : ""}${unfetchable.length ? `\n\n(${unfetchable.length} other link(s) could not be fetched.)` : ""}`
+      : urls.length && !prose
+        ? `Only these URLs are available (the pages could not be fetched). Extract place names ONLY if a URL itself literally contains them; otherwise return places: [].\n\n${urls.join("\n")}`
+        : `Read the places in this text:\n\n${prose || text}`;
   content.push({ type: "text", text: `${context}\n\n${source}` });
 
   try {

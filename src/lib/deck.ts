@@ -9,7 +9,7 @@ import type { TripMoment } from "@/lib/trip-moment";
  * keys + params; the cockpit renders with t(). Capped — a deck, not a feed.
  */
 export type DeckHue = "horizon" | "dune" | "wayfind" | "brand";
-export type DeckKind = "crewHeart" | "day1" | "weather" | "fx" | "money" | "invite" | "docs" | "crewPulse";
+export type DeckKind = "crewHeart" | "day1" | "weather" | "fx" | "money" | "invite" | "docs" | "crewPulse" | "inspire";
 
 export interface DeckCard {
   kind: DeckKind;
@@ -25,7 +25,7 @@ export interface DeckCard {
   /** hero-capable when present */
   photoUrl: string | null;
   /** phosphor icon name for the note tile */
-  icon: "Heart" | "CalendarDots" | "Sun" | "CurrencyCircleDollar" | "Wallet" | "Users" | "FileText" | "ChatCircle";
+  icon: "Heart" | "CalendarDots" | "Sun" | "CurrencyCircleDollar" | "Wallet" | "Users" | "FileText" | "ChatCircle" | "Sparkle";
   score: number;
 }
 
@@ -52,6 +52,22 @@ export function buildDeck(i: DeckInput): { hero: DeckCard | null; notes: DeckCar
   const cards: DeckCard[] = [];
   const m = i.moment;
   const push = (c: DeckCard) => cards.push(c);
+
+  // The camera-roll door: while the plan AND the shortlist are still thin,
+  // "import your saved posts" is the second-best action on the page.
+  if (i.hearts.length < 2 && i.day1.count < 2 && (m.phase === "PLANNING" || m.phase === "DEPARTURE")) {
+    push({
+      kind: "inspire", hue: "brand", icon: "Sparkle",
+      purposeKey: "cockpit.deck.inspirePurpose",
+      titleKey: "cockpit.deck.inspireTitle",
+      bodyKey: "cockpit.deck.inspireBody",
+      actionKey: "cockpit.deck.inspireAction",
+      params: {},
+      href: `${i.base}?import=1`,
+      photoUrl: null,
+      score: 88,
+    });
+  }
 
   // Crew is deciding — the strongest hero pre-trip: a hearted place not on the plan.
   const heart = i.hearts.find((h) => !h.onPlan) ?? i.hearts[0];

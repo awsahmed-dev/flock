@@ -90,7 +90,7 @@ export interface SavedPlace {
 
 export function DiscoverFeed({
   tripId, tripName = "", destination, center: destinationCenter, days, crewSize = 1, isOwner = false, initialCategory = null,
-  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false, live = false,
+  savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false, live = false, initialSpecialFilter = null,
 }: {
   tripId: string;
   /** §2: shown in the floating back-to-dashboard header on the mobile feed. */
@@ -115,6 +115,8 @@ export function DiscoverFeed({
   /** LIVE: Discover becomes "around you" — the device's location centers the
    *  map and the feed is a 3km circle, not the whole destination. */
   live?: boolean;
+  /** Deep link (?filter=saved|crew) — the import sheet's "See the shortlist". */
+  initialSpecialFilter?: "crew" | "saved" | null;
 }) {
   const t = useT();
   // Sprint 9 FIX-2B: the search hint names YOUR city, not a KL food ref.
@@ -159,6 +161,21 @@ export function DiscoverFeed({
   const center = here ?? destinationCenter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
+  // A+B (chosen 2026-08-22): Discover has two modes — For you | Shortlist.
+  // The Shortlist is the permanent home of every save; ?filter=saved lands on
+  // it (the import journey's "Open the shortlist").
+  const [mode, setMode] = useState<"forYou" | "shortlist">(initialSpecialFilter === "saved" ? "shortlist" : "forYou");
+  const [freshIds, setFreshIds] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("paxawa-inspire-new");
+      if (raw) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot read of the journey's handoff
+        setFreshIds(JSON.parse(raw) as string[]);
+        sessionStorage.removeItem("paxawa-inspire-new");
+      }
+    } catch { /* ignore */ }
+  }, []);
   const isDesktop = useIsDesktop();
 
   // ── Phase 6 §5: taste state ───────────────────────────────────────────────
@@ -167,7 +184,7 @@ export function DiscoverFeed({
   const [onboardDismissed, setOnboardDismissed] = useState(false);
   const [whySheetFor, setWhySheetFor] = useState<ScoredPlace | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [specialFilter, setSpecialFilter] = useState<"crew" | "saved" | null>(null);
+  const [specialFilter, setSpecialFilter] = useState<"crew" | "saved" | null>(initialSpecialFilter);
   const smarterToastFired = useRef(false);
 
   useEffect(() => {
@@ -573,8 +590,21 @@ export function DiscoverFeed({
   // immersive stream below is the mobile design; only one mounts at a time so
   // there's a single Mapbox instance and no doubled DOM.
   if (isDesktop) {
+    if (mode === "shortlist") {
+      return (
+        <div className="max-w-2xl">
+          <div className="mb-4 max-w-sm">
+            <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="solid" />
+          </div>
+          <ShortlistView tripId={tripId} days={days} savedItems={savedItems} freshIds={freshIds} onRemove={removeSaved} />
+        </div>
+      );
+    }
     return (
       <>
+        <div className="mb-4 max-w-sm">
+          <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="solid" />
+        </div>
         <div className="grid grid-cols-[1fr_minmax(0,480px)] xl:grid-cols-[1fr_minmax(0,540px)] gap-5 items-start">
           {/* Left — filter chips + search + card grid */}
           <div className="min-w-0">
@@ -709,8 +739,19 @@ export function DiscoverFeed({
     );
   }
 
+    if (mode === "shortlist") {
+    return (
+      <div className="px-4 pt-4 pb-32">
+        <div className="mb-4">
+          <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="solid" />
+        </div>
+        <ShortlistView tripId={tripId} days={days} savedItems={savedItems} freshIds={freshIds} onRemove={removeSaved} />
+      </div>
+    );
+  }
+
   return (
-    /* Sprint 7.1 FIX-1: the stage used to stop 60px short of the bottom
+        /* Sprint 7.1 FIX-1: the stage used to stop 60px short of the bottom
        (sized for the retired docked nav), exposing a strip of the page
        background under the hardcoded-dark feed — the "band" behind the
        floating nav. The immersive feed now runs to the viewport bottom and
@@ -724,6 +765,9 @@ export function DiscoverFeed({
           §4: pushed below the 52px floating header so it doesn't overlap the
           back link. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
+        <div className="mb-2.5">
+          <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="glass" />
+        </div>
         {searchOpen ? (
           /* Fix 4 / §9-E: the search bar slides in when tapped from the nav's
              Search slot; the ✕ restores the category strip. */
@@ -993,6 +1037,88 @@ export function DiscoverFeed({
   );
 }
 
+
+
+/** A — the Shortlist: the permanent home of every save. Fresh imports cluster
+ *  on top; every card adds to a day or unsaves. Reuses WishlistCard. */
+function ShortlistView({
+  tripId, days, savedItems, freshIds, onRemove,
+}: {
+  tripId: string; days: string[]; savedItems: SavedPlace[]; freshIds: string[]; onRemove: (id: string) => void;
+}) {
+  const t = useT();
+  const fresh = savedItems.filter((p) => freshIds.includes(p.placeId));
+  const rest = savedItems.filter((p) => !freshIds.includes(p.placeId));
+  return (
+    <div className="max-w-2xl">
+      <Link
+        href={`/trips/${tripId}/import`}
+        className="flex items-center gap-2.5 rounded-2xl border border-dashed px-3.5 py-3.5 mb-4"
+        style={{ borderColor: "color-mix(in srgb, var(--clr-brand) 45%, transparent)" }}
+      >
+        <Sparkles size={18} weight="fill" style={{ color: "var(--clr-brand)" }} />
+        <span className="flex-1 text-[14px] font-bold">{t("inspire.entry")}</span>
+        <ChevronLeft size={16} className="text-muted-foreground rotate-180 rtl:rotate-0" />
+      </Link>
+      {savedItems.length === 0 ? (
+        <div className="py-14 flex flex-col items-center gap-2 text-center px-6">
+          <Heart size={28} className="text-muted-foreground" />
+          <p className="font-bold text-[15px]">{t("discover.savedEmpty")}</p>
+          <p className="text-[13px] text-muted-foreground">{t("inspire.shortlistEmptySub")}</p>
+        </div>
+      ) : (
+        <>
+          {fresh.length > 0 && (
+            <>
+              <p className="text-[12px] font-bold uppercase tracking-wider text-tertiary mb-2 flex items-center gap-1.5">
+                <Sparkles size={14} weight="fill" style={{ color: "var(--clr-brand)" }} />
+                {t("inspire.freshCluster", { count: fresh.length })}
+              </p>
+              <ul className="space-y-2 mb-5">
+                {fresh.map((p) => (
+                  <WishlistCard key={p.placeId} place={p} tripId={tripId} days={days} onRemove={() => onRemove(p.placeId)} />
+                ))}
+              </ul>
+            </>
+          )}
+          {rest.length > 0 && (
+            <>
+              {fresh.length > 0 && (
+                <p className="text-[12px] font-bold uppercase tracking-wider text-tertiary mb-2">{t("inspire.earlier")}</p>
+              )}
+              <ul className="space-y-2">
+                {rest.map((p) => (
+                  <WishlistCard key={p.placeId} place={p} tripId={tripId} days={days} onRemove={() => onRemove(p.placeId)} />
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A — the two Discover modes. Same pill language as the app's segmented
+ *  controls; count = the shortlist size. */
+function ModeSwitch({ mode, count, onMode, tone }: { mode: "forYou" | "shortlist"; count: number; onMode: (m: "forYou" | "shortlist") => void; tone: "glass" | "solid" }) {
+  const t = useT();
+  const base = "flex-1 h-11 rounded-full flex items-center justify-center gap-1.5 text-[14px] font-bold transition-colors";
+  const wrap = tone === "glass" ? "bg-black/35 backdrop-blur border border-white/15" : "bg-secondary border border-border";
+  const on = tone === "glass" ? "bg-white/90 text-neutral-900" : "bg-card border border-border";
+  const off = tone === "glass" ? "text-white/85" : "text-muted-foreground";
+  return (
+    <div className={`flex p-1 rounded-full ${wrap}`}>
+      <button type="button" onClick={() => onMode("forYou")} className={`${base} ${mode === "forYou" ? on : off}`}>{t("discover.forYou")}</button>
+      <button type="button" onClick={() => onMode("shortlist")} className={`${base} ${mode === "shortlist" ? on : off}`}>
+        <Heart size={16} weight={mode === "shortlist" ? "fill" : "regular"} style={mode === "shortlist" ? { color: "var(--clr-horizon)" } : undefined} />
+        {t("discover.shortlist")}
+        {count > 0 && <span className="min-w-5 h-5 px-1 rounded-full text-[11px] font-black flex items-center justify-center text-white" style={{ background: "var(--clr-brand)" }}>{count}</span>}
+      </button>
+    </div>
+  );
+}
+
 /**
  * A2 — the progressive-disclosure category strip. Renders the inline top
  * categories (`All · Eat · Sights`) + ONE Filters pill that opens the sheet
@@ -1049,6 +1175,15 @@ function CategoryStrip({
 
   return (
     <div className={`flex items-center gap-1.5 overflow-x-auto scrollbar-none ${className ?? ""}`}>
+      {/* The camera-roll door, where people hunt for places anyway. */}
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent("paxawa:openInspire"))}
+        className={`${baseChip} inline-flex items-center gap-1.5 ${restChip}`}
+      >
+        <Sparkles className="w-4 h-4" style={{ color: "var(--clr-brand)" }} />
+        {t("inspire.chip")}
+      </button>
       {onSpecialFilter &&
         (["crew", "saved"] as const).map((f) => {
           const active = specialFilter === f;

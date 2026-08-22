@@ -18,7 +18,7 @@ import { getToday } from "@/lib/today-server";
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; filter?: string }>;
 }
 
 /** Server-safe validation list — kept local so this server page never pulls a
@@ -36,7 +36,7 @@ const VALID_CATEGORIES = [
  */
 export default async function DiscoverPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { category } = await searchParams;
+  const { category, filter } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
@@ -119,6 +119,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         crewSize={trip.members.length}
         isOwner={isOwner(trip, user.id)}
         initialCategory={initialCategory}
+        initialSpecialFilter={filter === "saved" || filter === "crew" ? filter : null}
         savedPlaces={savedPlaces}
         likedPlaceIds={likedPlaceIds}
         likeCounts={likeCounts}
