@@ -1551,6 +1551,8 @@
     "split": {"title": "Log it, split it", "body": "add a bill in Money and it's split across the crew in one tap — receipt photo optional."}
   },
   "inspire": {
+    "barText": "Drop a link or screenshot",
+    "barCta": "Import",
     "journeyTitle": "Drop your saved posts.",
     "deckProgress": "Import · {n} of {total}",
     "skipAll": "Skip all",
