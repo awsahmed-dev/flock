@@ -535,6 +535,73 @@ function LabI3() {
   );
 }
 
+
+/* Round 15: tab styles + smaller chips, with the approved I2 bar in place */
+function I2Bar() {
+  return (
+    <div className="mt-3 h-12 rounded-2xl flex items-center gap-2.5 ps-3 pe-1.5 bg-black/45 backdrop-blur border border-white/15">
+      <span className="flex -space-x-1.5">
+        <span className="w-7 h-7 rounded-full bg-black flex items-center justify-center border border-white/25"><TiktokLogo size={16} weight="fill" className="text-white" /></span>
+        <span className="w-7 h-7 rounded-full flex items-center justify-center border border-white/25" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}><InstagramLogo size={16} weight="fill" className="text-white" /></span>
+      </span>
+      <span className="text-[13px] font-bold text-white flex-1">Drop a link or screenshot</span>
+      <span className="h-9 px-4 rounded-full text-[13px] font-bold text-white flex items-center" style={{ background: "var(--clr-brand)" }}>Import</span>
+    </div>
+  );
+}
+/* S1 — brand dot: active word white-bold with a small BRAND dot under it */
+function LabS1() {
+  return (
+    <PhotoBg>
+      <div className="flex items-center justify-center gap-7 pt-1">
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-[15px] font-semibold text-white/55">Shortlist · 5</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-[16px] font-extrabold text-white">For You</span>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--clr-brand)", boxShadow: "0 0 8px var(--clr-brand)" }} />
+        </div>
+      </div>
+      <I2Bar />
+    </PhotoBg>
+  );
+}
+/* S2 — glass capsule: a small glass pill hugs the ACTIVE word and slides */
+function LabS2() {
+  return (
+    <PhotoBg>
+      <div className="flex items-center justify-center gap-2 pt-1">
+        <span className="h-9 px-3.5 rounded-full flex items-center text-[14px] font-semibold text-white/60">Shortlist · 5</span>
+        <span className="h-9 px-3.5 rounded-full flex items-center text-[14px] font-extrabold text-white bg-white/18 backdrop-blur border border-white/25">For You</span>
+      </div>
+      <I2Bar />
+    </PhotoBg>
+  );
+}
+/* S3 — T2 with SMALLER chips (h-8, 12px) under the search bar */
+function LabS3() {
+  return (
+    <PhotoBg dim>
+      <div className="flex items-center justify-center gap-2 pt-1">
+        <span className="h-9 px-3.5 rounded-full flex items-center text-[14px] font-semibold text-white/60">Shortlist · 5</span>
+        <span className="h-9 px-3.5 rounded-full flex items-center text-[14px] font-extrabold text-white bg-white/18 backdrop-blur border border-white/25">For You</span>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <div className="flex-1 h-11 rounded-full bg-black/45 backdrop-blur border border-white/20 flex items-center px-3.5 gap-2">
+          <span className="text-white/60 text-[14px]">⌕</span>
+          <span className="text-white/50 text-[14px]">Search places in Tokyo…</span>
+        </div>
+        <span className="w-10 h-10 rounded-full bg-black/45 backdrop-blur border border-white/20 flex items-center justify-center text-white/80">✕</span>
+      </div>
+      <div className="mt-2.5 flex gap-1.5 overflow-hidden">
+        {["All", "Food", "Sights", "Stay", "Activities", "Coffee"].map((f, i) => (
+          <span key={f} className={`h-8 px-3 rounded-full flex items-center text-[12px] font-bold shrink-0 ${i === 0 ? "bg-white/90 text-neutral-900" : "bg-black/35 backdrop-blur text-white/85 border border-white/15"}`}>{f}</span>
+        ))}
+      </div>
+    </PhotoBg>
+  );
+}
+
 function Lab() {
   const v = useSearchParams().get("v") ?? "a";
   return (
@@ -555,6 +622,9 @@ function Lab() {
       {v === "i1" && <Phone label="I1"><LabI1 /></Phone>}
       {v === "i2" && <Phone label="I2"><LabI2 /></Phone>}
       {v === "i3" && <Phone label="I3"><LabI3 /></Phone>}
+      {v === "s1" && <Phone label="S1"><LabS1 /></Phone>}
+      {v === "s2" && <Phone label="S2"><LabS2 /></Phone>}
+      {v === "s3" && <Phone label="S3"><LabS3 /></Phone>}
     </div>
   );
 }
