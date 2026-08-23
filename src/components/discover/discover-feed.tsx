@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { MagnifyingGlass as Search, X, CircleNotch as Loader2, Compass, WarningCircle as AlertCircle, MapTrifold as MapIcon, Sparkle as Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash as Trash2, CaretLeft as ChevronLeft } from "@phosphor-icons/react/dist/ssr";
+import { MagnifyingGlass as Search, X, CircleNotch as Loader2, Compass, WarningCircle as AlertCircle, MapTrifold as MapIcon, Sparkle as Sparkles, Heart, Star, MapPin, SlidersHorizontal, Check, Trash as Trash2, CaretLeft as ChevronLeft, TiktokLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { toggleWishlist, removeWishlist, type WishlistPlace } from "@/lib/actions/wishlist";
 import { togglePlaceLike } from "@/lib/actions/place-likes";
@@ -769,56 +769,75 @@ export function DiscoverFeed({
           <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="glass" />
         </div>
         {searchOpen ? (
-          /* Fix 4 / §9-E: the search bar slides in when tapped from the nav's
-             Search slot; the ✕ restores the category strip. */
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={searchPlaceholder}
-                className="w-full rounded-full glass-dark text-white placeholder:text-white/50 ps-9 pe-8 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-              />
-              {query && (
-                <button type="button" onClick={() => setQuery("")}
-                  className="absolute end-2.5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white" aria-label={t("common.clear")}>
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+          /* Round 15: search owns the filters — the bar plus the compact
+             32px type chips right under it. Close search, they leave with it. */
+          <>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search size={18} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-white/60" />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full h-11 rounded-full glass-dark text-white placeholder:text-white/50 ps-10 pe-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                />
+                {query && (
+                  <button type="button" onClick={() => setQuery("")}
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white" aria-label={t("common.clear")}>
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setQuery(""); setSearchOpen(false); }}
+                aria-label={t("common.close")}
+                className="shrink-0 w-10 h-10 rounded-full glass-dark text-white flex items-center justify-center"
+              >
+                <X size={16} />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => { setQuery(""); setSearchOpen(false); }}
-              aria-label={t("common.close")}
-              className="shrink-0 w-9 h-9 rounded-full glass-dark text-white flex items-center justify-center"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          /* Phase 7 §3-B: chips + a Map/List toggle. */
-          <div className="flex items-center gap-2">
             <CategoryStrip
               tone="glass"
+              size="sm"
               category={category}
               searching={false}
               activeFilterCount={0}
               onSelect={selectCategory}
-              onOpenFilters={() => {}}
-              showFilters={false}
-              className="flex-1 min-w-0 overflow-x-auto scrollbar-none"
+              onOpenFilters={() => setFiltersOpen(true)}
+              className="mt-2.5 overflow-x-auto scrollbar-none"
             />
-            <button
-              type="button"
-              onClick={() => setView((v) => (v === "map" ? "stream" : "map"))}
-              aria-label={view === "map" ? "List view" : "Map view"}
-              className="shrink-0 w-9 h-9 rounded-full glass-dark text-white flex items-center justify-center"
-            >
-              <MapIcon className="w-4 h-4" />
-            </button>
-          </div>
+          </>
+        ) : (
+          /* Round 15: no chip rail on the clean top — the I2 import bar, the
+             map toggle, and (only when filtered) ONE dismissible pill. */
+          <>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <InspireBar tripId={tripId} tone="glass" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setView((v) => (v === "map" ? "stream" : "map"))}
+                aria-label={view === "map" ? "List view" : "Map view"}
+                className="shrink-0 w-10 h-10 rounded-full glass-dark text-white flex items-center justify-center"
+              >
+                <MapIcon size={18} />
+              </button>
+            </div>
+            {category != null && (
+              <div className="mt-2.5 flex">
+                <button
+                  type="button"
+                  onClick={() => selectCategory(null)}
+                  className="h-8 px-3 rounded-full bg-white/90 text-neutral-900 flex items-center gap-1.5 text-[12px] font-bold"
+                >
+                  {t(CAT_KEY[category])} <X size={14} weight="bold" className="text-neutral-500" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -1053,15 +1072,7 @@ function ShortlistView({
   const rest = savedItems.filter((p) => !freshIds.includes(p.placeId));
   return (
     <div className="max-w-2xl">
-      <Link
-        href={`/trips/${tripId}/import`}
-        className="flex items-center gap-2.5 rounded-2xl border border-dashed px-3.5 py-3.5 mb-4"
-        style={{ borderColor: "color-mix(in srgb, var(--clr-brand) 45%, transparent)" }}
-      >
-        <Sparkles size={18} weight="fill" style={{ color: "var(--clr-brand)" }} />
-        <span className="flex-1 text-[14px] font-bold">{t("inspire.entry")}</span>
-        <ChevronLeft size={16} className="text-muted-foreground rotate-180 rtl:rotate-0" />
-      </Link>
+      <div className="mb-4"><InspireBar tripId={tripId} tone="solid" /></div>
       {savedItems.length === 0 ? (
         <div className="py-14 flex flex-col items-center gap-2 text-center px-6">
           <Heart size={28} className="text-muted-foreground" />
@@ -1105,19 +1116,37 @@ function ShortlistView({
  *  controls; count = the shortlist size. */
 function ModeSwitch({ mode, count, onMode, tone }: { mode: "forYou" | "shortlist"; count: number; onMode: (m: "forYou" | "shortlist") => void; tone: "glass" | "solid" }) {
   const t = useT();
-  const base = "flex-1 h-11 rounded-full flex items-center justify-center gap-1.5 text-[14px] font-bold transition-colors";
-  const wrap = tone === "glass" ? "bg-black/35 backdrop-blur border border-white/15" : "bg-secondary border border-border";
-  const on = tone === "glass" ? "bg-white/90 text-neutral-900" : "bg-card border border-border";
-  const off = tone === "glass" ? "text-white/85" : "text-muted-foreground";
+  const base = "h-9 px-3.5 rounded-full flex items-center gap-1.5 text-[14px] transition-all";
+  const on = tone === "glass" ? "font-extrabold text-white bg-white/18 backdrop-blur border border-white/25" : "font-extrabold bg-card border border-border";
+  const off = tone === "glass" ? "font-semibold text-white/60" : "font-semibold text-muted-foreground";
   return (
-    <div className={`flex p-1 rounded-full ${wrap}`}>
-      <button type="button" onClick={() => onMode("forYou")} className={`${base} ${mode === "forYou" ? on : off}`}>{t("discover.forYou")}</button>
-      <button type="button" onClick={() => onMode("shortlist")} className={`${base} ${mode === "shortlist" ? on : off}`}>
-        <Heart size={16} weight={mode === "shortlist" ? "fill" : "regular"} style={mode === "shortlist" ? { color: "var(--clr-horizon)" } : undefined} />
-        {t("discover.shortlist")}
-        {count > 0 && <span className="min-w-5 h-5 px-1 rounded-full text-[11px] font-black flex items-center justify-center text-white" style={{ background: "var(--clr-brand)" }}>{count}</span>}
+    <div className="flex items-center justify-center gap-2">
+      <button type="button" onClick={() => onMode("shortlist")} aria-pressed={mode === "shortlist"} className={`${base} ${mode === "shortlist" ? on : off}`}>
+        {t("discover.shortlist")}{count > 0 ? ` · ${count}` : ""}
+      </button>
+      <button type="button" onClick={() => onMode("forYou")} aria-pressed={mode === "forYou"} className={`${base} ${mode === "forYou" ? on : off}`}>
+        {t("discover.forYou")}
       </button>
     </div>
+  );
+}
+
+/** I2 — the import door: social logos + one labelled action. */
+function InspireBar({ tripId, tone }: { tripId: string; tone: "glass" | "solid" }) {
+  const t = useT();
+  const glass = tone === "glass";
+  return (
+    <Link
+      href={`/trips/${tripId}/import`}
+      className={`h-12 rounded-2xl flex items-center gap-2.5 ps-3 pe-1.5 ${glass ? "bg-black/45 backdrop-blur border border-white/15" : "bg-card border border-border"}`}
+    >
+      <span className="flex -space-x-1.5">
+        <span className="w-7 h-7 rounded-full bg-black flex items-center justify-center border border-white/25"><TiktokLogo size={16} weight="fill" className="text-white" /></span>
+        <span className="w-7 h-7 rounded-full flex items-center justify-center border border-white/25" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}><InstagramLogo size={16} weight="fill" className="text-white" /></span>
+      </span>
+      <span className={`text-[13px] font-bold flex-1 ${glass ? "text-white" : "text-foreground"}`}>{t("inspire.barText")}</span>
+      <span className="h-9 px-4 rounded-full text-[13px] font-bold text-white flex items-center" style={{ background: "var(--clr-brand)" }}>{t("inspire.barCta")}</span>
+    </Link>
   );
 }
 
@@ -1140,6 +1169,7 @@ function CategoryStrip({
   showFilters = true,
   specialFilter = null,
   onSpecialFilter,
+  size = "md",
 }: {
   /** "glass" = glass-on-dark (mobile, over the photo stream); "glassLight" =
    *  glass-on-light (desktop, over the light page); both share the material +
@@ -1158,12 +1188,16 @@ function CategoryStrip({
   /** Phase 6 §5-H: Crew picks / Saved special chips. */
   specialFilter?: "crew" | "saved" | null;
   onSpecialFilter?: (f: "crew" | "saved" | null) => void;
+  /** "sm" = the compact 32px chips under the search bar. */
+  size?: "md" | "sm";
 }) {
   const t = useT();
   const inline: (PlaceCategoryKey | null)[] = [null, ...INLINE_CATEGORIES];
   const isGlass = tone === "glass";
 
-  const baseChip = "shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
+  const baseChip = size === "sm"
+    ? "shrink-0 rounded-full h-8 px-3 text-[12px] font-bold flex items-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+    : "shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
   // Master color brief: selected/curated = dune, not white/purple.
   const activeChip = "";
   const duneStyle: React.CSSProperties = {
@@ -1177,15 +1211,6 @@ function CategoryStrip({
 
   return (
     <div className={`flex items-center gap-1.5 overflow-x-auto scrollbar-none ${className ?? ""}`}>
-      {/* The camera-roll door, where people hunt for places anyway. */}
-      <button
-        type="button"
-        onClick={() => window.dispatchEvent(new CustomEvent("paxawa:openInspire"))}
-        className={`${baseChip} inline-flex items-center gap-1.5 ${restChip}`}
-      >
-        <Sparkles className="w-4 h-4" style={{ color: "var(--clr-brand)" }} />
-        {t("inspire.chip")}
-      </button>
       {onSpecialFilter &&
         (["crew", "saved"] as const).map((f) => {
           const active = specialFilter === f;
