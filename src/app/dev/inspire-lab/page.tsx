@@ -338,6 +338,84 @@ function VariantC() {
   );
 }
 
+
+/* CHIP OPTIONS — how the Discover top row handles action-vs-filter */
+function GlassHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#3a2f28 0%,#1c1917 60%)" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={PHOTOS.shrine} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+      <div className="absolute inset-x-0 top-0 p-3 bg-gradient-to-b from-black/70 to-transparent">
+        <div className="mb-2.5 flex p-1 rounded-full bg-black/35 backdrop-blur border border-white/15">
+          <div className="flex-1 h-11 rounded-full flex items-center justify-center text-[14px] font-bold bg-white/90 text-neutral-900">For you</div>
+          <div className="flex-1 h-11 rounded-full flex items-center justify-center gap-1.5 text-[14px] font-bold text-white/85">♡ Shortlist</div>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+const FILTERS = ["All", "Food", "Sights", "Stay", "Activities"];
+function GChip({ children, on = false, brand = false }: { children: React.ReactNode; on?: boolean; brand?: boolean }) {
+  return (
+    <span className={`h-10 px-3.5 rounded-full flex items-center gap-1.5 text-[13px] font-bold shrink-0 ${on ? "bg-white/90 text-neutral-900" : brand ? "text-white" : "bg-black/30 backdrop-blur text-white/85 border border-white/15"}`}
+      style={brand ? { background: "var(--clr-brand)" } : undefined}>
+      {children}
+    </span>
+  );
+}
+function ChipOpt1() {
+  return (
+    <GlassHeader>
+      {/* 1 — the action is a BAR of its own; the rail is pure filters */}
+      <div className="mb-2 h-11 rounded-2xl border border-dashed flex items-center gap-2 px-3.5 bg-black/35 backdrop-blur" style={{ borderColor: "color-mix(in srgb, var(--clr-brand) 70%, white)" }}>
+        <Sparkle size={16} weight="fill" style={{ color: "#b6a8ff" }} />
+        <span className="text-[13px] font-bold text-white flex-1">Import from TikTok / IG</span>
+        <CaretRight size={16} className="text-white/70" />
+      </div>
+      <div className="flex gap-2 overflow-hidden">
+        {FILTERS.map((f, i) => <GChip key={f} on={i === 0}>{f}</GChip>)}
+      </div>
+    </GlassHeader>
+  );
+}
+function ChipOpt2() {
+  return (
+    <GlassHeader>
+      {/* 2 — brand circle pinned at the start + divider, then filters */}
+      <div className="flex items-center gap-2 overflow-hidden">
+        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white" style={{ background: "var(--clr-brand)" }}>
+          <Sparkle size={18} weight="fill" />
+        </span>
+        <span className="w-px h-7 bg-white/25 shrink-0" />
+        {FILTERS.map((f, i) => <GChip key={f} on={i === 0}>{f}</GChip>)}
+      </div>
+    </GlassHeader>
+  );
+}
+function ChipOpt3() {
+  return (
+    <GlassHeader>
+      {/* 3 — rail is ONLY filters; import lives in Shortlist / + / deck */}
+      <div className="flex gap-2 overflow-hidden">
+        {FILTERS.map((f, i) => <GChip key={f} on={i === 0}>{f}</GChip>)}
+        <GChip>⚙︎ Filters</GChip>
+      </div>
+    </GlassHeader>
+  );
+}
+function ChipOpt4() {
+  return (
+    <GlassHeader>
+      {/* 4 — grouped tones: solid brand ACTION chip, then outline filters */}
+      <div className="flex gap-2 overflow-hidden">
+        <GChip brand><Sparkle size={16} weight="fill" /> Import</GChip>
+        {FILTERS.map((f, i) => <GChip key={f} on={i === 0}>{f}</GChip>)}
+      </div>
+    </GlassHeader>
+  );
+}
+
 function Lab() {
   const v = useSearchParams().get("v") ?? "a";
   return (
@@ -348,6 +426,10 @@ function Lab() {
       {v === "b1" && <Phone label="B — Import journey: review deck"><VariantB1 /></Phone>}
       {v === "b2" && <Phone label="B — Journey done"><VariantB2 /></Phone>}
       {v === "c" && <Phone label="C — Ideas tray in the Plan"><VariantC /></Phone>}
+      {v === "c1" && <Phone label="1 — Import is its own bar"><ChipOpt1 /></Phone>}
+      {v === "c2" && <Phone label="2 — Pinned circle + divider"><ChipOpt2 /></Phone>}
+      {v === "c3" && <Phone label="3 — Filters only (no chip)"><ChipOpt3 /></Phone>}
+      {v === "c4" && <Phone label="4 — Grouped tones"><ChipOpt4 /></Phone>}
     </div>
   );
 }
