@@ -416,6 +416,125 @@ function ChipOpt4() {
   );
 }
 
+
+/* ── Round 14 lab: TikTok tabs, filter placement ideas, import-bar ideas ── */
+function TikTabs({ active = "foryou" }: { active?: "foryou" | "short" }) {
+  return (
+    <div className="flex items-center justify-center gap-6 pt-1">
+      <div className="flex flex-col items-center">
+        <span className={`text-[16px] ${active === "short" ? "font-extrabold text-white" : "font-semibold text-white/60"}`}>Shortlist · 5</span>
+        {active === "short" && <span className="mt-1 w-7 h-[3px] rounded-full bg-white" />}
+      </div>
+      <div className="flex flex-col items-center">
+        <span className={`text-[16px] ${active === "foryou" ? "font-extrabold text-white" : "font-semibold text-white/60"}`}>For You</span>
+        {active === "foryou" && <span className="mt-1 w-7 h-[3px] rounded-full bg-white" />}
+      </div>
+    </div>
+  );
+}
+function PhotoBg({ children, dim = false }: { children: React.ReactNode; dim?: boolean }) {
+  return (
+    <div className="absolute inset-0 bg-neutral-950">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={PHOTOS.shrine} alt="" className={`absolute inset-0 w-full h-full object-cover ${dim ? "opacity-30" : "opacity-80"}`} />
+      <div className="absolute inset-x-0 top-0 p-3 bg-gradient-to-b from-black/70 to-transparent pb-6">{children}</div>
+    </div>
+  );
+}
+/* T1 — clean top: only the small tabs (filters hidden until Search) */
+function LabT1() {
+  return (
+    <PhotoBg>
+      <TikTabs />
+      <p className="mt-3 text-center text-[12px] text-white/50">clean — no chips; filters live behind Search ↓</p>
+    </PhotoBg>
+  );
+}
+/* T2 — search opened from the nav: bar + the type chips below it */
+function LabT2() {
+  return (
+    <PhotoBg dim>
+      <TikTabs />
+      <div className="mt-3 flex items-center gap-2">
+        <div className="flex-1 h-11 rounded-full bg-black/45 backdrop-blur border border-white/20 flex items-center px-3.5 gap-2">
+          <span className="text-white/60 text-[14px]">⌕</span>
+          <span className="text-white/50 text-[14px]">Search places in Tokyo…</span>
+        </div>
+        <span className="w-10 h-10 rounded-full bg-black/45 backdrop-blur border border-white/20 flex items-center justify-center text-white/80">✕</span>
+      </div>
+      <div className="mt-2.5 flex gap-2 overflow-hidden">
+        {["All", "Food", "Sights", "Stay", "Activities"].map((f, i) => (
+          <span key={f} className={`h-10 px-3.5 rounded-full flex items-center text-[13px] font-bold shrink-0 ${i === 0 ? "bg-white/90 text-neutral-900" : "bg-black/35 backdrop-blur text-white/85 border border-white/15"}`}>{f}</span>
+        ))}
+      </div>
+      <p className="mt-3 text-center text-[12px] text-white/50">appears only after tapping Search in the nav</p>
+    </PhotoBg>
+  );
+}
+/* T3 — my alternative: one sliders button beside the tabs; active filter = one dismissible chip */
+function LabT3() {
+  return (
+    <PhotoBg>
+      <div className="relative">
+        <TikTabs />
+        <span className="absolute end-1 top-1 w-10 h-10 rounded-full bg-black/40 backdrop-blur border border-white/20 flex items-center justify-center text-white">
+          <span className="text-[15px]">⚙︎</span>
+        </span>
+      </div>
+      <div className="mt-3 flex justify-center">
+        <span className="h-10 px-3.5 rounded-full bg-white/90 text-neutral-900 flex items-center gap-2 text-[13px] font-bold">
+          Food <span className="text-neutral-500">✕</span>
+        </span>
+      </div>
+      <p className="mt-3 text-center text-[12px] text-white/50">chips only exist as the ACTIVE filter; the rest live in the ⚙︎ sheet</p>
+    </PhotoBg>
+  );
+}
+/* I1 — dashed bar (the pick, refined tighter) */
+function LabI1() {
+  return (
+    <PhotoBg>
+      <TikTabs />
+      <div className="mt-3 h-11 rounded-2xl border border-dashed flex items-center gap-2 px-3.5 bg-black/35 backdrop-blur" style={{ borderColor: "#a394ff" }}>
+        <Sparkle size={16} weight="fill" style={{ color: "#b6a8ff" }} />
+        <span className="text-[13px] font-bold text-white flex-1">Import from TikTok / IG</span>
+        <CaretRight size={16} className="text-white/70" />
+      </div>
+    </PhotoBg>
+  );
+}
+/* I2 — social bar: logos + Import pill */
+function LabI2() {
+  return (
+    <PhotoBg>
+      <TikTabs />
+      <div className="mt-3 h-12 rounded-2xl flex items-center gap-2.5 ps-3 pe-1.5 bg-black/45 backdrop-blur border border-white/15">
+        <span className="flex -space-x-1.5">
+          <span className="w-7 h-7 rounded-full bg-black flex items-center justify-center border border-white/25"><TiktokLogo size={16} weight="fill" className="text-white" /></span>
+          <span className="w-7 h-7 rounded-full flex items-center justify-center border border-white/25" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}><InstagramLogo size={16} weight="fill" className="text-white" /></span>
+        </span>
+        <span className="text-[13px] font-bold text-white flex-1">Drop a link or screenshot</span>
+        <span className="h-9 px-4 rounded-full text-[13px] font-bold text-white flex items-center" style={{ background: "var(--clr-brand)" }}>Import</span>
+      </div>
+    </PhotoBg>
+  );
+}
+/* I3 — input-look bar: reads like a paste field */
+function LabI3() {
+  return (
+    <PhotoBg>
+      <TikTabs />
+      <div className="mt-3 h-12 rounded-full flex items-center gap-2.5 ps-4 pe-1.5 bg-black/45 backdrop-blur border border-white/20">
+        <span className="text-white/60 text-[15px]">🔗</span>
+        <span className="text-[13.5px] text-white/55 flex-1">Paste a TikTok link…</span>
+        <span className="w-9 h-9 rounded-full flex items-center justify-center text-white" style={{ background: "var(--clr-brand)" }}>
+          <Sparkle size={16} weight="fill" />
+        </span>
+      </div>
+    </PhotoBg>
+  );
+}
+
 function Lab() {
   const v = useSearchParams().get("v") ?? "a";
   return (
@@ -430,6 +549,12 @@ function Lab() {
       {v === "c2" && <Phone label="2 — Pinned circle + divider"><ChipOpt2 /></Phone>}
       {v === "c3" && <Phone label="3 — Filters only (no chip)"><ChipOpt3 /></Phone>}
       {v === "c4" && <Phone label="4 — Grouped tones"><ChipOpt4 /></Phone>}
+      {v === "t1" && <Phone label="T1"><LabT1 /></Phone>}
+      {v === "t2" && <Phone label="T2"><LabT2 /></Phone>}
+      {v === "t3" && <Phone label="T3"><LabT3 /></Phone>}
+      {v === "i1" && <Phone label="I1"><LabI1 /></Phone>}
+      {v === "i2" && <Phone label="I2"><LabI2 /></Phone>}
+      {v === "i3" && <Phone label="I3"><LabI3 /></Phone>}
     </div>
   );
 }
