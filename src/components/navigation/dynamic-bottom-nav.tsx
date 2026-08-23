@@ -146,6 +146,60 @@ export function DynamicBottomNav({
     window.addEventListener("paxawa:openInspire", open);
     return () => window.removeEventListener("paxawa:openInspire", open);
   }, [router, base]);
+
+  // Round 13: swipe left/right anywhere on the page moves between the three
+  // pill tabs. Guards keep every existing horizontal gesture safe: gestures
+  // that start on a map, inside a sideways scroller (chip rails, carousels),
+  // on a swipeable row (touch-pan-y) or a form control never qualify; a
+  // qualifying swipe must be long (≥72px), flat (|dx| > 2·|dy|) and fast.
+  const tabsRef = useRef<{ hrefs: string[]; idx: number }>({ hrefs: [], idx: 0 });
+  useEffect(() => {
+    const swipe = { x: 0, y: 0, t: 0, ok: false };
+    const scrollable = (el: Element | null): boolean => {
+      let n: Element | null = el;
+      for (let i = 0; n && i < 10; i++, n = n.parentElement) {
+        if (n instanceof HTMLElement) {
+          if (n.classList.contains("mapboxgl-map")) return true;
+          if (n.classList.contains("touch-pan-y") || n.classList.contains("touch-none")) return true;
+          const cs = n.scrollWidth > n.clientWidth + 8 ? getComputedStyle(n).overflowX : "";
+          if (cs === "auto" || cs === "scroll") return true;
+          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return true;
+        }
+      }
+      return false;
+    };
+    const onStart = (e: TouchEvent) => {
+      swipe.ok = false;
+      if (e.touches.length !== 1) return;
+      const t0 = e.touches[0];
+      if (scrollable(e.target as Element)) return;
+      swipe.x = t0.clientX; swipe.y = t0.clientY; swipe.t = performance.now(); swipe.ok = true;
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (!swipe.ok) return;
+      swipe.ok = false;
+      const t0 = e.changedTouches[0];
+      if (!t0) return;
+      const dx = t0.clientX - swipe.x;
+      const dy = t0.clientY - swipe.y;
+      const dt = performance.now() - swipe.t;
+      if (Math.abs(dx) < 72 || Math.abs(dx) < Math.abs(dy) * 2 || dt > 600) return;
+      const { hrefs, idx } = tabsRef.current;
+      if (!hrefs.length) return;
+      const rtl = document.documentElement.dir === "rtl";
+      // finger left (dx<0) = forward in reading order; mirrored in RTL.
+      const forward = rtl ? dx > 0 : dx < 0;
+      const next = idx + (forward ? 1 : -1);
+      if (next < 0 || next >= hrefs.length) return;
+      router.push(hrefs[next]);
+    };
+    document.addEventListener("touchstart", onStart, { passive: true });
+    document.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", onStart);
+      document.removeEventListener("touchend", onEnd);
+    };
+  }, [router]);
   // Now-redesign step 1: any surface can open the confirmation sheet by event
   // (trip home "Add a confirmation", empty Day 1, docs tab).
   useEffect(() => {
@@ -202,6 +256,7 @@ export function DynamicBottomNav({
     if (moneyish && tabs.some((tab) => tab.key === "money")) return "money";
     return "";
   })();
+  tabsRef.current = { hrefs: tabs.map((tb) => tb.href), idx: tabs.findIndex((tb) => tb.key === activeKey) };
 
   const defaultDay = days.includes(todayIso) ? todayIso : days[0] ?? "";
 

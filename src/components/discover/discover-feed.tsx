@@ -916,7 +916,9 @@ export function DiscoverFeed({
            sheet. Top padding clears the floating chip strip. */
         <div
           ref={containerRef}
-          className="h-full overflow-y-auto scrollbar-none px-3 pt-[68px] space-y-3"
+          /* Round 13: cards SNAP as you scroll (proximity, so fast flings
+             still fly) — the free scroll read as aimless between cards. */
+          className="h-full overflow-y-auto scrollbar-none px-3 pt-[68px] space-y-3 snap-y snap-proximity"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
         >
           {/* §5-F: vibe onboarding lives inside the feed for cold users. */}
@@ -936,7 +938,7 @@ export function DiscoverFeed({
             </div>
           ) : (
             visible.map((s) => (
-              <div key={s.place.placeId} className="w-full aspect-[4/5] rounded-3xl overflow-hidden">
+              <div key={s.place.placeId} className="w-full aspect-[4/5] rounded-3xl overflow-hidden snap-start scroll-mt-[68px]">
                 <PlaceCard
                   scored={s} center={center}
                   saved={saved.has(s.place.placeId)}
