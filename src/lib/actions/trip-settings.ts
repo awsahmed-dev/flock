@@ -65,5 +65,7 @@ export async function deleteTrip(formData: FormData) {
   await assertOwner(tripId);
 
   await db.delete(trips).where(eq(trips.id, tripId));
-  redirect("/dashboard");
+  // No redirect() here: thrown NEXT_REDIRECT lands in the client's catch and
+  // reads as "delete failed" (round 16 — 'I can't delete a trip'). The client
+  // navigates itself.
 }

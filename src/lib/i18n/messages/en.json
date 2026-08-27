@@ -330,6 +330,7 @@
     "settingsDeleting": "Deleting…",
     "settingsDeleteTrip": "Delete trip",
     "settingsDeleteFailed": "Failed to delete trip",
+    "settingsDeleted": "Trip deleted",
     "clearPlan": "Clear all itinerary items",
     "clearPlanMeta": "Wipe every day's items and start the plan fresh. The trip itself stays.",
     "clearConfirm": "Tap again to confirm",

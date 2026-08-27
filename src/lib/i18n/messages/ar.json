@@ -330,6 +330,7 @@
     "settingsDeleting": "جارٍ الحذف…",
     "settingsDeleteTrip": "حذف الرحلة",
     "settingsDeleteFailed": "تعذّر حذف الرحلة",
+    "settingsDeleted": "حُذفت الرحلة",
     "clearPlan": "امسح كل عناصر الخطة",
     "clearPlanMeta": "أزل عناصر كل الأيام وابدأ الخطة من جديد. الرحلة نفسها تبقى.",
     "clearConfirm": "اضغط مرة أخرى للتأكيد",

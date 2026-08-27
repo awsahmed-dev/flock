@@ -232,9 +232,15 @@ export function DiscoverFeed({
     [tripId],
   );
 
-  // §3-C: search is a LOCAL filter over already-loaded cards (see `visible`),
-  // not an API round-trip — so ranking/category stay in browse mode.
-  const searching = false;
+  // Round 16 ("search is limited, not searching openly"): typing 2+ chars is
+  // a REAL search — debounced 400ms into /api/discover/search (Google text
+  // search, biased to the trip). Under 2 chars the feed returns to browse.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query.trim()), 400);
+    return () => clearTimeout(id);
+  }, [query]);
+  const searching = debouncedQuery.length >= 2;
 
   // A2: a non-"All" category counts as one active filter, so the Filters pill
   // can carry a visible active-count badge (Visibility of System Status). When
@@ -328,9 +334,12 @@ export function DiscoverFeed({
     } else if (specialFilter === "saved") {
       list = list.filter((s) => saved.has(s.place.placeId));
     }
-    if (!q) return list;
+    // While a REAL search ran, the candidates ARE the results — a literal
+    // name filter would drop results whose names lack the query substring.
+    // The substring filter only applies to the un-searched browse feed.
+    if (!q || searching) return list;
     return list.filter((s) => s.place.name.toLowerCase().includes(q));
-  }, [crewRanked, query, hidden, specialFilter, likeCountMap, saved]);
+  }, [crewRanked, query, hidden, specialFilter, likeCountMap, saved, searching]);
 
   const featuresRef = useRef<Map<string, PlaceFeatures>>(new Map());
   featuresRef.current = useMemo(
@@ -386,10 +395,9 @@ export function DiscoverFeed({
   );
 
   useEffect(() => {
-    if (searching) return;
-    void fetchFeed("", category);
+    void fetchFeed(searching ? debouncedQuery : "", category);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, here]);
+  }, [category, here, debouncedQuery]);
 
   // §9: the dynamic bottom nav (a sibling route component) drives the Saved
   // sheet + Search input via window events, and reads the wishlist count for
