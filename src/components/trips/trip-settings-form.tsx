@@ -62,7 +62,9 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
     startTransition(async () => {
       try {
         await deleteTrip(fd);
+        toast.success(t("trip.settingsDeleted"));
         router.push("/dashboard");
+        router.refresh();
       } catch {
         toast.error(t("trip.settingsDeleteFailed"));
       }
