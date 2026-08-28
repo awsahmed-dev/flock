@@ -602,6 +602,74 @@ function LabS3() {
   );
 }
 
+
+/* Round 16 — where trip DELETE lives */
+function DashCard({ dim = false }: { dim?: boolean }) {
+  return (
+    <div className={`relative rounded-3xl overflow-hidden h-[210px] ${dim ? "opacity-40" : ""}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={PHOTOS.tower} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 30%, rgba(0,0,0,.75))" }} />
+      <span className="absolute top-3 start-3 rounded-full px-2.5 py-1 text-[11px] font-black text-white" style={{ background: "var(--clr-horizon)" }}>19d</span>
+      <div className="absolute bottom-3 start-3.5">
+        <p className="text-white text-[17px] font-extrabold">Tokyo</p>
+        <p className="text-white/70 text-[12px]">7 Sep – 11 Sep</p>
+      </div>
+    </div>
+  );
+}
+function LabD1() {
+  return (
+    <div className="absolute inset-0 bg-background">
+      <div className="px-4 pt-6"><p className="text-[12px] font-bold uppercase tracking-wider text-tertiary mb-3">Coming up</p><DashCard dim /></div>
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-x-0 bottom-0 rounded-t-[20px] bg-card border-t border-border p-2 pb-8">
+        <div className="pt-2 pb-1 flex justify-center"><div className="w-10 h-1 rounded-full bg-foreground/25" /></div>
+        <p className="px-4 py-2 text-[15px] font-extrabold">Tokyo</p>
+        {["Open trip", "Share invite link", "Trip settings"].map((l) => (
+          <div key={l} className="h-13 py-3.5 px-4 text-[15px] font-semibold border-t border-border/50">{l}</div>
+        ))}
+        <div className="h-13 py-3.5 px-4 text-[15px] font-bold border-t border-border/50" style={{ color: "#FF3B30" }}>Delete trip…</div>
+      </div>
+      <p className="absolute top-2 inset-x-0 text-center text-[12px] text-muted-foreground">long-press any trip card</p>
+    </div>
+  );
+}
+function LabD2() {
+  return (
+    <div className="absolute inset-0 bg-background px-4 pt-6">
+      <p className="text-[17px] font-extrabold mb-1">Trip settings</p>
+      <p className="text-[12px] text-muted-foreground mb-4">…name · dates · budget · currency…</p>
+      <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: "rgba(255,59,48,.35)", background: "rgba(255,59,48,.06)" }}>
+        <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "#FF3B30" }}>Danger zone</p>
+        <div className="h-12 rounded-full border border-border bg-card flex items-center justify-center text-[15px] font-bold">Clear all plan items</div>
+        <div className="h-12 rounded-full flex items-center justify-center text-[15px] font-bold text-white" style={{ background: "#FF3B30" }}>Delete trip</div>
+        <p className="text-[12px] text-muted-foreground">Deletes the plan, votes, expenses and documents for everyone. Cannot be undone.</p>
+      </div>
+      <p className="mt-4 text-center text-[12px] text-muted-foreground">already exists here — now works + gets the red block style</p>
+    </div>
+  );
+}
+function LabD3() {
+  return (
+    <div className="absolute inset-0 bg-background">
+      <div className="px-4 pt-6">
+        <p className="text-[12px] font-bold uppercase tracking-wider text-tertiary mb-3">Coming up</p>
+        <div className="relative">
+          <DashCard />
+          <span className="absolute top-3 end-3 w-9 h-9 rounded-full bg-black/45 backdrop-blur flex items-center justify-center text-white text-[18px] font-black">⋯</span>
+          <div className="absolute top-14 end-3 w-44 rounded-2xl bg-card border border-border overflow-hidden elev-lg">
+            <div className="px-3.5 h-12 flex items-center text-[14px] font-semibold border-b border-border/50">Share invite</div>
+            <div className="px-3.5 h-12 flex items-center text-[14px] font-semibold border-b border-border/50">Settings</div>
+            <div className="px-3.5 h-12 flex items-center text-[14px] font-bold" style={{ color: "#FF3B30" }}>Delete trip…</div>
+          </div>
+        </div>
+      </div>
+      <p className="absolute top-2 inset-x-0 text-center text-[12px] text-muted-foreground">a ⋯ on every trip card</p>
+    </div>
+  );
+}
+
 function Lab() {
   const v = useSearchParams().get("v") ?? "a";
   return (
@@ -625,6 +693,9 @@ function Lab() {
       {v === "s1" && <Phone label="S1"><LabS1 /></Phone>}
       {v === "s2" && <Phone label="S2"><LabS2 /></Phone>}
       {v === "s3" && <Phone label="S3"><LabS3 /></Phone>}
+      {v === "d1" && <Phone label="D1"><LabD1 /></Phone>}
+      {v === "d2" && <Phone label="D2"><LabD2 /></Phone>}
+      {v === "d3" && <Phone label="D3"><LabD3 /></Phone>}
     </div>
   );
 }
