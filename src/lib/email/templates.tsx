@@ -74,7 +74,7 @@ function EmailShell({
                   <td>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`${APP_URL}/logo/wordmark.svg`}
+                      src={`${APP_URL}/logo/wordmark-email.png`}
                       alt="Paxawa"
                       width="96"
                       height="20"
