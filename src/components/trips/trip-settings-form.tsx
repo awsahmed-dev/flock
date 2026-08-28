@@ -271,60 +271,50 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
         )}
       </div>
 
-      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 space-y-3">
-        <div className="flex items-center gap-2 text-destructive">
-          <AlertTriangle className="w-4 h-4" />
-          <h2 className="font-medium text-sm">{t("trip.settingsDangerZone")}</h2>
-        </div>
-
-        {/* Clear plan — owner-only bulk reset, relocated from the retired
-            mobile Tools sheet. Wipes every day's itinerary items (the trip
-            itself survives). Two-tap arming so it isn't fat-fingered. */}
-        <div className="space-y-2 pb-3 border-b border-destructive/20">
-          <p className="text-sm text-muted-foreground">
-            {confirmClear ? t("trip.clearWarning") : t("trip.clearPlanMeta")}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-destructive border-destructive/30 hover:bg-destructive/10"
-            onClick={handleClearPlan}
-            disabled={isPending}
-          >
-            <Eraser className="w-4 h-4 me-1.5" />
-            {isPending
-              ? t("trip.clearingPlan")
-              : confirmClear
-                ? t("trip.clearConfirm")
-                : t("trip.clearPlan")}
-          </Button>
-        </div>
-
-        <p className="text-sm text-muted-foreground">
-          {t("trip.settingsDangerWarning")}
+      {/* D2 (chosen 2026-08-28): the danger zone per the approved mock —
+          red block, 12px uppercase title, full-width 48px pill actions. */}
+      <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: "rgba(255,59,48,.35)", background: "rgba(255,59,48,.06)" }}>
+        <p className="text-[12px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#FF3B30" }}>
+          <AlertTriangle className="w-4 h-4" /> {t("trip.settingsDangerZone")}
         </p>
+
+        <p className="text-[13px] text-muted-foreground">
+          {confirmClear ? t("trip.clearWarning") : t("trip.clearPlanMeta")}
+        </p>
+        <button
+          type="button"
+          onClick={handleClearPlan}
+          disabled={isPending}
+          className="w-full h-12 rounded-full border border-border bg-card text-[15px] font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          <Eraser className="w-4 h-4" />
+          {isPending ? t("trip.clearingPlan") : confirmClear ? t("trip.clearConfirm") : t("trip.clearPlan")}
+        </button>
+
         {showDeleteConfirm ? (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium text-destructive">{t("trip.settingsAreYouSure")}</span>
-            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isPending}>
-              {isPending ? t("trip.settingsDeleting") : t("trip.settingsConfirmDelete")}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
-              {t("common.cancel")}
-            </Button>
+          <div className="space-y-3 pt-1">
+            <p className="text-[14px] font-bold" style={{ color: "#FF3B30" }}>{t("trip.settingsAreYouSure")}</p>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 h-12 rounded-full border border-border bg-card text-[15px] font-bold">
+                {t("common.cancel")}
+              </button>
+              <button type="button" onClick={handleDelete} disabled={isPending} className="flex-1 h-12 rounded-full text-[15px] font-bold text-white disabled:opacity-60" style={{ background: "#FF3B30" }}>
+                {isPending ? t("trip.settingsDeleting") : t("trip.settingsConfirmDelete")}
+              </button>
+            </div>
           </div>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+          <button
+            type="button"
             onClick={() => setShowDeleteConfirm(true)}
+            className="w-full h-12 rounded-full text-[15px] font-bold text-white flex items-center justify-center gap-2"
+            style={{ background: "#FF3B30" }}
           >
-            <Trash2 className="w-4 h-4 me-1.5" />
+            <Trash2 className="w-4 h-4" />
             {t("trip.settingsDeleteTrip")}
-          </Button>
+          </button>
         )}
+        <p className="text-[12px] text-muted-foreground">{t("trip.settingsDangerWarning")}</p>
       </div>
       </div>
     </div>

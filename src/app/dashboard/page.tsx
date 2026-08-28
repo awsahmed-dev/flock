@@ -19,6 +19,7 @@ import { NewTripTrigger } from "@/components/trips/new-trip-trigger";
 import { OnboardingCard } from "@/components/dashboard/onboarding-card";
 import { ColdStartRedirect } from "@/components/dashboard/cold-start-redirect";
 import { TipBanner } from "@/components/dashboard/tip-banner";
+import { TripCardActions } from "@/components/dashboard/trip-card-actions";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
 import { diffDaysIso, toIsoDay } from "@/lib/today";
@@ -324,8 +325,8 @@ export default async function DashboardPage() {
                   const totalDays = differenceInCalendarDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1;
                   const progress = Math.min(100, (stops / Math.max(1, totalDays * 3)) * 100);
                   return (
+                    <TripCardActions key={trip.id} tripId={trip.id} tripName={trip.name} isOwner={trip.createdBy === user.id}>
                     <Link
-                      key={trip.id}
                       href={`/trips/${trip.id}`}
                       prefetch
                       className="relative rounded-2xl overflow-hidden shrink-0 active:scale-[0.98] transition-transform"
@@ -350,6 +351,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                     </Link>
+                    </TripCardActions>
                   );
                 })}
                 {/* Dashed "New trip" card. */}
@@ -375,8 +377,8 @@ export default async function DashboardPage() {
               </div>
               <div className="rounded-2xl border border-border bg-card overflow-hidden">
                 {pastTrips.slice(0, 3).map((trip, i) => (
+                  <TripCardActions key={trip.id} tripId={trip.id} tripName={trip.name} isOwner={trip.createdBy === user.id}>
                   <Link
-                    key={trip.id}
                     href={`/trips/${trip.id}`}
                     prefetch
                     className={`flex items-center gap-3 px-3 py-2.5 active:bg-muted/40 ${i > 0 ? "border-t border-border/60" : ""}`}
@@ -397,6 +399,7 @@ export default async function DashboardPage() {
                     </div>
                     <CaretRight size={16} weight="bold" className="text-muted-foreground/60 rtl:rotate-180 shrink-0" />
                   </Link>
+                  </TripCardActions>
                 ))}
               </div>
             </section>
