@@ -63,12 +63,20 @@ function EmailShell({
       <Head />
       <Preview>{preview}</Preview>
       <Tailwind>
-        <Body className="bg-slate-50 font-sans my-0" dir={dir}>
-          <Container className="bg-white max-w-[520px] my-8 mx-auto rounded-2xl overflow-hidden border border-slate-200">
+        <Body className="bg-[#0D0D0D] font-sans my-0" dir={dir} style={{ backgroundColor: "#0D0D0D" }}>
+          <Container
+            className="max-w-[520px] my-9 mx-auto rounded-[20px] overflow-hidden border border-[#2A2833]"
+            style={{
+              backgroundColor: "#141318",
+              // The landing's aurora, as a safe fallback-friendly gradient.
+              backgroundImage:
+                "radial-gradient(120% 70% at 20% 0%, rgba(139,124,255,0.18) 0%, rgba(20,19,24,0) 55%)",
+            }}
+          >
             {/* Brand bar. Email clients are unfriendly to inline SVG +
                 currentColor, so we serve the wordmark as a hosted asset
                 with explicit width/height for the Outlook fallback path. */}
-            <Section className="bg-gradient-to-br from-[#5B4BD9] to-[#8B7CFF] px-6 py-5">
+            <Section className="px-8 pt-7">
               <table>
                 <tr>
                   <td>
@@ -77,18 +85,8 @@ function EmailShell({
                       src={`${APP_URL}/logo/wordmark-email.png`}
                       alt="Paxawa"
                       width="96"
-                      height="20"
-                      style={{
-                        display: "block",
-                        height: "20px",
-                        width: "auto",
-                        // Wordmark renders in currentColor — for hosted-SVG
-                        // delivery in email, we ship a white-tinted variant
-                        // via filter. Most modern clients honor this; Outlook
-                        // falls back to the dark wordmark on the gradient
-                        // (still readable).
-                        filter: "brightness(0) invert(1)",
-                      }}
+                      height="29"
+                      style={{ display: "block", height: "29px", width: "auto" }}
                     />
                   </td>
                 </tr>
@@ -99,13 +97,13 @@ function EmailShell({
             <Section className="px-8 py-8">{children}</Section>
 
             {/* Footer */}
-            <Hr className="border-slate-200 my-0" />
+            <Hr className="border-[#2A2833] my-0" />
             <Section className="px-8 py-5 text-center">
-              <Text className="text-xs text-slate-400 m-0 leading-relaxed">
+              <Text className="text-xs text-[#787580] m-0 leading-relaxed">
                 You're receiving this because you're on a trip in Paxawa.{" "}
                 <Link
                   href={`${APP_URL}/dashboard`}
-                  className="text-indigo-500 underline"
+                  className="text-[#8B7CFF] underline"
                 >
                   Manage notifications
                 </Link>
@@ -122,7 +120,7 @@ function PrimaryButton({ href, label }: { href: string; label: string }) {
   return (
     <Button
       href={href}
-      className="bg-indigo-600 text-white px-5 py-3 rounded-lg font-bold text-sm no-underline inline-block"
+      className="bg-[#8B7CFF] text-[#0D0D0D] px-6 py-3.5 rounded-full font-bold text-sm no-underline inline-block"
     >
       {label}
     </Button>
@@ -168,21 +166,21 @@ function VoteOpenedEmail(p: VoteOpenedProps) {
       preview={t("email.voteOpenedSubject", { actor: p.authorName, trip: p.tripName })}
       locale={locale}
     >
-      <Heading className="text-slate-900 text-xl font-bold m-0 mb-2">
+      <Heading className="text-white text-xl font-bold m-0 mb-2">
         {t("email.voteOpenedHeading", { actor: p.authorName })}
       </Heading>
-      <Text className="text-slate-600 text-sm m-0 mb-5 leading-relaxed">
+      <Text className="text-[#B7B4C0] text-sm m-0 mb-5 leading-relaxed">
         {t("email.voteOpenedBody", { name: p.recipientName, trip: p.tripName })}
       </Text>
-      <Section className="bg-slate-50 rounded-xl p-4 mb-5">
-        <Text className="text-slate-900 text-base font-semibold m-0 mb-3 leading-snug">
+      <Section className="bg-[#1D1B24] rounded-xl p-4 mb-5">
+        <Text className="text-white text-base font-semibold m-0 mb-3 leading-snug">
           {p.question}
         </Text>
         <table className="w-full">
           {p.options.slice(0, 5).map((o, i) => (
             <tr key={i}>
               <td>
-                <Text className="text-slate-700 text-sm m-0 py-1">
+                <Text className="text-[#B7B4C0] text-sm m-0 py-1">
                   · {o}
                 </Text>
               </td>
@@ -246,10 +244,10 @@ function ExpenseLoggedEmail(p: ExpenseLoggedProps) {
       preview={t("email.expenseLoggedSubject", { actor: p.payerName, title: p.title })}
       locale={locale}
     >
-      <Heading className="text-slate-900 text-xl font-bold m-0 mb-2">
+      <Heading className="text-white text-xl font-bold m-0 mb-2">
         {t("email.expenseLoggedHeading", { actor: p.payerName, currency: p.currency, amount: p.amount.toFixed(2) })}
       </Heading>
-      <Text className="text-slate-600 text-sm m-0 mb-5 leading-relaxed">
+      <Text className="text-[#B7B4C0] text-sm m-0 mb-5 leading-relaxed">
         {t("email.expenseLoggedBody", { title: p.title, trip: p.tripName })}
       </Text>
       <Section className="bg-orange-50 rounded-xl p-4 mb-5 border border-orange-100">
@@ -314,10 +312,10 @@ function InviteAcceptedEmail(p: InviteAcceptedProps) {
       preview={t("email.inviteAcceptedSubject", { actor: p.joinerName, trip: p.tripName })}
       locale={locale}
     >
-      <Heading className="text-slate-900 text-xl font-bold m-0 mb-2">
+      <Heading className="text-white text-xl font-bold m-0 mb-2">
         {t("email.inviteAcceptedHeading", { actor: p.joinerName })}
       </Heading>
-      <Text className="text-slate-600 text-sm m-0 mb-5 leading-relaxed">
+      <Text className="text-[#B7B4C0] text-sm m-0 mb-5 leading-relaxed">
         {t("email.inviteAcceptedBody", { name: p.recipientName, actor: p.joinerName, destination: p.destination })}
       </Text>
       <PrimaryButton
