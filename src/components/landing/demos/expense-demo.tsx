@@ -1,187 +1,134 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { motion } from "motion/react";
-import { ArrowDownRight, ArrowUpRight, Receipt } from "@phosphor-icons/react/dist/ssr";
-import { DemoFrame, DemoHeader } from "./demo-frame";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Train,
+  ForkKnife,
+  Bed,
+  CaretRight,
+  Faders,
+} from "@phosphor-icons/react/dist/ssr";
+import { frame, seg } from "./frame";
+import { APP, PhoneShell, MiniTopBar, MiniNav } from "./app-kit";
 
 /**
- * Interactive Expense demo. Visitor types an amount, picks a currency,
- * and the demo splits it across a fixed 4-member crew live. They can
- * also pick who paid — the "You owe / You paid" cards update in real time.
- *
- * Pre-seeded with two prior expenses to give the running balance some
- * baseline rather than starting from zero.
+ * SPLIT station mockup — mirrors the real Money screenshot: the purple
+ * spent card (total, you-paid / you-owe pills, budget bar), Personal cap
+ * row, the all-square Balances card, and the Activity list with payer
+ * avatars.
  */
 
-const CREW = [
-  { id: "you", name: "You", color: "from-indigo-500 to-violet-600" },
-  { id: "maya", name: "Maya", color: "from-[#9BC97E] to-teal-600" },
-  { id: "alex", name: "Alex", color: "from-amber-500 to-orange-600" },
-  { id: "sam", name: "Sam", color: "from-rose-500 to-pink-600" },
-];
+const ROWS = [
+  { icon: Train, tone: APP.horizon, title: "JR passes", meta: "Aug 30 · You", amount: "USD 118", who: "MA", whoBg: "#0FA47A" },
+  { icon: ForkKnife, tone: APP.moss, title: "Nishiki street food", meta: "Aug 30 · Rania", amount: "USD 32", who: "RA", whoBg: "#E8A33D" },
+  { icon: Bed, tone: APP.wayfind, title: "Ryokan · 2 nights", meta: "Aug 29 · You", amount: "USD 380", who: "MA", whoBg: "#0FA47A" },
+] as const;
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY"];
-
-// Pre-existing balance state — what "You paid / You owe" cards show before
-// any demo input. Just numbers for visual flavor.
-const BASE_YOU_PAID = 480;
-const BASE_YOU_OWE = 120;
-
-export function ExpenseDemo() {
-  const [amount, setAmount] = useState<string>("200");
-  const [currency, setCurrency] = useState("USD");
-  const [paidBy, setPaidBy] = useState("you");
-  const [title, setTitle] = useState("Sushi dinner");
-
-  const amt = parseFloat(amount) || 0;
-  const perPerson = amt / CREW.length;
-
-  const youPaid = useMemo(
-    () => BASE_YOU_PAID + (paidBy === "you" ? amt : 0),
-    [paidBy, amt],
-  );
-  const youOwe = useMemo(
-    () => BASE_YOU_OWE + (paidBy !== "you" ? perPerson : 0),
-    [paidBy, perPerson],
-  );
-
+export function ExpenseDemo({ progress }: { progress?: number }) {
+  const bar = Math.round(seg(progress, 0.1, 0.45) * 26);
   return (
-    <DemoFrame toneClass="from-[#9BC97E]/[0.07] to-[#3EC5B7]/[0.04]">
-      <DemoHeader title="Tokyo trip · expenses" subtitle="Log a new spend" />
+    <PhoneShell>
+      <MiniTopBar title="Kyoto" />
 
-      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-        {/* Balance cards */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-3">
-            <div className="flex items-center gap-1.5 text-[10px] tracking-wider text-white/40 font-bold uppercase mb-1">
-              <ArrowUpRight className="w-3 h-3 text-[#9BC97E]" />
-              You paid
-            </div>
-            <motion.p
-              key={youPaid}
-              initial={{ scale: 0.95, opacity: 0.6 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-xl font-bold tabular-nums text-[#B8DBA1]"
-            >
-              {currency} {youPaid.toFixed(0)}
-            </motion.p>
+      <div className="flex-1 min-h-0 px-2 pt-1 flex flex-col gap-1.5 overflow-hidden">
+        {/* the spent card */}
+        <motion.div
+          {...frame(progress, 0.04, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}
+          className="shrink-0 rounded-2xl px-3 py-2.5 relative overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #7B6CF0, #5B4BD9)" }}
+        >
+          <span aria-hidden className="absolute -top-6 -right-4 w-24 h-24 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }} />
+          <p className="text-[7px] font-black tracking-[0.14em] uppercase text-white/80">Trip total spent</p>
+          <p className="text-[20px] font-extrabold text-white leading-tight tabular-nums">USD 626</p>
+          <div className="mt-1.5 flex gap-1.5">
+            <span className="flex-1 rounded-lg px-2 py-1" style={{ background: "rgba(255,255,255,0.14)" }}>
+              <span className="text-[6px] font-black tracking-wide uppercase text-white/80 inline-flex items-center gap-0.5"><ArrowUpRight size={7} /> You paid</span>
+              <span className="block text-[11px] font-bold text-white tabular-nums">USD 498</span>
+            </span>
+            <span className="flex-1 rounded-lg px-2 py-1" style={{ background: "rgba(255,255,255,0.14)" }}>
+              <span className="text-[6px] font-black tracking-wide uppercase text-white/80 inline-flex items-center gap-0.5"><ArrowDownRight size={7} /> You owe</span>
+              <span className="block text-[11px] font-bold text-white tabular-nums">USD 0</span>
+            </span>
           </div>
-          <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-3">
-            <div className="flex items-center gap-1.5 text-[10px] tracking-wider text-white/40 font-bold uppercase mb-1">
-              <ArrowDownRight className="w-3 h-3 text-[#FF8A5C]" />
-              You owe
-            </div>
-            <motion.p
-              key={youOwe}
-              initial={{ scale: 0.95, opacity: 0.6 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-xl font-bold tabular-nums text-[#FF8A5C]"
-            >
-              {currency} {youOwe.toFixed(0)}
-            </motion.p>
+          <div className="mt-1.5 flex items-center justify-between">
+            <p className="text-[6px] font-black tracking-[0.14em] uppercase text-white/80">Trip budget</p>
+            <p className="text-[8px] font-bold text-white tabular-nums">USD 626 <span className="text-white/60">/ 2,400</span></p>
           </div>
-        </div>
+          <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.22)" }}>
+            <div className="h-full rounded-full bg-white transition-[width] duration-150" style={{ width: `${progress === undefined ? 26 : bar}%` }} />
+          </div>
+          <p className="mt-0.5 text-[7px] text-white/70">{progress === undefined ? 26 : bar}% used</p>
+        </motion.div>
 
-        {/* Inline form */}
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-3">
-          <div className="flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-[#9BC97E]" />
-            <p className="text-xs font-bold text-white/70 uppercase tracking-wider">
-              New expense
-            </p>
-          </div>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="What for?"
-            className="w-full bg-transparent text-sm font-semibold text-white placeholder:text-white/30 outline-none border-b border-white/[0.06] focus:border-[#9BC97E]/40 transition-colors pb-1.5"
-          />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0"
-              className="flex-1 min-w-0 bg-transparent text-2xl font-bold text-white tabular-nums placeholder:text-white/20 outline-none"
-            />
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="bg-white/[0.06] text-xs font-bold text-white/80 rounded-md px-2 outline-none"
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <p className="text-[10px] tracking-wider font-bold text-white/40 uppercase mb-1.5">
-              Paid by
-            </p>
-            <div className="flex items-center gap-1.5">
-              {CREW.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setPaidBy(m.id)}
-                  className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-colors ${
-                    paidBy === m.id
-                      ? "bg-white text-black"
-                      : "bg-white/[0.04] text-white/60 hover:bg-white/[0.08]"
-                  }`}
-                >
-                  {m.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* personal cap */}
+        <motion.div
+          {...frame(progress, 0.3, { opacity: 0, y: 8 }, { opacity: 1, y: 0 })}
+          className="shrink-0 flex items-center gap-2 rounded-xl border px-2.5 py-1.5"
+          style={{ background: APP.card, borderColor: APP.border }}
+        >
+          <Faders size={12} style={{ color: APP.brand }} className="shrink-0" />
+          <span className="flex-1 text-[10px] font-semibold">Personal cap</span>
+          <span className="text-[9px]" style={{ color: APP.muted }}>Set a personal cap</span>
+          <CaretRight size={10} style={{ color: APP.muted }} />
+        </motion.div>
 
-        {/* Split preview */}
-        <div>
-          <p className="text-[10px] tracking-wider font-bold text-white/40 uppercase mb-2">
-            Split equally · {CREW.length} ways
-          </p>
-          <div className="space-y-1.5">
-            {CREW.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2"
+        {/* balances */}
+        <motion.div
+          {...frame(progress, 0.42, { opacity: 0, y: 8 }, { opacity: 1, y: 0 })}
+          className="shrink-0 rounded-xl border px-2.5 py-2"
+          style={{ background: APP.card, borderColor: APP.border }}
+        >
+          <p className="text-[11px] font-bold">Balances</p>
+          <p className="mt-0.5 text-[9px]" style={{ color: APP.muted }}>All square 🤝 — nobody owes anybody.</p>
+        </motion.div>
+
+        {/* activity */}
+        <motion.div
+          {...frame(progress, 0.54, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}
+          className="flex-1 min-h-0 rounded-xl border px-2.5 py-2 overflow-hidden"
+          style={{ background: APP.card, borderColor: APP.border }}
+        >
+          <div className="flex items-center justify-between">
+            <span>
+              <span className="text-[11px] font-bold">Activity · 4</span>
+              <span className="block text-[8px]" style={{ color: APP.muted }}>Most recent expenses</span>
+            </span>
+            <span className="text-[9px] font-bold inline-flex items-center gap-0.5" style={{ color: APP.brand }}>
+              View all <CaretRight size={9} />
+            </span>
+          </div>
+          <div className="mt-1.5 flex gap-1">
+            <span className="h-5 px-2 rounded-full flex items-center text-[8px] font-bold" style={{ background: "rgba(224,178,82,0.16)", color: APP.dune, border: `1px solid ${APP.dune}55` }}>All</span>
+            <span className="h-5 px-2 rounded-full flex items-center text-[8px] font-bold" style={{ background: "rgba(245,245,247,0.08)", color: APP.muted }}>Yours</span>
+          </div>
+          {ROWS.map((r, i) => {
+            const I = r.icon;
+            return (
+              <motion.div
+                key={r.title}
+                {...frame(progress, 0.64 + i * 0.1, { opacity: 0, x: 10 }, { opacity: 1, x: 0 })}
+                className="flex items-center gap-2 py-1.5"
+                style={{ borderTop: i > 0 ? `1px solid ${APP.border}` : undefined, marginTop: i === 0 ? 4 : 0 }}
               >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-6 h-6 rounded-full bg-gradient-to-br ${m.color} flex items-center justify-center text-[10px] font-bold text-white`}
-                  >
-                    {m.name.charAt(0)}
-                  </div>
-                  <span className="text-sm text-white/90">{m.name}</span>
-                  {paidBy === m.id && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#B8DBA1] bg-[#9BC97E]/15 rounded-full px-1.5 py-0.5">
-                      paid
-                    </span>
-                  )}
-                </div>
-                <motion.span
-                  key={`${m.id}-${perPerson}`}
-                  initial={{ opacity: 0.5, y: -2 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm font-bold tabular-nums text-white"
-                >
-                  {currency} {perPerson.toFixed(0)}
-                </motion.span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="text-center text-xs text-[#B8DBA1]">
-          ↑ Try changing the amount or payer
-        </p>
+                <span className="rounded-full flex items-center justify-center shrink-0" style={{ width: 22, height: 22, background: `${r.tone}22` }}>
+                  <I size={11} style={{ color: r.tone }} />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[10px] font-semibold truncate">{r.title}</span>
+                  <span className="block text-[8px] truncate" style={{ color: APP.muted }}>{r.meta}</span>
+                </span>
+                <span className="text-[10px] font-bold tabular-nums shrink-0">{r.amount}</span>
+                <span className="rounded-full flex items-center justify-center text-[6px] font-bold shrink-0" style={{ width: 15, height: 15, background: r.whoBg, color: "#fff" }}>{r.who}</span>
+                <CaretRight size={9} style={{ color: APP.muted }} className="shrink-0" />
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
-    </DemoFrame>
+
+      <MiniNav active="money" />
+    </PhoneShell>
   );
 }

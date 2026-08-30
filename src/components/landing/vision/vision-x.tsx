@@ -24,10 +24,17 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/ui/logo";
-import { NowDemo } from "../demos/now-demo";
+import { ShotPhone } from "../demos/shot-phone";
+import { BoardingDemo } from "../demos/boarding-demo";
+import { DiscoverDemo } from "../demos/discover-demo";
 import { DepartureDemo } from "../demos/departure-demo";
-import { LiveDemo } from "../demos/live-demo";
+import { ExpenseDemo } from "../demos/expense-demo";
 import { WrapDemo } from "../demos/wrap-demo";
+
+/** Real production screenshots (same captures the store listings use) —
+ *  used by the kit rail as posters for the recorded loops. */
+const shot = (ar: boolean, name: string) => `/landing/screens/${ar ? "ar" : "en"}/${name}.jpg`;
+const loop = (ar: boolean, name: string) => `/landing/screens/${ar ? "ar" : "en"}/${name}-loop.mp4`;
 
 /* ── the day cycle: one atmosphere per phase ─────────────────────────── */
 const ATMOS = [
@@ -43,7 +50,7 @@ const STATIONS = [
   {
     lead: "File the flight plan, ",
     accent: "sawa.",
-    body: "Votes land, day chips fill, readiness climbs — the trip stops being a maybe.",
+    body: "Paste a TikTok, it lands as real places. Hearts pile onto the shortlist, votes settle it — the trip stops being a maybe.",
     rx: "“so… are we actually going??”",
     tx: "CLEARED ✈",
   },
@@ -75,8 +82,8 @@ function lerpColor(a: string, b: string, t: number) {
   return ca.lerp(new THREE.Color(b), t);
 }
 // where each atmosphere peaks along the flight — night owns the WRAP leg,
-// dawn only breaks at the very end for the finale
-const ATMOS_STOPS = [0, 0.3, 0.55, 0.82, 1];
+// dawn breaks across the kit showcase and finale
+const ATMOS_STOPS = [0, 0.3, 0.55, 0.78, 1];
 
 function atmosphereAt(p: number) {
   let seg = 0;
@@ -190,7 +197,7 @@ function FlightWorld({ rig }: { rig: React.MutableRefObject<Rig> }) {
 
   const gates = useMemo(
     () =>
-      [0.2, 0.42, 0.64, 0.86].map((t, i) => ({
+      [0.2, 0.42, 0.64, 0.78].map((t, i) => ({
         t,
         pos: curve.getPointAt(t),
         tan: curve.getTangentAt(t),
@@ -474,8 +481,8 @@ function FlapBoard({ boarding, gate }: { boarding: string; gate: string }) {
 
 /* ── overlay segments driven by quantized progress ───────────────────── */
 // the second line of the hero brand cycles through what you pack
-const CYCLE_WORDS = ["SAWA.", "THE PLAN.", "THE CREW.", "THE MONEY.", "THE MEMORIES."];
-const CYCLE_WORDS_AR = ["سوا.", "الرِفقة.", "الخطة.", "المصاريف.", "الذكريات."];
+const CYCLE_WORDS = ["SAWA.", "THE PLAN.", "THE CREW.", "THE FINDS.", "THE MONEY.", "THE MEMORIES."];
+const CYCLE_WORDS_AR = ["سوا.", "الرِفقة.", "الخطة.", "الأماكن.", "المصاريف.", "الذكريات."];
 
 /* ── Arabic layer — same flight, بالعربي ─────────────────────────────── */
 const ATMOS_AR = [
@@ -490,7 +497,7 @@ const STATIONS_AR = [
   {
     lead: "قدّموا خطة الطيران، ",
     accent: "سوا.",
-    body: "الأصوات تحطّ، أيام الخطة تمتلئ، والجاهزية ترتفع — الرحلة لم تعد «ربما».",
+    body: "الصقوا رابط تيك توك فيتحوّل إلى أماكن حقيقية. القلوب تتجمع على القائمة، والتصويت يحسمها — الرحلة لم تعد «ربما».",
     rx: "«طيب… هل نحن ذاهبون فعلًا؟؟»",
     tx: "مصرَّح بالإقلاع ✈",
   },
@@ -531,6 +538,12 @@ const UI = {
     altitude: "Altitude",
     ft: "FT",
     throttle: "Throttle",
+    kitKicker: "Still onboard",
+    kitTitle: "The rest of the kit.",
+    kitImport: "TikTok → real places",
+    kitMap: "The plan, on the map",
+    kitLive: "The live day",
+    kitCockpit: "Home — every trip",
     fkick: "Wheels down · Where next?",
     f1: "FLY IT",
     f2: "SAWA.",
@@ -553,6 +566,12 @@ const UI = {
     altitude: "الارتفاع",
     ft: "قدم",
     throttle: "مرّر",
+    kitKicker: "وعلى متن الرحلة",
+    kitTitle: "باقي العدّة.",
+    kitImport: "تيك توك → أماكن حقيقية",
+    kitMap: "الخطة على الخريطة",
+    kitLive: "يوم الرحلة، مباشر",
+    kitCockpit: "البيت · كل رحلاتك",
     fkick: "هبطنا · إلى أين بعد؟",
     f1: "طيروها",
     f2: "سوا.",
@@ -672,46 +691,45 @@ export function VisionX() {
   const [demoP, setDemoP] = useState(0);
   const playedStation = useRef(-1);
 
-  // which phase station are we at?
+  // which phase station are we at? (4 = the kit showcase, 5 = finale)
+  // The kit holds a real slice of the flight — it used to flash by in
+  // 0.07 of the scroll and people passed it in one wheel tick.
   const station =
-    prog < 0.13 ? -1
-    : prog < 0.3 ? 0
-    : prog < 0.34 ? -2
-    : prog < 0.52 ? 1
-    : prog < 0.56 ? -2
-    : prog < 0.74 ? 2
-    : prog < 0.78 ? -2
-    : prog < 0.9 ? 3
-    : 4;
-  const atmos = station >= 0 && station < 4 ? ATMOS[station as 0 | 1 | 2 | 3] : null;
-  const atmosLoc =
-    station >= 0 && station < 4
-      ? (arMode ? ATMOS_AR : ATMOS)[station as 0 | 1 | 2 | 3]
-      : null;
-  const chapter =
-    station >= 0 && station < 4
-      ? (arMode ? STATIONS_AR : STATIONS)[station as 0 | 1 | 2 | 3]
-      : null;
-  const nightish = prog > 0.7 && prog < 0.92;
+    prog < 0.12 ? -1
+    : prog < 0.28 ? 0
+    : prog < 0.32 ? -2
+    : prog < 0.48 ? 1
+    : prog < 0.52 ? -2
+    : prog < 0.68 ? 2
+    : prog < 0.72 ? -2
+    : prog < 0.83 ? 3
+    : prog < 0.845 ? -2
+    : prog < 0.96 ? 4
+    : 5;
+  const nightish = prog > 0.66 && prog < 0.88;
 
   // the browser tab flies along with you
   useEffect(() => {
     const loc = station >= 0 && station < 4 ? (arMode ? ATMOS_AR : ATMOS)[station as 0 | 1 | 2 | 3] : null;
     document.title = loc
       ? `${loc.clock} · ${loc.label} — Paxawa`
-      : station === 4
+      : station === 5
         ? arMode
           ? "إلى أين بعد؟ — Paxawa"
           : "Where next? — Paxawa"
-        : arMode
-          ? "نروح سوا — Paxawa"
-          : "Pack Sawa — Paxawa";
+        : station === 4
+          ? arMode
+            ? "العدّة كاملة — Paxawa"
+            : "The full kit — Paxawa"
+          : arMode
+            ? "نروح سوا — Paxawa"
+            : "Pack Sawa — Paxawa";
   }, [station, arMode]);
 
   // keyboard flight: arrows/space hop between stations, s/س barrel-rolls
   useEffect(() => {
     if (!boarded) return;
-    const stops = [0, 0.22, 0.44, 0.66, 0.84, 0.97];
+    const stops = [0, 0.2, 0.4, 0.6, 0.775, 0.9, 0.985];
     const onKey = (e: KeyboardEvent) => {
       const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const cur = rig.current.target;
@@ -774,7 +792,7 @@ export function VisionX() {
 
   return (
     <div
-      className="relative h-[700vh]"
+      className="relative h-[860vh]"
       dir={arMode ? "rtl" : "ltr"}
       lang={arMode ? "ar" : "en"}
       style={{
@@ -785,9 +803,10 @@ export function VisionX() {
       }}
     >
       {/* keyframes + .vx-glass live in globals.css (shared with the sky
-          pages); only the demo reskin stays scoped here */}
+          pages). Station phones are REAL production screenshots — no
+          reskin. The .vx-light rules survive for ONE spot: the boarding
+          preloader phone, which keeps the live light-skinned boot demo. */}
       <style>{`
-        /* light-mode skin for the shared demos, scoped to this concept */
         .vx-light [class~="bg-black"] { background: #F6F5F1 !important; }
         .vx-light [class*="border-white/"] { border-color: rgba(20,20,20,0.10) !important; }
         .vx-light [class*="bg-[#1A1A1A]"] { background: #FFFFFF !important; }
@@ -876,7 +895,7 @@ export function VisionX() {
             style={{ height: `${Math.round(prog * 100)}%`, background: ink }}
           />
           {/* phase waypoints on the rail — click one to fly there */}
-          {[0.22, 0.44, 0.66, 0.84].map((pos, i) => (
+          {[0.2, 0.4, 0.6, 0.775].map((pos, i) => (
             <button
               key={i}
               type="button"
@@ -953,129 +972,194 @@ export function VisionX() {
           <FlapBoard boarding={t.boarding} gate={t.gate} />
         </div>
 
-        {/* PHASE STATIONS — the plane docks, the app shows itself */}
-        {atmos && chapter && (
-          <div key={atmos.word} className="absolute inset-0 flex items-center justify-center px-6">
-            {/* giant glass word — a frosted pane floating over the sky,
-                anchored to the side away from the mockup */}
-            <p
-              aria-hidden
-              className="vx-glass absolute inset-x-0 bottom-[4vh] font-black select-none px-[4vw]"
+        {/* PHASE STATIONS — the plane docks, the app shows itself. All four
+            stay mounted so each stage FADES in and out (they used to cut
+            hard on exit); only the active one gets the movie progress. */}
+        {([0, 1, 2, 3] as const).map((si) => {
+          const on = station === si;
+          const a = ATMOS[si];
+          const aLoc = (arMode ? ATMOS_AR : ATMOS)[si];
+          const ch = (arMode ? STATIONS_AR : STATIONS)[si];
+          const p = on ? demoP : 0;
+          const Demo = [DiscoverDemo, DepartureDemo, ExpenseDemo, WrapDemo][si];
+          return (
+            <div
+              key={si}
+              className="absolute inset-0 flex items-center justify-center px-6"
               style={{
-                fontSize: arMode ? "clamp(52px, 9vw, 140px)" : "clamp(64px, 11vw, 170px)",
-                letterSpacing: arMode ? "0" : "-0.03em",
-                // Arabic descenders paint below a tight line box — and
-                // background-clip:text only fills inside the box, which
-                // decapitated them. Taller line + padding keeps the
-                // gradient under every tail.
-                lineHeight: arMode ? 1.35 : 1,
-                paddingBottom: "0.12em",
-                textAlign: station % 2 === 1 ? "end" : "start",
-                animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) both",
+                opacity: on ? 1 : 0,
+                transform: `translateY(${on ? 0 : 28}px)`,
+                transition: "opacity 0.6s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1)",
               }}
             >
-              {atmosLoc?.word}
-            </p>
-
-            <div
-              className={`relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16 items-center ${
-                station % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
-              }`}
-            >
-              {/* the words */}
-              <div
-                className="text-center lg:text-start"
-                style={{ animation: "vx-in 0.6s cubic-bezier(0.22,1,0.36,1) 0.05s both" }}
-              >
-                <span
-                  className="inline-flex rounded-full border px-3 py-1.5 text-[11px] font-black tracking-[0.2em] uppercase backdrop-blur-sm"
-                  style={{
-                    color: ink,
-                    borderColor: faint,
-                    background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
-                  }}
-                >
-                  {atmosLoc?.clock} · {atmosLoc?.label}
-                </span>
-                <h2
-                  className="mt-4 text-2xl sm:text-4xl font-black leading-[1.15] lg:max-w-md"
-                  style={{ color: ink, letterSpacing: arMode ? "0" : "-0.03em" }}
-                >
-                  {chapter.lead}
-                  <span style={{ color: atmos.hue }}>{chapter.accent}</span>
-                </h2>
-                <p
-                  className="mt-3 text-sm sm:text-base leading-relaxed lg:max-w-md hidden sm:block"
-                  style={{ color: nightish ? "rgba(245,240,228,0.72)" : "rgba(20,20,20,0.66)" }}
-                >
-                  {chapter.body}
-                </p>
-
-                {/* comms — the group-chat static, answered by the tower */}
-                <div
-                  className="mt-4 inline-flex items-center gap-2.5 rounded-full border ps-4 pe-1.5 py-1.5 backdrop-blur-sm transition-all duration-500"
-                  style={{
-                    borderColor: faint,
-                    background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
-                    opacity: demoP >= 0.96 ? 1 : 0,
-                    transform: demoP >= 0.96 ? "translateY(0)" : "translateY(10px)",
-                  }}
-                >
-                  <span className="text-[12px] line-through" style={{ color: faint }}>
-                    {chapter.rx}
-                  </span>
-                  <span
-                    className="rounded-full px-2.5 py-1 text-[10px] font-black tracking-[0.08em]"
-                    style={{
-                      color: nightish ? atmos.hue : "#FFFFFF",
-                      background: nightish ? `${atmos.hue}22` : atmos.hue,
-                    }}
-                  >
-                    {chapter.tx}
-                  </span>
-                </div>
-
-                {/* movie progress */}
-                <div
-                  className="mt-5 mx-auto lg:mx-0 relative w-28 h-1 rounded-full overflow-hidden"
-                  style={{ background: nightish ? "rgba(245,240,228,0.18)" : "rgba(20,20,20,0.15)" }}
-                >
-                  <div
-                    className="absolute inset-y-0 start-0 rounded-full transition-[width] duration-100"
-                    style={{ width: `${Math.round(demoP * 100)}%`, background: atmos.hue }}
-                  />
-                </div>
-              </div>
-
-              {/* the app, exactly as it is — reskinned light for daylight */}
-              <div
-                dir="ltr"
-                className="vx-light mx-auto w-full max-w-[280px] sm:max-w-[340px]"
+              {/* giant glass word — a frosted pane floating over the sky,
+                  anchored to the side away from the mockup */}
+              <p
+                aria-hidden
+                className="vx-glass absolute inset-x-0 bottom-[4vh] font-black select-none px-[4vw]"
                 style={{
-                  animation: "vx-in 0.7s cubic-bezier(0.22,1,0.36,1) 0.12s both",
-                  transform: `rotate(${station % 2 === 1 ? -1.5 : 1.5}deg)`,
-                  boxShadow: `0 44px 130px -40px ${atmos.hue}99`,
-                  borderRadius: 24,
+                  fontSize: arMode ? "clamp(52px, 9vw, 140px)" : "clamp(64px, 11vw, 170px)",
+                  letterSpacing: arMode ? "0" : "-0.03em",
+                  // Arabic descenders paint below a tight line box — and
+                  // background-clip:text only fills inside the box, which
+                  // decapitated them. Taller line + padding keeps the
+                  // gradient under every tail.
+                  lineHeight: arMode ? 1.35 : 1,
+                  paddingBottom: "0.12em",
+                  textAlign: si % 2 === 1 ? "end" : "start",
                 }}
               >
-                {station === 0 ? (
-                  <NowDemo progress={demoP} />
-                ) : station === 1 ? (
-                  <DepartureDemo progress={demoP} />
-                ) : station === 2 ? (
-                  <LiveDemo progress={demoP} />
-                ) : (
-                  <WrapDemo progress={demoP} />
-                )}
+                {aLoc.word}
+              </p>
+
+              <div
+                className={`relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16 items-center ${
+                  si % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
+                }`}
+              >
+                {/* the words */}
+                <div className="text-center lg:text-start">
+                  <span
+                    className="inline-flex rounded-full border px-3 py-1.5 text-[11px] font-black tracking-[0.2em] uppercase backdrop-blur-sm"
+                    style={{
+                      color: ink,
+                      borderColor: faint,
+                      background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    {aLoc.clock} · {aLoc.label}
+                  </span>
+                  <h2
+                    className="mt-4 text-2xl sm:text-4xl font-black leading-[1.15] lg:max-w-md"
+                    style={{ color: ink, letterSpacing: arMode ? "0" : "-0.03em" }}
+                  >
+                    {ch.lead}
+                    <span style={{ color: a.hue }}>{ch.accent}</span>
+                  </h2>
+                  <p
+                    className="mt-3 text-sm sm:text-base leading-relaxed lg:max-w-md hidden sm:block"
+                    style={{ color: nightish ? "rgba(245,240,228,0.72)" : "rgba(20,20,20,0.66)" }}
+                  >
+                    {ch.body}
+                  </p>
+
+                  {/* comms — the group-chat static, answered by the tower */}
+                  <div
+                    className="mt-4 inline-flex items-center gap-2.5 rounded-full border ps-4 pe-1.5 py-1.5 backdrop-blur-sm transition-all duration-500"
+                    style={{
+                      borderColor: faint,
+                      background: nightish ? "rgba(13,13,13,0.35)" : "rgba(255,255,255,0.3)",
+                      opacity: p >= 0.96 ? 1 : 0,
+                      transform: p >= 0.96 ? "translateY(0)" : "translateY(10px)",
+                    }}
+                  >
+                    <span className="text-[12px] line-through" style={{ color: faint }}>
+                      {ch.rx}
+                    </span>
+                    <span
+                      className="rounded-full px-2.5 py-1 text-[10px] font-black tracking-[0.08em]"
+                      style={{
+                        color: nightish ? a.hue : "#FFFFFF",
+                        background: nightish ? `${a.hue}22` : a.hue,
+                      }}
+                    >
+                      {ch.tx}
+                    </span>
+                  </div>
+
+                  {/* movie progress */}
+                  <div
+                    className="mt-5 mx-auto lg:mx-0 relative w-28 h-1 rounded-full overflow-hidden"
+                    style={{ background: nightish ? "rgba(245,240,228,0.18)" : "rgba(20,20,20,0.15)" }}
+                  >
+                    <div
+                      className="absolute inset-y-0 start-0 rounded-full transition-[width] duration-100"
+                      style={{ width: `${Math.round(p * 100)}%`, background: a.hue }}
+                    />
+                  </div>
+                </div>
+
+                {/* the mockup phone — trails the copy by a beat on entry */}
+                <div
+                  dir="ltr"
+                  className="mx-auto"
+                  style={{
+                    transform: `rotate(${si % 2 === 1 ? -1.5 : 1.5}deg) translateY(${on ? 0 : 16}px)`,
+                    opacity: on ? 1 : 0,
+                    transition: `opacity 0.6s ease ${on ? "0.12s" : "0s"}, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${on ? "0.12s" : "0s"}`,
+                    boxShadow: `0 44px 130px -40px ${a.hue}99`,
+                    borderRadius: 28,
+                    height: "min(600px, 64vh)",
+                    aspectRatio: "1320 / 2868",
+                  }}
+                >
+                  <Demo progress={p} />
+                </div>
               </div>
             </div>
+          );
+        })}
+
+        {/* THE KIT — the rest of the app, docked before landing */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center transition-all duration-500"
+          style={{ opacity: station === 4 ? 1 : 0, transform: `translateY(${station === 4 ? 0 : 30}px)` }}
+        >
+          <p
+            className="text-[11px] font-black uppercase mb-2"
+            style={{ color: faint, letterSpacing: arMode ? "0.06em" : "0.26em" }}
+          >
+            {t.kitKicker}
+          </p>
+          <h2
+            className="font-black mb-6 px-6 text-center"
+            style={{
+              color: ink,
+              fontSize: "clamp(28px, 4.5vw, 52px)",
+              letterSpacing: arMode ? "0" : "-0.03em",
+              lineHeight: arMode ? 1.2 : 1,
+            }}
+          >
+            {t.kitTitle}
+          </h2>
+          <div
+            dir="ltr"
+            className="w-full max-w-5xl flex gap-4 lg:gap-6 overflow-x-auto px-6 pb-2 scrollbar-none snap-x"
+            style={{ pointerEvents: station === 4 ? "auto" : "none" }}
+          >
+            {(
+              [
+                [t.kitImport, "import", "#8B7CFF"],
+                [t.kitMap, "plan", "#3EC5B7"],
+                [t.kitLive, "live", "#FF8A5C"],
+                [t.kitCockpit, "dashboard", "#E0B252"],
+              ] as const
+            ).map(([label, name, hue], i) => (
+              <div
+                key={name}
+                className="shrink-0 w-[172px] sm:w-[196px] snap-center first:ms-auto last:me-auto"
+                style={{
+                  transform: `rotate(${i % 2 === 0 ? -1.2 : 1.2}deg) translateY(${station === 4 ? 0 : 22}px)`,
+                  opacity: station === 4 ? 1 : 0,
+                  // stagger in, leave together
+                  transition: `opacity 0.55s ease ${station === 4 ? i * 110 : 0}ms, transform 0.65s cubic-bezier(0.22,1,0.36,1) ${station === 4 ? i * 110 : 0}ms`,
+                }}
+              >
+                <div style={{ borderRadius: 28, boxShadow: `0 30px 80px -30px ${hue}88` }}>
+                  <ShotPhone src={shot(arMode, name)} video={loop(arMode, name)} alt={label} />
+                </div>
+                <p className="mt-3 text-center text-[12px] font-bold" style={{ color: ink }} dir={arMode ? "rtl" : "ltr"}>
+                  {label}
+                </p>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* FINALE */}
         <div
           className="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-700 px-6"
-          style={{ opacity: station === 4 ? 1 : 0, pointerEvents: station === 4 ? "auto" : "none" }}
+          style={{ opacity: station === 5 ? 1 : 0, pointerEvents: station === 5 ? "auto" : "none" }}
         >
           <p
             className="text-[11px] font-black uppercase mb-5 text-[#2E2005]/60"
@@ -1152,7 +1236,7 @@ export function VisionX() {
                 className="vx-light w-[228px] sm:w-[252px] rounded-[34px] border-[6px] border-[#141414] overflow-hidden bg-[#141414]"
                 style={{ boxShadow: "0 50px 110px -30px rgba(20,20,20,0.45)" }}
               >
-                <NowDemo progress={loadPct / 100} />
+                <BoardingDemo progress={loadPct / 100} />
               </div>
             </div>
           </div>

@@ -2,113 +2,112 @@
 
 import { motion } from "motion/react";
 import {
-  MapPin,
-  CellSignalSlash,
+  NavigationArrow,
+  ForkKnife,
   Camera,
+  Moon,
+  Sun,
+  CellSignalSlash,
   CheckCircle,
+  MapPin,
 } from "@phosphor-icons/react/dist/ssr";
-import { DemoFrame, DemoHeader } from "./demo-frame";
+import { DemoFrame } from "./demo-frame";
 import { frame } from "./frame";
+import { APP, MiniTicket, MiniHorizon } from "./app-kit";
 
 /**
- * Live-day demo — mirrors the "on the trip" chapter beat for beat:
- * today's stops on one card, a split logged from a receipt, and the
- * offline banner. Horizon orange.
+ * SPLIT mockup — the real LIVE cockpit in miniature: wayfind "Up next"
+ * Ticket, today's Horizon on a clock axis, the weather line, the
+ * receipt-scan split, and the Pocket Day promise.
  */
-
-const STOPS = [
-  { time: "09:30", name: "Tsukiji breakfast", state: "done" as const },
-  { time: "13:00", name: "teamLab Planets", state: "now" as const },
-  { time: "19:30", name: "Omoide Yokocho", state: "next" as const },
-];
 
 export function LiveDemo({ progress }: { progress?: number }) {
   return (
     <DemoFrame toneClass="from-[#FF8A5C]/[0.08] to-transparent">
-      <DemoHeader title="Now · Day 3" subtitle="Tokyo — today, only" />
-
-      <div className="flex-1 px-4 py-4 flex flex-col gap-3 overflow-hidden">
-        {/* offline banner — the Pocket Day promise, front and center */}
-        <motion.div
-          {...frame(progress, 0.05, { opacity: 0, y: -8 }, { opacity: 1, y: 0 })}
-          className="flex items-center gap-2.5 rounded-2xl border border-[#E0B252]/30 bg-[#E0B252]/[0.08] px-3.5 py-2.5"
-        >
-          <CellSignalSlash className="w-4 h-4 shrink-0" style={{ color: "#E0B252" }} />
-          <p className="text-[11px] font-semibold text-[#E8CB86]">
-            Zero bars in the metro — today still loads.
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: APP.bg, color: APP.fg }}>
+        <div className="shrink-0 px-3.5 pt-4 pb-2.5" style={{ borderBottom: `1px solid ${APP.border}` }}>
+          <p className="text-[9px] tracking-[0.16em] font-black uppercase" style={{ color: APP.muted }}>
+            Now · Live · Day 3
           </p>
-        </motion.div>
-
-        {/* today's stops */}
-        <div className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] p-2 flex flex-col">
-          {STOPS.map((s, i) => (
-            <motion.div
-              key={s.name}
-              {...frame(progress, 0.22 + i * 0.18, { opacity: 0, x: 12 }, { opacity: 1, x: 0 }, 0.15 + i * 0.1)}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
-                s.state === "now" ? "bg-[#FF8A5C]/[0.1] border border-[#FF8A5C]/25" : ""
-              }`}
-            >
-              <span
-                className={`text-[11px] font-bold tabular-nums w-10 shrink-0 ${
-                  s.state === "done" ? "text-white/30" : "text-white/60"
-                }`}
-              >
-                {s.time}
-              </span>
-              <MapPin
-                className="w-3.5 h-3.5 shrink-0"
-                style={{ color: s.state === "now" ? "#FF8A5C" : "rgba(255,255,255,0.3)" }}
-              />
-              <p
-                className={`flex-1 min-w-0 truncate text-[13px] ${
-                  s.state === "done"
-                    ? "text-white/35 line-through"
-                    : s.state === "now"
-                      ? "font-semibold text-white"
-                      : "text-white/70"
-                }`}
-              >
-                {s.name}
-              </p>
-              {s.state === "now" && (
-                <span className="shrink-0 rounded-full bg-[#FF8A5C]/15 border border-[#FF8A5C]/30 text-[#FFAB88] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                  Now
-                </span>
-              )}
-            </motion.div>
-          ))}
+          <p className="text-[14px] font-bold mt-0.5">Tokyo — today, only</p>
         </div>
 
-        {/* receipt just logged */}
-        <motion.div
-          {...frame(progress, 0.78, { opacity: 0, y: 12 }, { opacity: 1, y: 0 }, 0.5)}
-          className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] px-3.5 py-3"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-xl bg-[#9BC97E]/12 flex items-center justify-center shrink-0">
-              <Camera className="w-4 h-4" style={{ color: "#9BC97E" }} />
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-white truncate">
-                Lunch · ¥12,400
-              </p>
-              <p className="text-[11px] text-white/40 truncate">
-                Receipt scanned · split 4 ways
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-[#9BC97E]/12 border border-[#9BC97E]/30 text-[#B8DBA1] px-2 py-1 text-[10px] font-bold">
-              <CheckCircle weight="fill" className="w-3 h-3" /> ¥3,100 each
-            </span>
-          </div>
-        </motion.div>
+        <div className="flex-1 px-3 py-3 flex flex-col gap-2.5 overflow-hidden">
+          <motion.div {...frame(progress, 0.06, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}>
+            <MiniTicket
+              hue="wayfind"
+              kicker="Up next · 13:00 · in 25 min"
+              title="teamLab Planets"
+              sub="Toyosu · 12 min by metro"
+              icon={NavigationArrow}
+            />
+          </motion.div>
 
-        <motion.p
-          {...frame(progress, 0.94, { opacity: 0 }, { opacity: 1 })}
-          className="mt-auto text-center text-[10px] text-white/30"
-        >
-          Nobody asked &ldquo;what&apos;s the plan?&rdquo; today. Nobody had to.
-        </motion.p>
+          <motion.div {...frame(progress, 0.26, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}>
+            <MiniHorizon
+              title="Today · Day 3"
+              nowLabel="12:35"
+              progress={44}
+              endIcon={Moon}
+              marks={[
+                { at: 18, label: "Tsukiji", icon: ForkKnife, state: "done" },
+                { at: 52, label: "teamLab", icon: MapPin, state: "due" },
+                { at: 84, label: "Omoide", icon: ForkKnife, state: "later" },
+              ]}
+            />
+          </motion.div>
+
+          <motion.div
+            {...frame(progress, 0.48, { opacity: 0, x: 12 }, { opacity: 1, x: 0 }, 0.3)}
+            className="flex items-center gap-2 rounded-xl px-3 py-2"
+            style={{ background: APP.card, border: `1px solid ${APP.border}` }}
+          >
+            <Sun size={14} weight="fill" style={{ color: APP.wayfind }} className="shrink-0" />
+            <p className="text-[11px] truncate" style={{ color: APP.fg }}>
+              24° clear · sunset 17:58
+            </p>
+          </motion.div>
+
+          {/* receipt just scanned — Point-and-Split */}
+          <motion.div
+            {...frame(progress, 0.64, { opacity: 0, y: 12 }, { opacity: 1, y: 0 }, 0.45)}
+            className="rounded-xl px-3 py-2.5"
+            style={{ background: APP.card, border: `1px solid ${APP.border}` }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "rgba(155,201,126,0.18)" }}
+              >
+                <Camera size={14} style={{ color: APP.moss }} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold truncate">Lunch · ¥12,400</p>
+                <p className="text-[10px] truncate" style={{ color: APP.muted }}>
+                  Receipt scanned · split 4 ways
+                </p>
+              </div>
+              <span
+                className="inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-1 text-[10px] font-bold"
+                style={{ background: "rgba(155,201,126,0.18)", color: APP.moss, border: `1px solid ${APP.moss}55` }}
+              >
+                <CheckCircle weight="fill" size={11} /> ¥3,100 each
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Pocket Day — the offline promise */}
+          <motion.div
+            {...frame(progress, 0.86, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}
+            className="mt-auto flex items-center gap-2 rounded-xl px-3 py-2"
+            style={{ background: "rgba(224,178,82,0.10)", border: "1px solid rgba(224,178,82,0.35)" }}
+          >
+            <CellSignalSlash size={13} className="shrink-0" style={{ color: APP.dune }} />
+            <p className="text-[10px] font-semibold" style={{ color: APP.dune }}>
+              Zero bars in the metro — today still loads.
+            </p>
+          </motion.div>
+        </div>
       </div>
     </DemoFrame>
   );

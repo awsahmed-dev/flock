@@ -1,119 +1,101 @@
 "use client";
 
 import { motion } from "motion/react";
-import { DemoFrame, DemoHeader } from "./demo-frame";
+import {
+  CheckSquareOffset as Vote,
+  Wallet,
+  FileText,
+  Package,
+  Heart,
+} from "@phosphor-icons/react/dist/ssr";
+import { DemoFrame } from "./demo-frame";
 import { frame, seg } from "./frame";
+import { APP, MiniTicket, MiniHorizon, MiniInspireBar } from "./app-kit";
 
 /**
- * NOW-cockpit demo. Free mode reveals once; scrubbed mode (vision page)
- * steps through frames as the visitor scrolls: countdown → readiness
- * bar filling → day chips lighting → ticker → Pocket Day.
+ * PLAN mockup — a faithful miniature of the real planning cockpit
+ * (hero → boarding Ticket → Horizon → the Discover import bar), scrubbed
+ * by the station movie: hero → ticket lands → horizon track fills →
+ * the TikTok/IG import door slides in.
  */
 
-const DAYS = [
-  { d: "Sun 8", n: 3, tone: "#FF8A5C" },
-  { d: "Mon 9", n: 2, tone: "#3EC5B7" },
-  { d: "Tue 10", n: 2, tone: "#E0B252" },
-  { d: "Wed 11", n: 1, tone: "#8B7CFF" },
-  { d: "Thu 12", n: 0, tone: "#666" },
-];
-
 export function NowDemo({ progress }: { progress?: number }) {
-  const readiness = Math.round(seg(progress, 0.12, 0.5) * 57);
+  const track = 4 + Math.round(seg(progress, 0.35, 0.7) * 8); // eases to T−106's spot
   return (
     <DemoFrame toneClass="from-[#8B7CFF]/[0.07] to-transparent">
-      <DemoHeader title="Now · Planning" subtitle="Tokyo 🗼 (yes we're doing this)" />
-
-      <div className="flex-1 px-4 py-4 flex flex-col gap-3 overflow-hidden">
-        {/* Countdown + crew */}
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: APP.bg, color: APP.fg }}>
+        {/* hero — name + dates + countdown badge over the cover */}
         <motion.div
-          {...frame(progress, 0.02, { opacity: 0, y: 8 }, { opacity: 1, y: 0 })}
-          className="flex items-center justify-between gap-2"
+          {...frame(progress, 0.02, { opacity: 0 }, { opacity: 1 })}
+          className="relative shrink-0 h-[92px] overflow-hidden"
         >
-          <span className="rounded-full bg-[#8B7CFF]/15 text-[#B3A8FF] border border-[#8B7CFF]/25 px-2.5 py-1 text-[11px] font-bold">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#8B7CFF]/50 via-[#5B4BD9]/40 to-[#3EC5B7]/30" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 15%, rgba(0,0,0,0.88))" }} />
+          <span
+            className="absolute top-2 start-2.5 rounded-lg px-2 py-0.5 text-[10px] font-bold"
+            style={{ background: "rgba(255,138,92,0.16)", color: APP.horizon, border: `1px solid ${APP.horizon}` }}
+          >
             In 106 days
           </span>
-          <span className="text-[11px] text-white/40">4 going</span>
+          <div className="absolute bottom-0 inset-x-0 px-3.5 pb-2">
+            <p className="text-[17px] font-bold tracking-[-0.02em] text-white">Tokyo, sawa 🗼</p>
+            <p className="text-[10px] text-white/85 mt-0.5">Tokyo · 8 – 15 Nov · 4 going</p>
+          </div>
         </motion.div>
 
-        {/* Readiness — the bar fill scrubs with scroll */}
-        <motion.div
-          {...frame(progress, 0.1, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}
-          className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] p-3.5"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[12px] font-semibold text-white">Trip readiness</p>
-            <p className="text-[12px] font-bold text-[#9BC97E] tabular-nums">
-              {progress === undefined ? 57 : readiness}%
+        <div className="flex-1 px-3 py-3 flex flex-col gap-2.5 overflow-hidden">
+          {/* THE one primary action — a boarding stub in the hue of what it asks */}
+          <motion.div {...frame(progress, 0.12, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}>
+            <MiniTicket
+              hue="horizon"
+              kicker="Decide · 3 votes open"
+              title="Pick the Shibuya night"
+              sub="The crew is split 2–2"
+              icon={Vote}
+            />
+          </motion.div>
+
+          {/* the Horizon — readiness as a runway, marks where they sit in time */}
+          <motion.div {...frame(progress, 0.3, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}>
+            <MiniHorizon
+              title="Tokyo in 106 days"
+              nowLabel="T−106"
+              progress={progress === undefined ? 12 : track}
+              marks={[
+                { at: 42, label: "Budget", icon: Wallet, state: "done" },
+                { at: 66, label: "Docs", icon: FileText, state: "due" },
+                { at: 88, label: "Pack", icon: Package, state: "later" },
+              ]}
+            />
+          </motion.div>
+
+          {/* the Deck — crew hearts note */}
+          <motion.div
+            {...frame(progress, 0.55, { opacity: 0, x: 12 }, { opacity: 1, x: 0 }, 0.35)}
+            className="flex items-center gap-2 rounded-xl px-3 py-2"
+            style={{ background: APP.card, border: `1px solid ${APP.border}` }}
+          >
+            <Heart size={14} weight="fill" style={{ color: APP.horizon }} className="shrink-0" />
+            <p className="text-[11px] flex-1 truncate" style={{ color: APP.fg }}>
+              Omoide Yokocho · <span style={{ color: APP.muted }}>3 hearts · on the plan</span>
             </p>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-            {progress === undefined ? (
-              <motion.div
-                initial={{ width: 0 }}
-                whileInView={{ width: "57%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-                className="h-full me-auto rounded-full bg-[#9BC97E]"
-              />
-            ) : (
-              <div
-                className="h-full me-auto rounded-full bg-[#9BC97E] transition-[width] duration-150"
-                style={{ width: `${readiness}%` }}
-              />
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/40">
-            Dates ✓ · Crew ✓ · Stops ✓ · Budget ✓ · Packing 5%
-          </p>
-        </motion.div>
+          </motion.div>
 
-        {/* Day chips — light up one by one */}
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-white/35 mb-2">
-            Plan days
-          </p>
-          <div className="flex gap-1.5 overflow-hidden">
-            {DAYS.map((day, i) => (
-              <motion.div
-                key={day.d}
-                {...frame(progress, 0.45 + i * 0.07, { opacity: 0, y: 8 }, { opacity: 1, y: 0 })}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1.5 ${
-                  day.n === 0
-                    ? "border-white/[0.06] text-white/30"
-                    : "border-white/[0.1] text-white/80 bg-white/[0.03]"
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: day.tone }} />
-                {day.d}
-                {day.n > 0 && <span className="text-white/35">· {day.n}</span>}
-              </motion.div>
-            ))}
-          </div>
+          {/* the import door — paste a reel, real places land on the shortlist */}
+          <motion.div
+            {...frame(progress, 0.78, { opacity: 0, y: 12 }, { opacity: 1, y: 0 })}
+            className="mt-auto flex flex-col gap-1.5"
+          >
+            <MiniInspireBar />
+            <motion.p
+              {...frame(progress, 0.92, { opacity: 0 }, { opacity: 1 })}
+              className="text-[10px] px-1"
+              style={{ color: APP.muted }}
+            >
+              <span style={{ color: APP.brand, fontWeight: 700 }}>Layla&apos;s reel</span> → 3 real places on the shortlist
+            </motion.p>
+          </motion.div>
         </div>
-
-        {/* Ticker */}
-        <motion.div
-          {...frame(progress, 0.8, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}
-          className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] px-3.5 py-3"
-        >
-          <p className="text-[11px] text-white/50 truncate">
-            <span className="text-white/80 font-semibold">Priya</span> hearted
-            Omoide Yokocho · <span className="text-white/80 font-semibold">Tariq</span>{" "}
-            uploaded the JR Pass →
-          </p>
-        </motion.div>
-
-        {/* Pocket Day */}
-        <motion.div
-          {...frame(progress, 0.92, { opacity: 0, y: 10 }, { opacity: 1, y: 0 })}
-          className="mt-auto flex items-center gap-2 rounded-2xl border border-[#E0B252]/25 bg-[#E0B252]/[0.07] px-3.5 py-3"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#E0B252]" />
-          <p className="text-[11px] text-[#E8CB86] font-semibold">
-            Pocket Day — today&apos;s plan works with zero bars
-          </p>
-        </motion.div>
       </div>
     </DemoFrame>
   );
