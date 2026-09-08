@@ -1,5 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+// Tokenised join links must never end up in a search index — robots.txt
+// asks, this tells (launch audit §9).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 import { db } from "@/lib/db";
 import { tripInvites, tripMembers, profiles, itineraryItems } from "@/lib/db/schema";
 import { eq, and, asc } from "drizzle-orm";

@@ -31,8 +31,9 @@ export const viewport: Viewport = {
   themeColor: "#6366f1",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // No maximumScale/userScalable lock: blocking pinch-zoom fails WCAG 1.4.4
+  // (launch audit §14). iOS input auto-zoom — the reason such locks usually
+  // exist — is handled by the 16px iOS input floor in globals.css instead.
   // interactive-widget=resizes-content makes the visual viewport (and 100dvh)
   // shrink when the soft keyboard opens. Without it, fixed-position chat
   // inputs render behind the keyboard on mobile browsers.

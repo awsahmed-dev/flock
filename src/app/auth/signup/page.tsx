@@ -1,5 +1,14 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+// Launch audit §6: real title/description instead of the site default.
+export const metadata: Metadata = {
+  title: "Sign up free",
+  description:
+    "Create a free Paxawa account in minutes — no password needed. Plan the trip together, vote on places, and split every expense with your crew.",
+};
+
 import { SignupForm } from "@/components/auth/signup-form";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth/auth-shell";

@@ -1,5 +1,15 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+// Launch audit §6: both auth pages are in the sitemap but indexed under the
+// generic site default without their own metadata.
+export const metadata: Metadata = {
+  title: "Log in",
+  description:
+    "Log back in to Paxawa — your group trips, shared plans, votes and split expenses are right where the crew left them.",
+};
+
 import { LoginForm } from "@/components/auth/login-form";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth/auth-shell";

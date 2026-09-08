@@ -327,6 +327,18 @@
     min-height: 0;
     padding-inline: 0;
   }
+  /* Launch audit §14: the viewport zoom lock is gone (WCAG 1.4.4), which
+     re-exposes iOS's auto-zoom on focused fields below 16px. iOS-only floor
+     (the touch-callout @supports trick targets WebKit on iOS alone) so the
+     15px reference control stays 15px everywhere else. Bare .bg-transparent
+     fields zoom too, so this floor covers them as well. */
+  @supports (-webkit-touch-callout: none) {
+    input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
   /* Selects: no OS arrow jammed on the edge — our own chevron with 16px of
      room, at inline-end in both directions. */
   select:where(:not(.bg-transparent)) {

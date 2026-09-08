@@ -14,12 +14,16 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/blog", "/blog/", "/auth/", "/terms", "/privacy", "/share/", "/invite/"],
+        allow: ["/", "/blog", "/blog/", "/auth/", "/terms", "/privacy", "/share/"],
         disallow: [
           "/dashboard",
           "/trips/",
           "/api/",
           "/_next/",
+          // Invite links are tokenised trip-join credentials — an indexed
+          // invite is a stranger walking into someone's trip (audit §9).
+          // /share/ stays crawlable deliberately: sharing is the point.
+          "/invite/",
         ],
       },
     ],
