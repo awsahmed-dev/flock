@@ -1,5 +1,7 @@
 "use server";
 
+import { zMoney, zMoneyOrZero, zDateOnly, zText, parseOr } from "./validate";
+
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { splitEqually } from "@/lib/split";
 import { db } from "@/lib/db";
@@ -43,16 +45,15 @@ export async function createExpense(formData: FormData) {
     })
     .onConflictDoNothing();
 
-  const title = formData.get("title") as string;
-  const amount = parseFloat(formData.get("amount") as string);
+  // Audit §17: bounds, not just presence. `isNaN` alone let Infinity,
+  // negatives and 1e308 through into balance math.
+  const title = parseOr(zText(140), formData.get("title"), "Missing required fields");
+  const amount = parseOr(zMoney, parseFloat(formData.get("amount") as string), "Invalid amount");
   const category = (formData.get("category") as string) || "other";
-  const expenseDate = formData.get("expenseDate") as string;
-  const notes = (formData.get("notes") as string) || null;
+  const expenseDate = parseOr(zDateOnly, formData.get("expenseDate"), "Missing required fields");
+  const notesRaw = ((formData.get("notes") as string) || "").trim();
+  const notes = notesRaw ? notesRaw.slice(0, 2000) : null;
   const splitType = formData.get("splitType") as string; // "equal" | "custom"
-
-  if (!title || isNaN(amount) || !expenseDate) {
-    throw new Error("Missing required fields");
-  }
 
   // Sprint 3 FIX-4: custom per-member splits — [{ userId, amount }].
   let customSplits: { userId: string; amount: number }[] | null = null;
@@ -62,7 +63,7 @@ export async function createExpense(formData: FormData) {
         { userId: string; amount: number }[];
       customSplits = raw
         .map((r) => ({ userId: String(r.userId), amount: Number(r.amount) }))
-        .filter((r) => Number.isFinite(r.amount) && r.amount >= 0);
+        .filter((r) => zMoneyOrZero.safeParse(r.amount).success);
     } catch {
       throw new Error("Invalid custom split");
     }

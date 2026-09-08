@@ -1,5 +1,7 @@
 "use server";
 
+import { zMoneyOrZero, zText, parseOr } from "./validate";
+
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { votes, voteOptions, voteResponses, profiles, chatMessages } from "@/lib/db/schema";
@@ -41,22 +43,27 @@ export async function createVote(formData: FormData) {
     })
     .onConflictDoNothing();
 
-  const question = formData.get("question") as string;
+  // Audit §17: bounds. Question/label lengths capped, costs finite and
+  // bounded (a garbage deadline used to insert an Invalid Date).
+  const question = parseOr(zText(300), formData.get("question"), "Question is required");
   const deadlineRaw = formData.get("deadline") as string | null;
-  const deadline = deadlineRaw ? new Date(deadlineRaw) : null;
-
-  if (!question?.trim()) throw new Error("Question is required");
+  const deadlineParsed = deadlineRaw ? new Date(deadlineRaw) : null;
+  const deadline =
+    deadlineParsed && !Number.isNaN(deadlineParsed.getTime()) ? deadlineParsed : null;
 
   // Parse options — form sends option_label_0, option_label_1 ...
   const optionLabels: string[] = [];
   const optionCosts: (number | null)[] = [];
   let i = 0;
-  while (formData.get(`option_label_${i}`) !== null) {
+  while (formData.get(`option_label_${i}`) !== null && i < 50) {
     const label = formData.get(`option_label_${i}`) as string;
     const cost = formData.get(`option_cost_${i}`);
     if (label?.trim()) {
-      optionLabels.push(label.trim());
-      optionCosts.push(cost ? parseFloat(cost as string) : null);
+      optionLabels.push(label.trim().slice(0, 200));
+      const parsedCost = cost ? parseFloat(cost as string) : null;
+      optionCosts.push(
+        parsedCost != null && zMoneyOrZero.safeParse(parsedCost).success ? parsedCost : null,
+      );
     }
     i++;
   }

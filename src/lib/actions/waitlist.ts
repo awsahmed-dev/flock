@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { waitlistSignups } from "@/lib/db/schema";
 import { headers } from "next/headers";
+import { checkLimit } from "@/lib/rate-limit";
 
 /**
  * Adds an email to the waitlist. Idempotent — repeat submits return ok=true
@@ -18,6 +19,11 @@ export async function joinWaitlist(
   const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
   const source = (formData.get("source") as string | null) ?? "landing";
 
+  // Honeypot — a field hidden from humans. Bots tend to fill every input,
+  // so a non-empty value means "bot": pretend success, insert nothing.
+  const honeypot = ((formData.get("company") as string | null) ?? "").trim();
+  if (honeypot) return { ok: true, message: "You're in — we'll keep you posted." };
+
   // Cheap local validation — matches the same shape RFC-5322 would accept
   // for 99% of real addresses without pulling in a library.
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -29,6 +35,15 @@ export async function joinWaitlist(
 
   const h = await headers();
   const userAgent = h.get("user-agent")?.slice(0, 240) ?? null;
+
+  // Per-IP rate limit — a cheap guard against a bot flooding unique emails.
+  // 5 quick submits, then ~1 every 20s. In-memory (per-process) is enough
+  // pre-launch; swap for Upstash when we go multi-region.
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = checkLimit(`waitlist:${ip}`, { capacity: 5, refillPerSec: 0.05 });
+  if (!rl.ok) {
+    return { ok: false, message: "Too many tries — give it a moment and retry." };
+  }
 
   try {
     await db

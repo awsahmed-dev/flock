@@ -64,8 +64,15 @@ export async function joinTripAsGuest(
 ): Promise<{ error: string } | void> {
   const token = formData.get("token") as string;
   const tripId = formData.get("tripId") as string;
-  const displayName = ((formData.get("displayName") as string) ?? "").trim();
-  const email = (formData.get("email") as string | null)?.trim() || null;
+  // Audit §17: cap the name (it becomes a display name everywhere) and only
+  // accept an email-shaped email — anything else falls back to the synthetic
+  // guest address instead of becoming an auth account identity.
+  const displayName = ((formData.get("displayName") as string) ?? "").trim().slice(0, 60);
+  const emailRaw = (formData.get("email") as string | null)?.trim() || null;
+  const email =
+    emailRaw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw) && emailRaw.length <= 254
+      ? emailRaw.toLowerCase()
+      : null;
 
   if (!displayName) return { error: "Name is required" };
 

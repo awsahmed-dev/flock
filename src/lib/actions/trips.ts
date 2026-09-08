@@ -1,5 +1,7 @@
 "use server";
 
+import { zMoney, zDateOnly, zText, parseOr } from "./validate";
+
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { buildPackingSuggestions } from "@/lib/packing-suggestions";
@@ -40,18 +42,22 @@ export async function createTrip(formData: FormData) {
   // "malaysia" or "Taiz, yemen". Title-case each word; collapse runs of
   // whitespace; preserve internal punctuation (commas, hyphens). Skips
   // Arabic-script strings since case doesn't apply.
-  const rawName = (formData.get("name") as string).trim();
-  const rawDestination = (formData.get("destination") as string).trim();
+  // Audit §17: shape + range. Dates must be real calendar days in order,
+  // budget must be a bounded positive number, currency an ISO-shaped code.
+  const rawName = parseOr(zText(80), formData.get("name"), "Missing required fields");
+  const rawDestination = parseOr(zText(120), formData.get("destination"), "Missing required fields");
   const name = titleCase(rawName);
   const destination = titleCase(rawDestination);
-  const startDate = formData.get("startDate") as string;
-  const endDate = formData.get("endDate") as string;
+  const startDate = parseOr(zDateOnly, formData.get("startDate"), "Invalid dates");
+  const endDate = parseOr(zDateOnly, formData.get("endDate"), "Invalid dates");
+  if (startDate > endDate) throw new Error("Trip can't end before it starts");
   const budgetTotal = formData.get("budgetTotal")
-    ? parseFloat(formData.get("budgetTotal") as string)
+    ? parseOr(zMoney, parseFloat(formData.get("budgetTotal") as string), "Invalid budget")
     : null;
   // QA BUG-11: keep the per-person intent instead of flattening it.
   const budgetType = formData.get("budgetType") === "per_person" ? "per_person" : "flat";
-  const currency = (formData.get("currency") as string) || "USD";
+  const currencyRaw = ((formData.get("currency") as string) || "USD").trim().toUpperCase();
+  const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : "USD";
   // QA BUG-2: the wizard's "Who is coming?" emails — previously discarded.
   let inviteEmails: string[] = [];
   try {
