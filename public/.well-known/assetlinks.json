@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.paxawa.app",
+      "sha256_cert_fingerprints": [
+        "9C:C2:0F:CB:86:E2:EF:B1:60:00:8A:E4:C2:91:CD:CF:72:08:38:D3:E7:95:9A:06:AD:B4:8E:9B:63:3D:71:4E"
+      ]
+    }
+  }
+]

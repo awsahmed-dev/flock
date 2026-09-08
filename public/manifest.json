@@ -1,10 +1,10 @@
 {
-  "name": "Paxawa \u2014 Plan trips together",
+  "name": "Paxawa — Plan trips together",
   "short_name": "Paxawa",
-  "description": "Plan group trips, vote on options, split expenses \u2014 all in one place.",
+  "description": "Plan group trips, vote on options, split expenses — all in one place.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0D0D0D",
   "theme_color": "#6366f1",
   "orientation": "portrait-primary",
   "icons": [
@@ -96,5 +96,6 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "id": "/dashboard"
 }

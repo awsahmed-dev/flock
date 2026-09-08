@@ -86,6 +86,10 @@ export async function proxy(request: NextRequest) {
     path === "/sitemap.xml" ||
     path === "/robots.txt" ||
     path === "/manifest.json" ||
+    // Digital Asset Links — Google Play fetches this anonymously to verify
+    // the TWA wrapper owns paxawa.com; behind auth the Play app shows the
+    // browser chrome bar instead of running fullscreen.
+    path.startsWith("/.well-known/") ||
     path === "/opengraph-image" ||
     path === "/twitter-image" ||
     // Bing Webmaster Tools file-based verification. The token in
