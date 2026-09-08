@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkLimit } from "@/lib/rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/get-user";
 
@@ -13,6 +14,12 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Launch audit §18: every route that spends money is rate-limited per user.
+  {
+    const r = checkLimit(`ocr:${user.id}`, { capacity: 8, refillPerSec: 0.05 });
+    if (!r.ok) return NextResponse.json({ error: "Slow down" }, { status: 429, headers: { "Retry-After": String(r.retryAfter) } });
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ amount: null }, { status: 200 });

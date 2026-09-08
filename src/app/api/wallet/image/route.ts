@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkLimit } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getDestinationHero } from "@/lib/unsplash";
 
@@ -17,6 +18,12 @@ export async function GET(request: NextRequest) {
   const user = await getCurrentUser(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Launch audit §18: every route that spends money is rate-limited per user.
+  {
+    const r = checkLimit(`wallet-img:${user.id}`, { capacity: 20, refillPerSec: 0.2 });
+    if (!r.ok) return NextResponse.json({ error: "Slow down" }, { status: 429, headers: { "Retry-After": String(r.retryAfter) } });
   }
   const q = request.nextUrl.searchParams.get("q")?.trim();
   if (!q) {

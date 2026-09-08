@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { checkLimit } from "@/lib/rate-limit";
 import { PlacesNotConfiguredError } from "@/lib/places/google";
 
 /** Auth gate — every discover call costs Google quota. */
@@ -16,6 +17,15 @@ export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) {
     return { user: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  // Launch audit §18: one shared per-user budget across every discover route.
+  // Generous (feeds burst photo-proxy calls) but stops scripted extraction.
+  const r = checkLimit(`discover:${user.id}`, { capacity: 120, refillPerSec: 1.5 });
+  if (!r.ok) {
+    return {
+      user: null,
+      error: NextResponse.json({ error: "Slow down" }, { status: 429, headers: { "Retry-After": String(r.retryAfter) } }),
+    };
   }
   return { user, error: null as null };
 }

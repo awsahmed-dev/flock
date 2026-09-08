@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkLimit } from "@/lib/rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
@@ -108,6 +109,12 @@ async function fetchUrlText(url: string): Promise<string | null> {
 export async function POST(req: Request) {
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Launch audit §18: every route that spends money is rate-limited per user.
+  {
+    const r = checkLimit(`ai:inspire:${user.id}`, { capacity: 6, refillPerSec: 0.05 });
+    if (!r.ok) return NextResponse.json({ error: "Slow down" }, { status: 429, headers: { "Retry-After": String(r.retryAfter) } });
+  }
 
   let body: { tripId?: string; url?: string; text?: string; image?: string; mediaType?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "bad request" }, { status: 400 }); }
