@@ -205,13 +205,17 @@ function SortableLeg({
     // The WHOLE card is the drag surface (long-press on touch, small
     // move on pointer) — a finger-sized target instead of a 18px handle.
     // Quick taps still reach the buttons because activation needs a
-    // hold/move first. touch-manipulation keeps normal page scroll.
+    // hold/move first. touch-manipulation keeps normal page scroll, and
+    // select-none stops Android's long-press text selection from
+    // hijacking the hold before the 180ms touch sensor activates
+    // (video QA: long-pressing a city card opened the Copy/Share
+    // toolbar and the drag never started).
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`touch-manipulation ${isDragging ? "opacity-80 z-10 relative" : ""}`}
+      className={`touch-manipulation select-none ${isDragging ? "opacity-80 z-10 relative" : ""}`}
     >
       {/* travel hop chip */}
       {index > 0 && (
@@ -319,7 +323,7 @@ function SortableCityTab({
       {...listeners}
       onClick={onSelect}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`touch-manipulation flex-1 min-w-0 rounded-xl border px-2 py-1.5 text-center transition-colors ${
+      className={`touch-manipulation select-none flex-1 min-w-0 rounded-xl border px-2 py-1.5 text-center transition-colors ${
         isDragging ? "opacity-80 z-10 relative" : ""
       } ${
         active
@@ -417,7 +421,7 @@ function SortablePlaceRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`rounded-2xl border bg-card overflow-hidden touch-manipulation ${
+      className={`rounded-2xl border bg-card overflow-hidden touch-manipulation select-none ${
         isDragging ? "opacity-80 z-10 relative shadow-lg" : ""
       } ${isSel ? "border-primary/50" : "border-border"}`}
     >
@@ -585,7 +589,9 @@ export function AiPlannerPanel({ open, onClose, tripId, destination }: Props) {
 
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
+    // tolerance 12: a thumb wobbles a few px during the hold; 6 made the
+    // activation silently cancel and the gesture fall through to scroll.
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 12 } }),
   );
 
   function onLegDragEnd(e: DragEndEvent) {

@@ -147,6 +147,17 @@ export function ExpensesBoard({
       0,
     );
 
+    // Video-QA bug: a trip whose only expense was personal showed a SAR 0
+    // hero while the cockpit (which sums every expense row) and the
+    // personal-cap row both counted it. The hero's headline, "you paid"
+    // and the budget strip now cover ALL trip spending — shared splits
+    // stay the only inputs to owed/balances/settle-up below.
+    const totalPersonalBase = personalExpenses.reduce(
+      (s, e) => s + toBase(e.amount, e.currency),
+      0,
+    );
+    const totalTripBase = totalSharedBase + totalPersonalBase;
+
     const myPaidBase = sharedExpenses
       .filter((e) => e.paidBy === userId)
       .reduce((s, e) => s + toBase(e.amount, e.currency), 0);
@@ -188,7 +199,7 @@ export function ExpensesBoard({
     }
     const balances = [...balanceMap.values()];
 
-    const categoryTotals = sharedExpenses.reduce<Record<string, number>>(
+    const categoryTotals = expenseList.reduce<Record<string, number>>(
       (acc, e) => {
         acc[e.category] = (acc[e.category] ?? 0) + toBase(e.amount, e.currency);
         return acc;
@@ -208,6 +219,8 @@ export function ExpensesBoard({
       fxMissing: [...missing],
       sharedExpenses,
       totalSharedBase,
+      totalTripBase,
+      myPaidTotalBase: myPaidBase + myPersonalBase,
       myPaidBase,
       myOwedBase,
       personalSpentBase: myPersonalBase + mySharedShareBase,
@@ -261,7 +274,7 @@ export function ExpensesBoard({
             </button>
           </div>
           <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
-            {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••••"}
+            {currency} {showAmounts ? fmt(derived.totalTripBase) : "•••••"}
           </p>
           <FxIncompleteNote currencies={derived.fxMissing} className="mt-1 !text-white/85" />
           {derived.isMultiCurrency && fxRates && (
@@ -277,7 +290,7 @@ export function ExpensesBoard({
                 <ArrowUpRight className="w-4 h-4" /> {t("expenses.youPaid")}
               </div>
               <p className="text-sm font-bold tabular-nums mt-0.5">
-                {currency} {showAmounts ? fmt(derived.myPaidBase) : "•••••"}
+                {currency} {showAmounts ? fmt(derived.myPaidTotalBase) : "•••••"}
               </p>
             </div>
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
@@ -299,7 +312,7 @@ export function ExpensesBoard({
               <div className="flex items-center justify-between text-[12px] font-bold tracking-widest uppercase text-white/80 mb-1.5">
                 <span>{t("expenses.tripBudget")}</span>
                 <span className="tabular-nums">
-                  {currency} {showAmounts ? fmt(derived.totalSharedBase) : "•••"}
+                  {currency} {showAmounts ? fmt(derived.totalTripBase) : "•••"}
                   <span className="text-white/60 ms-1 font-medium">
                     / {fmt(tripBudget)}
                   </span>
@@ -308,22 +321,22 @@ export function ExpensesBoard({
               <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
                 <div
                   className={`me-auto h-full rounded-full ${
-                    derived.totalSharedBase / tripBudget >= 1
+                    derived.totalTripBase / tripBudget >= 1
                       ? "bg-red-300"
-                      : derived.totalSharedBase / tripBudget >= 0.9
+                      : derived.totalTripBase / tripBudget >= 0.9
                         ? "bg-orange-300"
-                        : derived.totalSharedBase / tripBudget >= 0.75
+                        : derived.totalTripBase / tripBudget >= 0.75
                           ? "bg-amber-300"
                           : "bg-white"
                   }`}
                   style={{
-                    width: `${Math.min(100, (derived.totalSharedBase / tripBudget) * 100)}%`,
+                    width: `${Math.min(100, (derived.totalTripBase / tripBudget) * 100)}%`,
                   }}
                 />
               </div>
               <div className="flex items-center justify-between mt-1.5 text-[10px] text-white/70">
                 <span>
-                  {t("expenses.percentUsed", { percent: Math.round((derived.totalSharedBase / tripBudget) * 100) })}
+                  {t("expenses.percentUsed", { percent: Math.round((derived.totalTripBase / tripBudget) * 100) })}
                 </span>
 
               </div>
@@ -342,7 +355,7 @@ export function ExpensesBoard({
           baseCurrency={currency}
           destination={destination}
           tripBudget={tripBudget}
-          sharedSpent={derived.totalSharedBase}
+          sharedSpent={derived.totalTripBase}
           personalBudget={personalBudget}
           personalSpent={derived.personalSpentBase}
           memberCount={Math.max(1, members.length)}
