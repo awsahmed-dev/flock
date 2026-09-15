@@ -169,16 +169,14 @@ export function ExpenseCamera({
           {camError ? (
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-3">
               <Camera size={28} className="text-muted-foreground" />
-              <p className="font-semibold">Paxawa can&rsquo;t see the bill.</p>
-              <p className="text-[13px] text-muted-foreground">
-                Allow camera access in Settings, or type the amount instead.
-              </p>
+              <p className="font-semibold">{t("expenses.camDeniedTitle")}</p>
+              <p className="text-[13px] text-muted-foreground">{t("expenses.camDeniedBody")}</p>
               <button
                 type="button"
                 onClick={() => setScreen("review")}
                 className="mt-2 rounded-full bg-primary text-primary-foreground text-[14px] font-bold px-5 py-2.5"
               >
-                Type instead
+                {t("expenses.camTypeInstead")}
               </button>
             </div>
           ) : (
@@ -199,7 +197,7 @@ export function ExpenseCamera({
                   type="button"
                   onClick={capture}
                   disabled={ocrBusy}
-                  aria-label="Capture"
+                  aria-label={t("expenses.camCapture")}
                   className="w-[72px] h-[72px] rounded-full bg-white ring-4 ring-white/40 active:scale-95 transition-transform disabled:opacity-60"
                 />
                 <button
@@ -208,7 +206,7 @@ export function ExpenseCamera({
                   className="inline-flex items-center gap-1.5 rounded-full bg-black/50 text-white text-[13px] font-semibold px-4 py-2"
                   style={{ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
                 >
-                  <Keyboard size={16} /> Type instead
+                  <Keyboard size={16} /> {t("expenses.camTypeInstead")}
                 </button>
               </div>
             </>
@@ -284,7 +282,7 @@ export function ExpenseCamera({
             disabled={!(amt > 0)}
             className="h-13 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] py-3.5 disabled:opacity-50"
           >
-            Next — split it
+            {t("expenses.camNextSplit")}
           </button>
         </div>
       )}
@@ -321,7 +319,7 @@ export function ExpenseCamera({
           </div>
 
           <p className="text-center text-[15px] font-bold tabular-nums">
-            {currency} {perHead.toFixed(2)} each
+            {t("expenses.camPerHead", { currency, amount: perHead.toFixed(2) })}
             {perHeadBase != null && (
               <span className="text-muted-foreground font-normal"> ≈ {tripCurrency} {perHeadBase.toFixed(2)}</span>
             )}

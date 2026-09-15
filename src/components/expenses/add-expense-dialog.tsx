@@ -1,6 +1,7 @@
 "use client";
 
 import { protectedFileUrl } from "@/lib/storage-url";
+import { COMMON_CURRENCIES } from "@/lib/currencies";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -32,14 +33,9 @@ function categoryMeta(value: ExpenseCategory) {
 }
 
 // Shown in the currency dropdown — popular travel-relevant currencies
-// first, the rest of the world's majors after. Users can also type a
+// first, the rest of the world's majors after (shared list — the trip
+// wizard's budget step uses the same one). Users can also type a
 // 3-letter ISO code manually if theirs isn't in the list.
-const COMMON_CURRENCIES = [
-  "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF",
-  "CNY", "AED", "SAR", "INR", "THB", "IDR", "MYR",
-  "SGD", "HKD", "KRW", "TWD", "TRY", "MXN", "BRL",
-  "ZAR", "EGP", "NZD", "NOK", "SEK", "DKK", "PLN",
-];
 
 /** Today as a date-input value in the USER'S timezone — toISOString()
  *  would flip to yesterday/tomorrow around midnight. */

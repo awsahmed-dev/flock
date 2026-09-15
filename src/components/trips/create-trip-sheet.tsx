@@ -1,6 +1,7 @@
 "use client";
 
 import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
+import { COMMON_CURRENCIES } from "@/lib/currencies";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin, CalendarDots as CalendarDays } from "@phosphor-icons/react/dist/ssr";
 import {
@@ -788,7 +789,9 @@ function Step3({
   perPerson: boolean;
   setPerPerson: (v: boolean) => void;
 }) {
-  const CURRENCIES = ["USD", "SAR", "AED", "EUR", "GBP", "EGP"];
+  // Full shared list (lib/currencies) — was a 6-item subset that made a
+  // JPY budget impossible for a Japan trip while expenses accepted JPY.
+  const CURRENCIES = COMMON_CURRENCIES;
   return (
     <div className="space-y-5">
       <div>
