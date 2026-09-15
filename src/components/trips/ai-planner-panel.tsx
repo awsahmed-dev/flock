@@ -248,11 +248,17 @@ function SortableLeg({
         )}
         <div className="p-3.5">
           <div className="flex items-start gap-2.5">
+            {/* Instant-drag handle: touch-action none hands the gesture to
+                dnd-kit from the first pixel of movement — no long-press, no
+                scroll steal (video QA ×2: hold-to-drag never felt grabbable
+                on Android). The rest of the card keeps hold-to-drag. */}
             <span
-              className="shrink-0 -ms-1 p-1.5 text-muted-foreground cursor-grab active:cursor-grabbing"
+              {...listeners}
+              style={{ touchAction: "none" }}
+              className="shrink-0 -ms-2.5 -my-1.5 p-3 text-muted-foreground cursor-grab active:cursor-grabbing"
               aria-hidden
             >
-              <DotsSixVertical className="w-5 h-5" />
+              <DotsSixVertical className="w-6 h-6" />
             </span>
             <div className="min-w-0 flex-1">
               {!leg.photoUrl && <p className="text-sm font-bold truncate">{leg.cityLabel}</p>}
@@ -427,8 +433,14 @@ function SortablePlaceRow({
     >
       {/* the whole row is the drag surface (hold on touch, small move on pointer) */}
       <div {...attributes} {...listeners} className="flex items-center gap-2.5 p-2.5 cursor-pointer" onClick={onToggleOpen}>
-        <span className="shrink-0 -ms-0.5 text-muted-foreground/70 cursor-grab active:cursor-grabbing" aria-hidden>
-          <DotsSixVertical className="w-4 h-4" />
+        <span
+          {...listeners}
+          style={{ touchAction: "none" }}
+          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 -ms-2 -my-2 p-2.5 text-muted-foreground/70 cursor-grab active:cursor-grabbing"
+          aria-hidden
+        >
+          <DotsSixVertical className="w-5 h-5" />
         </span>
         <div
           className="w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
