@@ -779,6 +779,51 @@ export function ItineraryBoard({
           {/* Scrollable list — trimmed from 55vh to 45vh so map gets
               the larger share of the viewport when sheet is expanded. */}
           <div className="max-h-[45vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
+            {/* Planning's front door. Audit 2026-09-15: planning was the only
+                core activity with no home — it lived three taps deep inside
+                the day-add sheet, and on an empty trip the screen offered
+                nothing but "nothing planned yet". When the whole trip is
+                empty, the plan IS the launcher: one ready-made route, one
+                manual path, one import path. Per-day add rows stay below for
+                trips that have already started. */}
+            {items.length === 0 && (phase === "PLANNING" || phase === "DEPARTURE") && (
+              <div className="mb-3 rounded-3xl border border-border bg-card p-4">
+                <p className="font-extrabold text-[17px]">{t("itinerary.planEmptyTitle")}</p>
+                <p className="mt-1 text-[13px] text-muted-foreground">{t("itinerary.planEmptyBody")}</p>
+
+                <button
+                  type="button"
+                  onClick={() => setAiOpen(true)}
+                  className="mt-3.5 w-full rounded-2xl bg-primary text-primary-foreground px-4 py-3.5 flex items-center gap-3 text-start active:scale-[0.99] transition-transform"
+                >
+                  <Sparkles size={22} weight="fill" className="shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold text-[15px] truncate">{t("itinerary.planEmptySmart")}</span>
+                    <span className="block text-[12px] opacity-85 truncate">{t("itinerary.planEmptySmartSub")}</span>
+                  </span>
+                  <ChevronRight size={18} className="shrink-0 opacity-70 rtl:rotate-180" />
+                </button>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openAddFor(days[0] ?? null)}
+                    className="rounded-2xl border border-border px-3 py-3 flex flex-col items-center gap-1.5 text-center active:scale-[0.99] transition-transform"
+                  >
+                    <Plus size={18} className="text-primary" />
+                    <span className="text-[12.5px] font-semibold leading-tight">{t("itinerary.planEmptyManual")}</span>
+                  </button>
+                  <Link
+                    href={`/trips/${tripId}/import`}
+                    className="rounded-2xl border border-border px-3 py-3 flex flex-col items-center gap-1.5 text-center"
+                  >
+                    <Sparkles size={18} className="text-[color:var(--clr-horizon)]" />
+                    <span className="text-[12.5px] font-semibold leading-tight">{t("itinerary.planEmptyImport")}</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Sprint 8 Item 6: DEPARTURE — countdown + pack-today sit once
                 above the day list; day-pinned docs render per-day below. */}
             {phase === "DEPARTURE" && startDate && (
@@ -957,13 +1002,17 @@ export function ItineraryBoard({
                         mockup's dashed entry at the bottom of each day. */}
                     {(phase === "PLANNING" || phase === "DEPARTURE") && (
                       <div className="mt-2">
-                        {dayItems.length === 0 ? (
+                        {dayItems.length === 0 && items.length > 0 ? (
                           /* An empty day is where a first-timer arrives, so it
                              gets a real primary button rather than a 13px
                              dashed ghost row — plus a second door, because
                              people often don't know WHAT to add, only that
                              they should. Days that already have stops keep
-                             the quiet inline row below. */
+                             the quiet inline row below.
+                             Audit 2026-09-15: suppressed while the WHOLE trip
+                             is empty — the trip-level launcher above already
+                             offers these same doors, and stacking both read
+                             as the screen asking twice. */
                           <div className="rounded-2xl border-[1.5px] border-dashed border-border px-4 py-5 text-center">
                             <p className="text-[14px] text-muted-foreground leading-relaxed">
                               {t("itinerary.emptyDayBody")}

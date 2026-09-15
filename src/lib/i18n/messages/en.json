@@ -579,7 +579,13 @@
     "nothingPlannedYet": "Nothing planned yet.",
     "emptyDayBody": "Nothing here yet. Add somewhere you want to go — you can move it to another day later.",
     "browseIdeas": "Browse ideas in {destination}",
-    "loadingMap": "Loading map…"
+    "loadingMap": "Loading map…",
+    "planEmptyTitle": "Your plan is empty",
+    "planEmptyBody": "Start from a ready plan, or build it yourself.",
+    "planEmptySmart": "Plan the whole trip for me",
+    "planEmptySmartSub": "Every day — real places, your taste",
+    "planEmptyManual": "I'll add places myself",
+    "planEmptyImport": "From a reel or TikTok link"
   },
   "discover": {
     "forYou": "For you",

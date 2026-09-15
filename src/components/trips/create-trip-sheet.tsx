@@ -110,13 +110,19 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
     // "2 Weeks" while viewing August must produce an August range.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    // Video-QA 2026-09-15: presets used to start TODAY, so a brand-new trip
+    // was instantly LIVE (tripPhase: today >= start) — which hides the whole
+    // planning affordance layer (`phase === "PLANNING"`) and drops the user
+    // into the live-day cockpit at the exact moment they came to plan. A trip
+    // you are still planning starts in the future; default two weeks out,
+    // which also lands clear of the 7-day DEPARTURE window. The calendar is
+    // right there for anyone who means "leaving tomorrow".
+    const soon = addDays(today, 14);
     let anchor: Date;
     if (start) {
       anchor = start;
-    } else if (isSameMonth(viewMonth, today)) {
-      anchor = today;
-    } else if (isBefore(viewMonth, today)) {
-      anchor = today;
+    } else if (isSameMonth(viewMonth, today) || isBefore(viewMonth, today)) {
+      anchor = soon;
     } else {
       anchor = startOfMonth(viewMonth);
     }

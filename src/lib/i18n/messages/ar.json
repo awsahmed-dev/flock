@@ -579,7 +579,13 @@
     "nothingPlannedYet": "لا شيء مخطط بعد.",
     "emptyDayBody": "لا يوجد شيء هنا بعد. أضف مكانًا تودّ زيارته — يمكنك نقله إلى يوم آخر لاحقًا.",
     "browseIdeas": "تصفّح أفكارًا في {destination}",
-    "loadingMap": "جارٍ تحميل الخريطة…"
+    "loadingMap": "جارٍ تحميل الخريطة…",
+    "planEmptyTitle": "خطة رحلتكم فاضية",
+    "planEmptyBody": "ابدأ بخطة جاهزة، أو رتّبها بنفسك.",
+    "planEmptySmart": "خطّط لي الرحلة كاملة",
+    "planEmptySmartSub": "كل الأيام — أماكن حقيقية على ذوقكم",
+    "planEmptyManual": "أضيفها بنفسي",
+    "planEmptyImport": "من ريل أو رابط تيك توك"
   },
   "discover": {
     "forYou": "لك",
