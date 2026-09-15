@@ -38,7 +38,7 @@ export function WaitlistForm() {
   return (
     <div className="mt-10 max-w-md mx-auto">
       <p className="text-sm text-white/40 mb-3">
-        Or just leave your email — we'll keep you posted
+        Or just leave your email — we’ll keep you posted
       </p>
       <AnimatePresence mode="wait">
         {state.kind === "ok" ? (
@@ -59,6 +59,16 @@ export function WaitlistForm() {
             onSubmit={submit}
             className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] backdrop-blur p-1 ps-4 focus-within:border-white/25 transition-colors"
           >
+            {/* honeypot — hidden from humans, catches bots that fill every field */}
+            <input
+              type="text"
+              name="company"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              defaultValue=""
+              className="absolute -left-[9999px] h-0 w-0 opacity-0"
+            />
             <Mail className="w-4 h-4 text-white/40 shrink-0" />
             <input
               type="email"

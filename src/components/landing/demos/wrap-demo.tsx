@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import Image from "next/image";
 import {
   ShareNetwork,
   CaretRight,
@@ -31,8 +32,7 @@ export function WrapDemo({ progress }: { progress?: number }) {
         {...frame(progress, 0.03, { opacity: 0 }, { opacity: 1 })}
         className="relative flex-1 min-h-0 overflow-hidden"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/landing/screens/art/wrap-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <Image src="/landing/screens/art/wrap-hero.jpg" alt="" fill sizes="(max-width: 768px) 90vw, 420px" className="object-cover" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 35%, rgba(0,0,0,0.92))" }} />
         <div className="absolute bottom-0 inset-x-0 px-3 pb-2">
           <motion.p

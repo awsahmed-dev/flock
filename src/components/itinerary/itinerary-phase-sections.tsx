@@ -70,7 +70,13 @@ export function LiveDayTimeline({
       <div className="absolute inset-y-2 start-1 w-0.5 bg-border" aria-hidden />
       {items.map((item, idx) => {
         const done = item.completedAt != null;
-        const isNow = isToday && idx === firstOpenIdx;
+        /* Video-QA 2026-09-15: "happening now" was purely positional — the
+           first unfinished stop of today wore the badge all day, so at 18:02
+           a 09:30 temple still read as happening now while the 19:00 dinner
+           read as up-next. A stop is only "now" once its start time has
+           actually arrived (and, when we know the next one, before that
+           starts). Stops with no time keep the positional fallback. */
+        const isNow = isToday && idx === firstOpenIdx && startedByNow(items, idx, nowHm);
         const stateLabel = done
           ? t("now.done")
           : isNow
@@ -425,4 +431,21 @@ export function InlineAddRow({ label, onClick }: { label: string; onClick: () =>
       {label}
     </button>
   );
+}
+
+/**
+ * Has this stop's start time arrived? Times are "HH:MM" strings on the trip's
+ * own day, compared against the same clock the now-line already uses, so no
+ * Date objects and no timezone can creep in (see lib/today.ts).
+ */
+function startedByNow(
+  items: { startTime?: string | null }[],
+  idx: number,
+  nowHm: string,
+): boolean {
+  const start = items[idx]?.startTime;
+  if (!start) return true; // untimed stop — fall back to "next up in order"
+  if (start > nowHm) return false; // hasn't begun yet
+  const next = items.slice(idx + 1).find((i) => i.startTime)?.startTime;
+  return !next || nowHm < next;
 }

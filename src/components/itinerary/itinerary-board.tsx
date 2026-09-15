@@ -31,6 +31,9 @@ import { DocumentViewer } from "@/components/documents/document-viewer";
 import { isFileDoc } from "@/lib/doc-file";
 import { PlanDaySheet } from "./plan-day-sheet";
 import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
+import type { SavedRow } from "@/lib/actions/saves";
+import { SavesTray } from "@/components/saves/saves-tray";
+import { WhatsNow } from "@/components/now/whats-now";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
@@ -74,6 +77,8 @@ interface Props {
   phase?: TripPhase;
   startDate?: string | null;
   packItems?: { id: string; label: string; category: string; packed: boolean }[];
+  /** Planning v2: places saved for this trip, waiting for a day. */
+  saves?: SavedRow[];
   photoCountByItem?: Record<string, number>;
   /**
    * fix/tz: today in the traveller's zone, from the server.
@@ -145,6 +150,7 @@ export function ItineraryBoard({
   phase = "PLANNING",
   startDate = null,
   packItems = [],
+  saves = [],
   photoCountByItem = {},
   todayIso,
 }: Props) {
@@ -779,6 +785,17 @@ export function ItineraryBoard({
           {/* Scrollable list — trimmed from 55vh to 45vh so map gets
               the larger share of the viewport when sheet is expanded. */}
           <div className="max-h-[45vh] overflow-y-auto px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0)+1rem)]">
+            {/* The saves tray — what the crew captured, and what became of
+                it. Sits above the days because it is the pool the plan pulls
+                from, not an afterthought. */}
+            <SavesTray tripId={tripId} saves={saves} days={days} />
+
+            {phase === "LIVE" && (
+              <div className="mb-3 flex justify-center">
+                <WhatsNow tripId={tripId} saves={saves} />
+              </div>
+            )}
+
             {/* Planning's front door. Audit 2026-09-15: planning was the only
                 core activity with no home — it lived three taps deep inside
                 the day-add sheet, and on an empty trip the screen offered
@@ -791,9 +808,8 @@ export function ItineraryBoard({
                 <p className="font-extrabold text-[17px]">{t("itinerary.planEmptyTitle")}</p>
                 <p className="mt-1 text-[13px] text-muted-foreground">{t("itinerary.planEmptyBody")}</p>
 
-                <button
-                  type="button"
-                  onClick={() => setAiOpen(true)}
+                <Link
+                  href={`/trips/${tripId}/package`}
                   className="mt-3.5 w-full rounded-2xl bg-primary text-primary-foreground px-4 py-3.5 flex items-center gap-3 text-start active:scale-[0.99] transition-transform"
                 >
                   <Sparkles size={22} weight="fill" className="shrink-0" />
@@ -802,7 +818,7 @@ export function ItineraryBoard({
                     <span className="block text-[12px] opacity-85 truncate">{t("itinerary.planEmptySmartSub")}</span>
                   </span>
                   <ChevronRight size={18} className="shrink-0 opacity-70 rtl:rotate-180" />
-                </button>
+                </Link>
 
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <button

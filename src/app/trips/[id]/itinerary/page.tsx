@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import { listTripSaves } from "@/lib/actions/saves";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
@@ -143,6 +144,10 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
     for (const c of counts) if (c.itemId) photoCountByItem[c.itemId] = c.n;
   }
 
+  // Planning v2: the saves tray the plan pulls from. Failure here must never
+  // take the itinerary down with it — an empty tray is a fine degradation.
+  const tripSaves = await listTripSaves(id).catch(() => []);
+
   return (
     <ItineraryBoard
       tripId={id}
@@ -163,6 +168,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
       packItems={packList}
       photoCountByItem={photoCountByItem}
       todayIso={todayIso}
+      saves={tripSaves}
     />
   );
 }

@@ -506,7 +506,7 @@ function DestinationAutocomplete({
     const id = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/discover/autocomplete?q=${encodeURIComponent(query)}&session=${session.current}`,
+          `/api/discover/autocomplete?q=${encodeURIComponent(query)}&session=${session.current}&cities=1`,
         );
         const data = await res.json().catch(() => ({}));
         setPreds(Array.isArray(data.predictions) ? data.predictions : []);

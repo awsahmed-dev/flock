@@ -174,12 +174,19 @@ export async function autocomplete(
     /** bias radius in meters around lat/lng */
     radius?: number;
     languageCode?: string;
+    /** restrict predictions to localities — destination pickers want cities. */
+    citiesOnly?: boolean;
   } = {},
 ): Promise<PlacePrediction[]> {
   if (input.trim().length < 2) return [];
   const body: Record<string, unknown> = { input };
   if (opts.sessionToken) body.sessionToken = opts.sessionToken;
   if (opts.languageCode) body.languageCode = opts.languageCode;
+  // Video-QA 2026-09-15: typing "Tbilisi" surfaced "Tbilisi International
+  // Airport" first, so the trip was named "… Airport Trip" and every screen
+  // downstream repeated it while the AI quietly planned the city anyway.
+  // When the caller wants a destination, ask Places for localities only.
+  if (opts.citiesOnly) body.includedPrimaryTypes = ["(cities)"];
   if (opts.lat != null && opts.lng != null) {
     body.locationBias = {
       circle: {

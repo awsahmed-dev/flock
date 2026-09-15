@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import Image from "next/image";
 import {
   Heart,
   BookmarkSimple,
@@ -70,8 +71,7 @@ export function DiscoverDemo({ progress }: { progress?: number }) {
           className="relative rounded-2xl overflow-hidden"
           style={{ flex: "1 1 72%", minHeight: 0 }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/screens/art/discover-card.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <Image src="/landing/screens/art/discover-card.jpg" alt="" fill sizes="(max-width: 768px) 90vw, 420px" className="object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 45%, rgba(0,0,0,0.88))" }} />
 
           {/* side action rail */}
@@ -119,8 +119,7 @@ export function DiscoverDemo({ progress }: { progress?: number }) {
           className="relative rounded-t-2xl overflow-hidden"
           style={{ flex: "1 1 16%", minHeight: 24 }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/screens/art/discover-next.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <Image src="/landing/screens/art/discover-next.jpg" alt="" fill sizes="(max-width: 768px) 90vw, 420px" className="object-cover" />
         </motion.div>
       </div>
 

@@ -11,6 +11,7 @@ import { createItineraryItemFromGooglePlace, deleteItineraryItem } from "@/lib/a
 import { createDecision } from "@/lib/actions/decisions";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
+import { SaveButton } from "@/components/saves/save-button";
 import { PoweredByGoogle } from "./primitives";
 import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/animate-ui/components/radix/sheet";
@@ -344,24 +345,51 @@ export function PlaceDetailPanel({
             </button>
           ) : (
             <>
-              <div>
-                <p className="text-[12px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5">{t("itinerary.addToDay")}</p>
-                <div className="-mx-1 px-1 overflow-x-auto scrollbar-none">
-                  <div className="inline-flex items-center gap-1.5">
-                    {days.map((d, idx) => {
-                      const active = d === effectiveDay;
-                      return (
-                        <button
-                          key={d} type="button" onClick={() => setSelectedDay(d)}
-                          className={`shrink-0 rounded-2xl px-3.5 py-2 text-center transition-all ${active ? "bg-primary text-primary-foreground" : "bg-muted/60 text-foreground hover:bg-muted"}`}
-                        >
-                          <p className="text-[12px] font-bold tracking-wider uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
-                          <p className="text-[13px] font-bold mt-0.5 whitespace-nowrap">{format(parseISO(d), "MMM d")}</p>
-                        </button>
-                      );
-                    })}
+              {/* Audit 2026-09-15: this used to be a day-chip strip — on a
+                  30-day trip, thirty chips demanding a scheduling decision at
+                  the moment you merely liked a place. Saving is now the
+                  primary gesture (one tap, no question) and the day is
+                  offered in the toast afterwards. Picking an explicit day is
+                  still possible below for people who already know. */}
+              <div className="flex items-center gap-2">
+                {p && (
+                  <SaveButton
+                    tripId={tripId}
+                    place={{
+                      placeId: p.placeId,
+                      placeName: p.name,
+                      category: p.category ?? null,
+                      rating: p.rating ?? null,
+                      address: p.address ?? null,
+                      // coords is GeoJSON order [lng, lat] (see lib/actions/itinerary.ts)
+                      lat: p.coords?.[1] ?? null,
+                      lng: p.coords?.[0] ?? null,
+                      photoRef: p.photoRef ?? null,
+                      source: "discover",
+                    }}
+                  />
+                )}
+                <details className="flex-1">
+                  <summary className="h-11 rounded-2xl border border-border text-[13px] font-semibold inline-flex items-center justify-center w-full cursor-pointer list-none">
+                    {t("itinerary.addToDay")}
+                  </summary>
+                  <div className="-mx-1 px-1 overflow-x-auto scrollbar-none mt-2">
+                    <div className="inline-flex items-center gap-1.5">
+                      {days.map((d, idx) => {
+                        const active = d === effectiveDay;
+                        return (
+                          <button
+                            key={d} type="button" onClick={() => setSelectedDay(d)}
+                            className={`shrink-0 rounded-2xl px-3.5 py-2 text-center transition-all ${active ? "bg-primary text-primary-foreground" : "bg-muted/60 text-foreground hover:bg-muted"}`}
+                          >
+                            <p className="text-[12px] font-bold tracking-wider uppercase opacity-80">{t("itinerary.dayN", { n: idx + 1 })}</p>
+                            <p className="text-[13px] font-bold mt-0.5 whitespace-nowrap">{format(parseISO(d), "MMM d")}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                </details>
               </div>
               <div className="flex items-center gap-2">
                 {/* Brief C: tactile ripple on the primary CTA. */}

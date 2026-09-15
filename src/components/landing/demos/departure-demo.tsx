@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import Image from "next/image";
 import {
   Compass,
   CaretRight,
@@ -31,8 +32,7 @@ export function DepartureDemo({ progress }: { progress?: number }) {
         className="relative shrink-0 overflow-hidden"
         style={{ height: "21%" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/landing/screens/art/cockpit-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <Image src="/landing/screens/art/cockpit-hero.jpg" alt="" fill sizes="(max-width: 768px) 90vw, 420px" className="object-cover" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 25%, rgba(0,0,0,0.85))" }} />
         <span
           className="absolute top-1.5 start-2 rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide"
@@ -81,8 +81,7 @@ export function DepartureDemo({ progress }: { progress?: number }) {
           className="relative flex-1 min-h-0 rounded-2xl overflow-hidden"
           style={{ border: `1px solid ${APP.border}` }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/screens/art/day1-senso.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <Image src="/landing/screens/art/day1-senso.jpg" alt="" fill sizes="(max-width: 768px) 90vw, 420px" className="object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 30%, rgba(0,0,0,0.85))" }} />
           <span className="absolute top-1.5 start-1.5 rounded-full px-1.5 py-0.5 text-[7px] font-bold text-white inline-flex items-center gap-1" style={{ background: "rgba(0,0,0,0.5)" }}>
             📅 So you can picture it

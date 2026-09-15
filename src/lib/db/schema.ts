@@ -860,3 +860,113 @@ export const threadCommentsRelations = relations(threadComments, ({ one }) => ({
   thread: one(threads, { fields: [threadComments.threadId], references: [threads.id] }),
   user: one(profiles, { fields: [threadComments.userId], references: [profiles.id] }),
 }));
+
+// ═══ Planning v2 — the saves layer + packages ═════════════════════════════
+// Audit 2026-09-15 (docs/planning-ux-audit.md): Discover, reel imports and
+// manual search were three features that each scheduled at capture time —
+// which is what produced the 30-day-chip wall. They are now three FEEDERS
+// into one saves layer; the plan PULLS from it. Save-time and plan-time are
+// deliberately divorced.
+
+/** A user's folder of saves ("رحلة اليابان") — the TikTok-bookmark model. */
+export const saveFolders = pgTable("save_folders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * One saved place. `tripId` null = it lives in the global «محفوظاتي» inbox
+ * (the dreamer phase: reels saved months before a trip exists, and the
+ * landing zone for shares that match no trip). `status` is the "visible
+ * fate" the audit demands — a save that is never mentioned again teaches
+ * people to stop saving.
+ */
+export const savedPlaces = pgTable("saved_places", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  tripId: uuid("trip_id").references(() => trips.id, { onDelete: "cascade" }),
+  folderId: uuid("folder_id").references(() => saveFolders.id, { onDelete: "set null" }),
+  placeId: text("place_id"),
+  placeName: text("place_name").notNull(),
+  photoRef: text("photo_ref"),
+  category: text("category"),
+  rating: real("rating"),
+  address: text("address"),
+  lat: real("lat"),
+  lng: real("lng"),
+  /** 'discover' | 'reel' | 'search' | 'manual' | 'package' */
+  source: text("source").default("discover").notNull(),
+  sourceUrl: text("source_url"),
+  note: text("note"),
+  /** 'saved' | 'planned' | 'duplicate' | 'closed' | 'unverified' */
+  status: text("status").default("saved").notNull(),
+  /** set when the save graduates into the plan — powers «في اليوم ٣». */
+  itemId: uuid("item_id").references(() => itineraryItems.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * A «باقة» — the ready plan a trip opens with. Held as a draft document so
+ * closing the screen can never destroy a generated plan again (audit B3),
+ * and so the crew can react to it before it becomes the real itinerary.
+ * `payload` is the day/place structure; adopting it writes itinerary_items.
+ */
+export const tripPackages = pgTable("trip_packages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  /** 'canonical' | 'cached' | 'assembled' — the honesty tier. */
+  tier: text("tier").default("assembled").notNull(),
+  /** 'draft' | 'shared' | 'adopted' */
+  status: text("status").default("draft").notNull(),
+  payload: jsonb("payload").notNull(),
+  createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Crew reaction on one day of a package: 🔥 / 🙂 / تجاوز, plus place vetoes. */
+export const packageReactions = pgTable("package_reactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  packageId: uuid("package_id")
+    .notNull()
+    .references(() => tripPackages.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  dayIndex: integer("day_index").notNull(),
+  /** 'love' | 'ok' | 'skip' */
+  reaction: text("reaction").notNull(),
+  /** optional per-place veto within that day */
+  vetoPlaceId: text("veto_place_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const savedPlacesRelations = relations(savedPlaces, ({ one }) => ({
+  user: one(profiles, { fields: [savedPlaces.userId], references: [profiles.id] }),
+  trip: one(trips, { fields: [savedPlaces.tripId], references: [trips.id] }),
+  folder: one(saveFolders, { fields: [savedPlaces.folderId], references: [saveFolders.id] }),
+}));
+
+export const saveFoldersRelations = relations(saveFolders, ({ many }) => ({
+  places: many(savedPlaces),
+}));
+
+export const tripPackagesRelations = relations(tripPackages, ({ many, one }) => ({
+  reactions: many(packageReactions),
+  trip: one(trips, { fields: [tripPackages.tripId], references: [trips.id] }),
+}));
+
+export const packageReactionsRelations = relations(packageReactions, ({ one }) => ({
+  pkg: one(tripPackages, { fields: [packageReactions.packageId], references: [tripPackages.id] }),
+  user: one(profiles, { fields: [packageReactions.userId], references: [profiles.id] }),
+}));

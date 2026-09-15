@@ -27,6 +27,7 @@ export async function GET(request: Request) {
       lat: num(searchParams.get("lat")),
       lng: num(searchParams.get("lng")),
       languageCode: locale === "ar" ? "ar" : "en",
+      citiesOnly: searchParams.get("cities") === "1",
     });
     return NextResponse.json({ predictions });
   } catch (err) {
