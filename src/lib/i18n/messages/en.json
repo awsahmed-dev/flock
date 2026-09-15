@@ -1729,10 +1729,10 @@
     "rebuilt": "Plan rebuilt",
     "tierCanonical": "The classic route",
     "tierAssembled": "Laid out for you",
-    "statDays": "{count} days",
-    "statStops": "{count} stops",
-    "statFromSaves": "{count} from your saves",
-    "trayTitle": "{count} saves didn't fit a day",
+    "statDays": "{count, plural, =0 {no days} one {# day} other {# days}}",
+    "statStops": "{count, plural, =0 {no stops} one {# stop} other {# stops}}",
+    "statFromSaves": "{count, plural, one {# from your saves} other {# from your saves}}",
+    "trayTitle": "{count, plural, one {# save didn't fit a day} other {# saves didn't fit a day}}",
     "trayBody": "They're kept here — use ＋ on any day to pull one in.",
     "fromSaves": "From your saves",
     "dayEmpty": "Nothing on this day yet.",
@@ -1743,14 +1743,18 @@
     "allPinned": "Everything here is pinned",
     "noMoreSaves": "No saved places left to add",
     "adopt": "Use this plan",
-    "adopted": "Added {count} stops to your plan",
+    "adopted": "{count, plural, one {Added # stop to your plan} other {Added # stops to your plan}}",
     "alreadyAdopted": "This plan is already your itinerary.",
     "share": "Show the crew",
     "shared": "Shared with the crew",
     "saveFailed": "Couldn't save that — try again",
     "react_love": "Love",
     "react_ok": "Fine",
-    "react_skip": "Skip"
+    "react_skip": "Skip",
+    "rebuildLocale": "This plan was written in Arabic — rebuild it in English",
+    "replan": "Plan again",
+    "rebuildAdoptedConfirm": "This rebuilds the plan and removes the days it added before. Stops you added yourself stay.",
+    "adoptEmpty": "Add places first"
   },
   "saves": {
     "save": "Save",
@@ -1770,9 +1774,9 @@
     "allSaves": "All",
     "attachToTrip": "Add to a trip",
     "trayTitle": "Saved for this trip",
-    "traySub": "{count} places waiting for a day",
+    "traySub": "{count, plural, =0 {all scheduled} one {# place waiting for a day} other {# places waiting for a day}}",
     "statusPlanned": "In the plan",
     "statusSaved": "Not scheduled yet",
-    "makeTrip": "You have {count} places in {place} — make it a trip?"
+    "makeTrip": "{count, plural, one {You have # place in {place} — make it a trip?} other {You have # places in {place} — make it a trip?}}"
   }
 }

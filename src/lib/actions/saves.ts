@@ -11,7 +11,7 @@ import {
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { revalidatePath } from "next/cache";
-import { parseOr, zText } from "@/lib/actions/validate";
+import { parseOr, zText, zDateOnly } from "@/lib/actions/validate";
 import { z } from "zod";
 
 /**
@@ -59,6 +59,12 @@ async function requireUser() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Not signed in");
   return user;
+}
+
+/** Folders are personal; a folder id arriving from the client is not proof. */
+async function assertOwnFolder(folderId: string, userId: string) {
+  const f = await db.query.saveFolders.findFirst({ where: eq(saveFolders.id, folderId) });
+  if (!f || f.userId !== userId) throw new Error("Not found");
 }
 
 /** Membership check — only for trip-scoped saves; inbox saves are personal. */
@@ -214,7 +220,7 @@ export async function listFolders() {
     .select({
       id: saveFolders.id,
       name: saveFolders.name,
-      count: sql<number>`(select count(*)::int from ${savedPlaces} sp where sp.folder_id = ${saveFolders.id})`,
+      count: sql<number>`(select count(*)::int from ${savedPlaces} sp where sp.folder_id = ${saveFolders.id} and sp.user_id = ${user.id})`,
     })
     .from(saveFolders)
     .where(eq(saveFolders.userId, user.id))
@@ -225,6 +231,9 @@ export async function moveToFolder(saveId: string, folderId: string | null) {
   const user = await requireUser();
   const row = await db.query.savedPlaces.findFirst({ where: eq(savedPlaces.id, saveId) });
   if (!row || row.userId !== user.id) throw new Error("Not found");
+  // The folder id is client-supplied: without this you could file your save
+  // inside someone else's folder and it would show up in their inbox count.
+  if (folderId) await assertOwnFolder(folderId, user.id);
   await db.update(savedPlaces).set({ folderId }).where(eq(savedPlaces.id, saveId));
   revalidatePath("/saves");
 }
@@ -236,6 +245,7 @@ export async function moveToFolder(saveId: string, folderId: string | null) {
 export async function attachFolderToTrip(folderId: string, tripId: string) {
   const user = await requireUser();
   await assertMember(tripId, user.id);
+  await assertOwnFolder(folderId, user.id);
   await db
     .update(savedPlaces)
     .set({ tripId })
@@ -331,32 +341,51 @@ function eachDay(startIso: string, endIso: string): string[] {
  */
 export async function planSavedPlace(saveId: string, dayDate: string) {
   const user = await requireUser();
+  const day = parseOr(zDateOnly, dayDate, "Invalid day");
   const row = await db.query.savedPlaces.findFirst({ where: eq(savedPlaces.id, saveId) });
   if (!row) throw new Error("Not found");
   if (!row.tripId) throw new Error("Save has no trip");
   await assertMember(row.tripId, user.id);
 
-  const [item] = await db
-    .insert(itineraryItems)
-    .values({
-      tripId: row.tripId,
-      dayDate,
-      title: row.placeName,
-      type: "activity",
-      locationName: row.address ?? row.placeName,
-      locationLat: row.lat,
-      locationLng: row.lng,
-      googlePlaceId: row.placeId,
-      photoUrl: row.photoRef,
-      createdBy: user.id,
-    })
-    .returning({ id: itineraryItems.id });
+  // Replay guard: the tray button is a network round-trip away from a second
+  // tap, and every extra tap used to mint another identical stop.
+  if (row.status === "planned" && row.itemId) return { itemId: row.itemId, already: true as const };
 
-  await db
-    .update(savedPlaces)
-    .set({ status: "planned", itemId: item.id })
-    .where(eq(savedPlaces.id, saveId));
+  const trip = await db.query.trips.findFirst({ where: eq(trips.id, row.tripId) });
+  if (!trip) throw new Error("Trip not found");
+  // A day outside the trip renders nowhere — the stop would exist in the
+  // database and be invisible in the UI, which is the worst of both.
+  if (day < trip.startDate || day > trip.endDate) throw new Error("Day is outside the trip");
+
+  const itemId = await db.transaction(async (tx) => {
+    const [item] = await tx
+      .insert(itineraryItems)
+      .values({
+        tripId: row.tripId!,
+        dayDate: day,
+        title: row.placeName,
+        type: "activity",
+        locationName: row.address ?? row.placeName,
+        locationLat: row.lat,
+        locationLng: row.lng,
+        googlePlaceId: row.placeId,
+        photoUrl: row.photoRef,
+        rating: row.rating,
+        address: row.address,
+        provider: row.placeId ? "google" : "manual",
+        // Something the crew saved and then chose to schedule is a decision,
+        // not a proposal awaiting votes.
+        status: "confirmed",
+        createdBy: user.id,
+      })
+      .returning({ id: itineraryItems.id });
+    await tx
+      .update(savedPlaces)
+      .set({ status: "planned", itemId: item.id })
+      .where(eq(savedPlaces.id, saveId));
+    return item.id;
+  });
 
   revalidatePath(`/trips/${row.tripId}/itinerary`);
-  return { itemId: item.id };
+  return { itemId, already: false as const };
 }

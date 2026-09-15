@@ -95,7 +95,7 @@ export function SavesInbox({
             key={f.id}
             type="button"
             onClick={() => setActiveFolder(f.id)}
-            className={`shrink-0 h-9 px-3.5 rounded-full text-[13px] font-semibold border inline-flex items-center gap-1.5 ${
+            className={`shrink-0 h-11 px-4 rounded-full text-[13px] font-semibold border inline-flex items-center gap-1.5 ${
               activeFolder === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border"
             }`}
           >
@@ -105,7 +105,7 @@ export function SavesInbox({
         <button
           type="button"
           onClick={() => setCreating((v) => !v)}
-          className="shrink-0 h-9 w-9 rounded-full border border-border inline-flex items-center justify-center"
+          className="shrink-0 h-11 w-11 rounded-full border border-border inline-flex items-center justify-center"
           aria-label={t("saves.newFolder")}
         >
           <Plus size={15} />
@@ -153,7 +153,7 @@ export function SavesInbox({
                     }
                   })
                 }
-                className="h-9 px-3.5 rounded-full bg-primary text-primary-foreground text-[12.5px] font-bold inline-flex items-center gap-1.5"
+                className="h-11 px-4 rounded-full bg-primary text-primary-foreground text-[12.5px] font-bold inline-flex items-center gap-1.5"
               >
                 <Airplane size={13} weight="fill" /> {tr.name}
               </button>
@@ -208,7 +208,7 @@ export function SavesInbox({
                         router.refresh();
                       })
                     }
-                    className="mt-2 h-8 rounded-lg border border-border bg-background text-[12px] px-2"
+                    className="mt-2 h-11 rounded-xl border border-border bg-background text-[12.5px] px-2.5"
                     aria-label={t("saves.newFolder")}
                   >
                     <option value="">—</option>
@@ -228,7 +228,8 @@ export function SavesInbox({
                     router.refresh();
                   })
                 }
-                className="text-[12px] text-muted-foreground hover:text-destructive shrink-0"
+                aria-label={t("common.delete")}
+                className="w-11 h-11 -me-1 rounded-xl text-muted-foreground hover:text-destructive shrink-0 inline-flex items-center justify-center text-[15px]"
               >
                 ✕
               </button>

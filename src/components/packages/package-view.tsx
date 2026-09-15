@@ -17,7 +17,7 @@ import {
   Star,
   CircleNotch as Loader2,
 } from "@phosphor-icons/react/dist/ssr";
-import { useT } from "@/components/i18n/locale-provider";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
 import type { PackagePayload, PackageRecord } from "@/lib/actions/packages";
 import {
   adoptPackage,
@@ -55,6 +55,7 @@ export function PackageView({
   canManage: boolean;
 }) {
   const t = useT();
+  const { locale } = useLocale();
   const router = useRouter();
   const [pkg, setPkg] = useState<PackageRecord | null>(initial);
   const [busy, startTransition] = useTransition();
@@ -72,10 +73,15 @@ export function PackageView({
   }, [pkg]);
 
   async function mutate(next: PackagePayload) {
+    // Optimistic, but reversible: without the rollback a failed save left the
+    // screen showing a stop the database still had (or hiding one it didn't),
+    // and the next refresh silently undid what the user thought they'd done.
+    const prev = pkg?.payload;
     setPkg((p) => (p ? { ...p, payload: next } : p));
     try {
       await savePackagePayload(tripId, next);
     } catch {
+      if (prev) setPkg((p) => (p ? { ...p, payload: prev } : p));
       toast.error(t("pkg.saveFailed"));
     }
   }
@@ -132,7 +138,7 @@ export function PackageView({
   async function regenerate() {
     setWorking(true);
     try {
-      const fresh = await generatePackage(tripId);
+      const fresh = await generatePackage(tripId, locale === "ar" ? "ar" : "en");
       setPkg(fresh);
       toast.success(t("pkg.rebuilt"));
     } catch {
@@ -145,8 +151,8 @@ export function PackageView({
   function adopt() {
     startTransition(async () => {
       try {
-        const { added } = await adoptPackage(tripId);
-        toast.success(t("pkg.adopted", { count: added }));
+        const { added, already } = await adoptPackage(tripId);
+        toast.success(already ? t("pkg.alreadyAdopted") : t("pkg.adopted", { count: added }));
         router.push(`/trips/${tripId}/itinerary`);
         router.refresh();
       } catch {
@@ -176,6 +182,12 @@ export function PackageView({
   }
 
   const adopted = pkg.status === "adopted";
+  // The day titles and "why" lines are written into the payload at build
+  // time, so a plan built in Arabic keeps speaking Arabic under an English
+  // UI — the cover read "The classic route / المسار الكلاسيكي" at once.
+  // Rebuilding is instant and local, but it discards manual edits, so it is
+  // offered rather than done silently.
+  const wrongLocale = !!pkg.payload.locale && pkg.payload.locale !== locale;
 
   return (
     <div className="pb-56">
@@ -206,6 +218,18 @@ export function PackageView({
           </div>
         </div>
       </div>
+
+      {wrongLocale && canManage && !adopted && (
+        <button
+          type="button"
+          onClick={regenerate}
+          disabled={working}
+          className="mx-4 mt-3 w-[calc(100%-2rem)] min-h-12 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-start inline-flex items-center gap-2.5"
+        >
+          <ArrowsClockwise size={16} className="text-primary shrink-0" />
+          <span className="text-[12.5px] font-semibold">{t("pkg.rebuildLocale")}</span>
+        </button>
+      )}
 
       {/* ── unplaced saves tray ───────────────────────────────────── */}
       {pkg.payload.unplaced.length > 0 && (
@@ -278,27 +302,32 @@ export function PackageView({
                         {p.why && (
                           <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">{p.why}</p>
                         )}
+                        {/* 28px stacked squares were below every touch
+                            minimum and sat 4px apart, so "pin" regularly
+                            removed the stop instead. Full-size targets, on
+                            their own row. */}
+                        {canManage && !adopted && (
+                          <div className="mt-2 flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              aria-label={t("pkg.pin")}
+                              aria-pressed={!!p.pinned}
+                              onClick={() => pinPlace(i, p.key)}
+                              className={`w-12 h-12 rounded-xl inline-flex items-center justify-center ${p.pinned ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                            >
+                              <PushPin size={18} weight={p.pinned ? "fill" : "regular"} />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={t("pkg.remove")}
+                              onClick={() => removePlace(i, p.key)}
+                              className="w-12 h-12 rounded-xl text-muted-foreground hover:bg-muted inline-flex items-center justify-center"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      {canManage && !adopted && (
-                        <div className="flex flex-col gap-1 shrink-0">
-                          <button
-                            type="button"
-                            aria-label={t("pkg.pin")}
-                            onClick={() => pinPlace(i, p.key)}
-                            className={`w-7 h-7 rounded-lg inline-flex items-center justify-center ${p.pinned ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-                          >
-                            <PushPin size={13} weight={p.pinned ? "fill" : "regular"} />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={t("pkg.remove")}
-                            onClick={() => removePlace(i, p.key)}
-                            className="w-7 h-7 rounded-lg text-muted-foreground hover:bg-muted inline-flex items-center justify-center"
-                          >
-                            <X size={13} />
-                          </button>
-                        </div>
-                      )}
                     </div>
                   ))}
 
@@ -311,16 +340,16 @@ export function PackageView({
                       <button
                         type="button"
                         onClick={() => lighten(i)}
-                        className="flex-1 h-9 rounded-xl border border-border text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5"
+                        className="flex-1 h-12 rounded-xl border border-border text-[13px] font-semibold inline-flex items-center justify-center gap-1.5"
                       >
-                        <Minus size={14} /> {t("pkg.lighten")}
+                        <Minus size={16} /> {t("pkg.lighten")}
                       </button>
                       <button
                         type="button"
                         onClick={() => densify(i)}
-                        className="flex-1 h-9 rounded-xl border border-border text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5"
+                        className="flex-1 h-12 rounded-xl border border-border text-[13px] font-semibold inline-flex items-center justify-center gap-1.5"
                       >
-                        <Plus size={14} /> {t("pkg.densify")}
+                        <Plus size={16} /> {t("pkg.densify")}
                       </button>
                     </div>
                   )}
@@ -333,7 +362,7 @@ export function PackageView({
                           key={r}
                           type="button"
                           onClick={() => startTransition(async () => { await reactToDay(tripId, i, r); router.refresh(); })}
-                          className="flex-1 h-9 rounded-xl border border-border text-[12.5px] font-semibold"
+                          className="flex-1 h-12 rounded-xl border border-border text-[13px] font-semibold"
                         >
                           {r === "love" ? "🔥" : r === "ok" ? "🙂" : "⤫"} {t(`pkg.react_${r}`)}
                         </button>
@@ -356,26 +385,46 @@ export function PackageView({
           style={{ bottom: "calc(env(safe-area-inset-bottom,0) + 76px)" }}
         >
           {adopted ? (
-            <p className="text-center text-[13px] font-semibold text-muted-foreground pb-1">
-              {t("pkg.alreadyAdopted")}
-            </p>
+            /* Adoption used to be a dead end: the bar said "this is your
+               itinerary" and offered nothing, so there was no way back to
+               planning short of deleting stops by hand. */
+            <>
+              <p className="text-center text-[13px] font-semibold text-muted-foreground">
+                {t("pkg.alreadyAdopted")}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!confirm(t("pkg.rebuildAdoptedConfirm"))) return;
+                  void regenerate();
+                }}
+                disabled={working}
+                className="mt-2 w-full h-12 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-1.5"
+              >
+                {working ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowsClockwise size={16} />}
+                {t("pkg.replan")}
+              </button>
+            </>
           ) : (
             <>
+              {/* A destination with no curated route and no saves builds an
+                  honest empty skeleton — adopting it would write nothing and
+                  return a bare error, so the button says what's missing. */}
               <button
                 type="button"
                 onClick={adopt}
-                disabled={busy}
-                className="w-full h-13 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-[16px] inline-flex items-center justify-center gap-2"
+                disabled={busy || totals.stops === 0}
+                className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-bold text-[16px] inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle size={20} weight="fill" />}
-                {t("pkg.adopt")}
+                {totals.stops === 0 ? t("pkg.adoptEmpty") : t("pkg.adopt")}
               </button>
               <div className="mt-2 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={regenerate}
                   disabled={working}
-                  className="flex-1 h-11 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-1.5"
+                  className="flex-1 h-12 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-1.5"
                 >
                   {working ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowsClockwise size={16} />}
                   {t("pkg.rebuild")}
@@ -384,7 +433,7 @@ export function PackageView({
                   <button
                     type="button"
                     onClick={() => startTransition(async () => { await sharePackage(tripId); toast.success(t("pkg.shared")); router.refresh(); })}
-                    className="flex-1 h-11 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-1.5"
+                    className="flex-1 h-12 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-1.5"
                   >
                     <Users size={16} /> {t("pkg.share")}
                   </button>

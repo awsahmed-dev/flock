@@ -27,6 +27,10 @@ export default async function PackagePage({ params }: Props) {
   if (!trip) redirect("/dashboard");
 
   const pkg = await getPackage(id).catch(() => null);
+  // The verbs write to the whole crew's plan, so the screen must not offer
+  // them to a member the server will refuse (which showed as a bare
+  // "couldn't save" toast on every tap).
+  const isOwner = trip.members?.some((m) => m.userId === user.id && m.role === "owner") ?? false;
 
   return (
     <div className="min-h-dvh bg-background">
@@ -35,7 +39,7 @@ export default async function PackagePage({ params }: Props) {
         tripId={id}
         initial={pkg}
         memberCount={trip.members?.length ?? 1}
-        canManage
+        canManage={isOwner}
       />
     </div>
   );

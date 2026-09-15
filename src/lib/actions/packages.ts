@@ -9,10 +9,13 @@ import {
   trips,
   itineraryItems,
 } from "@/lib/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { revalidatePath } from "next/cache";
 import { findCanonical, type CanonPackage } from "@/lib/packages/canonical";
+import { distributeDays } from "@/lib/packages/distribute";
+import { parseOr } from "@/lib/actions/validate";
+import { z } from "zod";
 
 /**
  * «الباقة» — the ready plan a trip opens with.
@@ -58,6 +61,8 @@ export interface PackageDay {
 
 export interface PackagePayload {
   tier: PackageTier;
+  /** the language the day titles and "why" lines were written in */
+  locale?: "ar" | "en";
   provenance: string;
   cities: { name: string; nights: number }[];
   days: PackageDay[];
@@ -75,6 +80,42 @@ export interface PackageRecord {
   reactions: { userId: string; dayIndex: number; reaction: string; vetoPlaceId: string | null }[];
 }
 
+/**
+ * The payload is client-supplied and written straight to jsonb, so it is
+ * validated like any other untrusted input (audit: it was not). An
+ * unchecked payload could permanently 500 the package page for the whole
+ * crew, or push a malformed startTime into a Postgres `time` column.
+ */
+const zPlace = z.object({
+  key: z.string().max(120),
+  name: z.string().trim().min(1).max(200),
+  why: z.string().max(600).default(""),
+  category: z.string().max(40).default("sight"),
+  rating: z.number().finite().min(0).max(5).nullish(),
+  priceBand: z.number().int().min(0).max(4).nullish(),
+  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "bad time").nullish(),
+  lat: z.number().finite().min(-90).max(90).nullish(),
+  lng: z.number().finite().min(-180).max(180).nullish(),
+  photoRef: z.string().max(2000).nullish(),
+  fromSaveId: z.string().uuid().nullish(),
+  fromLabel: z.string().max(80).nullish(),
+  pinned: z.boolean().optional(),
+});
+const zPayload = z.object({
+  tier: z.enum(["canonical", "cached", "assembled"]),
+  locale: z.enum(["ar", "en"]).optional(),
+  provenance: z.string().max(400),
+  cities: z.array(z.object({ name: z.string().max(120), nights: z.number().int().min(0).max(365) })).max(40),
+  days: z.array(z.object({
+    index: z.number().int().min(0).max(400),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    title: z.string().max(200),
+    city: z.string().max(120),
+    places: z.array(zPlace).max(20),
+  })).max(400),
+  unplaced: z.array(z.object({ saveId: z.string().uuid(), name: z.string().max(200) })).max(200),
+});
+
 async function requireMember(tripId: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Not signed in");
@@ -82,6 +123,22 @@ async function requireMember(tripId: string) {
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, user.id)),
   });
   if (!member) throw new Error("Not a trip member");
+  return user;
+}
+
+/**
+ * Trip-wide destructive operations are owner-only here, matching the rest
+ * of the repo (trip-settings, documents, votes, bookings). Generating,
+ * adopting or sharing rewrites what the whole crew sees.
+ */
+async function requireOwner(tripId: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not signed in");
+  const member = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, user.id)),
+  });
+  if (!member) throw new Error("Not a trip member");
+  if (member.role !== "owner") throw new Error("Only the trip owner can change the plan");
   return user;
 }
 
@@ -113,26 +170,18 @@ function buildPayload(
   const unplaced: { saveId: string; name: string }[] = [];
 
   if (canon) {
-    // Each canonical day is used ONCE, in order. A trip longer than the
-    // curated route gets honest open days at the end rather than the same
-    // "last morning" repeated nine times (which is what naive clamping did
-    // on a 15-day Japan trip). Open days are also where the crew's saves
-    // land, which is the behaviour we want anyway. A trip SHORTER than the
-    // route keeps its opening days and its closing one, so the shape still
-    // reads arrive → explore → leave.
-    const shapes =
-      dates.length >= canon.days.length
-        ? canon.days
-        : [...canon.days.slice(0, Math.max(1, dates.length - 1)), canon.days[canon.days.length - 1]].slice(0, dates.length);
-
-    dates.forEach((date, i) => {
-      const shape = shapes[i];
-      if (!shape) {
+    // The allocation itself lives in lib/packages/distribute.ts and is unit
+    // tested there — two earlier versions of this shipped broken (repeated
+    // days, then a dropped Kyoto and 23 trailing blanks) with nothing to
+    // catch either.
+    distributeDays(canon, dates.length).forEach((slot, i) => {
+      const date = dates[i];
+      if (!slot.shape) {
         days.push({
           index: i,
           date,
-          title: ar ? "يوم مفتوح" : "Open day",
-          city: ar ? canon.cities[canon.cities.length - 1].nameAr : canon.cities[canon.cities.length - 1].name,
+          title: ar ? `يوم حر في ${slot.cityAr}` : `Free day in ${slot.city}`,
+          city: ar ? slot.cityAr : slot.city,
           places: [],
         });
         return;
@@ -140,16 +189,16 @@ function buildPayload(
       days.push({
         index: i,
         date,
-        title: ar ? shape.titleAr : shape.title,
-        city: ar ? shape.cityAr : shape.city,
-        places: shape.places.map((p, j) => ({
-          key: `c${i}-${j}`,
-          name: ar ? p.nameAr : p.name,
-          why: ar ? p.whyAr : p.why,
-          category: p.category,
-          rating: p.rating ?? null,
-          priceBand: p.priceBand ?? null,
-          startTime: p.startTime ?? null,
+        title: ar ? slot.shape.titleAr : slot.shape.title,
+        city: ar ? slot.shape.cityAr : slot.shape.city,
+        places: slot.shape.places.map((pl, k) => ({
+          key: `c${i}-${k}`,
+          name: ar ? pl.nameAr : pl.name,
+          why: ar ? pl.whyAr : pl.why,
+          category: pl.category,
+          rating: pl.rating ?? null,
+          priceBand: pl.priceBand ?? null,
+          startTime: pl.startTime ?? null,
           photoRef: null,
           fromSaveId: null,
           fromLabel: null,
@@ -172,12 +221,15 @@ function buildPayload(
 
   // Slot the crew's saves in. Round-robin keeps them spread across the trip
   // rather than dumped on day one.
-  saves.forEach((s, i) => {
+  saves.forEach((s) => {
     if (!days.length) {
       unplaced.push({ saveId: s.id, name: s.placeName });
       return;
     }
-    const target = days[i % days.length];
+    // Emptiest day first (earliest wins ties). Round-robin ignored the free
+    // days the allocation just created and piled saves onto full ones.
+    let target = days[0];
+    for (const d of days) if (d.places.length < target.places.length) target = d;
     const place: PackagePlace = {
       key: `s-${s.id}`,
       name: s.placeName,
@@ -232,6 +284,7 @@ function buildPayload(
   return {
     payload: {
       tier,
+      locale,
       provenance,
       cities: canon ? canon.cities.map((c) => ({ name: ar ? c.nameAr : c.name, nights: c.nights })) : [{ name: destination, nights: dates.length }],
       days,
@@ -276,11 +329,52 @@ export async function getPackage(tripId: string): Promise<PackageRecord | null> 
  * is a promise we can keep.
  */
 export async function generatePackage(tripId: string, locale: "ar" | "en" = "ar"): Promise<PackageRecord> {
-  const user = await requireMember(tripId);
+  const user = await requireOwner(tripId);
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
   if (!trip) throw new Error("Trip not found");
 
   const dates = eachDay(trip.startDate, trip.endDate);
+  const existing = await db.query.tripPackages.findFirst({ where: eq(tripPackages.tripId, tripId) });
+
+  // Unwind a previous adoption FIRST, before the saves are read.
+  //
+  // Rebuilding after adoption is allowed — the crew changed their mind —
+  // but the days this package already wrote into the itinerary have to go
+  // with it, or adopting the new plan stacks a second copy on top of the
+  // first. Only rows this feature created are touched: `provider` is
+  // stamped "package" on adoption, so manual and Discover stops survive.
+  //
+  // The ordering matters. Saves consumed by the old plan are marked
+  // "planned", so reading them before this ran meant the first rebuild
+  // silently dropped every save the previous plan had used.
+  if (existing?.status === "adopted") {
+    await db.transaction(async (tx) => {
+      const gone = await tx
+        .delete(itineraryItems)
+        .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "package")))
+        .returning({ id: itineraryItems.id });
+      const ids = gone.map((g) => g.id);
+      if (ids.length) {
+        await tx
+          .update(savedPlaces)
+          .set({ status: "saved", itemId: null })
+          .where(and(eq(savedPlaces.tripId, tripId), inArray(savedPlaces.itemId, ids)));
+      }
+      // Self-heal rows left by the earlier adopt, which stamped "planned"
+      // without an itemId and so could never be released.
+      await tx
+        .update(savedPlaces)
+        .set({ status: "saved" })
+        .where(
+          and(
+            eq(savedPlaces.tripId, tripId),
+            eq(savedPlaces.status, "planned"),
+            isNull(savedPlaces.itemId),
+          ),
+        );
+    });
+  }
+
   const saves = await db
     .select({
       id: savedPlaces.id,
@@ -298,11 +392,10 @@ export async function generatePackage(tripId: string, locale: "ar" | "en" = "ar"
   const canon = findCanonical(`${trip.destination ?? ""} ${trip.name ?? ""}`);
   const { payload, title, subtitle } = buildPayload(canon, dates, saves, locale, trip.destination ?? trip.name ?? "");
 
-  const existing = await db.query.tripPackages.findFirst({ where: eq(tripPackages.tripId, tripId) });
   if (existing) {
     await db
       .update(tripPackages)
-      .set({ title, subtitle, tier: payload.tier, payload, updatedAt: new Date() })
+      .set({ title, subtitle, tier: payload.tier, payload, status: "draft", updatedAt: new Date() })
       .where(eq(tripPackages.id, existing.id));
   } else {
     await db.insert(tripPackages).values({
@@ -321,19 +414,20 @@ export async function generatePackage(tripId: string, locale: "ar" | "en" = "ar"
 
 /** Persist an edited payload — every verb (بدّل/احذف/ثبّت…) lands here. */
 export async function savePackagePayload(tripId: string, payload: PackagePayload) {
-  await requireMember(tripId);
+  await requireOwner(tripId);
+  const clean = parseOr(zPayload, payload, "Bad package") as PackagePayload;
   const row = await db.query.tripPackages.findFirst({ where: eq(tripPackages.tripId, tripId) });
   if (!row) throw new Error("No package");
   await db
     .update(tripPackages)
-    .set({ payload, updatedAt: new Date() })
+    .set({ payload: clean, updatedAt: new Date() })
     .where(eq(tripPackages.id, row.id));
   revalidatePath(`/trips/${tripId}/package`);
 }
 
 /** Share with the crew — only meaningful once there IS a crew. */
 export async function sharePackage(tripId: string) {
-  await requireMember(tripId);
+  await requireOwner(tripId);
   const row = await db.query.tripPackages.findFirst({ where: eq(tripPackages.tripId, tripId) });
   if (!row) throw new Error("No package");
   await db.update(tripPackages).set({ status: "shared", updatedAt: new Date() }).where(eq(tripPackages.id, row.id));
@@ -372,12 +466,15 @@ export async function reactToDay(
  * stamped "planned" so the tray can show their fate instead of going quiet.
  */
 export async function adoptPackage(tripId: string) {
-  const user = await requireMember(tripId);
+  const user = await requireOwner(tripId);
   const pkg = await getPackage(tripId);
   if (!pkg) throw new Error("No package");
+  // Double-tap, a slow network, or a back-then-adopt used to insert the whole
+  // itinerary a second time. The status IS the guard.
+  if (pkg.status === "adopted") return { added: 0, already: true as const };
 
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
-  const plannedSaves: string[] = [];
+  const plannedSaves: { saveId: string; row: number }[] = [];
   for (const day of pkg.payload.days) {
     day.places.forEach((p, idx) => {
       rows.push({
@@ -391,23 +488,42 @@ export async function adoptPackage(tripId: string) {
         locationLng: p.lng ?? null,
         photoUrl: p.photoRef ?? null,
         notes: p.why || null,
+        // The "why" line is the whole reason a curated stop is trustworthy;
+        // dropping it on adoption turned the package into a bare name list.
+        topTip: p.why || null,
+        rating: p.rating ?? null,
+        priceLevel: p.priceBand ?? null,
+        provider: "package",
+        // Adopted stops are decisions, not proposals. Defaulting to
+        // "proposed" made every item on a solo trip say "tap to vote".
+        status: "confirmed",
         sortOrder: idx,
         createdBy: user.id,
       });
-      if (p.fromSaveId) plannedSaves.push(p.fromSaveId);
+      // index into `rows`, so the inserted id can be paired back to the save
+      if (p.fromSaveId) plannedSaves.push({ saveId: p.fromSaveId, row: rows.length - 1 });
     });
   }
-  if (rows.length) await db.insert(itineraryItems).values(rows);
-  for (const id of plannedSaves) {
-    await db.update(savedPlaces).set({ status: "planned" }).where(eq(savedPlaces.id, id));
-  }
+  if (!rows.length) throw new Error("Nothing to adopt");
 
-  await db
-    .update(tripPackages)
-    .set({ status: "adopted", updatedAt: new Date() })
-    .where(eq(tripPackages.id, pkg.id));
+  await db.transaction(async (tx) => {
+    const inserted = await tx.insert(itineraryItems).values(rows).returning({ id: itineraryItems.id });
+    for (const { saveId, row } of plannedSaves) {
+      // itemId, not just the status: a save marked "planned" with no link
+      // to its stop can never be un-planned when the plan is rebuilt, so it
+      // stayed stuck reading "In the plan" against a stop that was gone.
+      await tx
+        .update(savedPlaces)
+        .set({ status: "planned", itemId: inserted[row]?.id ?? null })
+        .where(eq(savedPlaces.id, saveId));
+    }
+    await tx
+      .update(tripPackages)
+      .set({ status: "adopted", updatedAt: new Date() })
+      .where(eq(tripPackages.id, pkg.id));
+  });
 
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/package`);
-  return { added: rows.length };
+  return { added: rows.length, already: false as const };
 }

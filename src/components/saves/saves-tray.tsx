@@ -97,9 +97,9 @@ export function SavesTray({
                   type="button"
                   disabled={busy}
                   onClick={() => place(s)}
-                  className="shrink-0 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-[12px] font-bold inline-flex items-center gap-1"
+                  className="shrink-0 h-11 px-3.5 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-bold inline-flex items-center gap-1"
                 >
-                  <Plus size={13} /> {t("itinerary.addToDay")}
+                  <Plus size={16} /> {t("itinerary.addToDay")}
                 </button>
               )}
             </li>

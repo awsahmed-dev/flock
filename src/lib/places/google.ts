@@ -195,21 +195,36 @@ export async function autocomplete(
       },
     };
   }
-  const data = await googleFetch<{ suggestions?: Array<{ placePrediction?: GPrediction }> }>(
-    "/places:autocomplete",
-    AUTOCOMPLETE_MASK,
-    body,
-  );
-  trackCall("autocomplete");
-  return (data.suggestions ?? [])
-    .map((s) => s.placePrediction)
-    .filter((p): p is GPrediction => !!p)
-    .map((p) => ({
-      placeId: p.placeId,
-      primary: p.structuredFormat?.mainText?.text ?? "",
-      secondary: p.structuredFormat?.secondaryText?.text ?? "",
-      placeTypes: p.types ?? [],
-    }));
+
+  async function run(b: Record<string, unknown>) {
+    const data = await googleFetch<{ suggestions?: Array<{ placePrediction?: GPrediction }> }>(
+      "/places:autocomplete",
+      AUTOCOMPLETE_MASK,
+      b,
+    );
+    trackCall("autocomplete");
+    return (data.suggestions ?? [])
+      .map((s) => s.placePrediction)
+      .filter((p): p is GPrediction => !!p)
+      .map((p) => ({
+        placeId: p.placeId,
+        primary: p.structuredFormat?.mainText?.text ?? "",
+        secondary: p.structuredFormat?.secondaryText?.text ?? "",
+        placeTypes: p.types ?? [],
+      }));
+  }
+
+  const out = await run(body);
+  // "(cities)" means localities, and a country is not a locality — so the
+  // airport fix above silently made "Japan", "Georgia" and "اليابان" return
+  // nothing at all in the destination picker. Retry once for countries and
+  // regions before giving up; the airport still never comes back, because
+  // these two types are the only widening we allow.
+  if (opts.citiesOnly && out.length === 0) {
+    const wider = { ...body, includedPrimaryTypes: ["country", "administrative_area_level_1"] };
+    return run(wider);
+  }
+  return out;
 }
 
 interface GPrediction {

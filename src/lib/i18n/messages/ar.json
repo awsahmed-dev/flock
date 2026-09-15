@@ -1729,10 +1729,10 @@
     "rebuilt": "أعدنا ترتيب الخطة",
     "tierCanonical": "المسار الكلاسيكي",
     "tierAssembled": "رتّبناها لكم",
-    "statDays": "{count} أيام",
-    "statStops": "{count} محطة",
-    "statFromSaves": "{count} من محفوظاتكم",
-    "trayTitle": "{count} من محفوظاتكم ما لقت يوم",
+    "statDays": "{count, plural, =0 {بدون أيام} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
+    "statStops": "{count, plural, =0 {لا محطات} one {محطة واحدة} two {محطتان} few {# محطات} many {# محطة} other {# محطة}}",
+    "statFromSaves": "{count, plural, one {واحدة من محفوظاتكم} two {اثنتان من محفوظاتكم} few {# من محفوظاتكم} many {# من محفوظاتكم} other {# من محفوظاتكم}}",
+    "trayTitle": "{count, plural, one {محفوظة واحدة ما لقت يوم} two {محفوظتان ما لقتا يوم} few {# محفوظات ما لقت يوم} many {# محفوظة ما لقت يوم} other {# محفوظة ما لقت يوم}}",
     "trayBody": "محفوظة هنا — اضغط ＋ على أي يوم لإضافتها.",
     "fromSaves": "من محفوظاتكم",
     "dayEmpty": "ما في شيء بهذا اليوم بعد.",
@@ -1743,14 +1743,18 @@
     "allPinned": "كل شيء هنا مثبّت",
     "noMoreSaves": "ما بقي أماكن محفوظة",
     "adopt": "اعتمد الخطة",
-    "adopted": "أضفنا {count} محطة لخطتكم",
+    "adopted": "{count, plural, one {أضفنا محطة واحدة لخطتكم} two {أضفنا محطتين لخطتكم} few {أضفنا # محطات لخطتكم} many {أضفنا # محطة لخطتكم} other {أضفنا # محطة لخطتكم}}",
     "alreadyAdopted": "هذي الخطة صارت خطة رحلتكم.",
     "share": "اعرضها على الربع",
     "shared": "عرضناها على الربع",
     "saveFailed": "ما قدرنا نحفظ — جرّب مرة ثانية",
     "react_love": "نار",
     "react_ok": "تمام",
-    "react_skip": "تجاوز"
+    "react_skip": "تجاوز",
+    "rebuildLocale": "هذي الخطة مكتوبة بالإنجليزي — أعد ترتيبها بالعربي",
+    "replan": "أعد التخطيط",
+    "rebuildAdoptedConfirm": "بنرتّب الخطة من جديد، وبنشيل الأيام اللي أضفناها منها قبل. الأماكن اللي أضفتها بنفسك تبقى.",
+    "adoptEmpty": "أضف أماكن أول"
   },
   "saves": {
     "save": "احفظ",
@@ -1770,9 +1774,9 @@
     "allSaves": "الكل",
     "attachToTrip": "أضفها لرحلة",
     "trayTitle": "محفوظات هذي الرحلة",
-    "traySub": "{count} مكان ينتظر يوم",
+    "traySub": "{count, plural, =0 {كلها تجدولت} one {مكان واحد ينتظر يومًا} two {مكانان ينتظران يومًا} few {# أماكن تنتظر يومًا} many {# مكانًا ينتظر يومًا} other {# مكان ينتظر يومًا}}",
     "statusPlanned": "في الخطة",
     "statusSaved": "ما تجدول بعد",
-    "makeTrip": "عندك {count} أماكن في {place} — نسوي لها رحلة؟"
+    "makeTrip": "{count, plural, one {عندك مكان واحد في {place} — نسوي لها رحلة؟} two {عندك مكانان في {place} — نسوي لها رحلة؟} few {عندك # أماكن في {place} — نسوي لها رحلة؟} many {عندك # مكانًا في {place} — نسوي لها رحلة؟} other {عندك # مكان في {place} — نسوي لها رحلة؟}}"
   }
 }

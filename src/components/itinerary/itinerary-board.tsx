@@ -30,7 +30,6 @@ import { DocumentCard } from "@/components/documents/document-card";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { isFileDoc } from "@/lib/doc-file";
 import { PlanDaySheet } from "./plan-day-sheet";
-import { AiPlannerPanel } from "@/components/trips/ai-planner-panel";
 import type { SavedRow } from "@/lib/actions/saves";
 import { SavesTray } from "@/components/saves/saves-tray";
 import { WhatsNow } from "@/components/now/whats-now";
@@ -185,7 +184,6 @@ export function ItineraryBoard({
   };
   const [searchOpen, setSearchOpen] = useState(false);
   const [defaultAddDay, setDefaultAddDay] = useState<string | null>(null);
-  const [aiOpen, setAiOpen] = useState(false);
   const [planDayOpen, setPlanDayOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -1210,18 +1208,6 @@ export function ItineraryBoard({
         />
       )}
 
-      {/* Lazy-mount the AI planner — same pattern as trip-overview;
-          it carries the questionnaire state + Anthropic client init
-          and shouldn't run on every Plan view. */}
-      {aiOpen && (
-        <AiPlannerPanel
-          open={aiOpen}
-          onClose={() => setAiOpen(false)}
-          tripId={tripId}
-          destination={destination}
-        />
-      )}
-
       {/* P0-3: the single AI entry. Opens on a scope choice — "Plan one
           day" (the real-place day builder) vs "Plan the whole trip"
           (hands off to the multi-day vibe wizard below). */}
@@ -1236,7 +1222,10 @@ export function ItineraryBoard({
           isOwner={isOwner}
           onChooseWholeTrip={() => {
             setPlanDayOpen(false);
-            setAiOpen(true);
+            // The 21-question wizard is retired (planning-ux-audit part 5).
+            // Whole-trip planning is «الباقة»: it already knows the
+            // destination and the dates, so there is nothing to ask.
+            router.push(`/trips/${tripId}/package`);
           }}
         />
       )}
