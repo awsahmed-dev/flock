@@ -13,15 +13,6 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { RippleButton, RippleButtonRipples } from "@/components/animate-ui/primitives/buttons/ripple";
 
-function friendlyAuthError(message: string): string {
-  // QA BUG-13: Supabase's raw "email rate limit exceeded" is meaningless to
-  // a person mid-signup — translate throttling into something actionable.
-  if (/rate limit|too many/i.test(message)) {
-    return "Too many sign-in attempts — try again in a few minutes.";
-  }
-  return message;
-}
-
 export function LoginForm() {
   const t = useT();
   const [email, setEmail] = useState("");
@@ -34,22 +25,30 @@ export function LoginForm() {
   const supabase = createClient();
   const router = useRouter();
 
+  function friendlyAuthError(message: string): string {
+    // QA BUG-13: Supabase's raw "email rate limit exceeded" is meaningless to
+    // a person mid-signup — translate throttling into something actionable.
+    if (/rate limit|too many/i.test(message)) return t("auth.tooManyAttempts");
+    return message;
+  }
+
   async function handleForgot() {
     if (!email) {
-      toast.error("Enter your email first, then tap Forgot password");
+      toast.error(t("auth.enterEmailFirst"));
       return;
     }
     setResetLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    // Video-QA 2026-09-15: this used to send a magic link, which signed you
+    // in but never gave you a password — so the password field on this very
+    // form stayed unusable forever. It's a real reset now: the link lands on
+    // /auth/reset where you set one. Also the migration path for accounts
+    // created back when signup was passwordless.
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset`,
     });
     setResetLoading(false);
     if (error) toast.error(friendlyAuthError(error.message));
-    else
-      toast.success("Magic link sent — check your email to sign back in", {
-        duration: 6000,
-      });
+    else toast.success(t("auth.resetSent"), { duration: 6000 });
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -61,9 +60,10 @@ export function LoginForm() {
 
     setLoading(false);
     if (error) {
-      toast.error(error.message === "Invalid login credentials"
-        ? "Wrong email or password"
-        : error.message
+      toast.error(
+        error.message === "Invalid login credentials"
+          ? t("auth.wrongCredentials")
+          : friendlyAuthError(error.message),
       );
     } else {
       router.push("/dashboard");

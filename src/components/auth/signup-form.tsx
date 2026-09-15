@@ -8,35 +8,47 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
+import { CircleNotch as Loader2, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react/dist/ssr";
 import { track } from "@/lib/analytics/events";
 import { useT } from "@/components/i18n/locale-provider";
 
-function friendlyAuthError(message: string): string {
-  // QA BUG-13: Supabase's raw "email rate limit exceeded" is meaningless to
-  // a person mid-signup — translate throttling into something actionable.
-  if (/rate limit|too many/i.test(message)) {
-    return "Too many sign-in attempts — try again in a few minutes.";
-  }
-  return message;
-}
+/** Supabase's own floor is 6; we ask for 8 and say so before submit. */
+const MIN_PASSWORD = 8;
 
 export function SignupForm() {
   const t = useT();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const supabase = createClient();
 
+  function friendlyAuthError(message: string): string {
+    // QA BUG-13: Supabase's raw "email rate limit exceeded" is meaningless to
+    // a person mid-signup — translate throttling into something actionable.
+    if (/rate limit|too many/i.test(message)) return t("auth.tooManyAttempts");
+    return message;
+  }
+
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !name) return;
+    if (!email || !name || !password) return;
+    if (password.length < MIN_PASSWORD) {
+      toast.error(t("auth.passwordTooShort"));
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
+    // Video-QA 2026-09-15: signup used to be signInWithOtp (magic link) while
+    // the LOGIN form asked for a password — so every email signup created an
+    // account with no password and then bounced off the sign-in screen
+    // forever. Signup now actually sets one.
+    const { error } = await supabase.auth.signUp({
       email,
+      password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { display_name: name },
@@ -71,17 +83,12 @@ export function SignupForm() {
       <Card>
         <CardContent className="pt-6 text-center">
           <div className="text-4xl mb-4">✉️</div>
-          <h3 className="font-semibold text-lg mb-2">Check your email</h3>
+          <h3 className="font-semibold text-lg mb-2">{t("auth.checkEmailTitle")}</h3>
           <p className="text-sm text-muted-foreground">
-            We sent a magic link to <strong>{email}</strong>. Click the link to create your account.
+            {t("auth.checkEmailBody", { email })}
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-4"
-            onClick={() => setSent(false)}
-          >
-            Use a different email
+          <Button variant="ghost" size="sm" className="mt-4" onClick={() => setSent(false)}>
+            {t("auth.useDifferentEmail")}
           </Button>
         </CardContent>
       </Card>
@@ -124,6 +131,7 @@ export function SignupForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -135,7 +143,32 @@ export function SignupForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">{t("auth.password")}</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={MIN_PASSWORD}
+                autoComplete="new-password"
+                className="pe-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground rtl:right-auto rtl:left-3"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("auth.passwordHint")}</p>
           </div>
           <Button
             type="submit"
