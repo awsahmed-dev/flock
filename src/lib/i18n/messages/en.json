@@ -1868,6 +1868,13 @@
     "alreadyIn": "Already in the plan",
     "empty": "Nothing left to suggest here",
     "failed": "Couldn't add that — try again",
-    "openCity": "What to do in {place}?"
+    "openCity": "What to do in {place}?",
+    "yourDays": "Your days here",
+    "couldAdd": "You could add",
+    "arrival": "Arrival",
+    "freeDay": "Free",
+    "arrivalBody": "Arrival day — deliberately light.",
+    "freeDayBody": "Nothing here yet.",
+    "stopCount": "{count, plural, =0 {no stops} one {# stop} other {# stops}}"
   }
 }

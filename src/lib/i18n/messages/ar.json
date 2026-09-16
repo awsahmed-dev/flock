@@ -1868,6 +1868,13 @@
     "alreadyIn": "موجود بالخطة",
     "empty": "ما بقي شي نقترحه هنا",
     "failed": "ما قدرنا نضيفه — جرّب مرة ثانية",
-    "openCity": "وش نسوي في {place}؟"
+    "openCity": "وش نسوي في {place}؟",
+    "yourDays": "أيامكم هنا",
+    "couldAdd": "تقدرون تضيفون",
+    "arrival": "وصول",
+    "freeDay": "يوم فاضي",
+    "arrivalBody": "يوم الوصول — خفيف على قصد.",
+    "freeDayBody": "ما في شي بهذا اليوم بعد.",
+    "stopCount": "{count, plural, =0 {بدون محطات} one {محطة} two {محطتان} few {# محطات} many {# محطة} other {# محطة}}"
   }
 }

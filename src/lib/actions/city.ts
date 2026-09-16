@@ -62,6 +62,12 @@ export interface CityDay {
   free: boolean;
 }
 
+export interface CityPlannedDay {
+  date: string;
+  travel: boolean;
+  stops: { title: string; titleAr: string | null; startTime: string | null; rating: number | null }[];
+}
+
 export interface CityBoard {
   baseId: BaseId;
   name: string;
@@ -74,6 +80,8 @@ export interface CityBoard {
   days: CityDay[];
   freeDays: number;
   places: CityPlace[];
+  /** what is already scheduled here, day by day — the primary question */
+  planned: CityPlannedDay[];
   /** other bases on this trip, for the switcher */
   siblings: { id: BaseId; name: string; nameAr: string }[];
   isOwner: boolean;
@@ -166,6 +174,30 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     });
   }
 
+  // "What am I doing in Tokyo?" is the question this screen is opened with.
+  // It used to answer only "what could I add?", which on a fully-planned
+  // city is an empty screen saying "nothing left to suggest".
+  const planned: CityPlannedDay[] = days.map((d) => ({
+    date: d.date,
+    travel: d.travel,
+    stops: stops
+      .filter((s) => s.dayDate === d.date)
+      // A stop with no time belongs at the END of the day, not the start:
+      // an empty string sorts before "07:00", which put an untimed save
+      // ahead of a 7am fish market.
+      .sort((a, b) => {
+        const at = a.startTime ? String(a.startTime) : "~";
+        const bt = b.startTime ? String(b.startTime) : "~";
+        return at.localeCompare(bt) || a.sortOrder - b.sortOrder;
+      })
+      .map((s) => ({
+        title: s.title,
+        titleAr: s.titleAr,
+        startTime: s.startTime ? String(s.startTime).slice(0, 5) : null,
+        rating: s.rating,
+      })),
+  }));
+
   return {
     baseId,
     name: base.name,
@@ -178,6 +210,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     days,
     freeDays: days.filter((d) => d.free).length,
     places: curated,
+    planned,
     siblings: segs
       .filter((sg) => sg.baseId !== baseId && BASES[sg.baseId])
       .map((sg) => ({ id: sg.baseId, name: BASES[sg.baseId].name, nameAr: BASES[sg.baseId].nameAr })),

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Plus,
-  Check,
   Sparkle as Sparkles,
   Star,
   BookmarkSimple,
@@ -148,8 +147,54 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         </div>
       )}
 
-      {/* ── what you could do here ──────────────────────────────────── */}
-      <div className="px-4 mt-4 flex items-center gap-2 overflow-x-auto pb-1">
+      {/* ── what you're already doing here ─────────────────────────── */}
+      <div className="px-4 mt-4 space-y-2">
+        <p className="text-[12px] font-semibold text-muted-foreground">{t("city.yourDays")}</p>
+        {board.planned.map((d) => (
+          <div key={d.date} className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="px-3.5 py-2.5 flex items-center gap-2 border-b border-border/60">
+              <span className="text-[12.5px] font-bold">
+                {format(parseISO(d.date), "EEE d MMM")}
+              </span>
+              {d.travel && (
+                <span className="text-[10.5px] font-bold rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                  {t("city.arrival")}
+                </span>
+              )}
+              {d.stops.length === 0 && !d.travel && (
+                <span className="text-[10.5px] font-bold rounded-full bg-primary/12 text-primary px-2 py-0.5">
+                  {t("city.freeDay")}
+                </span>
+              )}
+              <span className="ms-auto text-[11px] text-muted-foreground">
+                {t("city.stopCount", { count: d.stops.length })}
+              </span>
+            </div>
+            {d.stops.length > 0 ? (
+              <ul className="px-3.5 py-2 space-y-1.5">
+                {d.stops.map((st, j) => (
+                  <li key={`${d.date}-${j}`} className="flex items-baseline gap-2.5 text-[13px]">
+                    <span className="text-[11px] text-muted-foreground tabular-nums w-11 shrink-0" dir="ltr">
+                      {st.startTime ?? "—"}
+                    </span>
+                    <span className="min-w-0 flex-1">{(ar && st.titleAr) || st.title}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-3.5 py-3 text-[12.5px] text-muted-foreground">
+                {d.travel ? t("city.arrivalBody") : t("city.freeDayBody")}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ── what you could add ─────────────────────────────────────── */}
+      <p className="px-4 mt-5 text-[12px] font-semibold text-muted-foreground">
+        {t("city.couldAdd")}
+      </p>
+      <div className="px-4 mt-2 flex items-center gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setCat(null)}
@@ -176,7 +221,9 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
 
       <ul className="px-4 mt-3 space-y-2">
         {shown.length === 0 && (
-          <li className="py-10 text-center text-[13.5px] text-muted-foreground">{t("city.empty")}</li>
+          <li className="rounded-2xl border border-dashed border-border px-4 py-5 text-center text-[13px] text-muted-foreground">
+            {t("city.empty")}
+          </li>
         )}
         {shown.map((p) => (
           <li key={p.key} className="rounded-2xl border border-border bg-card p-3 flex items-start gap-3">
@@ -219,25 +266,6 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         ))}
       </ul>
 
-      {/* already scheduled, so the list above stays about what's left */}
-      {board.places.some((p) => p.inPlan) && (
-        <div className="px-4 mt-5">
-          <p className="text-[12px] text-muted-foreground mb-2">{t("city.alreadyIn")}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {board.places
-              .filter((p) => p.inPlan)
-              .map((p) => (
-                <span
-                  key={p.key}
-                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1.5 text-[11.5px] text-muted-foreground"
-                >
-                  <Check size={11} weight="bold" className="text-[color:var(--clr-moss)]" />
-                  {ar ? p.nameAr : p.name}
-                </span>
-              ))}
-          </div>
-        </div>
-      )}
 
       <div className="px-4 mt-6">
         <Link
