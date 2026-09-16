@@ -51,7 +51,6 @@ export interface CityPlace {
   inPlan: boolean;
   /** came from the crew's saves rather than the curated library */
   fromSave: boolean;
-  adultsOnly?: boolean;
   /** the hour this place is actually for — a bar is not a 09:30 stop */
   startTime?: string | null;
 }
@@ -78,7 +77,6 @@ export interface CityBoard {
   /** other bases on this trip, for the switcher */
   siblings: { id: BaseId; name: string; nameAr: string }[];
   isOwner: boolean;
-  kids: number;
 }
 
 /** Everything you could add while based here, and where there's room. */
@@ -138,7 +136,6 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         lng: c?.[1] ?? null,
         inPlan: onPlan.has(p.name),
         fromSave: false,
-        adultsOnly: p.adultsOnly,
         startTime: p.startTime ?? null,
       });
     }
@@ -185,7 +182,6 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
       .filter((sg) => sg.baseId !== baseId && BASES[sg.baseId])
       .map((sg) => ({ id: sg.baseId, name: BASES[sg.baseId].name, nameAr: BASES[sg.baseId].nameAr })),
     isOwner: role === "owner",
-    kids: trip.kids ?? 0,
   };
 }
 
@@ -320,13 +316,11 @@ export async function fillFreeDays(tripId: string, baseId: string) {
   const board = await getCityBoard(tripId, baseId);
   if (!board) throw new Error("Not a city on this trip");
 
-  const perDay = board.kids > 0 ? 3 : 4;
+  const perDay = 4;
   const free = board.days.filter((d) => d.free && !d.travel);
   if (!free.length) throw new Error("No free days here");
 
-  let pool = board.places.filter(
-    (p) => !p.inPlan && p.lat != null && p.lng != null && !(board.kids > 0 && p.adultsOnly),
-  );
+  let pool = board.places.filter((p) => !p.inPlan && p.lat != null && p.lng != null);
   if (!pool.length) throw new Error("Nothing left to add here");
 
   const planned: { date: string; places: CityPlace[] }[] = [];

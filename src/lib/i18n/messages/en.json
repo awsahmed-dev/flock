@@ -1232,13 +1232,7 @@
     "next": "Next",
     "createTrip": "Create trip",
     "failed": "Could not create the trip. Try again.",
-    "dur5Nights": "5 nights",
-    "adults": "Adults",
-    "kids": "Kids",
-    "kidsHint": "We'll lighten the days and skip places that don't suit them",
-    "crewEmailsLabel": "And if you want them in the app:",
-    "fewer": "Fewer {what}",
-    "more": "More {what}"
+    "dur5Nights": "5 nights"
   },
   "now": {
     "today": "Today",
@@ -1871,7 +1865,6 @@
     "filled": "{count, plural, one {Planned a day} other {Planned # days}}",
     "filledNear": "{count, plural, one {Planned a day — everything within {km}km} other {Planned # days — each day's stops within {km}km of each other}}",
     "fromSaves": "You saved this",
-    "notForKids": "Not with kids",
     "alreadyIn": "Already in the plan",
     "empty": "Nothing left to suggest here",
     "failed": "Couldn't add that — try again",

@@ -267,11 +267,7 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
   ]);
   const gone = new Set(removed.map((r) => r.title));
 
-  const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
-  const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[], {
-    adults: trip?.adults ?? 1,
-    kids: trip?.kids ?? 0,
-  });
+  const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[]);
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
   for (const day of days) {
     day.places

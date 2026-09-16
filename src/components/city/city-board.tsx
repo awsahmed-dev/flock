@@ -12,7 +12,6 @@ import {
   BookmarkSimple,
   CircleNotch as Loader2,
   CaretRight,
-  Warning,
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { addPlaceToCity, fillFreeDays, type CityBoard as Board } from "@/lib/actions/city";
@@ -196,13 +195,6 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
                 {p.fromSave && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full bg-primary/12 text-primary px-2 py-0.5">
                     <BookmarkSimple size={10} weight="fill" /> {t("city.fromSaves")}
-                  </span>
-                )}
-                {/* Said out loud rather than silently filtered, so nobody
-                    wonders where a place went. */}
-                {p.adultsOnly && board.kids > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full bg-[color:var(--clr-dune)]/15 text-[color:var(--clr-dune)] px-2 py-0.5">
-                    <Warning size={10} weight="fill" /> {t("city.notForKids")}
                   </span>
                 )}
               </div>
