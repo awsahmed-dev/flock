@@ -1849,7 +1849,11 @@
     "restore": "Put back what we dropped",
     "restored": "Everything's back",
     "nothingToLighten": "Nothing left to drop here",
-    "lightenedMoved": "Moved {place} to {day}"
+    "lightenedMoved": "Moved {place} to {day}",
+    "gaveTo": "{count, plural, one {The night went to {place}} other {# nights went to {place}}}",
+    "atMinimum": "{place} can't go below one night — remove the base instead",
+    "lockedReason": "This stay is booked — unmark it to change the nights",
+    "nowhereToGo": "Nowhere to put that night — every city is at its useful max. Add a base."
   },
   "city": {
     "all": "All",

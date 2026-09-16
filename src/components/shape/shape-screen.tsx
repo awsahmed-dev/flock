@@ -174,8 +174,26 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 ar={ar}
                 t={t}
                 isGroup={view.memberCount > 1}
-                onNights={(n) => run(() => editShape(tripId, { op: "nights", baseId: b.id, nights: n }))}
-                onRemove={() => run(() => editShape(tripId, { op: "remove", baseId: b.id }))}
+                onNights={(n) =>
+                  run(async () => {
+                    const r = await editShape(tripId, { op: "nights", baseId: b.id, nights: n });
+                    if (r.noop) {
+                      toast.info(t("shape.nowhereToGo"));
+                      return;
+                    }
+                    for (const x of r.movedTo ?? []) {
+                      toast.info(t("shape.gaveTo", { place: ar ? x.nameAr : x.name, count: x.nights }));
+                    }
+                  })
+                }
+                onRemove={() =>
+                  run(async () => {
+                    const r = await editShape(tripId, { op: "remove", baseId: b.id });
+                    for (const x of r.movedTo ?? []) {
+                      toast.info(t("shape.gaveTo", { place: ar ? x.nameAr : x.name, count: x.nights }));
+                    }
+                  })
+                }
                 onMode={(m) => run(() => editShape(tripId, { op: "transport", baseId: b.id, mode: m }))}
                 onDayTrip={(id, on) => run(() => editShape(tripId, { op: "dayTrip", baseId: b.id, tripId: id, on }))}
                 onLock={(l) => run(() => editShape(tripId, { op: "lock", baseId: b.id, lock: l }))}
@@ -389,13 +407,22 @@ function BaseRow({
 
           {/* the trade-off, made directly */}
           <div className={`mt-2 items-center gap-1.5 flex-wrap ${single ? "hidden" : "flex"}`}>
+            {/* A stepper that silently does nothing is worse than one that
+                refuses out loud: a tester tapped minus on three cities in a
+                row, got no movement and no message, and concluded the screen
+                was frozen. The "+" had only a hover tooltip, which a phone
+                never shows. */}
             <button
               type="button"
               style={{ touchAction: "none" }}
-              disabled={!canEdit || busy || locked || base.nights <= 1}
-              onClick={() => onNights(base.nights - 1)}
+              disabled={!canEdit || busy}
+              onClick={() => {
+                if (locked) return toast.info(t("shape.lockedReason"));
+                if (base.nights <= 1) return toast.info(t("shape.atMinimum", { place: ar ? base.nameAr : base.name }));
+                onNights(base.nights - 1);
+              }}
               aria-label="−"
-              className="w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center disabled:opacity-30"
+              className={`w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center ${locked || base.nights <= 1 ? "opacity-40" : ""}`}
             >
               <Minus size={16} />
             </button>
@@ -405,11 +432,14 @@ function BaseRow({
             <button
               type="button"
               style={{ touchAction: "none" }}
-              disabled={!canEdit || busy || locked || atMax}
-              onClick={() => onNights(base.nights + 1)}
+              disabled={!canEdit || busy}
+              onClick={() => {
+                if (locked) return toast.info(t("shape.lockedReason"));
+                if (atMax) return toast.info(t("shape.maxHint"));
+                onNights(base.nights + 1);
+              }}
               aria-label="+"
-              title={atMax ? t("shape.maxHint") : undefined}
-              className="w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center disabled:opacity-30"
+              className={`w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center ${locked || atMax ? "opacity-40" : ""}`}
             >
               <Plus size={16} />
             </button>

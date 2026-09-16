@@ -1849,7 +1849,11 @@
     "restore": "رجّع اللي شلناه",
     "restored": "رجّعنا كل شي",
     "nothingToLighten": "ما بقي شي نشيله من هذا اليوم",
-    "lightenedMoved": "نقلنا {place} إلى {day}"
+    "lightenedMoved": "نقلنا {place} إلى {day}",
+    "gaveTo": "{count, plural, one {راحت الليلة لـ{place}} two {راحت الليلتان لـ{place}} few {راحت الـ# ليالٍ لـ{place}} many {راحت الـ# ليلة لـ{place}} other {راحت الـ# ليلة لـ{place}}}",
+    "atMinimum": "{place} ما تنقص عن ليلة — احذف المقرّ إذا ما تبيه",
+    "lockedReason": "هذي الإقامة محجوزة — فكّ الحجز عشان تغيّرها",
+    "nowhereToGo": "ما في مكان لهذي الليلة — كل المقرات وصلت حدّها. أضف مقرًّا."
   },
   "city": {
     "all": "الكل",

@@ -428,6 +428,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   const find = (id: string) => segments.find((s) => s.baseId === id);
   /** Nights taken from an existing stay, so the UI can say so out loud. */
   const borrowedFrom: { baseId: BaseId; nights: number }[] = [];
+  // Nights that LEFT this base and went somewhere else. A tester tapped
+  // minus on Tokyo twice and the freed night went to Osaka the first time
+  // and Kyoto the second, with no message either time — same button, two
+  // answers, and no way to tell where his night had gone.
+  const before = new Map(segments.map((sg) => [sg.baseId, segmentNights(sg)]));
 
   switch (e.op) {
     case "nights": {
@@ -543,14 +548,35 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     if (flex) flex.checkOut = addIso(flex.checkIn, segmentNights(flex) + diff);
   }
 
-  await persist(tripId, segments, trip.startDate, user.id);
+  // Did anything actually change? A minus that silently reverts — because
+  // every other city is already at its useful maximum, so the freed night
+  // has nowhere to go — reads as a frozen screen. Say what is really
+  // blocking it, and point at the fix.
+  const unchanged =
+    segments.length === before.size &&
+    segments.every((sg) => before.get(sg.baseId) === segmentNights(sg));
+
+  const saved = await persist(tripId, segments, trip.startDate, user.id);
+
+  const movedTo = saved
+    .map((sg) => ({ baseId: sg.baseId, delta: segmentNights(sg) - (before.get(sg.baseId) ?? 0) }))
+    .filter((x) => x.delta > 0 && before.has(x.baseId))
+    .map((x) => ({
+      name: BASES[x.baseId]?.name ?? x.baseId,
+      nameAr: BASES[x.baseId]?.nameAr ?? x.baseId,
+      nights: x.delta,
+    }));
+
   return {
     ok: true,
+    /** nothing moved — the UI must explain why rather than look broken */
+    noop: unchanged,
     borrowedFrom: borrowedFrom.map((b) => ({
       name: BASES[b.baseId]?.name ?? b.baseId,
       nameAr: BASES[b.baseId]?.nameAr ?? b.baseId,
       nights: b.nights,
     })),
+    movedTo,
   };
 }
 
