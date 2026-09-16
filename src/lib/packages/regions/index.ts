@@ -2,6 +2,9 @@ import type { Base, BaseId, Route } from "@/lib/packages/types";
 import { IBERIA, IBERIA_COORDS } from "@/lib/packages/regions/iberia";
 import { BRITAIN_FRANCE, BRITAIN_FRANCE_COORDS } from "@/lib/packages/regions/britain-france";
 import { BALKANS, BALKANS_COORDS } from "@/lib/packages/regions/balkans";
+import { MALAYSIA, MALAYSIA_COORDS } from "@/lib/packages/regions/malaysia";
+import { THAILAND, THAILAND_COORDS } from "@/lib/packages/regions/thailand";
+import { INDONESIA_MALDIVES, INDONESIA_MALDIVES_COORDS } from "@/lib/packages/regions/indonesia-maldives";
 
 /**
  * A curated region: the places you can sleep in, and the routes through
@@ -15,7 +18,14 @@ export interface Region {
 }
 
 /** Every region we curate. Add a module, import it, list it here. */
-export const REGIONS: Region[] = [IBERIA, BRITAIN_FRANCE, BALKANS];
+export const REGIONS: Region[] = [
+  IBERIA,
+  BRITAIN_FRANCE,
+  BALKANS,
+  MALAYSIA,
+  THAILAND,
+  INDONESIA_MALDIVES,
+];
 
 /**
  * Coordinates for the places those regions name. Kept beside the content
@@ -26,4 +36,7 @@ export const REGION_COORDS: Record<string, readonly [number, number]> = {
   ...IBERIA_COORDS,
   ...BRITAIN_FRANCE_COORDS,
   ...BALKANS_COORDS,
+  ...MALAYSIA_COORDS,
+  ...THAILAND_COORDS,
+  ...INDONESIA_MALDIVES_COORDS,
 };
