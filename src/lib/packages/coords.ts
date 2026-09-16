@@ -223,6 +223,14 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
  * so treat it as missing data and leave the place unpinned rather than
  * substituting a city centre or a name search.
  */
+/**
+ * Regions keep their own coordinate tables beside their content, so a new
+ * destination is one new file rather than an edit to three. The central
+ * table still wins on a name collision — it is the older, hand-verified one.
+ */
+import { REGION_COORDS } from "@/lib/packages/regions";
+
 export function coordsFor(name: string): readonly [number, number] | null {
-  return PLACE_COORDS[name] ?? null;
+  // central table first, then the regions
+  return PLACE_COORDS[name] ?? REGION_COORDS[name] ?? null;
 }

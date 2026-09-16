@@ -15,6 +15,7 @@
 import { describe, it, expect } from "vitest";
 import { BASES, ROUTES, findRoutes, getBase } from "@/lib/packages/library";
 import { allocateNights, routeCapacity } from "@/lib/packages/allocate";
+import { coordsFor } from "@/lib/packages/coords";
 import { segmentsFromLegs, projectDays } from "@/lib/packages/project";
 
 const all = Object.values(BASES);
@@ -106,6 +107,47 @@ describe("base library", () => {
       for (const p of b.pairsWith) expect(BASES[p].maxNights, `${p} is not stayable`).toBeGreaterThan(0);
       for (const r of b.reachable) expect(BASES[r].dayTrip, `${r} has no day-trip shape`).toBeTruthy();
     }
+  });
+});
+
+describe("coordinates", () => {
+  /**
+   * Curated places used to carry none, and a "helpful" fallback geocoded
+   * them from their name against the whole destination country — which put
+   * Sensō-ji in Okayama and the Grand Bazaar 700km from Istanbul, and then
+   * saved the answer. Nothing guesses any more, so a place without a
+   * coordinate simply has no pin. That is honest, but it should be a
+   * deliberate choice rather than something a new region does by accident.
+   */
+  it("covers all but a handful of curated places", () => {
+    const missing: string[] = [];
+    for (const b of all) {
+      for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
+        for (const p of d.places) if (!coordsFor(p.name)) missing.push(`${b.id}: ${p.name}`);
+      }
+    }
+    // A few are genuinely unmappable (an unmarked arcade, a field of mud
+    // volcanoes). A region that forgot its table entirely would blow past
+    // this immediately.
+    expect(missing.length, `uncovered:\n${missing.join("\n")}`).toBeLessThanOrEqual(8);
+  });
+
+  it("puts every pin inside its own base's metro area", () => {
+    const strays: string[] = [];
+    for (const b of all) {
+      if (!b.lat && !b.lng) continue;
+      for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
+        for (const p of d.places) {
+          const c = coordsFor(p.name);
+          if (!c) continue;
+          // ~2.5° ≈ 275km: generous enough for a real day trip out of a
+          // base, tight enough to catch a pin in the wrong country.
+          const far = Math.abs(c[0] - b.lat) > 2.5 || Math.abs(c[1] - b.lng) > 2.5;
+          if (far) strays.push(`${b.id}: ${p.name} → ${c[0]},${c[1]} (base ${b.lat},${b.lng})`);
+        }
+      }
+    }
+    expect(strays, `pins far from their base:\n${strays.join("\n")}`).toEqual([]);
   });
 });
 

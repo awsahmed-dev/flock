@@ -257,7 +257,13 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
 
           <div className="flex flex-wrap gap-2">
             {view.addable.length === 0 && (
-              <span className="text-[12px] text-muted-foreground italic">{t("shape.noSuggestions")}</span>
+              <span className="text-[12px] text-muted-foreground italic">
+                {/* "No suggestions for this destination" is wrong when the
+                    real reason is that you're already in all of them. */}
+                {bases.some((b) => !b.id.startsWith("custom:"))
+                  ? t("shape.noMoreBases")
+                  : t("shape.noSuggestions")}
+              </span>
             )}
             {view.addable.map((a) => (
               <button
