@@ -119,17 +119,45 @@ describe("coordinates", () => {
    * coordinate simply has no pin. That is honest, but it should be a
    * deliberate choice rather than something a new region does by accident.
    */
-  it("covers all but a handful of curated places", () => {
+  /**
+   * Places with no confirmable point. Each was checked and deliberately
+   * left unpinned by its curator — a missing pin is honest, a wrong one is
+   * what we are preventing. Listed by name rather than counted so that a
+   * NEW uncovered place fails immediately instead of hiding under a
+   * threshold.
+   */
+  const UNMAPPABLE = new Set([
+    "Ebisu Yokochō",          // covered arcade, unmapped; nearest points are the wrong block
+    "Hakuza gold leaf house", // the shop is unmapped; the one mapped "箔座" is 600m away
+    "Pliva Watermills",       // strung along ~1km of shallows, no single venue
+    "Gobustan mud volcanoes", // fields cover several km² with no mapped entrance
+    "AlJadidah Arts District",// mapped only as part of AlUla town
+    "Gharameel Nature Reserve", // no mapped gate or boundary
+    "Harrat Khaybar",         // a lava field the size of a province, not a point
+    "Fazayah Beach",          // unmapped; a 4x4 track off the Mughsail road
+    "Jabal Samhan viewpoint", // the mapped reserve point is not the escarpment lookout
+  ]);
+
+  it("gives every curated place a coordinate, or a documented reason", () => {
     const missing: string[] = [];
     for (const b of all) {
       for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
-        for (const p of d.places) if (!coordsFor(p.name)) missing.push(`${b.id}: ${p.name}`);
+        for (const p of d.places) {
+          if (!coordsFor(p.name) && !UNMAPPABLE.has(p.name)) missing.push(`${b.id}: ${p.name}`);
+        }
       }
     }
-    // A few are genuinely unmappable (an unmarked arcade, a field of mud
-    // volcanoes). A region that forgot its table entirely would blow past
-    // this immediately.
-    expect(missing.length, `uncovered:\n${missing.join("\n")}`).toBeLessThanOrEqual(8);
+    expect(missing, `no coordinate and not on the unmappable list:\n${missing.join("\n")}`).toEqual([]);
+  });
+
+  it("keeps the unmappable list honest — nothing on it has since been pinned", () => {
+    const named = new Set(
+      all.flatMap((b) => [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]).flatMap((d) => d.places.map((p) => p.name)),
+    );
+    for (const n of UNMAPPABLE) {
+      expect(named.has(n), `${n} is on the unmappable list but no longer exists`).toBe(true);
+      expect(coordsFor(n), `${n} has a coordinate now — take it off the list`).toBeNull();
+    }
   });
 
   it("puts every pin inside its own base's metro area", () => {

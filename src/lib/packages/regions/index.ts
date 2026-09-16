@@ -5,6 +5,8 @@ import { BALKANS, BALKANS_COORDS } from "@/lib/packages/regions/balkans";
 import { MALAYSIA, MALAYSIA_COORDS } from "@/lib/packages/regions/malaysia";
 import { THAILAND, THAILAND_COORDS } from "@/lib/packages/regions/thailand";
 import { INDONESIA_MALDIVES, INDONESIA_MALDIVES_COORDS } from "@/lib/packages/regions/indonesia-maldives";
+import { GULF, GULF_COORDS } from "@/lib/packages/regions/gulf";
+import { EGYPT, EGYPT_COORDS } from "@/lib/packages/regions/egypt";
 
 /**
  * A curated region: the places you can sleep in, and the routes through
@@ -25,6 +27,8 @@ export const REGIONS: Region[] = [
   MALAYSIA,
   THAILAND,
   INDONESIA_MALDIVES,
+  GULF,
+  EGYPT,
 ];
 
 /**
@@ -39,4 +43,6 @@ export const REGION_COORDS: Record<string, readonly [number, number]> = {
   ...MALAYSIA_COORDS,
   ...THAILAND_COORDS,
   ...INDONESIA_MALDIVES_COORDS,
+  ...GULF_COORDS,
+  ...EGYPT_COORDS,
 };
