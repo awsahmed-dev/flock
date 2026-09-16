@@ -1515,8 +1515,8 @@ function SortableItemRow({
             }`}
           >
             {/* Curated stops carry both languages. This row rendered the
-                English one, so an Arabic reader saw "Shardeni Street" here
-                and «شارع شاردني» on the city screen — same place, same
+                English one, so an Arabic reader saw the English name here
+                and the Arabic name on the city screen — same place, same
                 trip, two languages. */}
             {(locale === "ar" && item.titleAr) || item.title}
           </p>

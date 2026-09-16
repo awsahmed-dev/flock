@@ -250,9 +250,9 @@ export function DepartureStrip({
                       {p.label}
                     </span>
                     {/* The raw key was printed here, so an Arabic packing
-                        list read «جواز السفر → Docs». The /pack screen has
-                        always had these in Arabic; this one just never
-                        asked for them. */}
+                        list showed its items in Arabic and their categories
+                        in English. The /pack screen has always had these
+                        translated; this one just never asked for them. */}
                     <span className="text-[12px] text-tertiary">
                       {t(`pack.categories.${PACK_CAT_KEY[p.category] ?? "other"}`)}
                     </span>
