@@ -9,6 +9,8 @@ import { itineraryItems, documents, packingItems, tripPhotos } from "@/lib/db/sc
 import { eq, asc, inArray, and, or, isNull, sql } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
+import { BASES } from "@/lib/packages/library";
+import { getLocale } from "@/lib/i18n";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
@@ -115,6 +117,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
   // Sprint 8 Item 6: the sheet is phase-aware. DEPARTURE pulls the pack
   // list (mine + shared); RECAP pulls crew-photo counts per stop.
   const todayIso = await getToday();
+  const locale = await getLocale();
   const phase = tripPhase({ startDate: trip.startDate, endDate: trip.endDate }, todayIso);
   const packList =
     phase === "DEPARTURE"
@@ -150,6 +153,9 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
 
   return (
     <ItineraryBoard
+        baseNames={Object.fromEntries(
+          Object.values(BASES).map((b) => [b.id, locale === "ar" ? b.nameAr : b.name]),
+        )}
       tripId={id}
       days={days}
       items={serializedItems as any}

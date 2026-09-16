@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSheetDrag } from "@/lib/use-sheet-drag";
 import { createPortal } from "react-dom";
 import { parseISO } from "date-fns";
@@ -56,6 +56,8 @@ interface Props {
   tripId: string;
   days: string[];
   items: Item[];
+  /** base id → display name, so a day can say which city you're in */
+  baseNames?: Record<string, string>;
   currency: string;
   destination: string;
   destinationCenter: [number, number] | null;
@@ -135,6 +137,7 @@ export function ItineraryBoard({
   tripId,
   days,
   items: initialItems,
+  baseNames = {},
   currency,
   destination,
   destinationCenter,
@@ -158,6 +161,18 @@ export function ItineraryBoard({
   // §10.1: basemap follows the app theme (dark-first; light on opt-in).
   const { resolvedTheme } = useTheme();
   const [items, setItems] = useState(initialItems);
+  /**
+   * Which base a day belongs to. Planning v3 projects the shape onto the
+   * grid and stamps `baseId`, so a multi-city trip can finally say «كيوتو»
+   * on day 8 instead of leaving you to work it out from the stop names.
+   */
+  const baseForDay = useCallback(
+    (day: string) => {
+      const id = items.find((i) => i.dayDate === day && i.baseId)?.baseId;
+      return id ? baseNames[id] ?? null : null;
+    },
+    [items, baseNames],
+  );
   // Keep local state in sync with server revalidations: adding a place (or AI
   // Plan) calls a server action that revalidates this route, re-rendering us
   // with fresh initialItems. Without this the new item wouldn't show until a
@@ -807,7 +822,7 @@ export function ItineraryBoard({
                 <p className="mt-1 text-[13px] text-muted-foreground">{t("itinerary.planEmptyBody")}</p>
 
                 <Link
-                  href={`/trips/${tripId}/package`}
+                  href={`/trips/${tripId}/routes`}
                   className="mt-3.5 w-full rounded-2xl bg-primary text-primary-foreground px-4 py-3.5 flex items-center gap-3 text-start active:scale-[0.99] transition-transform"
                 >
                   <Sparkles size={22} weight="fill" className="shrink-0" />
@@ -889,6 +904,9 @@ export function ItineraryBoard({
                             )}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
+                            {baseForDay(day) && (
+                              <span className="font-semibold text-foreground">{baseForDay(day)} · </span>
+                            )}
                             {format(parseISO(day), "MMMM d, yyyy")} · {t("itinerary.items", { count: dayItems.length })}
                           </p>
                         </div>
@@ -1222,10 +1240,10 @@ export function ItineraryBoard({
           isOwner={isOwner}
           onChooseWholeTrip={() => {
             setPlanDayOpen(false);
-            // The 21-question wizard is retired (planning-ux-audit part 5).
-            // Whole-trip planning is «الباقة»: it already knows the
-            // destination and the dates, so there is nothing to ask.
-            router.push(`/trips/${tripId}/package`);
+            // The 21-question wizard is retired. Whole-trip planning is a
+            // curated route: it already knows the destination and the dates,
+            // so there is nothing to ask.
+            router.push(`/trips/${tripId}/routes`);
           }}
         />
       )}

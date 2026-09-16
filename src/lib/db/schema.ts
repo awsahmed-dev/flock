@@ -188,6 +188,9 @@ export const itineraryItems = pgTable("itinerary_items", {
   placeTypes: jsonb("place_types"),
   address: text("address"),
   status: itineraryItemStatusEnum("status").default("proposed").notNull(),
+  /** Planning v3: which base (city you sleep in) this day belongs to. Set by
+   *  the shape projection; null for stops added by hand. */
+  baseId: text("base_id"),
   sortOrder: integer("sort_order").default(0).notNull(),
   // Phase 6 §6: booking anchors — flights/hotels are pinned, undeletable,
   // unvotable stops. Regular stops keep 'regular'.
@@ -932,6 +935,57 @@ export const tripPackages = pgTable("trip_packages", {
   createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * The trip's SHAPE — where the crew sleeps, in what order, for how long.
+ *
+ * Planning v3 (docs/planning-city-first.md). This is the trip's source of
+ * truth for structure; the day grid is a projection of it, recomputed on
+ * every edit. Before this, the day payload was both the truth and a frozen
+ * blob, so editing the structure after adoption had no defined behaviour at
+ * all — it either did nothing or wiped hand-edited days.
+ *
+ * Dates, not a night count: a hotel booking is a date range, `eachDay` is
+ * inclusive so nights and days disagree by one, and the departure day is a
+ * day that is nobody's night.
+ */
+export const tripSegments = pgTable("trip_segments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  /** key into the curated base library (lib/packages/library.ts) */
+  baseId: text("base_id").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  /** YYYY-MM-DD; checkOut equals the next segment's checkIn */
+  checkIn: date("check_in").notNull(),
+  checkOut: date("check_out").notNull(),
+  /** 'train' | 'flight' | 'car' | 'bus' | 'ferry' — how you arrived here */
+  transportInMode: text("transport_in_mode"),
+  transportInMinutes: integer("transport_in_minutes"),
+  /** base ids visited as a day trip from this base */
+  dayTrips: jsonb("day_trips").default([]).notNull(),
+  /** 'flight' | 'hotel' — a booking pins these dates; the stepper is read-only */
+  lockedBy: text("locked_by"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Crew reaction on one base of the shape: 🔥 / 🙂 / تجاوز. The audit found
+ *  reactions were bolted to days, the one layer no group argues about. */
+export const segmentReactions = pgTable("segment_reactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  baseId: text("base_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  /** 'love' | 'ok' | 'skip' */
+  reaction: text("reaction").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 /** Crew reaction on one day of a package: 🔥 / 🙂 / تجاوز, plus place vetoes. */

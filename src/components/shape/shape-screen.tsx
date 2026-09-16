@@ -1,0 +1,508 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  TouchSensor,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  DotsSixVertical,
+  Plus,
+  Minus,
+  X,
+  Lock,
+  BookmarkSimple,
+  Train,
+  Airplane,
+  Car,
+  Bus,
+  Boat,
+  CheckCircle,
+  CalendarBlank,
+  CaretRight,
+} from "@phosphor-icons/react/dist/ssr";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
+
+/**
+ * «شكل الرحلة» — the trip's structure, and the only screen that edits it.
+ *
+ * The audit's second pass (docs/planning-city-first.md): people decide where
+ * they sleep, for how long, and how they move — in that order — and only
+ * decide what happens at 9am on day 17 the night before, or never. Every
+ * control here maps to one of those three decisions and nothing here maps to
+ * a single day. That is the test this screen has to pass.
+ *
+ * Nights in, dates out: the stepper says «٦ ليالٍ» because that is how people
+ * talk, and it writes a check-in/check-out pair, because that is what a hotel
+ * booking is and what makes the arithmetic close.
+ */
+
+const MODE_ICON = { train: Train, flight: Airplane, car: Car, bus: Bus, ferry: Boat } as const;
+const MODES = ["train", "flight", "car", "bus", "ferry"] as const;
+
+export function ShapeScreen({ tripId, initial }: { tripId: string; initial: ShapeView }) {
+  const t = useT();
+  const { locale } = useLocale();
+  const ar = locale === "ar";
+  const router = useRouter();
+  const [view, setView] = useState(initial);
+  const [busy, startTransition] = useTransition();
+  const [order, setOrder] = useState<string[] | null>(null);
+
+  // Keep local state in sync with server revalidations. Every edit calls a
+  // server action and then router.refresh(), which re-renders this component
+  // with a fresh `initial` — but useState ignores prop changes, so without
+  // this the shape saved correctly and the screen silently kept showing the
+  // old nights. React's "adjust state when a prop changes" pattern: runs in
+  // render (a new server payload is a new object), no effect needed.
+  const [seen, setSeen] = useState(initial);
+  if (seen !== initial) {
+    setSeen(initial);
+    setView(initial);
+    setOrder(null);
+  }
+
+  const bases = order
+    ? order.map((id) => view.bases.find((b) => b.id === id)!).filter(Boolean)
+    : view.bases;
+
+  const assigned = bases.reduce((n, b) => n + b.nights, 0);
+  const unassigned = view.tripNights - assigned;
+
+  // The proven Android pattern (ai-planner-panel, two rounds of video QA):
+  // a 180ms hold with 12px tolerance, because a thumb wobbles during the
+  // hold and a tighter tolerance silently cancelled the gesture into a
+  // scroll. The grip below opts out of the delay entirely.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 12 } }),
+  );
+
+  function run(fn: () => Promise<unknown>, optimistic?: () => void) {
+    const snapshot = view;
+    optimistic?.();
+    startTransition(async () => {
+      try {
+        await fn();
+        router.refresh();
+      } catch (err) {
+        setView(snapshot);
+        setOrder(null);
+        toast.error(err instanceof Error ? err.message : t("shape.failed"));
+      }
+    });
+  }
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = bases.map((b) => b.id);
+    const next = arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id)));
+    setOrder(next);
+    run(() => editShape(tripId, { op: "reorder", order: next }));
+  }
+
+  const canEdit = view.isOwner;
+
+  return (
+    <div className="pb-32">
+      {/* ── ledger: the honesty device, always visible ─────────────── */}
+      <div className="px-4 pt-3 pb-2">
+        <div className="rounded-2xl border border-border bg-card px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <CalendarBlank size={17} className="text-muted-foreground shrink-0" />
+            <span className="text-[13px] font-semibold flex-1 min-w-0 truncate" dir="ltr">
+              {fmtRange(view.tripStart, view.tripEnd, locale)}
+            </span>
+            <span
+              className={`text-[12px] font-bold shrink-0 ${
+                unassigned === 0
+                  ? "text-[color:var(--clr-moss)]"
+                  : "text-[color:var(--clr-dune)]"
+              }`}
+            >
+              {unassigned === 0 ? t("shape.covered") : t("shape.unassigned", { count: Math.abs(unassigned) })}
+            </span>
+          </div>
+          <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full transition-[width] duration-200"
+              style={{
+                width: `${Math.min(100, (assigned / Math.max(1, view.tripNights)) * 100)}%`,
+                background: unassigned < 0 ? "var(--clr-dune)" : "var(--primary)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── the bases ───────────────────────────────────────────────── */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={bases.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          <div className="px-4 space-y-1">
+            {bases.map((b, i) => (
+              <BaseRow
+                key={b.id}
+                base={b}
+                first={i === 0}
+                canEdit={canEdit}
+                busy={busy}
+                ar={ar}
+                t={t}
+                isGroup={view.memberCount > 1}
+                onNights={(n) => run(() => editShape(tripId, { op: "nights", baseId: b.id, nights: n }))}
+                onRemove={() => run(() => editShape(tripId, { op: "remove", baseId: b.id }))}
+                onMode={(m) => run(() => editShape(tripId, { op: "transport", baseId: b.id, mode: m }))}
+                onDayTrip={(id, on) => run(() => editShape(tripId, { op: "dayTrip", baseId: b.id, tripId: id, on }))}
+                onLock={(l) => run(() => editShape(tripId, { op: "lock", baseId: b.id, lock: l }))}
+                onReact={(r) => run(() => reactToBase(tripId, b.id, r))}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {/* ── add a base ──────────────────────────────────────────────── */}
+      {canEdit && (
+        <div className="px-4 mt-4">
+          <p className="text-[12px] text-muted-foreground mb-2">{t("shape.addBase")}</p>
+          <div className="flex flex-wrap gap-2">
+            {view.addable.length === 0 && (
+              <span className="text-[12.5px] text-muted-foreground italic">{t("shape.noMoreBases")}</span>
+            )}
+            {view.addable.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                disabled={busy}
+                onClick={() => run(() => editShape(tripId, { op: "add", baseId: a.id }))}
+                className="min-h-11 px-3.5 rounded-full border border-dashed border-border text-[13px] font-semibold inline-flex items-center gap-1.5 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors"
+              >
+                <Plus size={14} /> {ar ? a.nameAr : a.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── what the shape says you still have to book ──────────────── */}
+      <div className="px-4 mt-5">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <p className="px-4 py-2.5 text-[13px] font-bold border-b border-border">{t("shape.errands")}</p>
+          <ul className="px-4 py-3 space-y-2">
+            {view.errands.filter((e) => !e.done).length === 0 ? (
+              <li className="text-[13px] text-muted-foreground">{t("shape.allBooked")}</li>
+            ) : (
+              view.errands
+                .filter((e) => !e.done)
+                .slice(0, 8)
+                .map((e, i) => (
+                  <li key={`${e.kind}-${e.baseId}-${i}`} className="flex items-center gap-2.5 text-[13px]">
+                    <span className="w-3.5 h-3.5 rounded border-[1.5px] border-muted-foreground shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {e.kind === "stay"
+                        ? t("shape.errandStay", {
+                            place: ar ? e.nameAr : e.name,
+                            nights: t("shape.nights", { count: e.nights ?? 0 }),
+                          })
+                        : t("shape.errandTransport", {
+                            mode: t(`shape.mode_${e.mode}`),
+                            place: ar ? e.nameAr : e.name,
+                          })}
+                    </span>
+                  </li>
+                ))
+            )}
+          </ul>
+        </div>
+      </div>
+
+      {/* ── the days this shape projects ────────────────────────────── */}
+      <div className="px-4 mt-5">
+        <Link
+          href={`/trips/${tripId}/itinerary`}
+          className="w-full min-h-14 rounded-2xl bg-primary text-primary-foreground font-bold text-[15px] inline-flex items-center justify-center gap-2 px-4"
+        >
+          {t("shape.viewDays")}
+          <span className="opacity-80 text-[13px] font-semibold">
+            · {t("shape.daysProjected", { count: view.days.length })}
+          </span>
+          <CaretRight size={16} className="rtl:rotate-180" />
+        </Link>
+        {!canEdit && (
+          <p className="mt-2.5 text-center text-[12px] text-muted-foreground">{t("shape.onlyOwner")}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BaseRow({
+  base, first, canEdit, busy, ar, t, isGroup,
+  onNights, onRemove, onMode, onDayTrip, onLock, onReact,
+}: {
+  base: BaseCard;
+  first: boolean;
+  canEdit: boolean;
+  busy: boolean;
+  ar: boolean;
+  t: (k: string, v?: Record<string, string | number>) => string;
+  isGroup: boolean;
+  onNights: (n: number) => void;
+  onRemove: () => void;
+  onMode: (m: (typeof MODES)[number]) => void;
+  onDayTrip: (id: string, on: boolean) => void;
+  onLock: (l: "hotel" | null) => void;
+  onReact: (r: "love" | "ok" | "skip") => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: base.id });
+  const [modeOpen, setModeOpen] = useState(false);
+  const locked = !!base.lockedBy;
+  const atMax = base.nights >= base.maxNights;
+  const Mode = base.transportInMode ? MODE_ICON[base.transportInMode] : Train;
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`touch-manipulation select-none ${isDragging ? "opacity-80 z-10 relative" : ""}`}
+    >
+      {/* the leg you arrived on — an assertion, with two consequences */}
+      {!first && (
+        <div className="flex items-center gap-2 ps-8 py-1.5 flex-wrap">
+          <button
+            type="button"
+            disabled={!canEdit || busy}
+            onClick={() => setModeOpen((v) => !v)}
+            style={{ touchAction: "none" }}
+            className="min-h-9 px-3 rounded-full border border-border bg-card inline-flex items-center gap-1.5 text-[12px] font-semibold text-[color:var(--clr-horizon)]"
+            aria-label={t("shape.changeTransport")}
+          >
+            <Mode size={14} weight="fill" />
+            {t(`shape.mode_${base.transportInMode ?? "train"}`)}
+            {base.transportInMinutes != null && (
+              <span className="text-muted-foreground font-medium">
+                {fmtMins(base.transportInMinutes, t)}
+              </span>
+            )}
+          </button>
+          {(base.transportInMinutes ?? 0) >= 180 && (
+            <span className="text-[11px] text-[color:var(--clr-dune)]">{t("shape.shortArrival")}</span>
+          )}
+          {modeOpen && canEdit && (
+            <div className="flex gap-1.5 flex-wrap">
+              {MODES.filter((m) => m !== base.transportInMode).map((m) => {
+                const I = MODE_ICON[m];
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    style={{ touchAction: "none" }}
+                    onClick={() => { setModeOpen(false); onMode(m); }}
+                    className="min-h-9 px-3 rounded-full border border-border bg-muted/40 text-[12px] inline-flex items-center gap-1.5"
+                  >
+                    <I size={13} /> {t(`shape.mode_${m}`)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-border bg-card p-3 flex items-start gap-2">
+        {/* Instant-drag grip: touch-action none hands the gesture to dnd-kit
+            from the first pixel, so it feels grabbable — the card body keeps
+            hold-to-drag. Both fixes come from Android video QA. */}
+        <span
+          {...listeners}
+          style={{ touchAction: "none" }}
+          className="shrink-0 -ms-1 p-2.5 text-muted-foreground cursor-grab active:cursor-grabbing"
+          aria-label={t("shape.reorder")}
+        >
+          <DotsSixVertical size={20} />
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-extrabold text-[16px]">{ar ? base.nameAr : base.name}</span>
+            {locked && (
+              <span className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
+                <Lock size={11} weight="fill" />
+                {base.lockedBy === "hotel" ? t("shape.lockedHotel") : t("shape.lockedFlight")}
+              </span>
+            )}
+          </div>
+          <p className="text-[11.5px] text-muted-foreground mt-0.5" dir="ltr">
+            {fmtDate(base.checkIn, ar)} → {fmtDate(base.checkOut, ar)}
+          </p>
+
+          {base.savesHere > 0 && (
+            <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary/10 rounded-full px-2.5 py-1">
+              <BookmarkSimple size={11} weight="fill" />
+              {t("shape.savesHere", { count: base.savesHere })}
+            </span>
+          )}
+
+          {/* the trade-off, made directly */}
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              style={{ touchAction: "none" }}
+              disabled={!canEdit || busy || locked || base.nights <= 1}
+              onClick={() => onNights(base.nights - 1)}
+              aria-label="−"
+              className="w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center disabled:opacity-30"
+            >
+              <Minus size={16} />
+            </button>
+            <span className="min-w-[86px] text-center text-[13px] font-bold">
+              {t("shape.nights", { count: base.nights })}
+            </span>
+            <button
+              type="button"
+              style={{ touchAction: "none" }}
+              disabled={!canEdit || busy || locked || atMax}
+              onClick={() => onNights(base.nights + 1)}
+              aria-label="+"
+              title={atMax ? t("shape.maxHint") : undefined}
+              className="w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center disabled:opacity-30"
+            >
+              <Plus size={16} />
+            </button>
+            {atMax && !locked && (
+              <span className="text-[10.5px] text-muted-foreground">{t("shape.maxReached")}</span>
+            )}
+          </div>
+
+          {/* day trips hang off the base — they are not nodes in the chain */}
+          {(base.dayTrips.length > 0 || base.reachable.length > 0) && (
+            <div className="mt-2.5 pt-2.5 border-t border-dashed border-border flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10.5px] text-muted-foreground">{t("shape.dayTrips")}</span>
+              {base.dayTrips.map((d) => (
+                <span
+                  key={d.id}
+                  className="inline-flex items-center gap-1 text-[12px] rounded-full border border-border bg-muted/40 ps-3 pe-1 min-h-9"
+                >
+                  {ar ? d.nameAr : d.name}
+                  {canEdit && (
+                    <button
+                      type="button"
+                      style={{ touchAction: "none" }}
+                      onClick={() => onDayTrip(d.id, false)}
+                      aria-label={t("shape.remove")}
+                      className="w-9 h-9 -me-1.5 rounded-full inline-flex items-center justify-center text-muted-foreground hover:text-[color:var(--clr-horizon)]"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {canEdit &&
+                base.reachable.slice(0, 2).map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    style={{ touchAction: "none" }}
+                    disabled={busy}
+                    onClick={() => onDayTrip(r.id, true)}
+                    className="min-h-9 px-3 rounded-full border border-dashed border-border text-[12px] text-muted-foreground inline-flex items-center gap-1.5 hover:border-primary/50 hover:text-primary"
+                  >
+                    <Plus size={13} /> {ar ? r.nameAr : r.name}
+                  </button>
+                ))}
+            </div>
+          )}
+
+          {/* the crew reacts HERE — this is the layer they argue about */}
+          {isGroup && (
+            <div className="mt-2.5 flex items-center gap-1.5">
+              {(["love", "ok", "skip"] as const).map((r) => {
+                const n = base.reactions[r];
+                const mine = base.reactions.mine === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    style={{ touchAction: "none" }}
+                    disabled={busy}
+                    onClick={() => onReact(r)}
+                    className={`min-h-9 px-3 rounded-full border text-[12px] font-semibold inline-flex items-center gap-1.5 ${
+                      mine ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {r === "love" ? "🔥" : r === "ok" ? "🙂" : "⤫"}
+                    {n > 0 && <span dir="ltr">{n}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1 shrink-0">
+          {canEdit && (
+            <button
+              type="button"
+              style={{ touchAction: "none" }}
+              disabled={busy}
+              onClick={() => onLock(locked ? null : "hotel")}
+              aria-label={t("shape.markBooked")}
+              className={`w-11 h-11 rounded-xl inline-flex items-center justify-center ${
+                locked ? "text-[color:var(--clr-moss)] bg-[color:var(--clr-moss)]/10" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <CheckCircle size={17} weight={locked ? "fill" : "regular"} />
+            </button>
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              style={{ touchAction: "none" }}
+              disabled={busy || locked}
+              onClick={onRemove}
+              aria-label={t("shape.remove")}
+              className="w-11 h-11 rounded-xl text-muted-foreground hover:text-[color:var(--clr-horizon)] hover:bg-[color:var(--clr-horizon)]/10 inline-flex items-center justify-center disabled:opacity-30"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Durations read inside Arabic sentences, so the units are translated too. */
+function fmtMins(m: number, t: (k: string, v?: Record<string, string | number>) => string) {
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (h && r) return t("shape.durHM", { h, m: r });
+  if (h) return t("shape.durH", { h });
+  return t("shape.durM", { m: r });
+}
+function fmtDate(iso: string, ar: boolean) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString(ar ? "ar" : "en", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+function fmtRange(a: string, b: string, locale: string) {
+  const f = (iso: string) =>
+    new Date(`${iso}T00:00:00Z`).toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+  return `${f(a)} – ${f(b)}`;
+}
