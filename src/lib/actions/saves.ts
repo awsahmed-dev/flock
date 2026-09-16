@@ -7,7 +7,9 @@ import {
   tripMembers,
   trips,
   itineraryItems,
+  tripSegments,
 } from "@/lib/db/schema";
+import { BASES } from "@/lib/packages/library";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { revalidatePath } from "next/cache";
@@ -265,12 +267,56 @@ export async function attachFolderToTrip(folderId: string, tripId: string) {
 export async function suggestDayFor(
   tripId: string,
   coords: { lat?: number | null; lng?: number | null },
-): Promise<{ day: string | null; reason: "near" | "emptiest" | "first" }> {
+): Promise<{ day: string | null; reason: "near" | "emptiest" | "first" | "base" }> {
   const user = await requireUser();
   await assertMember(tripId, user.id);
 
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
   if (!trip) throw new Error("Trip not found");
+
+  // The trip's shape answers this better than any centroid can.
+  //
+  // User testing: this put Arashiyama Bamboo Grove — Kyoto — on day one in
+  // Tokyo, 450km away and six days before the crew goes near Kyoto, while
+  // the app was simultaneously printing "4 of your saves are here" on the
+  // Kyoto card. It knew. It just wasn't asked.
+  //
+  // So if the trip has bases, a place lands in the city it is actually in,
+  // and nowhere else.
+  if (coords.lat != null && coords.lng != null) {
+    const segs = await db
+      .select()
+      .from(tripSegments)
+      .where(eq(tripSegments.tripId, tripId))
+      .orderBy(tripSegments.sortOrder);
+    if (segs.length) {
+      let best: { seg: typeof segs[number]; d2: number } | null = null;
+      for (const seg of segs) {
+        const b = BASES[seg.baseId];
+        if (!b) continue;
+        const dx = b.lat - coords.lat;
+        const dy = b.lng - coords.lng;
+        const d2 = dx * dx + dy * dy;
+        if (!best || d2 < best.d2) best = { seg, d2 };
+      }
+      // ~0.9° ≈ a metro area plus its day-trip radius.
+      if (best && best.d2 < 0.8) {
+        const stops = await db
+          .select({ dayDate: itineraryItems.dayDate })
+          .from(itineraryItems)
+          .where(eq(itineraryItems.tripId, tripId));
+        const count = new Map<string, number>();
+        for (const r of stops) if (r.dayDate) count.set(r.dayDate, (count.get(r.dayDate) ?? 0) + 1);
+        const inBase = eachDay(String(best.seg.checkIn), String(best.seg.checkOut)).slice(0, -1);
+        // Skip the arrival day — you just got off a train.
+        const usable = inBase.length > 1 ? inBase.slice(1) : inBase;
+        if (usable.length) {
+          const day = usable.reduce((a, b) => ((count.get(b) ?? 0) < (count.get(a) ?? 0) ? b : a));
+          return { day, reason: "base" };
+        }
+      }
+    }
+  }
 
   const rows = await db
     .select({

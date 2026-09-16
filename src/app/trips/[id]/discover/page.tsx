@@ -8,7 +8,7 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { isOwner } from "@/lib/permissions";
 import { geocodeDestination } from "@/lib/geocode";
 import { db } from "@/lib/db";
-import { tripWishlist, placeLikes } from "@/lib/db/schema";
+import { savedPlaces as savedPlacesTable, placeLikes } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { DiscoverFeed } from "@/components/discover/discover-feed";
 import type { PlaceCategoryKey } from "@/components/discover/primitives";
@@ -51,14 +51,24 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const todayIso = await getToday();
   if (!trip) redirect("/dashboard");
 
-  // §3-A: the user's saved places for this trip — hearts pre-fill from these
-  // and the wishlist sheet lists them all (not just those in the current feed).
-  const wishlistRows = await db.query.tripWishlist.findMany({
-    where: and(eq(tripWishlist.tripId, id), eq(tripWishlist.userId, user.id)),
-    orderBy: [desc(tripWishlist.createdAt)],
+  // The trip's saves, from the one table that is now the truth.
+  //
+  // User testing: a tester had twelve places saved to this trip, saw them on
+  // the Plan tab, opened Discover's Shortlist — the page whose whole job is
+  // his saves — and read "No saved places yet". Two tables both called "your
+  // saves" (trip_wishlist here, saved_places on the plan) and neither knew
+  // about the other. His words: "that's the sentence that would make me stop
+  // trusting the app with anything."
+  //
+  // saved_places wins because it is what the planner reads and what a save
+  // from a reel or a share lands in. Hearts still write trip_wishlist too
+  // until it is retired, so nothing already saved is lost.
+  const saveRows = await db.query.savedPlaces.findMany({
+    where: and(eq(savedPlacesTable.tripId, id), eq(savedPlacesTable.userId, user.id)),
+    orderBy: [desc(savedPlacesTable.createdAt)],
   });
-  const savedPlaces = wishlistRows.map((w) => ({
-    placeId: w.placeId,
+  const savedPlaces = saveRows.map((w) => ({
+    placeId: w.placeId ?? w.id,
     placeName: w.placeName,
     photoRef: w.photoRef,
     category: w.category,

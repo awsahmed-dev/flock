@@ -99,7 +99,7 @@ export function SavesTray({
                   onClick={() => place(s)}
                   className="shrink-0 h-11 px-3.5 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-bold inline-flex items-center gap-1"
                 >
-                  <Plus size={16} /> {t("itinerary.addToDay")}
+                  <Plus size={16} /> {t("saves.addToBest")}
                 </button>
               )}
             </li>

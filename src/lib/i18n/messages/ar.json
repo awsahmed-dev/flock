@@ -155,7 +155,9 @@
     "removeConfirm": "تزيل {name} من هذه الرحلة؟",
     "copyInviteLink": "انسخ رابط الدعوة",
     "inviteCopiedToast": "تم نسخ رابط الدعوة!",
-    "failedToCopyToast": "تعذّر النسخ"
+    "failedToCopyToast": "تعذّر النسخ",
+    "pending": "بانتظار القبول",
+    "pendingHint": "أرسلنا لهم رابط الانضمام"
   },
   "push": {
     "enabledToast": "تم تفعيل الإشعارات",
@@ -551,7 +553,7 @@
     "failedToAdd": "تعذّرت الإضافة — حاول مجددًا.",
     "addManuallyNamed": "أضف “{name}” يدويًا",
     "notesPlaceholder": "أي شيء تريد تذكره",
-    "aiEntry": "خطة ذكية",
+    "aiEntry": "خطّط",
     "addNote": "أضف يدويًا — ملاحظة أو موعدًا",
     "addTimeBlock": "أضف فترة زمنية",
     "logExpenseDay": "سجّل مصروفًا لهذا اليوم",
@@ -1171,8 +1173,8 @@
     "slotDinner": "العشاء",
     "scopeOneDay": "خطّط ليوم واحد",
     "scopeOneDayDesc": "يوم جاهز من أماكن حقيقية.",
-    "scopeWholeTrip": "خطّط للرحلة كاملة",
-    "scopeWholeTripDesc": "خطة ذكية لكل الأيام، على ذوقكم.",
+    "scopeWholeTrip": "اختر شكل الرحلة",
+    "scopeWholeTripDesc": "مسارات مختارة بأيدينا — تختار واحد ويصير خطتكم.",
     "scopeHeading": "ماذا يخطط الذكاء الاصطناعي؟"
   },
   "decisions": {
@@ -1229,7 +1231,8 @@
     "skipBudget": "تجاوز حاليًا",
     "next": "التالي",
     "createTrip": "أنشئ الرحلة",
-    "failed": "تعذّر إنشاء الرحلة. حاول مجددًا."
+    "failed": "تعذّر إنشاء الرحلة. حاول مجددًا.",
+    "dur5Nights": "٥ ليالٍ"
   },
   "now": {
     "today": "اليوم",
@@ -1778,7 +1781,9 @@
     "traySub": "{count, plural, =0 {كلها تجدولت} one {مكان واحد ينتظر يومًا} two {مكانان ينتظران يومًا} few {# أماكن تنتظر يومًا} many {# مكانًا ينتظر يومًا} other {# مكان ينتظر يومًا}}",
     "statusPlanned": "في الخطة",
     "statusSaved": "ما تجدول بعد",
-    "makeTrip": "{count, plural, one {عندك مكان واحد في {place} — نسوي لها رحلة؟} two {عندك مكانان في {place} — نسوي لها رحلة؟} few {عندك # أماكن في {place} — نسوي لها رحلة؟} many {عندك # مكانًا في {place} — نسوي لها رحلة؟} other {عندك # مكان في {place} — نسوي لها رحلة؟}}"
+    "makeTrip": "{count, plural, one {عندك مكان واحد في {place} — نسوي لها رحلة؟} two {عندك مكانان في {place} — نسوي لها رحلة؟} few {عندك # أماكن في {place} — نسوي لها رحلة؟} many {عندك # مكانًا في {place} — نسوي لها رحلة؟} other {عندك # مكان في {place} — نسوي لها رحلة؟}}",
+    "addToBest": "حطّه بأنسب يوم",
+    "plannedIn": "أضفناه إلى {day} في {place}"
   },
   "routes": {
     "title": "اختر شكل رحلتكم",
@@ -1836,6 +1841,7 @@
     "onlyOwner": "صاحب الرحلة يقدر يغيّر الشكل",
     "durHM": "{h}س {m}د",
     "durH": "{h}س",
-    "durM": "{m}د"
+    "durM": "{m}د",
+    "dayTripsLead": "رحلات يوم من هنا — أحلى شي بالرحلة"
   }
 }

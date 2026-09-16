@@ -2,7 +2,8 @@
 
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
-import { itineraryItems, profiles, chatMessages } from "@/lib/db/schema";
+import { itineraryItems,
+  tripRemovedStops, profiles, chatMessages } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -507,10 +508,25 @@ export async function deleteItineraryItem(itemId: string, tripId: string) {
     throw new PermissionError("Only the person who added this item or the trip owner can delete it");
   }
 
+  // Remember the removal of a curated stop. The trip shape re-projects the
+  // whole grid on any structural edit, so without a tombstone this stop
+  // would reappear the next time the crew touched the plan.
+  const full = await db.query.itineraryItems.findFirst({
+    where: eq(itineraryItems.id, itemId),
+    columns: { title: true, provider: true, baseId: true },
+  });
+  if (full?.provider === "package") {
+    await db
+      .insert(tripRemovedStops)
+      .values({ tripId, title: full.title, baseId: full.baseId ?? null, removedBy: user.id })
+      .onConflictDoNothing();
+  }
+
   await db.delete(itineraryItems)
     .where(and(eq(itineraryItems.id, itemId), eq(itineraryItems.tripId, tripId)));
 
   revalidatePath(`/trips/${tripId}/itinerary`);
+  revalidatePath(`/trips/${tripId}/shape`);
 }
 
 /**

@@ -114,6 +114,18 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
   }
 
   const canEdit = view.isOwner;
+  /**
+   * A one-base trip is the common case (Istanbul, Tbilisi, Dubai, a resort),
+   * and this screen was built for a chain. User testing: "one card, with a
+   * drag handle to reorder — reorder what, against what? — an ✕ to remove
+   * the only city, a stepper with nowhere for a night to go, and an Add-a-
+   * base button whose answer is already printed underneath."
+   *
+   * So the chain controls only appear when there is a chain. What stays is
+   * the thing that turned out to be the best content in the app and was
+   * buried at the bottom of this card: day trips.
+   */
+  const single = bases.length === 1;
 
   return (
     <div className="pb-32">
@@ -156,6 +168,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 key={b.id}
                 base={b}
                 first={i === 0}
+                single={single}
                 canEdit={canEdit}
                 busy={busy}
                 ar={ar}
@@ -174,13 +187,11 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
       </DndContext>
 
       {/* ── add a base ──────────────────────────────────────────────── */}
-      {canEdit && (
+      {/* A button that exists only to say "no" is worse than no button. */}
+      {canEdit && view.addable.length > 0 && (
         <div className="px-4 mt-4">
           <p className="text-[12px] text-muted-foreground mb-2">{t("shape.addBase")}</p>
           <div className="flex flex-wrap gap-2">
-            {view.addable.length === 0 && (
-              <span className="text-[12.5px] text-muted-foreground italic">{t("shape.noMoreBases")}</span>
-            )}
             {view.addable.map((a) => (
               <button
                 key={a.id}
@@ -249,11 +260,12 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
 }
 
 function BaseRow({
-  base, first, canEdit, busy, ar, t, isGroup,
+  base, first, single, canEdit, busy, ar, t, isGroup,
   onNights, onRemove, onMode, onDayTrip, onLock, onReact,
 }: {
   base: BaseCard;
   first: boolean;
+  single: boolean;
   canEdit: boolean;
   busy: boolean;
   ar: boolean;
@@ -327,14 +339,16 @@ function BaseRow({
         {/* Instant-drag grip: touch-action none hands the gesture to dnd-kit
             from the first pixel, so it feels grabbable — the card body keeps
             hold-to-drag. Both fixes come from Android video QA. */}
-        <span
-          {...listeners}
-          style={{ touchAction: "none" }}
-          className="shrink-0 -ms-1 p-2.5 text-muted-foreground cursor-grab active:cursor-grabbing"
-          aria-label={t("shape.reorder")}
-        >
-          <DotsSixVertical size={20} />
-        </span>
+        {!single && (
+          <span
+            {...listeners}
+            style={{ touchAction: "none" }}
+            className="shrink-0 -ms-1 p-2.5 text-muted-foreground cursor-grab active:cursor-grabbing"
+            aria-label={t("shape.reorder")}
+          >
+            <DotsSixVertical size={20} />
+          </span>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -358,7 +372,7 @@ function BaseRow({
           )}
 
           {/* the trade-off, made directly */}
-          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+          <div className={`mt-2 items-center gap-1.5 flex-wrap ${single ? "hidden" : "flex"}`}>
             <button
               type="button"
               style={{ touchAction: "none" }}
@@ -390,8 +404,10 @@ function BaseRow({
 
           {/* day trips hang off the base — they are not nodes in the chain */}
           {(base.dayTrips.length > 0 || base.reachable.length > 0) && (
-            <div className="mt-2.5 pt-2.5 border-t border-dashed border-border flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10.5px] text-muted-foreground">{t("shape.dayTrips")}</span>
+            <div className={`mt-2.5 pt-2.5 border-t border-dashed border-border flex items-center gap-1.5 flex-wrap ${single ? "border-t-0 pt-0" : ""}`}>
+              <span className={`text-muted-foreground ${single ? "text-[12px] font-semibold w-full mb-0.5" : "text-[10.5px]"}`}>
+                {single ? t("shape.dayTripsLead") : t("shape.dayTrips")}
+              </span>
               {base.dayTrips.map((d) => (
                 <span
                   key={d.id}
@@ -412,7 +428,7 @@ function BaseRow({
                 </span>
               ))}
               {canEdit &&
-                base.reachable.slice(0, 2).map((r) => (
+                base.reachable.slice(0, single ? 4 : 2).map((r) => (
                   <button
                     key={r.id}
                     type="button"
@@ -468,7 +484,7 @@ function BaseRow({
               <CheckCircle size={17} weight={locked ? "fill" : "regular"} />
             </button>
           )}
-          {canEdit && (
+          {canEdit && !single && (
             <button
               type="button"
               style={{ touchAction: "none" }}

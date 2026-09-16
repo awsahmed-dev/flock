@@ -155,7 +155,9 @@
     "removeConfirm": "Remove {name} from this trip?",
     "copyInviteLink": "Copy invite link",
     "inviteCopiedToast": "Invite link copied!",
-    "failedToCopyToast": "Failed to copy"
+    "failedToCopyToast": "Failed to copy",
+    "pending": "Invited",
+    "pendingHint": "We sent them a join link"
   },
   "push": {
     "enabledToast": "Notifications enabled",
@@ -551,7 +553,7 @@
     "failedToAdd": "Couldn't add that — try again.",
     "addManuallyNamed": "Add “{name}” manually",
     "notesPlaceholder": "anything to remember",
-    "aiEntry": "AI plan",
+    "aiEntry": "Plan",
     "addNote": "Add manually — a note or a timed slot",
     "addTimeBlock": "Add a time block",
     "logExpenseDay": "Log an expense for this day",
@@ -1171,8 +1173,8 @@
     "slotDinner": "Dinner",
     "scopeOneDay": "Plan one day",
     "scopeOneDayDesc": "A ready-made day of real places.",
-    "scopeWholeTrip": "Plan the whole trip",
-    "scopeWholeTripDesc": "An AI itinerary across every day, tuned to your vibe.",
+    "scopeWholeTrip": "Shape the whole trip",
+    "scopeWholeTripDesc": "Hand-picked routes — choose one and it becomes your plan.",
     "scopeHeading": "What should AI plan?"
   },
   "decisions": {
@@ -1229,7 +1231,8 @@
     "skipBudget": "Skip for now",
     "next": "Next",
     "createTrip": "Create trip",
-    "failed": "Could not create the trip. Try again."
+    "failed": "Could not create the trip. Try again.",
+    "dur5Nights": "5 nights"
   },
   "now": {
     "today": "Today",
@@ -1778,7 +1781,9 @@
     "traySub": "{count, plural, =0 {all scheduled} one {# place waiting for a day} other {# places waiting for a day}}",
     "statusPlanned": "In the plan",
     "statusSaved": "Not scheduled yet",
-    "makeTrip": "{count, plural, one {You have # place in {place} — make it a trip?} other {You have # places in {place} — make it a trip?}}"
+    "makeTrip": "{count, plural, one {You have # place in {place} — make it a trip?} other {You have # places in {place} — make it a trip?}}",
+    "addToBest": "Put it on the best day",
+    "plannedIn": "Added to {day} in {place}"
   },
   "routes": {
     "title": "Pick your trip's shape",
@@ -1836,6 +1841,7 @@
     "onlyOwner": "Only the trip owner can change the shape",
     "durHM": "{h}h {m}m",
     "durH": "{h}h",
-    "durM": "{m}m"
+    "durM": "{m}m",
+    "dayTripsLead": "Day trips from here — the best of the trip"
   }
 }

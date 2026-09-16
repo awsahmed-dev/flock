@@ -51,8 +51,24 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
   // geocode in parallel (capped at 30 to avoid abusing Nominatim) and
   // persist the result, then patch the in-memory rows so this render
   // already includes them.
+  // User testing: this put Sensō-ji in Okayama, Nakamise in Hiroshima and the
+  // Grand Bazaar in Marmaris — 700km out — then PERSISTED each wrong answer,
+  // so the bad pin became permanent and poisoned day placement too. The cause
+  // is the scope: a name plus a whole country ("Sensō-ji Temple, Japan") and
+  // then the first Nominatim hit, no bounding box, no distance check.
+  //
+  // Curated stops carry real coordinates now, so they are excluded outright:
+  // for them a missing pin is honest and a wrong one is a lie the user acts
+  // on. Hand-added stops keep the backfill, since their name is something the
+  // user typed about a place they meant.
   const missingGeo = items
-    .filter((i) => i.locationName && i.locationLat == null && i.locationLng == null)
+    .filter(
+      (i) =>
+        i.locationName &&
+        i.locationLat == null &&
+        i.locationLng == null &&
+        i.provider !== "package",
+    )
     .slice(0, 30);
   if (missingGeo.length > 0) {
     const results = await Promise.all(

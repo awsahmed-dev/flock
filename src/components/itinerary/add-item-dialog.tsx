@@ -59,8 +59,11 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           id: crypto.randomUUID(),
           tripId,
           dayDate,
-          // Hand-added stops belong to no curated base.
+          // Hand-added stops belong to no curated base and carry no
+          // curated Arabic copy.
           baseId: null,
+          titleAr: null,
+          topTipAr: null,
           title: formData.get("title") as string,
           type: (formData.get("type") as Item["type"]) || "activity",
           startTime: (formData.get("startTime") as string) || null,

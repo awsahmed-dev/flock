@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/components/i18n/locale-provider";
+
 import { useState, useTransition } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -60,6 +62,8 @@ export function ItineraryCard({
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [, startTransition] = useTransition();
+  const { locale } = useLocale();
+  const ar = locale === "ar";
 
   const {
     attributes,
@@ -153,7 +157,9 @@ export function ItineraryCard({
                   "font-medium text-sm leading-tight",
                   item.status === "rejected" && "line-through text-muted-foreground"
                 )}>
-                  {item.title}
+                  {/* Curated stops carry both languages; an Arabic reader
+                      was getting an English plan inside an Arabic app. */}
+                  {(ar && item.titleAr) || item.title}
                 </span>
               </div>
 
@@ -165,7 +171,9 @@ export function ItineraryCard({
                     {item.startTime.slice(0, 5)}
                   </span>
                 )}
-                {item.locationName && (
+                {/* User testing: every row printed its own name twice,
+                    because curated stops set locationName to the title. */}
+                {item.locationName && item.locationName !== item.title && (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground max-w-[140px] truncate">
                     <MapPin className="w-4 h-4 shrink-0" />
                     {item.locationName}
@@ -189,9 +197,9 @@ export function ItineraryCard({
                 )}
               </div>
 
-              {item.notes && (
+              {((ar && item.topTipAr) || item.notes) && (
                 <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed line-clamp-2 italic">
-                  {item.notes}
+                  {(ar && item.topTipAr) || item.notes}
                 </p>
               )}
             </div>

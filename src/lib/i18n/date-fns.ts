@@ -40,6 +40,31 @@ export function getActiveLocale(): LocaleId {
 }
 
 /**
+ * Arabic writes dates differently, and date-fns's `ar` locale only
+ * translates the words — it still obeys the pattern's English shape. Call
+ * sites all over the app pass patterns like "EEE, MMM d", which rendered as
+ * «أربعاء, سبتمبر 30»: no definite article, month before day, Latin comma.
+ * A native reader reported all three as "not words".
+ *
+ * Rewriting the pattern here fixes every screen at once, instead of asking
+ * a hundred call sites to know about Arabic.
+ */
+function arabicPattern(p: string): string {
+  return (
+    p
+      // «أربعاء» is a bare noun; the day of the week is «الأربعاء». date-fns
+      // puts the article on the full form only.
+      .replace(/(?<!E)EEE(?!E)/g, "EEEE")
+      // Day before month.
+      .replace(/\bMMMM(\s+)d\b/g, "d MMMM")
+      .replace(/\bMMM(\s+)d\b/g, "d MMM")
+      // Arabic drops the comma before a year, and uses «،» elsewhere.
+      .replace(/,\s*yyyy/g, " yyyy")
+      .replace(/,\s/g, "، ")
+  );
+}
+
+/**
  * Drop-in replacement for date-fns `format`. Always passes the active
  * locale unless a caller explicitly overrides it via `options.locale`.
  */
@@ -48,7 +73,8 @@ export function format(
   formatStr: string,
   options?: FormatOptions,
 ): string {
-  return fnsFormat(date, formatStr, {
+  const localeId: LocaleId = options?.locale === LOCALES.en ? "en" : active;
+  return fnsFormat(date, localeId === "ar" ? arabicPattern(formatStr) : formatStr, {
     locale: LOCALES[active],
     ...options,
   });

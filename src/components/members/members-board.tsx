@@ -28,6 +28,8 @@ interface Props {
   isOwner: boolean;
   members: Member[];
   inviteUrl: string | null;
+  /** invited by email, not yet joined */
+  pending?: { email: string; token: string }[];
 }
 
 /* inviteUrl is passed by the page but unused (the share sheet mints its own
@@ -39,6 +41,7 @@ export function MembersBoard({
   isOwner,
   members,
   inviteUrl: _inviteUrl,
+  pending: pendingInvites = [],
 }: Props) {
   const t = useT();
   const [pending, startTransition] = useTransition();
@@ -101,6 +104,35 @@ export function MembersBoard({
           ))}
         </div>
       </section>
+
+      {/* Invited but not joined yet. Without this the wizard's "Who is
+          coming?" looked like it had thrown the emails away. */}
+      {pendingInvites.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+              {t("crew.pending")} · {pendingInvites.length}
+            </h3>
+            <div className="flex-1 h-px bg-border/60" />
+          </div>
+          <ul className="space-y-2">
+            {pendingInvites.map((p) => (
+              <li
+                key={p.email}
+                className="flex items-center gap-3 rounded-2xl border border-dashed border-border px-3.5 py-3"
+              >
+                <span className="w-9 h-9 rounded-full bg-muted inline-flex items-center justify-center shrink-0">
+                  <UserPlus className="w-4 h-4 text-muted-foreground" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold truncate" dir="ltr">{p.email}</span>
+                  <span className="block text-[11.5px] text-muted-foreground">{t("crew.pendingHint")}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* §11: full-width invite CTA — opens the share sheet (real /invite
           link + native share). The shell <main> already clears the nav. */}

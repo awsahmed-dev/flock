@@ -1322,7 +1322,7 @@ function SortableItemRow({
   // Fix 3: horizontal swipe-left to reveal a delete zone. Reordering is
   // handle-only (dnd-kit listeners live on the grip button), so a horizontal
   // pointer drag on the row body never activates the vertical DnD sensor.
-  const { isRtl } = useLocale();
+  const { isRtl, locale } = useLocale();
   const [dx, setDx] = useState(0);
   const swipeStartX = useRef<number | null>(null);
   function onSwipeDown(e: React.PointerEvent) {
@@ -1536,9 +1536,9 @@ function SortableItemRow({
           </div>
         )}
 
-        {item.topTip && (
+        {((locale === "ar" && item.topTipAr) || item.topTip) && (
           <p className="text-xs italic text-muted-foreground line-clamp-1">
-            💡 {item.topTip}
+            💡 {(locale === "ar" && item.topTipAr) || item.topTip}
           </p>
         )}
       </div>

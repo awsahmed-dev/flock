@@ -126,10 +126,21 @@ function morningOf(places: CuratedPlace[]): CuratedPlace[] {
   return (early.length ? early : places).slice(0, 1);
 }
 
+/** A crew save, as the projection needs to see it. */
+export interface SaveForPlan {
+  id: string;
+  name: string;
+  lat: number | null;
+  lng: number | null;
+  category?: string | null;
+  rating?: number | null;
+}
+
 export function projectDays(
   segments: Segment[],
   bases: Record<BaseId, Base>,
   tripStart: string,
+  saves?: SaveForPlan[],
 ): ProjectedDay[] {
   const ordered = redate(segments, tripStart);
   const out: ProjectedDay[] = [];
@@ -206,7 +217,14 @@ export function projectDays(
   const last = ordered[ordered.length - 1];
   if (last && bases[last.baseId]) {
     const base = bases[last.baseId];
-    const shape = base.days[Math.min(base.days.length - 1, segmentNights(last))];
+    // The next UNUSED shape, never one the stay already served. Clamping to
+    // the last index meant a stay that used every shape got its final day
+    // repeated verbatim as the departure — Byōdō-in twice, Osaka Castle Park
+    // twice, and the last day was always a copy of the one before it.
+    const usedHere = new Set(
+      out.filter((d) => d.baseId === last.baseId && !d.dayTripTo).map((d) => d.title),
+    );
+    const shape = base.days.find((d) => !usedHere.has(d.title));
     out.push({
       date: last.checkOut,
       index: index++,
@@ -220,7 +238,80 @@ export function projectDays(
     });
   }
 
+  if (saves?.length) placeSaves(out, ordered, bases, saves);
+
   return out;
+}
+
+/** Loose match, so "Toyosu Market" and "Toyosu Fish Market" are one place. */
+function samePlace(a: string, b: string) {
+  const norm = (x: string) =>
+    x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\u0600-\u06ff ]/g, "").trim();
+  const A = norm(a);
+  const B = norm(b);
+  if (!A || !B) return false;
+  if (A === B) return true;
+  return A.length >= 5 && B.length >= 5 && (A.includes(B) || B.includes(A));
+}
+
+/**
+ * Slot the crew's own saves into the plan.
+ *
+ * User testing: a curated route placed 33 of its own stops and ZERO of the
+ * twelve the user had saved, then duplicated two of them under slightly
+ * different names. And the tray's «add» put a Kyoto restaurant on a Tokyo
+ * day, 450km and six days out, because nothing consulted the base.
+ *
+ * So: a save goes to the base it is actually near, on that base's emptiest
+ * non-travel day, and never twice.
+ */
+function placeSaves(
+  days: ProjectedDay[],
+  segments: Segment[],
+  bases: Record<BaseId, Base>,
+  saves: SaveForPlan[],
+): void {
+  const already = (name: string) => days.some((d) => d.places.some((p) => samePlace(p.name, name)));
+
+  for (const save of saves) {
+    if (already(save.name)) continue;
+
+    // Which base is this near? No coords, or nothing close, means we cannot
+    // honestly say — leave it in the tray rather than guess a city.
+    let target: BaseId | null = null;
+    if (save.lat != null && save.lng != null) {
+      let best = Infinity;
+      for (const seg of segments) {
+        const b = bases[seg.baseId];
+        if (!b) continue;
+        const dx = b.lat - save.lat;
+        const dy = b.lng - save.lng;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < best) {
+          best = d2;
+          target = seg.baseId;
+        }
+      }
+      // ~0.9° ≈ a metro area and its day-trip radius. Beyond that the place
+      // belongs to a city this trip does not visit.
+      if (best > 0.8) target = null;
+    }
+    if (!target) continue;
+
+    const candidates = days.filter(
+      (d) => d.baseId === target && !d.travel && !d.departure && !d.dayTripTo,
+    );
+    if (!candidates.length) continue;
+    const day = candidates.reduce((a, b) => (b.places.length < a.places.length ? b : a));
+    day.places.push({
+      name: save.name,
+      nameAr: save.name,
+      why: "From your saves",
+      whyAr: "من محفوظاتكم",
+      category: (save.category as CuratedPlace["category"]) ?? "sight",
+      rating: save.rating ?? undefined,
+    });
+  }
 }
 
 /**

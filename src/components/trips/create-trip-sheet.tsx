@@ -99,6 +99,10 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
 
   const DURATIONS: { key: string; label: string; days: number }[] = [
     { key: "weekend", label: t("create.durWeekend"), days: 2 },
+    // User testing: "5 nights is the most common trip length there is and
+    // it's the one that isn't there" — the Eid/long-weekend break that sends
+    // this audience to Istanbul, Tbilisi, Trabzon and Dubai.
+    { key: "short", label: t("create.dur5Nights"), days: 5 },
     { key: "week", label: t("create.dur1Week"), days: 6 },
     { key: "twoweeks", label: t("create.dur2Weeks"), days: 13 },
     { key: "month", label: t("create.dur1Month"), days: 29 },

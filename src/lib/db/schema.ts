@@ -191,6 +191,11 @@ export const itineraryItems = pgTable("itinerary_items", {
   /** Planning v3: which base (city you sleep in) this day belongs to. Set by
    *  the shape projection; null for stops added by hand. */
   baseId: text("base_id"),
+  /** Arabic name + tip for curated stops. The app is Arabic-first and the
+   *  projection used to write English only, so the entire curated Arabic
+   *  corpus was invisible to the readers it was written for. */
+  titleAr: text("title_ar"),
+  topTipAr: text("top_tip_ar"),
   sortOrder: integer("sort_order").default(0).notNull(),
   // Phase 6 §6: booking anchors — flights/hotels are pinned, undeletable,
   // unvotable stops. Regular stops keep 'regular'.
@@ -970,6 +975,24 @@ export const tripSegments = pgTable("trip_segments", {
   lockedBy: text("locked_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * Curated stops the crew removed by hand.
+ *
+ * The shape re-projects the whole day grid on every structural edit, which
+ * means it rewrites every row it owns. Without this, deleting a stop and
+ * then changing anything about the trip brought the stop straight back —
+ * the fastest way to teach someone their edits don't count.
+ */
+export const tripRemovedStops = pgTable("trip_removed_stops", {
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  baseId: text("base_id"),
+  title: text("title").notNull(),
+  removedBy: uuid("removed_by").references(() => profiles.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 /** Crew reaction on one base of the shape: 🔥 / 🙂 / تجاوز. The audit found

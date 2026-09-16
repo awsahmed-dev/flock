@@ -48,3 +48,24 @@ create unique index if not exists trip_packages_trip_uq on trip_packages (trip_i
 -- projection writes it now.
 alter table itinerary_items add column if not exists base_id text;
 create index if not exists itinerary_items_base_idx on itinerary_items (trip_id, base_id);
+
+-- User testing: the whole Arabic corpus was invisible. The projection wrote
+-- only the English name/why into itinerary_items, so an Arabic reader got a
+-- plan in English with Arabic chrome around it — «البازار الكبير» existed in
+-- the library and never reached a screen. Both languages are stored now and
+-- the grid picks by locale.
+alter table itinerary_items add column if not exists title_ar text;
+alter table itinerary_items add column if not exists top_tip_ar text;
+
+-- User testing: a tester deleted a stop, later added a base, and the deleted
+-- stop came back — the shape re-projects and rewrites every package row, so
+-- an evening of trimming would vanish in one tap. Deletions of curated stops
+-- are remembered, so a rebuild honours them.
+create table if not exists trip_removed_stops (
+  trip_id uuid not null references trips(id) on delete cascade,
+  base_id text,
+  title text not null,
+  removed_by uuid references profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  primary key (trip_id, title)
+);

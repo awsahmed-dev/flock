@@ -34,6 +34,10 @@ interface RawItem {
   locationName?: string | null;
   locationLat?: number | null;
   locationLng?: number | null;
+  /** "package" stops are curated and carry real coordinates — never guess
+   *  one from their name (that is how the Grand Bazaar ended up in
+   *  Marmaris, 700km away, and got saved there permanently). */
+  provider?: string | null;
 }
 
 interface Props {
@@ -161,6 +165,7 @@ export function TripMap({ items, destination, tripId, onAddPoi, focusedDay = nul
       const toGeocode = items.filter(
         (i) =>
           i.status !== "rejected" &&
+          i.provider !== "package" &&
           i.locationName &&
           i.locationLat == null &&
           i.locationLng == null

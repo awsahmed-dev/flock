@@ -28,6 +28,19 @@ export default async function MembersPage({ params }: Props) {
     ? `${getBaseUrl()}/invite/${trip.invites[0].token}`
     : null;
 
+  // User testing: someone typed three friends' emails into a screen called
+  // "Who is coming?", then opened Crew and read "1 person on this trip" with
+  // no pending row and no error. The emails were in the database the whole
+  // time — the wizard writes them as targeted invites (trips.ts) and nothing
+  // ever read the field back. "A group travel app that silently loses the
+  // group is just a notes app with a nice header."
+  const joined = new Set(
+    trip.members.map((m) => (m.user?.email ?? "").toLowerCase()).filter(Boolean),
+  );
+  const pending = trip.invites
+    .filter((i) => i.invitedEmail && !joined.has(i.invitedEmail.toLowerCase()))
+    .map((i) => ({ email: i.invitedEmail as string, token: i.token }));
+
   return (
     <div className="px-4 pt-4 max-w-3xl mx-auto">
         <MembersBoard
@@ -37,6 +50,7 @@ export default async function MembersPage({ params }: Props) {
         isOwner={isOwner}
         members={trip.members}
         inviteUrl={inviteUrl}
+        pending={pending}
       />
     </div>
   );

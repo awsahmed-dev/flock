@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   tripSegments,
   segmentReactions,
+  tripRemovedStops,
   tripMembers,
   trips,
   itineraryItems,
@@ -15,9 +16,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { parseOr } from "@/lib/actions/validate";
 import { BASES, ROUTES, findRoutes, getBase } from "@/lib/packages/library";
+import { coordsFor } from "@/lib/packages/coords";
 import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
 import { allocateNights, routeCapacity, tripNightsBetween } from "@/lib/packages/allocate";
-import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor } from "@/lib/packages/project";
+import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor, type SaveForPlan } from "@/lib/packages/project";
 
 /**
  * «شكل الرحلة» — the trip's structure, and the day grid projected from it.
@@ -243,28 +245,62 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
  * editable after adoption instead of being a one-way door.
  */
 async function reproject(tripId: string, segments: Segment[], tripStart: string, userId: string) {
-  const days = projectDays(segments, BASES, tripStart);
+  // The crew's own saves are part of the plan, not a separate tray the plan
+  // ignores: a curated route used to place 33 of its own stops and none of
+  // the twelve someone had saved for the trip.
+  const [saveRows, removed] = await Promise.all([
+    db
+      .select({
+        id: savedPlaces.id,
+        name: savedPlaces.placeName,
+        lat: savedPlaces.lat,
+        lng: savedPlaces.lng,
+        category: savedPlaces.category,
+        rating: savedPlaces.rating,
+      })
+      .from(savedPlaces)
+      .where(eq(savedPlaces.tripId, tripId)),
+    db
+      .select({ title: tripRemovedStops.title })
+      .from(tripRemovedStops)
+      .where(eq(tripRemovedStops.tripId, tripId)),
+  ]);
+  const gone = new Set(removed.map((r) => r.title));
+
+  const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[]);
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
   for (const day of days) {
-    day.places.forEach((p, idx) => {
-      rows.push({
-        tripId,
-        dayDate: day.date,
-        title: p.name,
-        type: "activity",
-        startTime: p.startTime ?? null,
-        locationName: p.name,
-        notes: p.why || null,
-        topTip: p.why || null,
-        rating: p.rating ?? null,
-        priceLevel: p.priceBand ?? null,
-        provider: "package",
-        baseId: day.baseId,
-        status: "confirmed",
-        sortOrder: idx,
-        createdBy: userId,
+    day.places
+      .filter((p) => !gone.has(p.name))
+      .forEach((p, idx) => {
+        rows.push({
+          tripId,
+          dayDate: day.date,
+          title: p.name,
+          // The app is Arabic-first and this wrote English only, so the whole
+          // curated Arabic corpus never reached a screen.
+          titleAr: p.nameAr || null,
+          type: "activity",
+          startTime: p.startTime ?? null,
+          locationName: p.name,
+          // Real, hand-checked coordinates. Curated stops used to ship with
+          // none, and a "helpful" fallback geocoded them by name against the
+          // whole country and saved the answer — putting the Grand Bazaar in
+          // Marmaris. A place we can't confirm gets no pin, which is honest.
+          locationLat: coordsFor(p.name)?.[0] ?? null,
+          locationLng: coordsFor(p.name)?.[1] ?? null,
+          notes: p.why || null,
+          topTip: p.why || null,
+          topTipAr: p.whyAr || null,
+          rating: p.rating ?? null,
+          priceLevel: p.priceBand ?? null,
+          provider: "package",
+          baseId: day.baseId,
+          status: "confirmed",
+          sortOrder: idx,
+          createdBy: userId,
+        });
       });
-    });
   }
 
   await db.transaction(async (tx) => {
@@ -280,6 +316,15 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
         .where(and(eq(savedPlaces.tripId, tripId), inArray(savedPlaces.itemId, ids)));
     }
     if (rows.length) await tx.insert(itineraryItems).values(rows);
+    // A save that is now in the plan must stop saying it's waiting.
+    const placed = new Set(rows.map((r) => r.title));
+    for (const sv of saveRows) {
+      const inPlan = placed.has(sv.name);
+      await tx
+        .update(savedPlaces)
+        .set({ status: inPlan ? "planned" : "saved" })
+        .where(eq(savedPlaces.id, sv.id));
+    }
   });
 
   revalidatePath(`/trips/${tripId}/itinerary`);
