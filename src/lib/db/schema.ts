@@ -111,6 +111,10 @@ export const trips = pgTable("trips", {
     .references(() => profiles.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  /** Who is actually travelling. Kids change the plan: no standing-room
+   *  alleys at 19:30, and fewer stops in a day. */
+  adults: integer("adults").default(1).notNull(),
+  kids: integer("kids").default(0).notNull(),
 });
 
 // ─── Trip Members ─────────────────────────────────────────────────────────────

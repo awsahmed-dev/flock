@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { parseISO } from "date-fns";
 import { format } from "@/lib/i18n/date-fns";
 import Link from "next/link";
-import { Plus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDown, ArrowSquareOut as ExternalLink, MagnifyingGlass as Search, Compass, Bed, Airplane as Plane, Car, ForkKnife as Utensils, Ticket, Question as HelpCircle, Trash as Trash2, Pencil, DotsSixVertical as GripVertical, MapPin, Clock, Note as StickyNote, Wallet, FileText, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
+import { Plus, Minus, Sparkle as Sparkles, CaretUp as ChevronUp, CaretDown as ChevronDown, ArrowSquareOut as ExternalLink, MagnifyingGlass as Search, Compass, Bed, Airplane as Plane, Car, ForkKnife as Utensils, Ticket, Question as HelpCircle, Trash as Trash2, Pencil, DotsSixVertical as GripVertical, MapPin, Clock, Note as StickyNote, Wallet, FileText, CaretRight as ChevronRight } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
 import dynamicImport from "next/dynamic";
 import {
@@ -34,6 +34,7 @@ import type { SavedRow } from "@/lib/actions/saves";
 import { SavesTray } from "@/components/saves/saves-tray";
 import { WhatsNow } from "@/components/now/whats-now";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
+import { lightenDay } from "@/lib/actions/shape";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
@@ -166,6 +167,10 @@ export function ItineraryBoard({
    * grid and stamps `baseId`, so a multi-city trip can finally say «كيوتو»
    * on day 8 instead of leaving you to work it out from the stop names.
    */
+  const baseIdForDay = useCallback(
+    (day: string) => items.find((i) => i.dayDate === day && i.baseId)?.baseId ?? null,
+    [items],
+  );
   const baseForDay = useCallback(
     (day: string) => {
       const id = items.find((i) => i.dayDate === day && i.baseId)?.baseId;
@@ -801,6 +806,48 @@ export function ItineraryBoard({
             {/* The saves tray — what the crew captured, and what became of
                 it. Sits above the days because it is the pool the plan pulls
                 from, not an afterthought. */}
+            {/* Day controls, on the surface people actually look at. The
+                pacing button answers the tester who wanted "fewer stops per
+                day and one lazy day" and had only one-at-a-time deletes; the
+                city link answers "what else is there in Tokyo?" without ever
+                offering a place in the wrong city. */}
+            {focusedDay && (
+              <div className="mb-3 flex items-center gap-2 flex-wrap">
+                {isOwner && getItemsForDay(focusedDay).length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startTransition(async () => {
+                        try {
+                          const r = await lightenDay(tripId, focusedDay);
+                          toast.success(
+                            t("shape.lightened", {
+                              place: locale === "ar" && r.removedAr ? r.removedAr : r.removed,
+                            }),
+                          );
+                          router.refresh();
+                        } catch {
+                          toast.error(t("shape.nothingToLighten"));
+                        }
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 min-h-9 text-[12px] font-semibold text-muted-foreground hover:text-primary hover:border-primary/40"
+                  >
+                    <Minus className="w-4 h-4" /> {t("shape.lighten")}
+                  </button>
+                )}
+                {baseIdForDay(focusedDay) && (
+                  <Link
+                    href={`/trips/${tripId}/city/${baseIdForDay(focusedDay)}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 min-h-9 text-[12px] font-semibold text-muted-foreground hover:text-primary hover:border-primary/40"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {t("city.openCity", { place: baseForDay(focusedDay) ?? "" })}
+                  </Link>
+                )}
+              </div>
+            )}
+
             <SavesTray tripId={tripId} saves={saves} days={days} />
 
             {phase === "LIVE" && (
@@ -909,6 +956,7 @@ export function ItineraryBoard({
                             )}
                             {format(parseISO(day), "MMMM d, yyyy")} · {t("itinerary.items", { count: dayItems.length })}
                           </p>
+
                         </div>
                         <button
                           type="button"

@@ -229,6 +229,53 @@ describe("projectDays", () => {
   });
 });
 
+describe("who is travelling", () => {
+  const segsFor = (nights: number) =>
+    segmentsFromLegs(allocateNights(ROUTE, BASES, nights).legs, "2026-09-30");
+
+  it("caps a day when kids are on the trip", () => {
+    const busy = { ...BASES, tokyo: { ...BASES.tokyo, days: BASES.tokyo.days.map((d) => ({
+      ...d,
+      places: [
+        { name: "a", nameAr: "أ", why: "w", whyAr: "و", category: "sight" as const, startTime: "09:00" },
+        { name: "b", nameAr: "ب", why: "w", whyAr: "و", category: "sight" as const, startTime: "11:00" },
+        { name: "c", nameAr: "ج", why: "w", whyAr: "و", category: "sight" as const, startTime: "14:00" },
+        { name: "d", nameAr: "د", why: "w", whyAr: "و", category: "food" as const, startTime: "19:00" },
+        { name: "e", nameAr: "ه", why: "w", whyAr: "و", category: "food" as const, startTime: "21:00" },
+      ],
+    })) } };
+    const segs = segsFor(7);
+    const adults = projectDays(segs, busy, "2026-09-30");
+    const family = projectDays(segs, busy, "2026-09-30", undefined, { adults: 2, kids: 2 });
+    const full = (ds: typeof adults) => ds.filter((d) => !d.travel && !d.departure);
+    expect(Math.max(...full(adults).map((d) => d.places.length))).toBe(5);
+    expect(Math.max(...full(family).map((d) => d.places.length))).toBe(3);
+  });
+
+  it("keeps a standing-room alley off a family's plan entirely", () => {
+    const withBar = { ...BASES, tokyo: { ...BASES.tokyo, days: [
+      { key: "t0", title: "n", titleAr: "ن", places: [
+        { name: "Museum", nameAr: "متحف", why: "w", whyAr: "و", category: "sight" as const, startTime: "10:00" },
+        { name: "Drinking alley", nameAr: "زقاق", why: "w", whyAr: "و", category: "food" as const, startTime: "19:30", adultsOnly: true },
+      ] },
+      ...BASES.tokyo.days.slice(1),
+    ] } };
+    const segs = segsFor(7);
+    const names = (ds: ReturnType<typeof projectDays>) => ds.flatMap((d) => d.places.map((p) => p.name));
+    expect(names(projectDays(segs, withBar, "2026-09-30"))).toContain("Drinking alley");
+    expect(
+      names(projectDays(segs, withBar, "2026-09-30", undefined, { adults: 2, kids: 1 })),
+    ).not.toContain("Drinking alley");
+  });
+
+  it("leaves a solo or adults-only trip untouched", () => {
+    const segs = segsFor(7);
+    const plain = projectDays(segs, BASES, "2026-09-30");
+    const adultsOnly = projectDays(segs, BASES, "2026-09-30", undefined, { adults: 3, kids: 0 });
+    expect(adultsOnly.map((d) => d.places.length)).toEqual(plain.map((d) => d.places.length));
+  });
+});
+
 describe("redate", () => {
   it("re-dates back-to-back after a reorder, preserving each stay's length", () => {
     const segs = segsFromNights([3, 2, 2]);

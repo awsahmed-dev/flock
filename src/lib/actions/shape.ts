@@ -14,7 +14,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { parseOr } from "@/lib/actions/validate";
+import { parseOr, zDateOnly } from "@/lib/actions/validate";
 import { BASES, ROUTES, findRoutes, getBase } from "@/lib/packages/library";
 import { coordsFor } from "@/lib/packages/coords";
 import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
@@ -267,7 +267,11 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
   ]);
   const gone = new Set(removed.map((r) => r.title));
 
-  const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[]);
+  const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
+  const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[], {
+    adults: trip?.adults ?? 1,
+    kids: trip?.kids ?? 0,
+  });
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
   for (const day of days) {
     day.places
@@ -424,6 +428,8 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
 
   const tripNights = tripNightsBetween(trip.startDate, trip.endDate);
   const find = (id: string) => segments.find((s) => s.baseId === id);
+  /** Nights taken from an existing stay, so the UI can say so out loud. */
+  const borrowedFrom: { baseId: BaseId; nights: number }[] = [];
 
   switch (e.op) {
     case "nights": {
@@ -447,19 +453,35 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       const base = BASES[e.baseId];
       if (!base || base.maxNights < 1) throw new Error("Not a base you can stay in");
       if (segments.length >= 8) throw new Error("That's a lot of moving");
-      // Take the new base's nights from the longest unlocked stay, so the
-      // trip length never silently changes underneath the user.
-      const donor = segments
-        .filter((s) => !s.lockedBy && segmentNights(s) > 1)
-        .sort((a, b) => segmentNights(b) - segmentNights(a))[0];
       const want = Math.min(base.typicalNights || 1, base.maxNights);
-      const take = donor ? Math.min(want, segmentNights(donor) - 1) : 0;
-      if (donor && take > 0) donor.checkOut = addIso(donor.checkIn, segmentNights(donor) - take);
+
+      // Spend the unassigned nights FIRST. A tester went to fill two empty
+      // days, added Osaka, and watched Tokyo drop from 6 nights to 4 without
+      // being asked — the old code always raided the longest stay even when
+      // the trip had slack sitting right there.
+      const assigned = segments.reduce((n, sg) => n + segmentNights(sg), 0);
+      const slack = Math.max(0, tripNights - assigned);
+      let got = Math.min(want, slack);
+
+      // Only if that isn't enough do we borrow, and then we say who from.
+      while (got < 1) {
+        const donor = segments
+          .filter((sg) => !sg.lockedBy && segmentNights(sg) > 1)
+          .sort((a, b) => segmentNights(b) - segmentNights(a))[0];
+        if (!donor) break;
+        const take = Math.min(want - got, segmentNights(donor) - 1);
+        if (take <= 0) break;
+        donor.checkOut = addIso(donor.checkIn, segmentNights(donor) - take);
+        borrowedFrom.push({ baseId: donor.baseId, nights: take });
+        got += take;
+      }
+      if (got < 1) throw new Error("No nights free — shorten a stay first");
+
       segments.push({
         baseId: base.id,
         order: segments.length,
         checkIn: trip.startDate,
-        checkOut: addIso(trip.startDate, Math.max(1, take)),
+        checkOut: addIso(trip.startDate, got),
         transportInMode: "train",
         transportInMinutes: 120,
         dayTrips: [],
@@ -524,7 +546,14 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   }
 
   await persist(tripId, segments, trip.startDate, user.id);
-  return { ok: true };
+  return {
+    ok: true,
+    borrowedFrom: borrowedFrom.map((b) => ({
+      name: BASES[b.baseId]?.name ?? b.baseId,
+      nameAr: BASES[b.baseId]?.nameAr ?? b.baseId,
+      nights: b.nights,
+    })),
+  };
 }
 
 export async function reactToBase(tripId: string, baseId: string, reaction: "love" | "ok" | "skip") {
@@ -545,4 +574,80 @@ export async function reactToBase(tripId: string, baseId: string, reaction: "lov
 function addIso(iso: string, n: number): string {
   const t = Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) + n * 86_400_000;
   return new Date(t).toISOString().slice(0, 10);
+}
+
+/* ── one-tap day pacing ───────────────────────────────────────────────── */
+
+/**
+ * «خفّف» — make one day lighter.
+ *
+ * User testing: "I wanted fewer stops per day and one lazy day. The only
+ * tools are: delete one item at a time, and drag to reorder." Deleting four
+ * stops across fourteen days by hand is not a pace control.
+ *
+ * Drops the weakest curated stop on the day — lowest rated, latest in the
+ * evening if unrated — and tombstones it, so the next rebuild honours it.
+ * Only curated rows are eligible: something the crew added by hand is a
+ * decision, not filler.
+ */
+export async function lightenDay(tripId: string, dayDate: string) {
+  const user = await requireOwner(tripId);
+  const day = parseOr(zDateOnly, dayDate, "Invalid day");
+
+  const rows = await db
+    .select()
+    .from(itineraryItems)
+    .where(
+      and(
+        eq(itineraryItems.tripId, tripId),
+        eq(itineraryItems.dayDate, day),
+        eq(itineraryItems.provider, "package"),
+      ),
+    );
+  if (rows.length <= 1) throw new Error("Nothing left to drop here");
+
+  const weakest = rows.slice().sort((a, b) => {
+    const ra = a.rating ?? 0;
+    const rb = b.rating ?? 0;
+    if (ra !== rb) return ra - rb;
+    return (b.startTime ?? "").localeCompare(a.startTime ?? "");
+  })[0];
+
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(tripRemovedStops)
+      .values({ tripId, title: weakest.title, baseId: weakest.baseId ?? null, removedBy: user.id })
+      .onConflictDoNothing();
+    await tx.delete(itineraryItems).where(eq(itineraryItems.id, weakest.id));
+  });
+
+  revalidatePath(`/trips/${tripId}/itinerary`);
+  return { removed: weakest.title, removedAr: weakest.titleAr ?? weakest.title };
+}
+
+/** Undo every «خفّف» on a day — the stops come back on the next rebuild. */
+export async function restoreDay(tripId: string, dayDate: string) {
+  const user = await requireOwner(tripId);
+  const day = parseOr(zDateOnly, dayDate, "Invalid day");
+  const seg = await db
+    .select()
+    .from(tripSegments)
+    .where(eq(tripSegments.tripId, tripId))
+    .orderBy(tripSegments.sortOrder);
+  if (!seg.length) throw new Error("No shape yet");
+
+  await db.delete(tripRemovedStops).where(eq(tripRemovedStops.tripId, tripId));
+  const trip = await getTrip(tripId);
+  await reproject(tripId, relink(redate(seg.map(toSegment), trip.startDate), BASES), trip.startDate, user.id);
+  return { day };
+}
+
+/** How many stops this day has lost, so the UI can offer to put them back. */
+export async function removedCount(tripId: string) {
+  await requireMember(tripId);
+  const rows = await db
+    .select({ title: tripRemovedStops.title })
+    .from(tripRemovedStops)
+    .where(eq(tripRemovedStops.tripId, tripId));
+  return rows.length;
 }

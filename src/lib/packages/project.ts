@@ -113,6 +113,19 @@ export function estimateLeg(from: Base, to: Base): { transportInMode: TransportM
 
 const hour = (t?: string) => (t ? parseInt(t.slice(0, 2), 10) : 12);
 
+/**
+ * Drop what does not fit the people on the trip, then cap the day.
+ *
+ * This is a filter, not a substitution: a family day with three stops is
+ * the point, not a gap to be backfilled with a fourth temple.
+ */
+function forParty(places: CuratedPlace[], party?: Party): CuratedPlace[] {
+  let out = places;
+  if (party && party.kids > 0) out = out.filter((p) => !p.adultsOnly);
+  const cap = stopsPerDay(party);
+  return out.length > cap ? out.slice(0, cap) : out;
+}
+
 /** Afternoon-and-later, for a day that begins on a train. */
 function afternoonOf(places: CuratedPlace[], keep: number): CuratedPlace[] {
   const late = places.filter((p) => hour(p.startTime) >= 14);
@@ -136,11 +149,28 @@ export interface SaveForPlan {
   rating?: number | null;
 }
 
+/** Who is travelling. Changes what a day can honestly contain. */
+export interface Party {
+  adults: number;
+  kids: number;
+}
+
+/**
+ * A day's ceiling. Children set the pace long before anyone's preferences
+ * do: a tester with a 7- and an 11-year-old asked for "fewer things per day
+ * and one lazy day" and had no way to say so.
+ */
+function stopsPerDay(party?: Party): number {
+  if (!party || party.kids === 0) return 99;
+  return 3;
+}
+
 export function projectDays(
   segments: Segment[],
   bases: Record<BaseId, Base>,
   tripStart: string,
   saves?: SaveForPlan[],
+  party?: Party,
 ): ProjectedDay[] {
   const ordered = redate(segments, tripStart);
   const out: ProjectedDay[] = [];
@@ -182,7 +212,7 @@ export function projectDays(
           travel: false,
           dayTripTo: to,
           departure: false,
-          places: shape?.places ?? [],
+          places: forParty(shape?.places ?? [], party),
         });
         continue;
       }
@@ -206,8 +236,8 @@ export function projectDays(
         places: !shape
           ? []
           : isTravel
-            ? afternoonOf(shape.places, longHaul ? 1 : 2)
-            : shape.places,
+            ? afternoonOf(forParty(shape.places, party), longHaul ? 1 : 2)
+            : forParty(shape.places, party),
       });
     }
   });
@@ -234,11 +264,11 @@ export function projectDays(
       travel: false,
       dayTripTo: null,
       departure: true,
-      places: shape ? morningOf(shape.places) : [],
+      places: shape ? morningOf(forParty(shape.places, party)) : [],
     });
   }
 
-  if (saves?.length) placeSaves(out, ordered, bases, saves);
+  if (saves?.length) placeSaves(out, ordered, bases, saves, stopsPerDay(party));
 
   return out;
 }
@@ -270,6 +300,7 @@ function placeSaves(
   segments: Segment[],
   bases: Record<BaseId, Base>,
   saves: SaveForPlan[],
+  cap = 99,
 ): void {
   const already = (name: string) => days.some((d) => d.places.some((p) => samePlace(p.name, name)));
 
@@ -299,7 +330,7 @@ function placeSaves(
     if (!target) continue;
 
     const candidates = days.filter(
-      (d) => d.baseId === target && !d.travel && !d.departure && !d.dayTripTo,
+      (d) => d.baseId === target && !d.travel && !d.departure && !d.dayTripTo && d.places.length < cap,
     );
     if (!candidates.length) continue;
     const day = candidates.reduce((a, b) => (b.places.length < a.places.length ? b : a));

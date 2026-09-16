@@ -1232,7 +1232,13 @@
     "next": "Next",
     "createTrip": "Create trip",
     "failed": "Could not create the trip. Try again.",
-    "dur5Nights": "5 nights"
+    "dur5Nights": "5 nights",
+    "adults": "Adults",
+    "kids": "Kids",
+    "kidsHint": "We'll lighten the days and skip places that don't suit them",
+    "crewEmailsLabel": "And if you want them in the app:",
+    "fewer": "Fewer {what}",
+    "more": "More {what}"
   },
   "now": {
     "today": "Today",
@@ -1842,6 +1848,33 @@
     "durHM": "{h}h {m}m",
     "durH": "{h}h",
     "durM": "{m}m",
-    "dayTripsLead": "Day trips from here — the best of the trip"
+    "dayTripsLead": "Day trips from here — the best of the trip",
+    "borrowed": "{count, plural, one {Took a night from {place}} other {Took # nights from {place}}}",
+    "lighten": "Make it lighter",
+    "lightened": "Dropped {place}",
+    "restore": "Put back what we dropped",
+    "restored": "Everything's back",
+    "nothingToLighten": "Nothing left to drop here"
+  },
+  "city": {
+    "all": "All",
+    "cat_sight": "Sights",
+    "cat_food": "Food",
+    "cat_nature": "Nature",
+    "cat_walk": "Walks",
+    "cat_shop": "Shopping",
+    "cat_rest": "Rest",
+    "add": "Add to the plan",
+    "added": "Added to {day}",
+    "addedNear": "Added to {day} — near that day's other stops",
+    "fill": "{count, plural, one {Fill the free day} other {Fill the # free days}}",
+    "filled": "{count, plural, one {Planned a day} other {Planned # days}}",
+    "filledNear": "{count, plural, one {Planned a day — everything within {km}km} other {Planned # days — each day's stops within {km}km of each other}}",
+    "fromSaves": "You saved this",
+    "notForKids": "Not with kids",
+    "alreadyIn": "Already in the plan",
+    "empty": "Nothing left to suggest here",
+    "failed": "Couldn't add that — try again",
+    "openCity": "What to do in {place}?"
   }
 }

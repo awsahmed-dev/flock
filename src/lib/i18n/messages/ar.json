@@ -1232,7 +1232,13 @@
     "next": "التالي",
     "createTrip": "أنشئ الرحلة",
     "failed": "تعذّر إنشاء الرحلة. حاول مجددًا.",
-    "dur5Nights": "٥ ليالٍ"
+    "dur5Nights": "٥ ليالٍ",
+    "adults": "كبار",
+    "kids": "أطفال",
+    "kidsHint": "نخفّف الأيام ونتجنّب أماكن ما تناسبهم",
+    "crewEmailsLabel": "وإذا تبي تدعوهم للتطبيق:",
+    "fewer": "أقل {what}",
+    "more": "أكثر {what}"
   },
   "now": {
     "today": "اليوم",
@@ -1842,6 +1848,33 @@
     "durHM": "{h}س {m}د",
     "durH": "{h}س",
     "durM": "{m}د",
-    "dayTripsLead": "رحلات يوم من هنا — أحلى شي بالرحلة"
+    "dayTripsLead": "رحلات يوم من هنا — أحلى شي بالرحلة",
+    "borrowed": "{count, plural, one {أخذنا ليلة من {place}} two {أخذنا ليلتين من {place}} few {أخذنا # ليالٍ من {place}} many {أخذنا # ليلة من {place}} other {أخذنا # ليلة من {place}}}",
+    "lighten": "خفّف اليوم",
+    "lightened": "شلنا {place}",
+    "restore": "رجّع اللي شلناه",
+    "restored": "رجّعنا كل شي",
+    "nothingToLighten": "ما بقي شي نشيله من هذا اليوم"
+  },
+  "city": {
+    "all": "الكل",
+    "cat_sight": "معالم",
+    "cat_food": "أكل",
+    "cat_nature": "طبيعة",
+    "cat_walk": "مشي",
+    "cat_shop": "تسوّق",
+    "cat_rest": "راحة",
+    "add": "أضفه للخطة",
+    "added": "أضفناه في {day}",
+    "addedNear": "أضفناه في {day} — قريب من أماكن ذاك اليوم",
+    "fill": "{count, plural, one {املأ اليوم الفاضي} two {املأ اليومين الفاضيين} few {املأ الـ# أيام الفاضية} many {املأ الـ# يومًا الفاضية} other {املأ الـ# يوم الفاضية}}",
+    "filled": "{count, plural, one {رتّبنا يومًا} two {رتّبنا يومين} other {رتّبنا # أيام}}",
+    "filledNear": "{count, plural, one {رتّبنا يومًا — كل أماكنه داخل {km} كم} other {رتّبنا # أيام — أماكن كل يوم داخل {km} كم من بعض}}",
+    "fromSaves": "من محفوظاتكم",
+    "notForKids": "ما تناسب الأطفال",
+    "alreadyIn": "موجود بالخطة",
+    "empty": "ما بقي شي نقترحه هنا",
+    "failed": "ما قدرنا نضيفه — جرّب مرة ثانية",
+    "openCity": "وش نسوي في {place}؟"
   }
 }

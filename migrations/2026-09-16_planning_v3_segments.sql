@@ -69,3 +69,9 @@ create table if not exists trip_removed_stops (
   created_at timestamptz not null default now(),
   primary key (trip_id, title)
 );
+
+-- User testing: a father of two was booked into four standing-room drinking
+-- alleys at 19:30 because the app had no idea his kids existed. The wizard
+-- asks who is coming and only accepted emails — a 7-year-old does not have one.
+alter table trips add column if not exists adults integer not null default 1;
+alter table trips add column if not exists kids integer not null default 0;

@@ -3,7 +3,7 @@
 import { SheetGrip, useDismissDrag } from "@/components/ui/sheet-grip";
 import { COMMON_CURRENCIES } from "@/lib/currencies";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin, CalendarDots as CalendarDays } from "@phosphor-icons/react/dist/ssr";
+import { MagnifyingGlass as Search, X, Plus, Sparkle as Sparkles, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CircleNotch as Loader2, MapPin, CalendarDots as CalendarDays , Minus } from "@phosphor-icons/react/dist/ssr";
 import {
   addDays,
   addMonths,
@@ -71,6 +71,11 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
 
   // Step 2
   const [crew, setCrew] = useState<string[]>([]);
+  // User testing: "Who is coming?" only accepted emails. A 7-year-old does
+  // not have one, so the app decided he was travelling alone and booked him
+  // into standing-room alleys at 19:30 with two children.
+  const [adults, setAdults] = useState(1);
+  const [kids, setKids] = useState(0);
   const [crewInput, setCrewInput] = useState("");
 
   // Step 3
@@ -165,6 +170,8 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
     fd.set("currency", currency);
     // QA BUG-2: the "Who is coming?" entries were silently discarded.
     if (crew.length > 0) fd.set("inviteEmails", JSON.stringify(crew));
+    fd.set("adults", String(adults));
+    fd.set("kids", String(kids));
     startTransition(async () => {
       try {
         // createTrip redirects to the new trip's NOW screen on success.
@@ -252,6 +259,10 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
             <Step2
               t={t}
               crew={crew}
+              adults={adults}
+              kids={kids}
+              setAdults={setAdults}
+              setKids={setKids}
               crewInput={crewInput}
               setCrewInput={setCrewInput}
               addCrew={() => {
@@ -720,6 +731,10 @@ function Step2({
   setCrewInput,
   addCrew,
   removeCrew,
+  adults,
+  kids,
+  setAdults,
+  setKids,
 }: {
   t: (k: string, p?: Record<string, string | number>) => string;
   crew: string[];
@@ -727,10 +742,36 @@ function Step2({
   setCrewInput: (v: string) => void;
   addCrew: () => void;
   removeCrew: (v: string) => void;
+  adults: number;
+  kids: number;
+  setAdults: (n: number) => void;
+  setKids: (n: number) => void;
 }) {
   return (
     <div className="space-y-5">
       <h2 className="type-h1">{t("create.crewTitle")}</h2>
+
+      {/* Who is actually on the trip — separate from who gets an app invite.
+          This is the one answer that changes the plan itself. */}
+      <div className="rounded-2xl bg-secondary/60 p-3.5 space-y-3">
+        <PartyRow
+          label={t("create.adults")}
+          value={adults}
+          min={1}
+          onChange={setAdults}
+          t={t}
+        />
+        <PartyRow
+          label={t("create.kids")}
+          hint={t("create.kidsHint")}
+          value={kids}
+          min={0}
+          onChange={setKids}
+          t={t}
+        />
+      </div>
+
+      <p className="text-xs text-muted-foreground -mt-1">{t("create.crewEmailsLabel")}</p>
       <div className="flex gap-2">
         <input
           value={crewInput}
@@ -777,6 +818,51 @@ function Step2({
         </ul>
       )}
       <p className="text-xs text-muted-foreground">{t("create.crewHint")}</p>
+    </div>
+  );
+}
+
+function PartyRow({
+  label,
+  hint,
+  value,
+  min,
+  onChange,
+  t,
+}: {
+  label: string;
+  hint?: string;
+  value: number;
+  min: number;
+  onChange: (n: number) => void;
+  t: (k: string, p?: Record<string, string | number>) => string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold">{label}</span>
+        {hint && <span className="block text-[11.5px] text-muted-foreground">{hint}</span>}
+      </span>
+      <span className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
+          aria-label={t("create.fewer", { what: label })}
+          className="w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center disabled:opacity-30"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <span className="min-w-[2.25rem] text-center text-[15px] font-bold tabular-nums">{value}</span>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(20, value + 1))}
+          aria-label={t("create.more", { what: label })}
+          className="w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </span>
     </div>
   );
 }

@@ -56,6 +56,14 @@ export async function createTrip(formData: FormData) {
     : null;
   // QA BUG-11: keep the per-person intent instead of flattening it.
   const budgetType = formData.get("budgetType") === "per_person" ? "per_person" : "flat";
+  // Who is actually travelling — kids have no email, so the invite list
+  // could never carry them and the plan never knew they were coming.
+  const clampInt = (v: FormDataEntryValue | null, lo: number, hi: number, dflt: number) => {
+    const n = Number.parseInt(String(v ?? ""), 10);
+    return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt;
+  };
+  const adults = clampInt(formData.get("adults"), 1, 20, 1);
+  const kids = clampInt(formData.get("kids"), 0, 20, 0);
   const currencyRaw = ((formData.get("currency") as string) || "USD").trim().toUpperCase();
   const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : "USD";
   // QA BUG-2: the wizard's "Who is coming?" emails — previously discarded.
@@ -97,6 +105,8 @@ export async function createTrip(formData: FormData) {
       budgetTotal,
       budgetType,
       currency,
+      adults,
+      kids,
       createdBy: user.id,
     })
     .returning();

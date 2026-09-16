@@ -180,6 +180,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 onDayTrip={(id, on) => run(() => editShape(tripId, { op: "dayTrip", baseId: b.id, tripId: id, on }))}
                 onLock={(l) => run(() => editShape(tripId, { op: "lock", baseId: b.id, lock: l }))}
                 onReact={(r) => run(() => reactToBase(tripId, b.id, r))}
+                tripId={tripId}
               />
             ))}
           </div>
@@ -197,7 +198,15 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 key={a.id}
                 type="button"
                 disabled={busy}
-                onClick={() => run(() => editShape(tripId, { op: "add", baseId: a.id }))}
+                onClick={() =>
+                  run(async () => {
+                    const r = await editShape(tripId, { op: "add", baseId: a.id });
+                    // Never move someone's nights in silence.
+                    for (const b of r.borrowedFrom ?? []) {
+                      toast.info(t("shape.borrowed", { place: ar ? b.nameAr : b.name, count: b.nights }));
+                    }
+                  })
+                }
                 className="min-h-11 px-3.5 rounded-full border border-dashed border-border text-[13px] font-semibold inline-flex items-center gap-1.5 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors"
               >
                 <Plus size={14} /> {ar ? a.nameAr : a.name}
@@ -260,12 +269,13 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
 }
 
 function BaseRow({
-  base, first, single, canEdit, busy, ar, t, isGroup,
+  base, first, single, canEdit, busy, ar, t, isGroup, tripId,
   onNights, onRemove, onMode, onDayTrip, onLock, onReact,
 }: {
   base: BaseCard;
   first: boolean;
   single: boolean;
+  tripId: string;
   canEdit: boolean;
   busy: boolean;
   ar: boolean;
@@ -352,7 +362,13 @@ function BaseRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-extrabold text-[16px]">{ar ? base.nameAr : base.name}</span>
+            {/* The city layer: what you actually do while based here. */}
+            <Link
+              href={`/trips/${tripId}/city/${base.id}`}
+              className="font-extrabold text-[16px] underline decoration-dotted underline-offset-4 decoration-muted-foreground/50"
+            >
+              {ar ? base.nameAr : base.name}
+            </Link>
             {locked && (
               <span className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
                 <Lock size={11} weight="fill" />

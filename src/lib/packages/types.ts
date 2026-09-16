@@ -22,6 +22,13 @@ export interface CuratedPlace {
   /** 0 = free … 3 = expensive */
   priceBand?: 0 | 1 | 2 | 3;
   startTime?: string;
+  /**
+   * Not somewhere you take young children: standing-room counters, cramped
+   * late-night alleys. User testing put a family with a 7- and an 11-year-old
+   * in four drinking alleys at 19:30 because nothing in the app knew they
+   * existed.
+   */
+  adultsOnly?: boolean;
 }
 
 export interface CuratedDay {
