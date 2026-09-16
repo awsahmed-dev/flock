@@ -25,7 +25,7 @@ export default async function RoutesPage({ params }: Props) {
   const routes = await listRoutes(id).catch(() => []);
   // Even with no curated route we can start a one-base shape, as long as we
   // recognise the destination well enough to have content for it.
-  const fallback = findBaseByText(`${destination} ${trip.name ?? ""}`);
+  const fallback = findBaseByText(destination) ?? (trip.destination ? null : findBaseByText(trip.name ?? ""));
 
   return (
     <div className="min-h-dvh bg-background">

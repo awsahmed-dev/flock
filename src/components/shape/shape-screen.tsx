@@ -59,6 +59,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
   const [view, setView] = useState(initial);
   const [busy, startTransition] = useTransition();
   const [order, setOrder] = useState<string[] | null>(null);
+  const [cityInput, setCityInput] = useState("");
 
   // Keep local state in sync with server revalidations. Every edit calls a
   // server action and then router.refresh(), which re-renders this component
@@ -217,11 +218,47 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
       </DndContext>
 
       {/* ── add a base ──────────────────────────────────────────────── */}
-      {/* A button that exists only to say "no" is worse than no button. */}
-      {canEdit && view.addable.length > 0 && (
+      {canEdit && (
         <div className="px-4 mt-4">
           <p className="text-[12px] text-muted-foreground mb-2">{t("shape.addBase")}</p>
+
+          {/* Any city, not just the ones we curate. Suggestions are a
+              shortcut, not the whole set — a trip to somewhere we have no
+              route for had nothing to offer and no way to type your own. */}
+          <form
+            className="flex gap-2 mb-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const name = cityInput.trim();
+              if (name.length < 2) return;
+              setCityInput("");
+              run(async () => {
+                const r = await editShape(tripId, { op: "addCustom", name });
+                for (const x of r.borrowedFrom ?? []) {
+                  toast.info(t("shape.borrowed", { place: ar ? x.nameAr : x.name, count: x.nights }));
+                }
+              });
+            }}
+          >
+            <input
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+              placeholder={t("shape.addAnyCity")}
+              className="flex-1 min-w-0 h-11 rounded-xl border border-border bg-card px-3.5 text-[13.5px]"
+            />
+            <button
+              type="submit"
+              disabled={busy || cityInput.trim().length < 2}
+              className="h-11 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-[13px] disabled:opacity-40"
+            >
+              {t("shape.addIt")}
+            </button>
+          </form>
+
           <div className="flex flex-wrap gap-2">
+            {view.addable.length === 0 && (
+              <span className="text-[12px] text-muted-foreground italic">{t("shape.noSuggestions")}</span>
+            )}
             {view.addable.map((a) => (
               <button
                 key={a.id}
@@ -286,9 +323,13 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
           {t("shape.viewDays")}
           <span className="opacity-80 text-[13px] font-semibold">
             {/* "26 days ready" with ten of them empty is not ready. */}
-            · {view.emptyDays > 0
-              ? t("shape.daysSomeEmpty", { count: view.emptyDays })
-              : t("shape.daysProjected", { count: view.days.length })}
+            {/* "0 days ready" on a destination we don't curate is a strange
+                way to say "nothing is planned yet, go fill it". */}
+            · {view.days.length > 0 && view.emptyDays >= view.days.length
+              ? t("shape.daysAllEmpty", { count: view.days.length })
+              : view.emptyDays > 0
+                ? t("shape.daysSomeEmpty", { count: view.emptyDays })
+                : t("shape.daysProjected", { count: view.days.length })}
           </span>
           <CaretRight size={16} className="rtl:rotate-180" />
         </Link>

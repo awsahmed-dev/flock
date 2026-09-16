@@ -1800,7 +1800,9 @@
     "adopting": "Setting up your plan…",
     "adopted": "Done — your plan is in",
     "failed": "Couldn't set that up — try again",
-    "freeDays": "{count, plural, one {# of them a free day} other {# of them free days}}"
+    "freeDays": "{count, plural, one {# of them a free day} other {# of them free days}}",
+    "startHere": "Start your plan in {place}",
+    "noneBodyV2": "We don't curate a route here yet — but we can start the shape, lay out your days, and you add the cities you want."
   },
   "shape": {
     "title": "Trip shape",
@@ -1858,7 +1860,11 @@
     "emptyDays": "{count, plural, one {# empty day} other {# empty days}}",
     "overAssigned": "{count, plural, one {# day past the trip} other {# days past the trip}}",
     "daysSomeEmpty": "{count, plural, one {# still empty} other {# still empty}}",
-    "removeDayTrip": "Remove the {place} day trip"
+    "removeDayTrip": "Remove the {place} day trip",
+    "addAnyCity": "Type any city…",
+    "addIt": "Add",
+    "noSuggestions": "No suggestions for this destination — type a city above",
+    "daysAllEmpty": "{count, plural, one {# day to fill} other {# days to fill}}"
   },
   "city": {
     "all": "All",

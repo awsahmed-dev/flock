@@ -109,6 +109,11 @@ export interface Segment {
   /** bases visited as day trips from this one */
   dayTrips: BaseId[];
   lockedBy: "flight" | "hotel" | null;
+  /** set only for a city we do not curate — see trip_segments */
+  customName?: string | null;
+  customNameAr?: string | null;
+  customLat?: number | null;
+  customLng?: number | null;
 }
 
 /** One projected day of the itinerary. */

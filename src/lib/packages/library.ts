@@ -35,6 +35,7 @@ import type {
   CuratedDay,
   Route,
 } from "@/lib/packages/types";
+import { REGIONS } from "@/lib/packages/regions";
 
 /* ── Japan ─────────────────────────────────────────────────────────────── */
 
@@ -595,7 +596,7 @@ const SIGHNAGHI_DAYTRIP: CuratedDay = {
 
 /* ── The bases ────────────────────────────────────────────────────────── */
 
-export const BASES: Record<BaseId, Base> = {
+const REGION_BASES: Record<BaseId, Base> = {
   /* Japan — sleeping bases */
   tokyo: {
     id: "tokyo",
@@ -892,7 +893,7 @@ export const BASES: Record<BaseId, Base> = {
  * literally cannot be walked without dropping a base. A single-base route has
  * no moves to honour, so its floor is just the shortest trip worth flying for.
  */
-export const ROUTES: Route[] = [
+const REGION_ROUTES: Route[] = [
   {
     id: "japan-classic",
     match: ["japan", "tokyo", "kyoto", "osaka", "اليابان", "طوكيو", "كيوتو", "أوساكا"],
@@ -1015,6 +1016,18 @@ export const ROUTES: Route[] = [
 export function getBase(id: BaseId): Base | null {
   return BASES[id] ?? null;
 }
+
+/**
+ * Regions are separate modules so the corpus can grow without every
+ * addition touching one enormous file. Anything exported here is merged
+ * below; a region only has to export `bases` and `routes`.
+ */
+export const BASES: Record<BaseId, Base> = {
+  ...REGION_BASES,
+  ...Object.fromEntries(REGIONS.flatMap((r) => Object.entries(r.bases))),
+};
+
+export const ROUTES: Route[] = [...REGION_ROUTES, ...REGIONS.flatMap((r) => r.routes)];
 
 /**
  * Every route we curate for this destination — not just the first. A Japan

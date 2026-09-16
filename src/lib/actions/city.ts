@@ -9,7 +9,7 @@ import { z } from "zod";
 import { parseOr } from "@/lib/actions/validate";
 import { BASES } from "@/lib/packages/library";
 import { coordsFor } from "@/lib/packages/coords";
-import type { BaseId, PlaceCategory } from "@/lib/packages/types";
+import type { Base, BaseId, PlaceCategory } from "@/lib/packages/types";
 import { eachDate } from "@/lib/packages/allocate";
 
 /**
@@ -92,9 +92,6 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
   const { role } = await requireMember(tripId);
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
   if (!trip) return null;
-  const base = BASES[baseId];
-  if (!base) return null;
-
   const segs = await db
     .select()
     .from(tripSegments)
@@ -102,6 +99,25 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     .orderBy(tripSegments.sortOrder);
   const seg = segs.find((s) => s.baseId === baseId);
   if (!seg) return null;
+
+  // A city we do not curate still gets this screen — it just has nothing to
+  // suggest yet, and everything to fill.
+  const base: Base =
+    BASES[baseId] ?? {
+      id: baseId,
+      name: seg.customName ?? baseId.replace(/^custom:/, ""),
+      nameAr: seg.customNameAr || seg.customName || baseId.replace(/^custom:/, ""),
+      country: "",
+      lat: seg.customLat ?? 0,
+      lng: seg.customLng ?? 0,
+      photoQuery: seg.customName ?? "",
+      match: [],
+      typicalNights: 1,
+      maxNights: 60,
+      reachable: [],
+      pairsWith: [],
+      days: [],
+    };
 
   const [stops, saves, removed] = await Promise.all([
     db.select().from(itineraryItems).where(eq(itineraryItems.tripId, tripId)),
@@ -221,8 +237,12 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     places: curated,
     planned,
     siblings: segs
-      .filter((sg) => sg.baseId !== baseId && BASES[sg.baseId])
-      .map((sg) => ({ id: sg.baseId, name: BASES[sg.baseId].name, nameAr: BASES[sg.baseId].nameAr })),
+      .filter((sg) => sg.baseId !== baseId)
+      .map((sg) => ({
+        id: sg.baseId,
+        name: BASES[sg.baseId]?.name ?? sg.customName ?? sg.baseId.replace(/^custom:/, ""),
+        nameAr: BASES[sg.baseId]?.nameAr ?? sg.customNameAr ?? sg.customName ?? sg.baseId.replace(/^custom:/, ""),
+      })),
     isOwner: role === "owner",
   };
 }

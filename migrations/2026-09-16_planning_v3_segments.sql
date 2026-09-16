@@ -73,3 +73,15 @@ create table if not exists trip_removed_stops (
 -- (reverted) A party-composition column pair lived here briefly. Profiling
 -- who is on a trip is not this app's job — pacing is a control the user
 -- reaches for, not an inference we make about their household.
+
+-- A city we do not curate is still a city you can sleep in.
+--
+-- "I tried Lisbon and it told me to go to Discover — how will Discover build
+-- me a package?" It can't. A destination with no curated route had no shape
+-- at all, and "Add a base" could only ever offer cities from the same
+-- curated region, so there was no way to add an arbitrary one either.
+-- A custom base carries its own name and coordinates on the segment.
+alter table trip_segments add column if not exists custom_name text;
+alter table trip_segments add column if not exists custom_name_ar text;
+alter table trip_segments add column if not exists custom_lat double precision;
+alter table trip_segments add column if not exists custom_lng double precision;

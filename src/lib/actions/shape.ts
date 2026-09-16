@@ -107,6 +107,44 @@ export interface ShapeView {
   memberCount: number;
 }
 
+/**
+ * The base behind a segment, curated or not.
+ *
+ * A destination we do not curate is still a place you sleep. Rather than
+ * refusing to plan it, a custom base carries its own name and coordinates
+ * and behaves like any other — it simply has no curated days, so its nights
+ * arrive as free days you can fill.
+ */
+function resolveBase(r: typeof tripSegments.$inferSelect): Base {
+  const known = BASES[r.baseId];
+  if (known) return known;
+  const name = r.customName ?? r.baseId.replace(/^custom:/, "");
+  return {
+    id: r.baseId,
+    name,
+    nameAr: r.customNameAr || name,
+    country: "",
+    lat: r.customLat ?? 0,
+    lng: r.customLng ?? 0,
+    photoQuery: name,
+    match: [name.toLowerCase()],
+    typicalNights: 1,
+    // No curated content, so no ceiling to protect — the whole stay is
+    // yours to fill.
+    maxNights: 60,
+    reachable: [],
+    pairsWith: [],
+    days: [],
+  };
+}
+
+/** Curated bases plus whatever custom ones this trip invented. */
+function basesFor(rows: (typeof tripSegments.$inferSelect)[]): Record<BaseId, Base> {
+  const out: Record<BaseId, Base> = { ...BASES };
+  for (const r of rows) if (!out[r.baseId]) out[r.baseId] = resolveBase(r);
+  return out;
+}
+
 function toSegment(r: typeof tripSegments.$inferSelect): Segment {
   return {
     baseId: r.baseId,
@@ -117,6 +155,10 @@ function toSegment(r: typeof tripSegments.$inferSelect): Segment {
     transportInMinutes: r.transportInMinutes ?? null,
     dayTrips: Array.isArray(r.dayTrips) ? (r.dayTrips as BaseId[]) : [],
     lockedBy: (r.lockedBy as "flight" | "hotel") ?? null,
+    customName: r.customName ?? null,
+    customNameAr: r.customNameAr ?? null,
+    customLat: r.customLat ?? null,
+    customLng: r.customLng ?? null,
   };
 }
 
@@ -125,7 +167,12 @@ export async function listRoutes(tripId: string): Promise<RouteCard[]> {
   await requireMember(tripId);
   const trip = await getTrip(tripId);
   const nights = tripNightsBetween(trip.startDate, trip.endDate);
-  const matches = findRoutes(`${trip.destination ?? ""} ${trip.name ?? ""}`);
+  // The DESTINATION decides, and the name is only a fallback for trips
+  // created before we captured one. Searching both at once meant a trip to
+  // Lisbon named "Qa-A Istanbul" was offered Istanbul routes.
+  const matches = trip.destination?.trim()
+    ? findRoutes(trip.destination)
+    : findRoutes(trip.name ?? "");
   return matches.map((route) => {
     const a = allocateNights(route, BASES, nights);
     return {
@@ -169,7 +216,8 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     .orderBy(tripSegments.sortOrder);
   if (!rows.length) return null;
 
-  const segments = relink(redate(rows.map(toSegment), trip.startDate), BASES);
+  const LIB = basesFor(rows);
+  const segments = relink(redate(rows.map(toSegment), trip.startDate), LIB);
   const [saves, reacts, members] = await Promise.all([
     db
       .select({ lat: savedPlaces.lat, lng: savedPlaces.lng })
@@ -182,11 +230,11 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
   const used = new Set(segments.map((s) => s.baseId));
   const addable = Object.values(BASES)
     .filter((b) => b.maxNights > 0 && !used.has(b.id))
-    .filter((b) => segments.some((s) => BASES[s.baseId]?.pairsWith.includes(b.id)))
+    .filter((b) => segments.some((s) => LIB[s.baseId]?.pairsWith.includes(b.id)))
     .map((b) => ({ id: b.id, name: b.name, nameAr: b.nameAr, typicalNights: b.typicalNights }));
 
   const bases: BaseCard[] = segments.map((s) => {
-    const b = BASES[s.baseId];
+    const b = LIB[s.baseId];
     const mine = reacts.find((r) => r.baseId === s.baseId && r.userId === user.id);
     const forBase = reacts.filter((r) => r.baseId === s.baseId);
     return {
@@ -220,11 +268,13 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     };
   });
 
-  const days = projectDays(segments, BASES, trip.startDate);
+  const days = projectDays(segments, LIB, trip.startDate);
   const errands = errandsFor(segments).map((e) => ({
     ...e,
-    name: BASES[e.baseId]?.name ?? e.baseId,
-    nameAr: BASES[e.baseId]?.nameAr ?? e.baseId,
+    // LIB, not BASES — a custom base printed its raw id, so the checklist
+    // read "custom:lisbon hotel · 7 nights".
+    name: LIB[e.baseId]?.name ?? e.baseId.replace(/^custom:/, ""),
+    nameAr: LIB[e.baseId]?.nameAr ?? e.baseId.replace(/^custom:/, ""),
   }));
 
   const stopCounts = await db
@@ -258,7 +308,13 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
  * from Discover survives untouched, which is what lets the shape stay
  * editable after adoption instead of being a one-way door.
  */
-async function reproject(tripId: string, segments: Segment[], tripStart: string, userId: string) {
+async function reproject(
+  tripId: string,
+  segments: Segment[],
+  tripStart: string,
+  userId: string,
+  lib: Record<BaseId, Base> = BASES,
+) {
   // The crew's own saves are part of the plan, not a separate tray the plan
   // ignores: a curated route used to place 33 of its own stops and none of
   // the twelve someone had saved for the trip.
@@ -290,7 +346,7 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
     .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "chosen")));
   for (const k of kept) gone.add(k.title);
 
-  const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[]);
+  const days = projectDays(segments, lib, tripStart, saveRows as SaveForPlan[]);
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
   for (const day of days) {
     day.places
@@ -373,7 +429,18 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
 }
 
 async function persist(tripId: string, segments: Segment[], tripStart: string, userId: string) {
-  const fresh = relink(redate(segments, tripStart), BASES);
+  const lib: Record<BaseId, Base> = { ...BASES };
+  for (const sg of segments) {
+    if (lib[sg.baseId]) continue;
+    const name = sg.customName ?? sg.baseId.replace(/^custom:/, "");
+    lib[sg.baseId] = {
+      id: sg.baseId, name, nameAr: sg.customNameAr || name, country: "",
+      lat: sg.customLat ?? 0, lng: sg.customLng ?? 0, photoQuery: name,
+      match: [name.toLowerCase()], typicalNights: 1, maxNights: 60,
+      reachable: [], pairsWith: [], days: [],
+    };
+  }
+  const fresh = relink(redate(segments, tripStart), lib);
   await db.transaction(async (tx) => {
     await tx.delete(tripSegments).where(eq(tripSegments.tripId, tripId));
     if (fresh.length) {
@@ -388,12 +455,16 @@ async function persist(tripId: string, segments: Segment[], tripStart: string, u
           transportInMinutes: s.transportInMinutes,
           dayTrips: s.dayTrips,
           lockedBy: s.lockedBy,
+          customName: s.customName ?? null,
+          customNameAr: s.customNameAr ?? null,
+          customLat: s.customLat ?? null,
+          customLng: s.customLng ?? null,
           updatedAt: new Date(),
         })),
       );
     }
   });
-  await reproject(tripId, fresh, tripStart, userId);
+  await reproject(tripId, fresh, tripStart, userId, lib);
   return fresh;
 }
 
@@ -418,18 +489,56 @@ export async function adoptRoute(tripId: string, routeId: string) {
   };
 }
 
-/** Start from nothing — one base, the destination itself, all the nights. */
-export async function startBlankShape(tripId: string, baseId: string) {
+/**
+ * Start from nothing — one base, the destination itself, all the nights.
+ *
+ * Works for a destination we have never heard of: a tester typed "Lisbon",
+ * got no routes, and the only door offered was Discover — which cannot
+ * build a plan. Now every destination can have a shape, curated or not.
+ */
+export async function startBlankShape(
+  tripId: string,
+  baseId: string | null,
+  custom?: { name: string; lat?: number | null; lng?: number | null },
+) {
   const user = await requireOwner(tripId);
   const trip = await getTrip(tripId);
-  const base = getBase(baseId);
-  if (!base) throw new Error("Unknown base");
   const nights = Math.max(1, tripNightsBetween(trip.startDate, trip.endDate));
-  const segments = segmentsFromLegs(
-    [{ baseId: base.id, nights: Math.min(nights, Math.max(1, base.maxNights)), transportInMode: null, transportInMinutes: null }],
+
+  const base = baseId ? getBase(baseId) : null;
+  if (base) {
+    const segments = segmentsFromLegs(
+      [{ baseId: base.id, nights: Math.min(nights, Math.max(1, base.maxNights)), transportInMode: null, transportInMinutes: null }],
+      trip.startDate,
+    );
+    await persist(tripId, segments, trip.startDate, user.id);
+    return { bases: 1 };
+  }
+
+  const name = (custom?.name ?? trip.destination ?? trip.name ?? "").trim();
+  if (!name) throw new Error("Where are you going?");
+  const slug = "custom:" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  await persist(
+    tripId,
+    [
+      {
+        baseId: slug,
+        order: 0,
+        checkIn: trip.startDate,
+        checkOut: addIso(trip.startDate, nights),
+        transportInMode: null,
+        transportInMinutes: null,
+        dayTrips: [],
+        lockedBy: null,
+        customName: name,
+        customNameAr: name,
+        customLat: custom?.lat ?? null,
+        customLng: custom?.lng ?? null,
+      },
+    ],
     trip.startDate,
+    user.id,
   );
-  await persist(tripId, segments, trip.startDate, user.id);
   return { bases: 1 };
 }
 
@@ -437,6 +546,12 @@ const zEdit = z.discriminatedUnion("op", [
   z.object({ op: z.literal("nights"), baseId: z.string().max(60), nights: z.number().int().min(1).max(60) }),
   z.object({ op: z.literal("reorder"), order: z.array(z.string().max(60)).max(20) }),
   z.object({ op: z.literal("add"), baseId: z.string().max(60) }),
+  z.object({
+    op: z.literal("addCustom"),
+    name: z.string().trim().min(2).max(80),
+    lat: z.number().finite().min(-90).max(90).nullish(),
+    lng: z.number().finite().min(-180).max(180).nullish(),
+  }),
   z.object({ op: z.literal("remove"), baseId: z.string().max(60) }),
   z.object({ op: z.literal("dayTrip"), baseId: z.string().max(60), tripId: z.string().max(60), on: z.boolean() }),
   z.object({ op: z.literal("transport"), baseId: z.string().max(60), mode: z.enum(MODES) }),
@@ -527,6 +642,45 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         transportInMinutes: 120,
         dayTrips: [],
         lockedBy: null,
+      });
+      break;
+    }
+    case "addCustom": {
+      // Any city, curated or not. "Add a base" could only ever offer cities
+      // that pair with a curated route, so on a trip we do not curate there
+      // was nothing to offer and no way to type your own.
+      const slug = "custom:" + e.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+      if (!slug.replace("custom:", "")) throw new Error("Give the city a name");
+      if (segments.some((sg) => sg.baseId === slug)) throw new Error("Already in this trip");
+      if (segments.length >= 8) throw new Error("That's a lot of moving");
+
+      const assignedNow = segments.reduce((n, sg) => n + segmentNights(sg), 0);
+      const slack = Math.max(0, tripNights - assignedNow);
+      let got = Math.min(2, slack);
+      while (got < 1) {
+        const donor = segments
+          .filter((sg) => !sg.lockedBy && segmentNights(sg) > 1)
+          .sort((a, b) => segmentNights(b) - segmentNights(a))[0];
+        if (!donor) break;
+        donor.checkOut = addIso(donor.checkIn, segmentNights(donor) - 1);
+        borrowedFrom.push({ baseId: donor.baseId, nights: 1 });
+        got += 1;
+      }
+      if (got < 1) throw new Error("No nights free — shorten a stay first");
+
+      segments.push({
+        baseId: slug,
+        order: segments.length,
+        checkIn: trip.startDate,
+        checkOut: addIso(trip.startDate, got),
+        transportInMode: "train",
+        transportInMinutes: 120,
+        dayTrips: [],
+        lockedBy: null,
+        customName: e.name,
+        customNameAr: e.name,
+        customLat: e.lat ?? null,
+        customLng: e.lng ?? null,
       });
       break;
     }

@@ -6,6 +6,7 @@ import {
   integer,
   boolean,
   real,
+  doublePrecision,
   pgEnum,
   date,
   time,
@@ -973,6 +974,15 @@ export const tripSegments = pgTable("trip_segments", {
   dayTrips: jsonb("day_trips").default([]).notNull(),
   /** 'flight' | 'hotel' — a booking pins these dates; the stepper is read-only */
   lockedBy: text("locked_by"),
+  /**
+   * A city we do not curate. `baseId` is "custom:<slug>" and the name and
+   * coordinates live here, so any destination can have a shape even with no
+   * curated content behind it.
+   */
+  customName: text("custom_name"),
+  customNameAr: text("custom_name_ar"),
+  customLat: doublePrecision("custom_lat"),
+  customLng: doublePrecision("custom_lng"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

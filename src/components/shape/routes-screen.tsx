@@ -51,10 +51,10 @@ export function RoutesScreen({
   }
 
   async function blank() {
-    if (!fallbackBaseId) return;
     setWorking("blank");
     try {
-      await startBlankShape(tripId, fallbackBaseId);
+      // No curated base is fine — the destination itself becomes one.
+      await startBlankShape(tripId, fallbackBaseId, fallbackBaseId ? undefined : { name: destination });
       toast.success(t("routes.adopted"));
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
@@ -72,24 +72,25 @@ export function RoutesScreen({
         <MapTrifold size={40} className="mx-auto text-muted-foreground" />
         <h1 className="mt-4 text-[20px] font-extrabold">{t("routes.noneTitle", { place: destination })}</h1>
         <p className="mt-2 text-[14px] text-muted-foreground leading-relaxed max-w-sm mx-auto">
-          {t("routes.noneBody")}
+          {t("routes.noneBodyV2")}
         </p>
-        <Link
-          href={`/trips/${tripId}/discover`}
+        {/* Discover cannot build a plan, so it is no longer the way out of
+            an uncurated destination. Start the shape here and fill it. */}
+        <button
+          type="button"
+          onClick={blank}
+          disabled={!!working}
           className="mt-6 inline-flex items-center justify-center gap-2 min-h-12 px-5 rounded-2xl bg-primary text-primary-foreground font-bold text-[14px]"
         >
-          <Compass size={17} weight="fill" /> {t("routes.toSaves")}
+          {working === "blank" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass size={17} weight="fill" />}
+          {t("routes.startHere", { place: destination })}
+        </button>
+        <Link
+          href={`/trips/${tripId}/discover`}
+          className="mt-3 block mx-auto min-h-12 px-5 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center"
+        >
+          {t("routes.toSaves")}
         </Link>
-        {fallbackBaseId && (
-          <button
-            type="button"
-            onClick={blank}
-            disabled={!!working}
-            className="mt-3 block mx-auto min-h-12 px-5 rounded-2xl border border-border font-semibold text-[13.5px]"
-          >
-            {working === "blank" ? <Loader2 className="w-4 h-4 animate-spin" /> : t("routes.blankTitle")}
-          </button>
-        )}
       </div>
     );
   }
