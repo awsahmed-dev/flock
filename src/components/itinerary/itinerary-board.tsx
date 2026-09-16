@@ -1514,7 +1514,11 @@ function SortableItemRow({
               item.status === "rejected" ? "line-through text-muted-foreground" : ""
             }`}
           >
-            {item.title}
+            {/* Curated stops carry both languages. This row rendered the
+                English one, so an Arabic reader saw "Shardeni Street" here
+                and «شارع شاردني» on the city screen — same place, same
+                trip, two languages. */}
+            {(locale === "ar" && item.titleAr) || item.title}
           </p>
           <span
             className={`shrink-0 inline-flex items-center gap-1 rounded-full ${TypeCfg.bg} ${TypeCfg.text} px-2 py-0.5 text-[12px] font-bold tracking-wider uppercase`}

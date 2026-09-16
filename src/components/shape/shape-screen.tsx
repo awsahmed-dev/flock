@@ -377,7 +377,7 @@ function BaseRow({
             )}
           </div>
           <p className="text-[11.5px] text-muted-foreground mt-0.5" dir="ltr">
-            {fmtDate(base.checkIn, ar)} → {fmtDate(base.checkOut, ar)}
+            {fmtDate(base.checkIn, ar)} – {fmtDate(base.checkOut, ar)}
           </p>
 
           {base.savesHere > 0 && (

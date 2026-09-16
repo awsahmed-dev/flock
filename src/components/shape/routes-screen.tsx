@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowRight, Compass, CircleNotch as Loader2, MapTrifold } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, CaretRight, Compass, CircleNotch as Loader2, MapTrifold } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { adoptRoute, startBlankShape, type RouteCard } from "@/lib/actions/shape";
 
@@ -124,7 +124,11 @@ export function RoutesScreen({
             <div className="mt-3 flex items-center gap-1.5 flex-wrap">
               {r.chain.map((c, i) => (
                 <span key={`${c.name}-${i}`} className="inline-flex items-center gap-1.5">
-                  {i > 0 && <span className="text-muted-foreground text-[12px]">←</span>}
+                  {/* An SVG caret always renders and mirrors correctly; the
+                      text arrow was a blank box in Arabic. */}
+                  {i > 0 && (
+                    <CaretRight size={11} className="text-muted-foreground shrink-0 rtl:rotate-180" />
+                  )}
                   <span className="rounded-full bg-primary/10 text-primary text-[12px] font-bold px-2.5 py-1">
                     {ar ? c.nameAr : c.name}
                     <span className="opacity-70 font-semibold"> {c.nights}</span>

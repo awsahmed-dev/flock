@@ -154,6 +154,12 @@ export function LiveDayTimeline({
    Renders once above the day list: how long to departure, and the
    unpacked items that still need attention (day-pinned documents already
    render under each day). */
+/** Category key → i18n key, mirroring packing-board's CATEGORY_META. */
+const PACK_CAT_KEY: Record<string, string> = {
+  general: "general", clothes: "clothes", docs: "documents", tech: "tech",
+  toiletries: "toiletries", medical: "medical", outdoor: "outdoor", other: "other",
+};
+
 export function DepartureStrip({
   tripId,
   startDate,
@@ -243,7 +249,13 @@ export function DepartureStrip({
                     <span className={`flex-1 text-[14px] font-semibold ${isPacked ? "line-through text-muted-foreground" : ""}`}>
                       {p.label}
                     </span>
-                    <span className="text-[12px] text-tertiary capitalize">{p.category}</span>
+                    {/* The raw key was printed here, so an Arabic packing
+                        list read «جواز السفر → Docs». The /pack screen has
+                        always had these in Arabic; this one just never
+                        asked for them. */}
+                    <span className="text-[12px] text-tertiary">
+                      {t(`pack.categories.${PACK_CAT_KEY[p.category] ?? "other"}`)}
+                    </span>
                   </button>
                 </li>
               );

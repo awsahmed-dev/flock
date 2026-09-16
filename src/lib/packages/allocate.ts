@@ -9,13 +9,17 @@ import type { Base, BaseId, Route, TransportMode } from "@/lib/packages/types";
  *  1. Route nights are RATIOS, never absolutes.
  *  2. Every base gets at least one night while nights remain; a trip shorter
  *     than the route drops bases from the TAIL and says which.
- *  3. No base may exceed its `maxNights`. Linear scaling put 13 nights in
- *     Tokyo on a 30-night trip — visibly wrong to anyone who has been, and it
- *     takes the "curated = trustworthy" positioning down with it.
- *  4. Because `maxNights <= days.length` for every base (enforced in tests),
- *     rule 3 also makes a blank curated day structurally impossible. Nights
- *     we cannot place become `overflow` — an honest prompt to add a base,
- *     not padding.
+ *  3. `maxNights` caps CURATED CONTENT, not the right to stay. Linear scaling
+ *     put 13 nights in Tokyo on a 30-night trip — visibly wrong to anyone who
+ *     has been, and it takes the "curated = trustworthy" positioning down
+ *     with it. So curated nights stop at the ceiling.
+ *  4. But every night of the trip still belongs to a base. Nights past the
+ *     ceiling are spread as FREE days and reported as `overflow`, so the UI
+ *     can offer to fill them or suggest another base. A tester's sixth night
+ *     in Tbilisi used to belong to nothing: it existed in the day grid,
+ *     showed on no city screen, and no control could reach it.
+ *  5. Because `maxNights <= days.length` for every base (enforced in tests),
+ *     rule 3 makes a blank day impossible at or below a route's capacity.
  */
 
 export interface AllocatedLeg {
@@ -29,7 +33,12 @@ export interface Allocation {
   legs: AllocatedLeg[];
   /** bases the trip was too short to include, in route order */
   dropped: BaseId[];
-  /** nights the route has no capacity for — offer more bases, never inflate */
+  /**
+   * Nights beyond the route's curated depth. They ARE allocated — every
+   * night belongs to a base — but they arrive as free days, so the UI can
+   * offer to fill them or suggest another base rather than pretending the
+   * route is deeper than it is.
+   */
   overflow: number;
 }
 
@@ -78,6 +87,20 @@ export function allocateNights(
   const transportFor = (from: BaseId, to: BaseId) =>
     route.transport.find((t) => t.from === from && t.to === to) ?? null;
 
+  // Every night of the trip must belong to a base.
+  //
+  // A tester booked 6 nights in Tbilisi, whose curated content covers 5. The
+  // sixth belonged to nothing: it existed in the day grid, appeared on no
+  // city screen, and no control could reach it. The ceiling is a cap on
+  // CURATED CONTENT, not permission to stay — so anything left over is
+  // spread across the stays as free days, which is honest and is exactly
+  // what "fill the free days" is for.
+  const freeNights = remaining;
+  for (let i = 0; remaining > 0; i = (i + 1) % keep.length) {
+    nights[i] += 1;
+    remaining -= 1;
+  }
+
   return {
     legs: keep.map((l, i) => {
       const prev = i > 0 ? keep[i - 1].baseId : null;
@@ -90,7 +113,7 @@ export function allocateNights(
       };
     }),
     dropped,
-    overflow: remaining,
+    overflow: freeNights,
   };
 }
 

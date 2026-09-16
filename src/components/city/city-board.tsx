@@ -95,7 +95,10 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         <div className="rounded-2xl border border-border bg-card p-4">
           <h1 className="text-[22px] font-extrabold leading-tight">{ar ? board.nameAr : board.name}</h1>
           <p className="mt-1 text-[12.5px] text-muted-foreground">
-            {format(parseISO(board.checkIn), "EEE d MMM")} → {format(parseISO(board.checkOut), "EEE d MMM")}
+            {/* An en dash, not an arrow: the Arabic face has no arrow glyph
+                (and the Latin subset drops the Arrows block), so "→" rendered
+                as a blank box — and in RTL it pointed the wrong way anyway. */}
+            {format(parseISO(board.checkIn), "EEE d MMM")} – {format(parseISO(board.checkOut), "EEE d MMM")}
             {" · "}
             {t("shape.nights", { count: board.nights })}
           </p>

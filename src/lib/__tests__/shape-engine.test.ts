@@ -81,11 +81,12 @@ describe("tripNightsBetween", () => {
 });
 
 describe("allocateNights", () => {
-  it("always allocates exactly the trip's nights, or reports the remainder", () => {
+  it("allocates every night of the trip, always", () => {
     for (const n of [1, 2, 3, 5, 7, 10, 14, 20, 30, 60]) {
       const a = allocateNights(ROUTE, BASES, n);
       const sum = a.legs.reduce((x, l) => x + l.nights, 0);
-      expect(sum + a.overflow).toBe(n);
+      // A night that belongs to no base is a day the user can never reach.
+      expect(sum, `${n} nights`).toBe(n);
     }
   });
 
@@ -102,18 +103,30 @@ describe("allocateNights", () => {
     expect(a.dropped).toEqual(["osaka"]);
   });
 
-  it("never exceeds a base's useful maximum — no 13 nights in Tokyo", () => {
+  it("keeps CURATED nights inside each base's ceiling — no 13 curated days in Tokyo", () => {
     const a = allocateNights(ROUTE, BASES, 30);
-    for (const l of a.legs) expect(l.nights).toBeLessThanOrEqual(BASES[l.baseId].maxNights);
-    // capacity is 6+5+4 = 15, so a 30-night trip overflows by 15
+    // capacity is 6+5+4 = 15, so 15 of the 30 nights are free days
     expect(routeCapacity(ROUTE, BASES)).toBe(15);
     expect(a.overflow).toBe(15);
+    const days = projectDays(segmentsFromLegs(a.legs, "2026-09-30"), BASES, "2026-09-30");
+    for (const id of ["tokyo", "kyoto", "osaka"]) {
+      const curated = days.filter((d) => d.baseId === id && d.places.length > 0 && !d.departure);
+      expect(curated.length, `${id} curated days`).toBeLessThanOrEqual(BASES[id].maxNights);
+    }
   });
 
-  it("reports overflow rather than inflating, so the UI can offer more bases", () => {
+  it("stays inside every ceiling when the trip fits", () => {
+    const a = allocateNights(ROUTE, BASES, 12);
+    expect(a.overflow).toBe(0);
+    for (const l of a.legs) expect(l.nights).toBeLessThanOrEqual(BASES[l.baseId].maxNights);
+  });
+
+  it("reports how many nights are beyond the route's depth", () => {
     const a = allocateNights(ROUTE, BASES, 20);
+    // 15 nights of curated depth, so 5 arrive as free days — and all 20
+    // are still assigned to a base.
     expect(a.overflow).toBe(5);
-    expect(a.legs.reduce((x, l) => x + l.nights, 0)).toBe(15);
+    expect(a.legs.reduce((x, l) => x + l.nights, 0)).toBe(20);
   });
 
   it("respects the ratio when there is room", () => {
