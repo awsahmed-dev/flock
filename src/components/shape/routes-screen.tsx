@@ -147,7 +147,11 @@ export function RoutesScreen({
               </span>
               {r.overflow > 0 && (
                 <span className="text-[11px] text-[color:var(--clr-dune)]">
-                  {t("routes.overflow", { count: r.overflow })}
+                  {/* These nights ARE allocated now, so "left over" was a
+                      flat contradiction of the chain printed right above:
+                      "Tokyo 10 › Kyoto 8 › Osaka 7" and "10 nights left
+                      over" on a 25-night trip. */}
+                  {t("routes.freeDays", { count: r.overflow })}
                 </span>
               )}
               {r.dropped.length > 0 && (

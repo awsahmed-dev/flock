@@ -1799,7 +1799,8 @@
     "toSaves": "Go to Discover",
     "adopting": "Setting up your plan…",
     "adopted": "Done — your plan is in",
-    "failed": "Couldn't set that up — try again"
+    "failed": "Couldn't set that up — try again",
+    "freeDays": "{count, plural, one {# of them a free day} other {# of them free days}}"
   },
   "shape": {
     "title": "Trip shape",
@@ -1853,7 +1854,11 @@
     "gaveTo": "{count, plural, one {The night went to {place}} other {# nights went to {place}}}",
     "atMinimum": "{place} can't go below one night — remove the base instead",
     "lockedReason": "This stay is booked — unmark it to change the nights",
-    "nowhereToGo": "Nowhere to put that night — every city is at its useful max. Add a base."
+    "nowhereToGo": "Nowhere to put that night — every city is at its useful max. Add a base.",
+    "emptyDays": "{count, plural, one {# empty day} other {# empty days}}",
+    "overAssigned": "{count, plural, one {# day past the trip} other {# days past the trip}}",
+    "daysSomeEmpty": "{count, plural, one {# still empty} other {# still empty}}",
+    "removeDayTrip": "Remove the {place} day trip"
   },
   "city": {
     "all": "All",

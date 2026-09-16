@@ -6,6 +6,7 @@ import { trips, tripMembers } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { refitShapeToTrip } from "@/lib/actions/shape";
 
 async function assertOwner(tripId: string) {
   const user = await getCurrentUser();
@@ -30,12 +31,24 @@ export async function updateTrip(formData: FormData) {
   const budgetTotal = budgetRaw ? parseFloat(budgetRaw) : null;
   const currency = formData.get("currency") as string;
 
+  const before = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
+
   await db
     .update(trips)
     .set({ name, destination, startDate, endDate, budgetTotal, currency })
     .where(eq(trips.id, tripId));
 
+  // The trip's dates are the source of truth; the shape has to follow them.
+  // Without this a shortened trip kept stays running past its own end, and
+  // a moved start date left the stored segments four days out of step with
+  // the screen.
+  if (before && (before.startDate !== startDate || before.endDate !== endDate)) {
+    await refitShapeToTrip(tripId).catch(() => {});
+  }
+
   revalidatePath(`/trips/${tripId}`);
+  revalidatePath(`/trips/${tripId}/shape`);
+  revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/settings`);
 }
 

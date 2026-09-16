@@ -10,7 +10,7 @@ import {
   itineraryItems,
   savedPlaces,
 } from "@/lib/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, gt, lt, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -95,6 +95,8 @@ export interface RouteCard {
 
 export interface ShapeView {
   tripNights: number;
+  /** days of the plan with nothing on them — "assigned" is not "ready" */
+  emptyDays: number;
   tripStart: string;
   tripEnd: string;
   bases: BaseCard[];
@@ -225,8 +227,18 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     nameAr: BASES[e.baseId]?.nameAr ?? e.baseId,
   }));
 
+  const stopCounts = await db
+    .select({ dayDate: itineraryItems.dayDate })
+    .from(itineraryItems)
+    .where(eq(itineraryItems.tripId, tripId));
+  const filled = new Set(stopCounts.map((r) => r.dayDate));
+
   return {
     tripNights: tripNightsBetween(trip.startDate, trip.endDate),
+    // A night can belong to a base and still be an empty day. Reporting
+    // only "every day assigned" told a tester his 25-night trip was ready
+    // while ten of its days had nothing on them at all.
+    emptyDays: days.filter((d) => !filled.has(d.date)).length,
     tripStart: trip.startDate,
     tripEnd: trip.endDate,
     bases,
@@ -268,6 +280,15 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
       .where(eq(tripRemovedStops.tripId, tripId)),
   ]);
   const gone = new Set(removed.map((r) => r.title));
+
+  // Anything the crew chose by hand stays put, and the projection must not
+  // offer it again — otherwise a reshape would duplicate it alongside the
+  // curated original.
+  const kept = await db
+    .select({ title: itineraryItems.title })
+    .from(itineraryItems)
+    .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "chosen")));
+  for (const k of kept) gone.add(k.title);
 
   const days = projectDays(segments, BASES, tripStart, saveRows as SaveForPlan[]);
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
@@ -328,6 +349,23 @@ async function reproject(tripId: string, segments: Segment[], tripStart: string,
         .where(eq(savedPlaces.id, sv.id));
     }
   });
+
+  // A stop outside the trip's dates exists in the database and nowhere in
+  // the app. Shortening a trip used to strand the places someone had chosen
+  // just past the new end — so they are pulled back onto the last day
+  // rather than quietly disappearing.
+  const first = days[0]?.date;
+  const last = days[days.length - 1]?.date;
+  if (first && last) {
+    await db
+      .update(itineraryItems)
+      .set({ dayDate: last })
+      .where(and(eq(itineraryItems.tripId, tripId), gt(itineraryItems.dayDate, last)));
+    await db
+      .update(itineraryItems)
+      .set({ dayDate: first })
+      .where(and(eq(itineraryItems.tripId, tripId), lt(itineraryItems.dayDate, first)));
+  }
 
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/shape`);
@@ -731,4 +769,60 @@ export async function removedCount(tripId: string) {
     .from(tripRemovedStops)
     .where(eq(tripRemovedStops.tripId, tripId));
   return rows.length;
+}
+
+
+/**
+ * Re-fit the shape to the trip's dates.
+ *
+ * Changing a trip's dates used to leave the shape where it was: a tester
+ * pulled the end date back by 18 days and the last stay still ran four days
+ * PAST the new end, with nine itinerary rows stranded beyond it — present in
+ * the database, invisible in the app. Moving the START date was worse: the
+ * screen rendered dates from the trip while the stored segments kept the old
+ * ones, so the two disagreed by four days on every row and day one showed
+ * the wrong city.
+ *
+ * So dates are the trip's, always, and the shape is re-dated and re-fitted
+ * to them whenever they move.
+ */
+export async function refitShapeToTrip(tripId: string) {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
+  if (!trip) return;
+
+  const rows = await db
+    .select()
+    .from(tripSegments)
+    .where(eq(tripSegments.tripId, tripId))
+    .orderBy(tripSegments.sortOrder);
+  if (!rows.length) return;
+
+  let segments = redate(rows.map(toSegment), trip.startDate);
+  const want = tripNightsBetween(trip.startDate, trip.endDate);
+  if (want <= 0) return;
+
+  // Trim from the tail when the trip shrank; drop whole stays that no
+  // longer fit rather than leaving them hanging past the end.
+  let total = segments.reduce((n, sg) => n + segmentNights(sg), 0);
+  while (total > want && segments.length) {
+    const last = segments[segments.length - 1];
+    const n = segmentNights(last);
+    if (n > 1 && total - 1 >= segments.length) {
+      last.checkOut = addIso(last.checkIn, n - 1);
+      total -= 1;
+    } else {
+      segments.pop();
+      total -= n;
+    }
+    segments = redate(segments, trip.startDate);
+  }
+  // Grow the tail when it lengthened, so the whole trip still has a base.
+  if (total < want && segments.length) {
+    const last = segments[segments.length - 1];
+    last.checkOut = addIso(last.checkIn, segmentNights(last) + (want - total));
+  }
+
+  await persist(tripId, redate(segments, trip.startDate), trip.startDate, user.id);
 }

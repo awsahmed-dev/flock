@@ -317,7 +317,12 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
     topTip: place.why || null,
     topTipAr: place.whyAr || null,
     rating: place.rating ?? null,
-    provider: place.fromSave ? "google" : "package",
+    // "chosen", never "package": the shape regeneration deletes every
+    // package row and rebuilds. A tester added Fushimi Inari, then
+    // shortened TOKYO by one night — a different city — and Fushimi was
+    // gone, while every stop the app had picked came back. A place someone
+    // went looking for is not disposable.
+    provider: "chosen",
     status: "confirmed",
     sortOrder: order,
     createdBy: user.id,
@@ -406,7 +411,8 @@ export async function fillFreeDays(tripId: string, baseId: string) {
       topTip: p.why || null,
       topTipAr: p.whyAr || null,
       rating: p.rating ?? null,
-      provider: p.fromSave ? "google" : "package",
+      // Asked for by name, so it survives a reshape like any other choice.
+      provider: "chosen" as const,
       status: "confirmed" as const,
       sortOrder: i,
       createdBy: user.id,

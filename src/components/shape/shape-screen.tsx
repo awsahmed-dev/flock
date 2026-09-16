@@ -126,6 +126,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
    * buried at the bottom of this card: day trips.
    */
   const single = bases.length === 1;
+  const fullyCovers = assigned >= view.tripNights;
 
   return (
     <div className="pb-32">
@@ -139,12 +140,21 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
             </span>
             <span
               className={`text-[12px] font-bold shrink-0 ${
-                unassigned === 0
+                unassigned === 0 && view.emptyDays === 0
                   ? "text-[color:var(--clr-moss)]"
                   : "text-[color:var(--clr-dune)]"
               }`}
             >
-              {unassigned === 0 ? t("shape.covered") : t("shape.unassigned", { count: Math.abs(unassigned) })}
+              {/* Math.abs() made over-allocation read as under-allocation in
+                  the same words — "4 days with no base" on a trip whose
+                  shape ran four days PAST its end. */}
+              {unassigned === 0
+                ? view.emptyDays > 0
+                  ? t("shape.emptyDays", { count: view.emptyDays })
+                  : t("shape.covered")
+                : unassigned > 0
+                  ? t("shape.unassigned", { count: unassigned })
+                  : t("shape.overAssigned", { count: -unassigned })}
             </span>
           </div>
           <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
@@ -169,6 +179,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 base={b}
                 first={i === 0}
                 single={single}
+                fullyCovers={fullyCovers}
                 canEdit={canEdit}
                 busy={busy}
                 ar={ar}
@@ -274,7 +285,10 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
         >
           {t("shape.viewDays")}
           <span className="opacity-80 text-[13px] font-semibold">
-            · {t("shape.daysProjected", { count: view.days.length })}
+            {/* "26 days ready" with ten of them empty is not ready. */}
+            · {view.emptyDays > 0
+              ? t("shape.daysSomeEmpty", { count: view.emptyDays })
+              : t("shape.daysProjected", { count: view.days.length })}
           </span>
           <CaretRight size={16} className="rtl:rotate-180" />
         </Link>
@@ -287,12 +301,14 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
 }
 
 function BaseRow({
-  base, first, single, canEdit, busy, ar, t, isGroup, tripId,
+  base, first, single, fullyCovers, canEdit, busy, ar, t, isGroup, tripId,
   onNights, onRemove, onMode, onDayTrip, onLock, onReact,
 }: {
   base: BaseCard;
   first: boolean;
   single: boolean;
+  /** this one base already covers the whole trip, so nights can't move */
+  fullyCovers: boolean;
   tripId: string;
   canEdit: boolean;
   busy: boolean;
@@ -406,7 +422,11 @@ function BaseRow({
           )}
 
           {/* the trade-off, made directly */}
-          <div className={`mt-2 items-center gap-1.5 flex-wrap ${single ? "hidden" : "flex"}`}>
+          {/* Hidden only when a single base already owns the whole trip.
+              A tester removed bases until one was left and the stepper row
+              collapsed to nothing — no count, no controls — while the
+              header read "21 days with no base". */}
+          <div className={`mt-2 items-center gap-1.5 flex-wrap ${single && fullyCovers ? "hidden" : "flex"}`}>
             {/* A stepper that silently does nothing is worse than one that
                 refuses out loud: a tester tapped minus on three cities in a
                 row, got no movement and no message, and concluded the screen
@@ -465,7 +485,7 @@ function BaseRow({
                       type="button"
                       style={{ touchAction: "none" }}
                       onClick={() => onDayTrip(d.id, false)}
-                      aria-label={t("shape.remove")}
+                      aria-label={t("shape.removeDayTrip", { place: ar ? d.nameAr : d.name })}
                       className="w-9 h-9 -me-1.5 rounded-full inline-flex items-center justify-center text-muted-foreground hover:text-[color:var(--clr-horizon)]"
                     >
                       <X size={13} />
