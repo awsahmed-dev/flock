@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
-import { format as dfFormat } from "@/lib/i18n/date-fns";
+import { formatWith } from "@/lib/i18n/date-fns";
+import { getLocale } from "@/lib/i18n";
 import { parseDateOnly } from "@/lib/date-only";
 import { Suitcase as Luggage, Users } from "@phosphor-icons/react/dist/ssr";
 import { TripPrepChecklist } from "@/components/trips/trip-prep-checklist";
@@ -38,7 +39,11 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
     docsCount: props.documents.length, ticker: ticker ? { text: ticker.text } : null,
   });
   const daysUntil = Math.max(0, differenceInCalendarDays(parseDateOnly(startDate), new Date()));
-  const dateLabel = dfFormat(parseDateOnly(startDate), "EEE d MMM");
+  // Explicit locale: this is a server component, and the module-level one
+  // is shared across concurrent requests — which is how an Arabic trip home
+  // ended up printing "Thu 24 Sep" and its weather row "Thursday".
+  const loc = await getLocale();
+  const dateLabel = formatWith(loc, parseDateOnly(startDate), "EEE d MMM");
 
   // Weather for the start date — open-meteo, no API key. Row hidden on any
   // failure (§3-D: no placeholder).
@@ -126,7 +131,7 @@ export async function DepartureCockpit(props: CockpitShared & { t: T }) {
 
           {weather && (
             <BoardRow>
-              ⛅ {weather.tempMax}° {t(weather.key)} {dfFormat(parseDateOnly(startDate), "EEEE")}
+              ⛅ {weather.tempMax}° {t(weather.key)} {formatWith(loc, parseDateOnly(startDate), "EEEE")}
               {/(Rain|Drizzle|Thunder)/.test(weather.key) ? t("cockpit.rainLayer") : ""}
             </BoardRow>
           )}

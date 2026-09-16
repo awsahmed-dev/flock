@@ -185,8 +185,14 @@ export default async function TripPage({ params }: Props) {
       .slice(0, 3) as TeaserPlace[];
   }
 
-  const dict = getDictionary(await getLocale());
-  const t = (key: string, params?: Record<string, string | number>) => tFromDict(dict, key, params);
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  // The locale must reach tFromDict, or plural selection falls back to
+  // English rules: Arabic needs "few" for 3–10 and English has no such
+  // category, so the trip home rendered «بعد 7 يوم» where it should read
+  // «بعد ٧ أيام» — while other strings on the same screen got it right.
+  const t = (key: string, params?: Record<string, string | number>) =>
+    tFromDict(dict, key, params, locale);
 
   // Crew Pulse ticker: last activity row (§6.5 — one line, never a feed).
   const lastActivity = await db.query.activities.findFirst({

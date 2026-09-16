@@ -65,6 +65,33 @@ function arabicPattern(p: string): string {
 }
 
 /**
+ * Format with an EXPLICIT locale — the only safe option on the server.
+ *
+ * `active` is module state, and module state on the server is shared by
+ * every concurrent request. Under streaming, one request can overwrite it
+ * while another is still rendering, so an Arabic page could serialise an
+ * English date — which is exactly what a tester saw on her trip home
+ * ("Tbilisi · Thu 24 Sep" inside an otherwise Arabic screen) and is also
+ * what produced the hydration mismatch, because the client re-rendered the
+ * same date correctly.
+ *
+ * Client components are fine with `format` — their module graph is
+ * per-browser, and LocaleProvider sets it during render. SERVER components
+ * must use this and pass the locale they resolved for the request.
+ */
+export function formatWith(
+  localeId: LocaleId,
+  date: Date | number,
+  formatStr: string,
+  options?: FormatOptions,
+): string {
+  return fnsFormat(date, localeId === "ar" ? arabicPattern(formatStr) : formatStr, {
+    locale: LOCALES[localeId],
+    ...options,
+  });
+}
+
+/**
  * Drop-in replacement for date-fns `format`. Always passes the active
  * locale unless a caller explicitly overrides it via `options.locale`.
  */
