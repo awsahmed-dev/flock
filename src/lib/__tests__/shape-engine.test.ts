@@ -170,10 +170,25 @@ describe("projectDays", () => {
     // three arrivals: the flight in, plus Kyoto and Osaka by train
     expect(travel).toHaveLength(3);
     expect(days[0].travel).toBe(true);
-    // an arrival afternoon must not carry a 09:00 stop
+    // The move itself is a morning item; everything you actually GO to on
+    // an arrival day must be afternoon or later.
     for (const d of travel) {
-      expect(d.places.every((p) => parseInt((p.startTime ?? "12").slice(0, 2), 10) >= 14)).toBe(true);
+      const visits = d.places.filter((p) => !p.leg);
+      expect(visits.every((p) => parseInt((p.startTime ?? "12").slice(0, 2), 10) >= 14)).toBe(true);
     }
+  });
+
+  it("puts the journey on the day you travel", () => {
+    const days = projectDays(segsFor(7), BASES, "2026-09-30");
+    const kyotoArrival = days.find((d) => d.travel && d.baseId === "kyoto")!;
+    const leg = kyotoArrival.places.find((p) => p.leg);
+    // The shape knew "train, 2h 15m" and the day used to say nothing.
+    expect(leg, "arrival day has no journey on it").toBeTruthy();
+    expect(leg!.name).toMatch(/^Train to /);
+    expect(leg!.why).toMatch(/2h 15m/);
+    // ...and the first day of the trip has no leg — you did not come from
+    // another base on this trip.
+    expect(days[0].places.some((p) => p.leg)).toBe(false);
   });
 
   it("only renames a day when you arrived from another base", () => {

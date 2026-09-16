@@ -22,6 +22,8 @@ export interface CuratedPlace {
   /** 0 = free … 3 = expensive */
   priceBand?: 0 | 1 | 2 | 3;
   startTime?: string;
+  /** the move between bases, not somewhere you go */
+  leg?: boolean;
 }
 
 export interface CuratedDay {

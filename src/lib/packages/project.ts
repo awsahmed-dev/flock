@@ -111,6 +111,33 @@ export function estimateLeg(from: Base, to: Base): { transportInMode: TransportM
   return { transportInMode: "train", transportInMinutes: Math.max(20, Math.round((km / 90) * 60)) };
 }
 
+const MODE_EN: Record<string, string> = {
+  train: "Train", flight: "Flight", car: "Drive", bus: "Bus", ferry: "Ferry",
+};
+const MODE_AR: Record<string, string> = {
+  train: "قطار", flight: "طيران", car: "سيارة", bus: "باص", ferry: "عبّارة",
+};
+
+/** "About 2h 15m, then check in and drop the bags." */
+function durationLine(mins: number | null, loc: "en" | "ar"): string {
+  if (!mins) {
+    return loc === "ar" ? "يوم انتقال — خذوا راحتكم." : "A moving day — take it easy.";
+  }
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const dur =
+    loc === "ar"
+      ? h
+        ? `${h} ساعة${m ? ` و${m} دقيقة` : ""}`
+        : `${m} دقيقة`
+      : h
+        ? `${h}h${m ? ` ${m}m` : ""}`
+        : `${m}m`;
+  return loc === "ar"
+    ? `حوالي ${dur} — بعدها سجّلوا دخولكم وحطّوا الشنط.`
+    : `About ${dur} — then check in and drop the bags.`;
+}
+
 const hour = (t?: string) => (t ? parseInt(t.slice(0, 2), 10) : 12);
 
 /** Afternoon-and-later, for a day that begins on a train. */
@@ -188,6 +215,23 @@ export function projectDays(
       }
 
       const shape = pool.shift();
+      // The move itself is a stop. The shape knew "train, 2h 15m" and the
+      // day it happened on said nothing at all — no checkout, no train, no
+      // "today you go to Kyoto" — on a multi-city trip that is the single
+      // most important thing on the day.
+      const leg: CuratedPlace[] = arrivedFromAnotherBase
+        ? [
+            {
+              name: `${MODE_EN[seg.transportInMode ?? "train"]} to ${base.name}`,
+              nameAr: `${MODE_AR[seg.transportInMode ?? "train"]} إلى ${base.nameAr}`,
+              why: durationLine(seg.transportInMinutes, "en"),
+              whyAr: durationLine(seg.transportInMinutes, "ar"),
+              category: "rest",
+              startTime: "09:00",
+              leg: true,
+            },
+          ]
+        : [];
       out.push({
         date,
         index: index++,
@@ -204,9 +248,9 @@ export function projectDays(
         dayTripTo: null,
         departure: false,
         places: !shape
-          ? []
+          ? leg
           : isTravel
-            ? afternoonOf(shape.places, longHaul ? 1 : 2)
+            ? [...leg, ...afternoonOf(shape.places, longHaul ? 1 : 2)]
             : shape.places,
       });
     }

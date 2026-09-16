@@ -359,7 +359,9 @@ async function reproject(
           // The app is Arabic-first and this wrote English only, so the whole
           // curated Arabic corpus never reached a screen.
           titleAr: p.nameAr || null,
-          type: "activity",
+          // The move between cities is transport, and the day grid already
+          // knows how to render that differently from somewhere you visit.
+          type: p.leg ? "transport" : "activity",
           startTime: p.startTime ?? null,
           locationName: p.name,
           // Real, hand-checked coordinates. Curated stops used to ship with
