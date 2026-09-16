@@ -14,8 +14,9 @@ import { useEffect, useRef, type CSSProperties, type PointerEvent as RPointerEve
  * The rules that make touch dragging reliable:
  *   • the drag ZONE gets `touch-action: none` — the browser never claims the
  *     gesture for scrolling, so pointermove keeps firing;
- *   • pointer capture on the zone element itself (not e.target), so the
- *     gesture survives the finger leaving the element;
+ *   • pointer capture on the zone element itself (not e.target), taken only
+ *     ONCE the 6px slop is exceeded — capturing on pointerdown retargets the
+ *     click away from any button inside the zone;
  *   • a 6px slop before it counts as a move, so taps stay taps;
  *   • after a real drag the following click is swallowed at capture phase,
  *     so a link under the finger does not navigate;
@@ -60,6 +61,16 @@ export function useSheetDrag(opts: {
     if (!d || d.id !== id) return;
     const dy = y - d.startY;
     if (!d.moved && Math.abs(dy) < 6) return;
+    if (!d.moved && id !== TOUCH_ID) {
+      // Capture only once this is genuinely a drag. Capturing on pointerdown
+      // retargets every later pointer event — and therefore the click — to
+      // the zone element, so a button inside the zone never receives its own
+      // click. That silently broke the itinerary's day chips for mouse and
+      // pen: tapping a day did nothing and the plan would only ever show
+      // day one. Touch was unaffected (it uses the touch handlers), which is
+      // why it survived phone QA.
+      try { d.el.setPointerCapture(id); } catch { /* ignore */ }
+    }
     d.moved = true;
     const now = performance.now();
     const dt = Math.max(1, now - d.lastT);
@@ -107,9 +118,8 @@ export function useSheetDrag(opts: {
     onPointerDown(e: RPointerEvent) {
       if (e.pointerType === "touch") return; // fingers use the touch handlers
       if (e.pointerType === "mouse" && e.button !== 0) return;
-      const el = e.currentTarget as HTMLElement;
-      try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ }
-      begin(e.pointerId, e.clientY, el);
+      // No pointer capture here — see move(). A tap must stay a tap.
+      begin(e.pointerId, e.clientY, e.currentTarget as HTMLElement);
     },
     onPointerMove(e: RPointerEvent) {
       if (e.pointerType === "touch") return;
