@@ -111,7 +111,13 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
   const gone = new Set(removed.map((r) => r.title));
   const onPlan = new Set(stops.map((s) => s.title));
 
-  const dates = eachDate(String(seg.checkIn), String(seg.checkOut)).slice(0, -1);
+  // Nights are checkIn..checkOut exclusive — except for the last base,
+  // which also owns the departure day. Without this the city header said
+  // "Tue 13 → Sat 17" and then listed only 13–16, while the plan had a
+  // stop on the 17th: two screens, two answers.
+  const isLast = segs[segs.length - 1]?.baseId === baseId;
+  const span = eachDate(String(seg.checkIn), String(seg.checkOut));
+  const dates = isLast ? span : span.slice(0, -1);
   const countFor = (d: string) => stops.filter((s) => s.dayDate === d).length;
   const days: CityDay[] = dates.map((d, i) => ({
     date: d,
@@ -208,7 +214,10 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     checkOut: String(seg.checkOut),
     nights: dates.length,
     days,
-    freeDays: days.filter((d) => d.free).length,
+    // Must agree with fillFreeDays, which skips arrival days. They
+    // disagreed, so the button offered "Fill the free day" and the action
+    // answered "No free days here" — on the same screen, at once.
+    freeDays: days.filter((d) => d.free && !d.travel).length,
     places: curated,
     planned,
     siblings: segs

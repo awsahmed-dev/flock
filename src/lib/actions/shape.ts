@@ -204,7 +204,9 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
         .filter((t) => BASES[t])
         .map((t) => ({ id: t, name: BASES[t].name, nameAr: BASES[t].nameAr })),
       reachable: b.reachable
-        .filter((r) => BASES[r] && !s.dayTrips.includes(r))
+        // Not a place the trip already sleeps in — offering a "day trip"
+        // to your own base reads as a bug, and is one.
+        .filter((r) => BASES[r] && !s.dayTrips.includes(r) && !segments.some((x) => x.baseId === r))
         .map((r) => ({ id: r, name: BASES[r].name, nameAr: BASES[r].nameAr })),
       savesHere: saves.filter((sv) => near(b, sv.lat, sv.lng)).length,
       reactions: {
@@ -575,50 +577,107 @@ function addIso(iso: string, n: number): string {
 /* ── one-tap day pacing ───────────────────────────────────────────────── */
 
 /**
- * «خفّف» — make one day lighter.
+ * Make one day lighter.
  *
- * User testing: "I wanted fewer stops per day and one lazy day. The only
- * tools are: delete one item at a time, and drag to reorder." Deleting four
- * stops across fourteen days by hand is not a pace control.
+ * Reported: "It never stops, and it doesn't move anything — it deletes."
+ * A friendly-sounding button with no warning and no undo was silently
+ * destroying real places, and it chose badly — asked to lighten a Kyoto
+ * day it removed two walks minutes from Kiyomizu-dera and KEPT the two
+ * stops out in Uji, a train ride away.
  *
- * Drops the weakest curated stop on the day — lowest rated, latest in the
- * evening if unrated — and tombstones it, so the next rebuild honours it.
- * Only curated rows are eligible: something the crew added by hand is a
- * decision, not filler.
+ * So two changes. It drops the stop that makes the day SPRAWL — the one
+ * furthest from everything else — because that is what actually makes a
+ * day heavy. And it MOVES that stop to a free day in the same city when
+ * there is one, rather than throwing it away; only with nowhere to put it
+ * does it remove, and then it says so and can be undone.
  */
 export async function lightenDay(tripId: string, dayDate: string) {
   const user = await requireOwner(tripId);
   const day = parseOr(zDateOnly, dayDate, "Invalid day");
 
-  const rows = await db
+  const all = await db
     .select()
     .from(itineraryItems)
-    .where(
-      and(
-        eq(itineraryItems.tripId, tripId),
-        eq(itineraryItems.dayDate, day),
-        eq(itineraryItems.provider, "package"),
-      ),
-    );
+    .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "package")));
+  const rows = all.filter((r) => r.dayDate === day);
   if (rows.length <= 1) throw new Error("Nothing left to drop here");
 
-  const weakest = rows.slice().sort((a, b) => {
-    const ra = a.rating ?? 0;
-    const rb = b.rating ?? 0;
-    if (ra !== rb) return ra - rb;
-    return (b.startTime ?? "").localeCompare(a.startTime ?? "");
-  })[0];
+  // The outlier: furthest from the day's centre of gravity. Falls back to
+  // the lowest rated when we have no coordinates to reason with.
+  const geo = rows.filter((r) => r.locationLat != null && r.locationLng != null);
+  let victim = rows[0];
+  if (geo.length >= 3) {
+    const cx = geo.reduce((n, r) => n + r.locationLat!, 0) / geo.length;
+    const cy = geo.reduce((n, r) => n + r.locationLng!, 0) / geo.length;
+    victim = geo.reduce((a, b) => {
+      const d = (r: typeof a) => (r.locationLat! - cx) ** 2 + (r.locationLng! - cy) ** 2;
+      return d(b) > d(a) ? b : a;
+    });
+  } else {
+    victim = rows.slice().sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0))[0];
+  }
+
+  // Somewhere else in this city with room? Move it rather than bin it.
+  const sameBase = victim.baseId
+    ? all.filter((r) => r.baseId === victim.baseId).map((r) => r.dayDate)
+    : [];
+  const counts = new Map<string, number>();
+  for (const d of sameBase) counts.set(d, (counts.get(d) ?? 0) + 1);
+  // Not onto the arrival day — that one is deliberately light because you
+  // spent the morning on a train.
+  const arrival = [...sameBase].sort()[0];
+  const target = [...new Set(sameBase)]
+    .filter((d) => d !== day && d !== arrival)
+    .sort((a, b) => (counts.get(a) ?? 0) - (counts.get(b) ?? 0))[0];
+  const roomy = target && (counts.get(target) ?? 0) < rows.length - 1;
+
+  if (roomy) {
+    await db
+      .update(itineraryItems)
+      .set({ dayDate: target, startTime: null, sortOrder: counts.get(target) ?? 0 })
+      .where(eq(itineraryItems.id, victim.id));
+    revalidatePath(`/trips/${tripId}/itinerary`);
+    return {
+      moved: true as const,
+      to: target,
+      removed: victim.title,
+      removedAr: victim.titleAr ?? victim.title,
+    };
+  }
 
   await db.transaction(async (tx) => {
     await tx
       .insert(tripRemovedStops)
-      .values({ tripId, title: weakest.title, baseId: weakest.baseId ?? null, removedBy: user.id })
+      .values({ tripId, title: victim.title, baseId: victim.baseId ?? null, removedBy: user.id })
       .onConflictDoNothing();
-    await tx.delete(itineraryItems).where(eq(itineraryItems.id, weakest.id));
+    await tx.delete(itineraryItems).where(eq(itineraryItems.id, victim.id));
   });
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  return { removed: weakest.title, removedAr: weakest.titleAr ?? weakest.title };
+  return {
+    moved: false as const,
+    to: null,
+    removed: victim.title,
+    removedAr: victim.titleAr ?? victim.title,
+  };
+}
+
+/** Put back one stop that «خفّف» removed. */
+export async function undoLighten(tripId: string, title: string) {
+  const user = await requireOwner(tripId);
+  await db
+    .delete(tripRemovedStops)
+    .where(and(eq(tripRemovedStops.tripId, tripId), eq(tripRemovedStops.title, title)));
+  const trip = await getTrip(tripId);
+  const rows = await db
+    .select()
+    .from(tripSegments)
+    .where(eq(tripSegments.tripId, tripId))
+    .orderBy(tripSegments.sortOrder);
+  if (rows.length) {
+    await reproject(tripId, relink(redate(rows.map(toSegment), trip.startDate), BASES), trip.startDate, user.id);
+  }
+  return { ok: true };
 }
 
 /** Undo every «خفّف» on a day — the stops come back on the next rebuild. */

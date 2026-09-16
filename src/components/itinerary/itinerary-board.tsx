@@ -34,7 +34,7 @@ import type { SavedRow } from "@/lib/actions/saves";
 import { SavesTray } from "@/components/saves/saves-tray";
 import { WhatsNow } from "@/components/now/whats-now";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
-import { lightenDay } from "@/lib/actions/shape";
+import { lightenDay, undoLighten } from "@/lib/actions/shape";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
@@ -820,11 +820,28 @@ export function ItineraryBoard({
                       startTransition(async () => {
                         try {
                           const r = await lightenDay(tripId, focusedDay);
-                          toast.success(
-                            t("shape.lightened", {
-                              place: locale === "ar" && r.removedAr ? r.removedAr : r.removed,
-                            }),
-                          );
+                          const name = locale === "ar" && r.removedAr ? r.removedAr : r.removed;
+                          if (r.moved) {
+                            toast.success(
+                              t("shape.lightenedMoved", {
+                                place: name,
+                                day: format(parseISO(r.to!), "EEE d MMM"),
+                              }),
+                            );
+                          } else {
+                            // Never destroy a place silently — this button
+                            // used to delete with no message and no undo.
+                            toast.success(t("shape.lightened", { place: name }), {
+                              action: {
+                                label: t("common.undo"),
+                                onClick: () =>
+                                  startTransition(async () => {
+                                    await undoLighten(tripId, r.removed);
+                                    router.refresh();
+                                  }),
+                              },
+                            });
+                          }
                           router.refresh();
                         } catch {
                           toast.error(t("shape.nothingToLighten"));

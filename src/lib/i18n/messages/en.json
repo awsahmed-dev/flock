@@ -1848,7 +1848,8 @@
     "lightened": "Dropped {place}",
     "restore": "Put back what we dropped",
     "restored": "Everything's back",
-    "nothingToLighten": "Nothing left to drop here"
+    "nothingToLighten": "Nothing left to drop here",
+    "lightenedMoved": "Moved {place} to {day}"
   },
   "city": {
     "all": "All",
