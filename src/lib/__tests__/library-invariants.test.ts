@@ -16,6 +16,7 @@ import { describe, it, expect } from "vitest";
 import { BASES, ROUTES, findRoutes, getBase } from "@/lib/packages/library";
 import { allocateNights, routeCapacity } from "@/lib/packages/allocate";
 import { coordsFor } from "@/lib/packages/coords";
+import { photoFor } from "@/lib/packages/photos";
 import { segmentsFromLegs, projectDays } from "@/lib/packages/project";
 
 const all = Object.values(BASES);
@@ -160,6 +161,16 @@ describe("coordinates", () => {
     }
   });
 
+  it("has a photograph for most landmarks", () => {
+    // Three testers stopped at the same wall: a plan for a country they had
+    // never seen, with no pictures anywhere. Wikidata covers landmarks well
+    // and small kitchens poorly, which is the honest split — this floor
+    // just stops the set being silently emptied.
+    const named = all.flatMap((b) => [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]).flatMap((d) => d.places);
+    const shown = named.filter((p) => photoFor(p.name)).length;
+    expect(shown / named.length, `${shown}/${named.length} places have a photo`).toBeGreaterThanOrEqual(0.4);
+  });
+
   it("puts every pin inside its own base's metro area", () => {
     const strays: string[] = [];
     for (const b of all) {
@@ -256,10 +267,10 @@ describe("meals", () => {
    * it tightens as the authoring pass lands. Lower the numbers, never
    * raise them.
    */
-  const BASES_WITH_NO_MEAL = 7;
-  const MIN_DAYS_WITH_A_MEAL = 0.4;
+  const BASES_WITH_NO_MEAL = 0;
+  const MIN_DAYS_WITH_A_MEAL = 0.9;
 
-  it("tracks how thin the food really is", () => {
+  it("puts a meal on nearly every day, and at least one in every city", () => {
     let total = 0;
     let withFood = 0;
     const none: string[] = [];
@@ -275,12 +286,41 @@ describe("meals", () => {
       }
       if (any === 0) none.push(b.id);
     }
-    expect(none.length, `bases with no meal anywhere: ${none.join(", ")}`).toBeLessThanOrEqual(
-      BASES_WITH_NO_MEAL,
-    );
+    expect(none, `bases with no meal anywhere: ${none.join(", ")}`).toEqual([]);
     expect(withFood / total, `${withFood}/${total} curated days carry a meal`).toBeGreaterThanOrEqual(
       MIN_DAYS_WITH_A_MEAL,
     );
+  });
+
+  /**
+   * Silence is the one answer that isn't allowed. A tester who needs halal
+   * food searched the whole app and found nothing — not a tag, not a
+   * filter, not a note — and said she'd rather be told we don't know than
+   * be handed four drinking alleys and have it called dinner.
+   */
+  it("says something about eating at every single food place", () => {
+    const silent: string[] = [];
+    for (const b of all) {
+      for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
+        for (const p of d.places) {
+          if (p.category === "food" && !p.dietary?.length) silent.push(`${b.id}/${p.name}`);
+        }
+      }
+    }
+    expect(silent, `food with no dietary answer:\n${silent.join("\n")}`).toEqual([]);
+  });
+
+  it("never claims halal and pork on the same plate", () => {
+    const contradictory: string[] = [];
+    for (const b of all) {
+      for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
+        for (const p of d.places) {
+          const t = p.dietary ?? [];
+          if (t.includes("halal") && t.includes("pork-served")) contradictory.push(`${b.id}/${p.name}`);
+        }
+      }
+    }
+    expect(contradictory, `both halal and pork-served:\n${contradictory.join("\n")}`).toEqual([]);
   });
 });
 

@@ -9,6 +9,7 @@ import { z } from "zod";
 import { parseOr } from "@/lib/actions/validate";
 import { BASES } from "@/lib/packages/library";
 import { coordsFor } from "@/lib/packages/coords";
+import { photoFor } from "@/lib/packages/photos";
 import type { Base, BaseId, PlaceCategory } from "@/lib/packages/types";
 import { eachDate } from "@/lib/packages/allocate";
 
@@ -53,6 +54,8 @@ export interface CityPlace {
   fromSave: boolean;
   /** the hour this place is actually for — a bar is not a 09:30 stop */
   startTime?: string | null;
+  /** a picture, where we have one — the single biggest trust signal */
+  photoUrl?: string | null;
 }
 
 export interface CityDay {
@@ -167,6 +170,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         inPlan: onPlan.has(p.name),
         fromSave: false,
         startTime: p.startTime ?? null,
+        photoUrl: photoFor(p.name),
       });
     }
   }
@@ -193,6 +197,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
       inPlan: onPlan.has(s.placeName),
       fromSave: true,
       startTime: null,
+      photoUrl: s.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(s.photoRef)}&w=400` : null,
     });
   }
 
@@ -334,6 +339,7 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
     locationName: place.name,
     locationLat: place.lat,
     locationLng: place.lng,
+    photoUrl: place.photoUrl ?? null,
     notes: place.why || null,
     topTip: place.why || null,
     topTipAr: place.whyAr || null,

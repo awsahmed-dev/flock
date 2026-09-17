@@ -17,6 +17,7 @@ import { z } from "zod";
 import { parseOr, zDateOnly } from "@/lib/actions/validate";
 import { BASES, ROUTES, findRoutes, getBase } from "@/lib/packages/library";
 import { coordsFor } from "@/lib/packages/coords";
+import { photoFor } from "@/lib/packages/photos";
 import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
 import { allocateNights, routeCapacity, tripNightsBetween } from "@/lib/packages/allocate";
 import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor, type SaveForPlan } from "@/lib/packages/project";
@@ -372,6 +373,9 @@ async function reproject(
           // Marmaris. A place we can't confirm gets no pin, which is honest.
           locationLat: coordsFor(p.name)?.[0] ?? null,
           locationLng: coordsFor(p.name)?.[1] ?? null,
+          // "For a country I've never seen, that is the whole problem in
+          // one sentence" — a tester, on a 36-stop plan with no pictures.
+          photoUrl: photoFor(p.name),
           notes: p.why || null,
           topTip: p.why || null,
           topTipAr: p.whyAr || null,

@@ -25,6 +25,33 @@ export interface CuratedPlace {
   /** the move between bases, not somewhere you go */
   leg?: boolean;
   /**
+   * What we can honestly say about eating here.
+   *
+   * Required on every food place, "unverified" included — a tester who
+   * needs halal food searched the whole app and found nothing anywhere,
+   * and said plainly she would rather be told we don't know than be handed
+   * four drinking alleys and have it called dinner. Silence is the one
+   * answer that isn't allowed.
+   *
+   *  halal          — certified, or a kitchen that states it
+   *  halal-friendly — no pork and no alcohol served, or seafood/veg only
+   *  seafood        — a fish kitchen, which is most of the way there
+   *  vegetarian     — real vegetarian mains, not a side salad
+   *  vegan          — the same, without dairy or egg
+   *  pork-served    — say it out loud rather than let someone find out
+   *  unverified     — we looked and could not confirm
+   */
+  dietary?: (
+    | "halal"
+    | "halal-friendly"
+    | "seafood"
+    | "vegetarian"
+    | "vegan"
+    | "pork-served"
+    | "unverified"
+  )[];
+
+  /**
    * Days of the week this place actually opens, 0 = Sunday. Omit when it
    * opens daily. A tester was scheduled into a flea market on a Thursday
    * while the card's own tip read "Tuesdays and Saturdays only" — the

@@ -50,6 +50,7 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Daikanyama T-Site": [35.6493, 139.6998],
   "Mount Takao": [35.6252, 139.2437],
   "Yakuō-in": [35.626, 139.2504],
+  "Ukai Toriyama": [35.6159, 139.2573],
   "Keiō Takaosan Onsen Gokurakuyu": [35.6321, 139.2693],
 
   /* ── Kyoto ───────────────────────────────────────────────────────────── */
@@ -58,9 +59,10 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Gion at dusk": [35.0027, 135.7749],
   "Arashiyama Bamboo Grove": [35.017, 135.6716],
   "Tenryū-ji": [35.0162, 135.6729],
+  "Arashiyama Yoshimura": [35.0143, 135.676],
   "Kinkaku-ji": [35.0395, 135.7295],
   "Kiyomizu-dera": [34.9948, 135.785],
-  "Ninenzaka and Sannenzaka": [34.9975, 135.7809],
+  "Okutan Nanzenji": [35.0124, 135.7931],
   "Nanzen-ji aqueduct": [35.0106, 135.7936],
   "Philosopher's Path to Ginkaku-ji": [35.0209, 135.7941],
   "Nijō Castle": [35.014, 135.7485],
@@ -75,32 +77,38 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   Dōtonbori: [34.6687, 135.5016],
   "Shitennō-ji": [34.6547, 135.5168],
   "Shinsekai and Tsūtenkaku": [34.6525, 135.5063],
+  "Janjan Yokochō": [34.6499, 135.5061],
   "Abeno Harukas 300": [34.6458, 135.514],
   "Osaka Aquarium Kaiyukan": [34.6545, 135.4289],
+  "Naniwa Kuishinbo Yokochō": [34.6563, 135.4304],
   "Nakanoshima and Kitahama": [34.6924, 135.5078],
   "Umeda Sky Building": [34.7053, 135.4905],
   "Osaka Castle Park": [34.6865, 135.5272],
+  "Tenjinbashisuji Shōtengai": [34.6997, 135.5116],
   "Umekita Park at Osaka Station": [34.7054, 135.4927],
 
   /* ── Hakone ──────────────────────────────────────────────────────────── */
   Ōwakudani: [35.2446, 139.0199],
-  "Lake Ashi crossing": [35.2145, 139.002],
   "Hakone Shrine": [35.204, 139.0256],
   "Hakone Shrine torii": [35.2027, 139.0257],
+  "Amazake Chaya": [35.2022, 139.049],
   "Tenzan Tōji-kyō": [35.2249, 139.0887],
   "Hakone Open-Air Museum": [35.2443, 139.0521],
   "Pola Museum of Art": [35.2567, 139.0212],
   "Gōra Park": [35.2486, 139.0452],
+  "Hatsuhana Honten": [35.2311, 139.1002],
 
   /* ── Kanazawa ────────────────────────────────────────────────────────── */
   "Kenroku-en": [36.5624, 136.6624],
   "Kanazawa Castle Park": [36.5658, 136.6594],
+  Miyoshian: [36.563, 136.6612],
   "21st Century Museum of Contemporary Art": [36.5608, 136.6582],
   "Ōmichō Market": [36.5717, 136.656],
   "Higashi Chaya District": [36.5726, 136.6667],
   "Nagamachi samurai district": [36.564, 136.65],
   "Shirakawa-gō (Ogimachi)": [36.2573, 136.9068],
   "Wada House": [36.26, 136.907],
+  Irori: [36.2609, 136.9069],
   "Shiroyama viewpoint": [36.263, 136.908],
 
   /* ── Hiroshima ───────────────────────────────────────────────────────── */
@@ -113,6 +121,7 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Daishō-in": [34.2928, 132.3188],
   "Shukkei-en": [34.4003, 132.4674],
   "Hiroshima Castle": [34.4021, 132.4595],
+  "Kanawa oyster boat": [34.3934, 132.4545],
   "Hondōri arcade": [34.3938, 132.457],
 
   /* ── Sapporo ─────────────────────────────────────────────────────────── */
@@ -126,9 +135,11 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Hoheikyo Onsen": [42.9496, 141.1561],
   "Futami Suspension Bridge": [42.9638, 141.1581],
   "Jōzankei foot baths": [42.9649, 141.1633],
+  "Soup Curry Garaku": [43.0581, 141.3551],
   "Hokkaidō Jingu": [43.0546, 141.3092],
   "Hokkaido University ginkgo avenue": [43.0748, 141.3435],
   "Mount Moiwa ropeway": [43.0316, 141.3331],
+  "Jingisukan Daruma": [43.0549, 141.3525],
 
   /* ── Japan day trips ─────────────────────────────────────────────────── */
   "Tōdai-ji": [34.689, 135.8398],
@@ -150,11 +161,12 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   /* ── Istanbul ────────────────────────────────────────────────────────── */
   "Hagia Sophia": [41.0085, 28.98],
   "Blue Mosque": [41.0054, 28.9769],
-  "Basilica Cistern": [41.0085, 28.9784],
+  "Sultanahmet Köftecisi Selim Usta": [41.008, 28.977],
   "Grand Bazaar": [41.011, 28.9675],
   "Topkapı Palace": [41.0113, 28.9832],
   "Gülhane Park": [41.013, 28.9809],
   "Spice Bazaar": [41.0165, 28.9705],
+  "Hamdi Restaurant": [41.0172, 28.9699],
   "Bosphorus ferry to Anadolu Kavağı": [41.1739, 29.0887],
   "Fish lunch at the pier": [41.1739, 29.0887],
   "İstiklal Avenue": [41.0339, 28.9782],
@@ -163,9 +175,9 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Kadıköy market streets": [40.9912, 29.0255],
   "Moda seafront walk": [40.9797, 29.0273],
   "Kariye Mosque (Chora)": [41.0312, 28.939],
+  Asitane: [41.0309, 28.939],
   "Balat streets": [41.032, 28.9483],
   "Eyüp Sultan Mosque": [41.048, 28.9337],
-  "Pierre Loti Hill": [41.0533, 28.9334],
 
   /* ── Princes' Islands ────────────────────────────────────────────────── */
   "Büyükada waterfront": [40.8749, 29.1283],
@@ -185,6 +197,7 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Shardeni Street": [41.6905, 44.8084],
   "Jvari Monastery": [41.8383, 44.7335],
   "Svetitskhoveli Cathedral": [41.8423, 44.721],
+  Salobie: [41.8284, 44.7251],
   "Chronicle of Georgia": [41.7707, 44.8104],
   "Georgian National Museum": [41.696, 44.8002],
   "Dry Bridge Market": [41.7012, 44.8033],
@@ -193,6 +206,7 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Turtle Lake": [41.7004, 44.7545],
   "Vera and Kiacheli street": [41.7061, 44.7905],
   "Mtatsminda Park": [41.693, 44.7795],
+  "Puri Guliani": [41.7022, 44.8052],
   "Meidan Bazaar": [41.6899, 44.8093],
 
   /* ── Batumi ──────────────────────────────────────────────────────────── */
@@ -203,9 +217,11 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Batumi Botanical Garden": [41.6944, 41.7083],
   "Mtsvane Kontskhi beach": [41.6918, 41.7052],
   "Argo cable car": [41.6366, 41.6509],
+  "Adjarian Khachapuri House": [41.6458, 41.6336],
   "Makhuntseti Waterfall": [41.5749, 41.8583],
   "Queen Tamar's Arch Bridge": [41.5708, 41.8598],
   "Mtirala National Park": [41.6599, 41.8521],
+  "Dzveli Tsiskvili": [41.5726, 41.696],
 
   /* ── Georgia day trips ───────────────────────────────────────────────── */
   "Ananuri Fortress": [42.1637, 44.7031],

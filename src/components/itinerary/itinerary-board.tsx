@@ -1527,6 +1527,16 @@ function SortableItemRow({
             }`}
           />
           )}
+          {/* Curated stops now carry a photo where one exists. */}
+          {item.photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.photoUrl}
+              alt=""
+              loading="lazy"
+              className="w-11 h-11 rounded-lg object-cover bg-muted shrink-0 -my-0.5"
+            />
+          )}
           <p
             className={`flex-1 min-w-0 font-bold text-sm leading-snug ${
               item.status === "rejected" ? "line-through text-muted-foreground" : ""

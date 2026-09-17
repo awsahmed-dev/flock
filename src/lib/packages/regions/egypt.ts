@@ -30,7 +30,8 @@ const CAIRO_DAYS: CuratedDay[] = [
     places: [
       { name: "Pyramids of Giza", nameAr: "أهرامات الجيزة", why: "Be at the gate when it opens. By eleven you are sharing Khufu with four thousand people and the light has gone flat white.", whyAr: "كونوا عند البوابة مع الافتتاح. بعد الحادية عشر بتتقاسمون خوفو مع أربعة آلاف واحد والضوء يصير أبيض مسطح.", category: "sight", rating: 4.7, priceBand: 2, startTime: "08:00" },
       { name: "Great Sphinx of Giza", nameAr: "أبو الهول", why: "Walk down to it instead of taking the horse — it is eight minutes, and the approach through the valley temple is how it was built to be seen.", whyAr: "انزلوا له مشي بدل ما تاخذون حصان — ثمان دقايق، والدخول من معبد الوادي هو الطريقة اللي بُني عشان تشوفونه فيها.", category: "sight", rating: 4.6, priceBand: 0, startTime: "10:30" },
-      { name: "Grand Egyptian Museum", nameAr: "المتحف المصري الكبير", why: "Give it four hours and start on the grand staircase — Tutankhamun's five thousand pieces are all in one room here for the first time since they came out of the ground.", whyAr: "أعطوه أربع ساعات وابدأوا من الدرج الكبير — كنز توت عنخ آمون كامل، خمسة آلاف قطعة، بقاعة وحدة لأول مرة من يوم طلعت من الأرض.", category: "sight", rating: 4.8, priceBand: 2, startTime: "13:00" },
+      { name: "9 Pyramids Lounge", nameAr: "ناين بيراميدز لاونج", why: "The only kitchen inside the plateau fence: grilled kofta, koshary and hibiscus over ice, at tables where all nine pyramids line up in one window.", whyAr: "المطبخ الوحيد داخل سور الهضبة: كفتة مشوية وكشري وكركديه على ثلج، وطاولات تتصف قدامها الأهرامات التسعة بمنظر واحد.", category: "food", rating: 4.4, priceBand: 2, startTime: "12:00", dietary: ["halal"] },
+      { name: "Grand Egyptian Museum", nameAr: "المتحف المصري الكبير", why: "Give it four hours and start on the grand staircase — Tutankhamun's five thousand pieces are all in one room here for the first time since they came out of the ground.", whyAr: "أعطوه أربع ساعات وابدأوا من الدرج الكبير — كنز توت عنخ آمون كامل، خمسة آلاف قطعة، بقاعة وحدة لأول مرة من يوم طلعت من الأرض.", category: "sight", rating: 4.8, priceBand: 2, startTime: "13:30" },
     ],
   },
   {
@@ -39,7 +40,7 @@ const CAIRO_DAYS: CuratedDay[] = [
     titleAr: "القاهرة الفاطمية… مشي",
     places: [
       { name: "Al-Azhar Mosque", nameAr: "الجامع الأزهر", why: "A thousand years of teaching around one courtyard — sit against a column in the sahn for ten minutes before you go anywhere else in this city.", whyAr: "ألف سنة تدريس حول صحن واحد — اقعدوا يمّ عمود بالصحن عشر دقايق قبل ما تروحون أي مكان ثاني بهالمدينة.", category: "sight", rating: 4.7, priceBand: 0, startTime: "09:30" },
-      { name: "Khan el-Khalili", nameAr: "خان الخليلي", why: "Prices on the main square start at four times what you should pay. Walk two lanes in and they start at two.", whyAr: "الأسعار بالميدان الرئيسي تبدأ بأربع أضعاف المفروض. ادخلوا زقاقين جوّا وبتبدأ بضعفين.", category: "shop", rating: 4.4, priceBand: 1, startTime: "11:00" },
+      { name: "Farahat", nameAr: "مطعم فرحات", why: "Pigeon stuffed with freekeh, or half a chicken off the grill and a plate of tahini, at metal tables in a lane off Al-Azhar — they cook in the street and you eat in it.", whyAr: "حمام محشي فريك، أو نص فرخة من على الفحم وصحن طحينة، على طاولات حديد بزقاق جنب الأزهر — يطبخون بالشارع وتاكلون فيه.", category: "food", rating: 4.4, priceBand: 1, startTime: "13:00", dietary: ["halal"] },
       { name: "Al-Azhar Park", nameAr: "حديقة الأزهر", why: "Built on a five-hundred-year-old rubbish mound; the upper terrace looks straight across the whole medieval skyline as the sun drops behind it.", whyAr: "مبنية فوق تلة زبالة عمرها خمسمية سنة؛ والشرفة العليا تطل على خط المدينة المملوكي كامل والشمس تنزل خلفه.", category: "nature", rating: 4.6, priceBand: 1, startTime: "16:30" },
       { name: "Al-Muizz Street", nameAr: "شارع المعز لدين الله", why: "Go after dark, when it is lit and closed to cars — a kilometre of Fatimid and Mamluk façades, and you can walk inside most of them.", whyAr: "روحوا بعد الظلام، لما يضوي ويتسكّر بوجه السيارات — كيلو واجهات فاطمية ومملوكية، وأغلبها تقدرون تدخلونه.", category: "walk", rating: 4.6, priceBand: 0, startTime: "18:30" },
     ],
@@ -52,6 +53,7 @@ const CAIRO_DAYS: CuratedDay[] = [
       { name: "Citadel of Saladin", nameAr: "قلعة صلاح الدين", why: "Get there at opening for the terrace: on a clear morning you can see the pyramids from the wall, twenty kilometres off, and the Muhammad Ali mosque is inside the same ticket.", whyAr: "اوصلوا مع الافتتاح عشان الشرفة: بصباح صافي تشوفون الأهرام من السور على بعد عشرين كيلو، وجامع محمد علي داخل نفس التذكرة.", category: "sight", rating: 4.6, priceBand: 1, startTime: "09:00" },
       { name: "Mosque-Madrasa of Sultan Hassan", nameAr: "مسجد ومدرسة السلطان حسن", why: "The entrance corridor is deliberately dark so the courtyard hits you when you step out of it — stand in the middle and clap once.", whyAr: "ممر الدخول معتم بقصد عشان الصحن يضربكم أول ما تطلعون منه — اوقفوا بالنص وصفقوا مرة.", category: "sight", rating: 4.7, priceBand: 1, startTime: "11:30" },
       { name: "Mosque of Ibn Tulun", nameAr: "جامع ابن طولون", why: "The oldest mosque in Cairo still standing in its original form, and its spiral minaret is the only one in the city you are allowed to climb.", whyAr: "أقدم مسجد بالقاهرة لسا واقف على شكله الأصلي، ومئذنته الحلزونية الوحيدة بالمدينة اللي مسموح تطلعونها.", category: "sight", rating: 4.7, priceBand: 0, startTime: "14:00" },
+      { name: "Koshary Abou Tarek", nameAr: "كشري أبو طارق", why: "Four floors of one dish: rice, lentils, macaroni and fried onion in a bowl, with the vinegar and the chilli sauce poured on at the table. Order a medium, not a large.", whyAr: "أربعة أدوار لطبق واحد: رز وعدس ومكرونة وبصل مقلي بصحن، والخل والشطة تتصب عند الطاولة. اطلبوا وسط مو كبير.", category: "food", rating: 4.5, priceBand: 0, startTime: "16:30", dietary: ["halal", "vegetarian"] },
     ],
   },
   {
@@ -71,9 +73,9 @@ const CAIRO_DAYS: CuratedDay[] = [
     titleAr: "سقارة ودهشور",
     places: [
       { name: "Step Pyramid of Djoser", nameAr: "هرم زوسر المدرج", why: "The first pyramid anybody built, a hundred years before Giza — and since the restoration you can walk down inside it.", whyAr: "أول هرم بُني بالتاريخ، قبل الجيزة بمية سنة — ومن بعد الترميم تقدرون تنزلون جوّاه مشي.", category: "sight", rating: 4.7, priceBand: 2, startTime: "09:00" },
-      { name: "Memphis open-air museum", nameAr: "متحف ميت رهينة المفتوح", why: "Twenty minutes and one enormous fallen Ramses lying on his back — worth it as the stop between Saqqara and Dahshur, not as a destination.", whyAr: "عشرين دقيقة وتمثال رمسيس ضخم ساقط على ظهره — تستاهل كوقفة بين سقارة ودهشور، مو كهدف بحالها.", category: "sight", rating: 4.2, priceBand: 1, startTime: "12:00" },
-      { name: "Bent Pyramid", nameAr: "الهرم المنحني", why: "The one where they changed the angle halfway up because it was about to collapse — and it is the emptiest pyramid in Egypt, on most days completely.", whyAr: "الهرم اللي غيّروا زاويته بالنص لأنه كان راح ينهار — وهو أخلى هرم بمصر من الزوار، وبأغلب الأيام فاضي تمامًا.", category: "sight", rating: 4.6, priceBand: 1, startTime: "14:00" },
-      { name: "Red Pyramid", nameAr: "الهرم الأحمر", why: "The first true pyramid, and you can climb down a sixty-three-metre shaft into three corbelled chambers with nobody else inside them.", whyAr: "أول هرم كامل الشكل، وتقدرون تنزلون ممر ثلاثة وستين متر لثلاث غرف مقبّبة وما فيها أحد غيركم.", category: "sight", rating: 4.6, priceBand: 1, startTime: "15:30" },
+      { name: "Bent Pyramid", nameAr: "الهرم المنحني", why: "The one where they changed the angle halfway up because it was about to collapse — and it is the emptiest pyramid in Egypt, on most days completely.", whyAr: "الهرم اللي غيّروا زاويته بالنص لأنه كان راح ينهار — وهو أخلى هرم بمصر من الزوار، وبأغلب الأيام فاضي تمامًا.", category: "sight", rating: 4.6, priceBand: 1, startTime: "12:00" },
+      { name: "Red Pyramid", nameAr: "الهرم الأحمر", why: "The first true pyramid, and you can climb down a sixty-three-metre shaft into three corbelled chambers with nobody else inside them.", whyAr: "أول هرم كامل الشكل، وتقدرون تنزلون ممر ثلاثة وستين متر لثلاث غرف مقبّبة وما فيها أحد غيركم.", category: "sight", rating: 4.6, priceBand: 1, startTime: "14:00" },
+      { name: "Andrea El Mariouteya", nameAr: "أندريا المريوطية", why: "Chickens turning on spits over a charcoal pit and feteer pulled paper-thin, at long tables under trees on the Mariouteya canal — the stop on the drive back from Saqqara.", whyAr: "فراخ تدور على الفحم فوق حفرة جمر، وفطير مشلتت مفرود رفيع، على طاولات طويلة تحت الشجر على ترعة المريوطية — وقفة الرجعة من سقارة.", category: "food", rating: 4.4, priceBand: 2, startTime: "16:30", dietary: ["halal"] },
     ],
   },
 ];
@@ -88,6 +90,7 @@ const LUXOR_DAYS: CuratedDay[] = [
     places: [
       { name: "Karnak Temple", nameAr: "معبد الكرنك", why: "Thirty pharaohs each added to it over two thousand years — go straight to the hypostyle hall at opening and stand in it alone for ten minutes.", whyAr: "ثلاثين فرعون كل واحد زاد عليه على مدى ألفين سنة — روحوا لقاعة الأعمدة مع الافتتاح واوقفوا فيها لحالكم عشر دقايق.", category: "sight", rating: 4.8, priceBand: 2, startTime: "08:00" },
       { name: "Luxor Museum", nameAr: "متحف الأقصر", why: "Small, cold and perfectly lit — an hour here teaches you more than a whole day at Karnak, and almost nobody bothers with it.", whyAr: "صغير وبارد وإضاءته مظبوطة — ساعة فيه تعلمكم أكثر من يوم كامل بالكرنك، وبالكاد أحد يهتم فيه.", category: "sight", rating: 4.6, priceBand: 1, startTime: "11:30" },
+      { name: "Sofra Restaurant", nameAr: "مطعم سفرة", why: "Molokhia, stuffed pigeon and lamb tagine out of clay pots, in a 1930s house two streets back from the corniche — sit upstairs on the floor cushions.", whyAr: "ملوخية وحمام محشي وطواجن لحم بالفخار، ببيت من الثلاثينات على بعد شارعين من الكورنيش — اقعدوا فوق على المساند الأرضية.", category: "food", rating: 4.6, priceBand: 1, startTime: "14:00", dietary: ["halal"] },
       { name: "Luxor Temple", nameAr: "معبد الأقصر", why: "Come back to it after dark — it is the one great temple lit at night, and the avenue of sphinxes runs out of it straight into the modern town.", whyAr: "ارجعوا له بعد الظلام — المعبد الكبير الوحيد اللي ينوّر بالليل، وطريق الكباش يطلع منه لداخل البلد الحديثة مباشرة.", category: "sight", rating: 4.7, priceBand: 2, startTime: "18:00" },
     ],
   },
@@ -99,6 +102,7 @@ const LUXOR_DAYS: CuratedDay[] = [
       { name: "Valley of the Kings", nameAr: "وادي الملوك", why: "The standard ticket covers any three tombs — take Ramesses IV, Ramesses IX and Merenptah, and only pay the separate fee for Seti I if the budget stretches.", whyAr: "التذكرة العادية تغطي أي ثلاث مقابر — خذوا رمسيس الرابع ورمسيس التاسع ومرنبتاح، وما تدفعون التذكرة المنفصلة لسيتي الأول إلا لو الميزانية تسمح.", category: "sight", rating: 4.7, priceBand: 2, startTime: "07:00" },
       { name: "Temple of Hatshepsut", nameAr: "معبد حتشبسوت", why: "Three terraces cut into a three-hundred-metre cliff — be there before nine, because after that the stone starts throwing the heat back at you.", whyAr: "ثلاث مدرجات محفورة بجرف ثلاثمية متر — كونوا هناك قبل التاسعة، لأن بعدها الحجر يبدأ يرجع لكم الحر بوجهكم.", category: "sight", rating: 4.6, priceBand: 2, startTime: "10:00" },
       { name: "Colossi of Memnon", nameAr: "تمثالا ممنون", why: "All that is left of a mortuary temple larger than Karnak — everything that stood behind these two was carried off by the Nile.", whyAr: "كل اللي بقي من معبد جنائزي أكبر من الكرنك — وكل اللي كان واقف خلف هالتمثالين جرفه النيل.", category: "sight", rating: 4.3, priceBand: 0, startTime: "12:00" },
+      { name: "Marsam Hotel garden", nameAr: "حديقة فندق مرسم", why: "A mud-brick courtyard five minutes from the Colossi: chicken tagine, molokhia and hot bread out of the oven, eaten under the trees where the archaeologists eat.", whyAr: "فناء من الطين على بعد خمس دقايق من تمثالي ممنون: طاجن فراخ وملوخية وعيش سخن من الفرن، تاكلونه تحت الشجر وين ياكل علماء الآثار.", category: "food", rating: 4.3, priceBand: 1, startTime: "13:00", dietary: ["halal"] },
     ],
   },
   {
@@ -108,6 +112,7 @@ const LUXOR_DAYS: CuratedDay[] = [
     places: [
       { name: "Deir el-Medina", nameAr: "دير المدينة", why: "The village where the men who cut the royal tombs lived, with their own small tombs on the slope above — better painted than most of the kings' are.", whyAr: "القرية اللي عاش فيها الرجال اللي حفروا مقابر الملوك، وفوقها بالمنحدر مقابرهم الصغيرة — ملونة أحسن من أغلب مقابر الملوك نفسها.", category: "sight", rating: 4.6, priceBand: 1, startTime: "08:30" },
       { name: "Medinet Habu", nameAr: "مدينة هابو", why: "The colour is still on the ceilings here because hardly anyone comes — this is what Karnak looked like when it was painted.", whyAr: "الألوان لسا على السقوف هنا لأن بالكاد أحد يجي — كذا كان شكل الكرنك وهو ملوّن.", category: "sight", rating: 4.7, priceBand: 1, startTime: "11:00" },
+      { name: "Nour El Balad", nameAr: "نور البلد", why: "A west-bank house with a roof terrace over the sugarcane: tagines of duck and okra, aubergine with tahini, and everything on the table comes off the family's own land.", whyAr: "بيت بالبر الغربي وسطحه يطل على قصب السكر: طواجن بط وبامية، وباذنجان بالطحينة، وكل اللي على السفرة من أرض العيلة نفسها.", category: "food", rating: 4.5, priceBand: 1, startTime: "13:00", dietary: ["halal"] },
       { name: "Banana Island", nameAr: "جزيرة الموز", why: "Twenty minutes upriver by felucca — a farm island of banana and mango where the tea arrives with sugarcane you cut yourself.", whyAr: "عشرين دقيقة عكس التيار بالفلوكة — جزيرة مزارع موز ومانجو، والشاي يجيكم مع قصب تقطعونه بأيديكم.", category: "nature", rating: 4.3, priceBand: 1, startTime: "16:00" },
     ],
   },
@@ -263,10 +268,11 @@ export const EGYPT_COORDS: Record<string, readonly [number, number]> = {
   "Pyramids of Giza": [29.9792, 31.1342],
   "Great Sphinx of Giza": [29.9753, 31.1375],
   "Grand Egyptian Museum": [29.9946, 31.1191],
+  "9 Pyramids Lounge": [29.9678, 31.1319],
 
   /* ── Fatimid Cairo ───────────────────────────────────────────────────── */
   "Al-Azhar Mosque": [30.0458, 31.2627],
-  "Khan el-Khalili": [30.0489, 31.2613],
+  Farahat: [30.0467, 31.2612],
   "Al-Azhar Park": [30.0401, 31.2641],
   "Al-Muizz Street": [30.0493, 31.2612],
 
@@ -274,6 +280,7 @@ export const EGYPT_COORDS: Record<string, readonly [number, number]> = {
   "Citadel of Saladin": [30.0293, 31.2616],
   "Mosque-Madrasa of Sultan Hassan": [30.0324, 31.2562],
   "Mosque of Ibn Tulun": [30.0287, 31.2502],
+  "Koshary Abou Tarek": [30.0503, 31.2377],
 
   /* ── Old Cairo and the river ─────────────────────────────────────────── */
   "Mosque of Amr ibn al-As": [30.0098, 31.233],
@@ -283,17 +290,20 @@ export const EGYPT_COORDS: Record<string, readonly [number, number]> = {
 
   /* ── Saqqara and Dahshur ─────────────────────────────────────────────── */
   "Step Pyramid of Djoser": [29.8712, 31.2166],
-  "Memphis open-air museum": [29.8495, 31.2551],
   "Bent Pyramid": [29.7902, 31.2095],
   "Red Pyramid": [29.8086, 31.2062],
+  "Andrea El Mariouteya": [29.9994, 31.142],
 
   /* ── Luxor ───────────────────────────────────────────────────────────── */
   "Karnak Temple": [25.7159, 32.6578],
   "Luxor Museum": [25.7077, 32.6445],
+  "Sofra Restaurant": [25.6949, 32.6423],
   "Luxor Temple": [25.6995, 32.6391],
   "Valley of the Kings": [25.7405, 32.6018],
   "Temple of Hatshepsut": [25.7383, 32.6064],
   "Colossi of Memnon": [25.7205, 32.6104],
+  "Marsam Hotel garden": [25.7242, 32.6066],
+  "Nour El Balad": [25.7172, 32.5957],
   "Deir el-Medina": [25.7284, 32.601],
   "Medinet Habu": [25.72, 32.6007],
   "Banana Island": [25.683, 32.6226],

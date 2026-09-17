@@ -34,6 +34,7 @@ const UBUD_DAYS: CuratedDay[] = [
     places: [
       { name: "Campuhan Ridge Walk", nameAr: "ممشى حافة تشامبوهان", why: "Ninety minutes from the airport and then this: a paved spine between two river valleys with no traffic on it, and it is the only hour of the day under 30 degrees.", whyAr: "ساعة ونص من المطار وبعدها هذا: ممشى مرصوف على ظهر بين واديين وما فيه سيارات، وهي الساعة الوحيدة باليوم تحت الثلاثين درجة.", category: "walk", rating: 4.5, priceBand: 0, startTime: "16:00" },
       { name: "Ubud Palace", nameAr: "قصر أوبود", why: "The legong dance in the palace courtyard starts at 7:30 and the tickets are sold at the gate from six — sit on the left, the gamelan orchestra is on the right.", whyAr: "رقصة الليغونغ بفناء القصر تبدأ ٧:٣٠ والتذاكر تنباع عند البوابة من الساعة ستة — اقعدوا على اليسار، فرقة الغاميلان على اليمين.", category: "sight", rating: 4.3, priceBand: 1, startTime: "18:00" },
+      { name: "Fair Warung Balé", nameAr: "فير وارونغ بالي", why: "Dinner after the dance at a warung that puts what it makes into a free clinic up the road — nasi campur, chicken sate, and it is still open when the palace empties.", whyAr: "عشا بعد الرقصة بوارونغ يحوّل أرباحه لعيادة مجانية بنفس الشارع — ناسي تشامبور وسيخ دجاج، ولا زال مفتوح لما يفضى القصر.", category: "food", rating: 4.5, priceBand: 1, startTime: "20:45", dietary: ["unverified"] },
     ],
   },
   {
@@ -54,6 +55,7 @@ const UBUD_DAYS: CuratedDay[] = [
     places: [
       { name: "Penelokan viewpoint", nameAr: "مطل بينيلوكان", why: "Breakfast facing a live volcano sitting in its own crater lake — go early: by ten the cloud comes up the valley and you will see nothing at all.", whyAr: "فطور قبال بركان حي قاعد داخل بحيرة فوهته — روحوا بدري: الساعة عشرة يطلع الغيم من الوادي وما بتشوفون ولا شي.", category: "nature", rating: 4.5, priceBand: 1, startTime: "07:30" },
       { name: "Pura Ulun Danu Beratan", nameAr: "معبد أولون دانو براتان", why: "The temple that looks like it is floating on Lake Bratan — it is on the 50,000-rupiah note, it sits at 1,200 metres, and you will want a jacket.", whyAr: "المعبد اللي يبان طافي على بحيرة براتان — موجود على ورقة الخمسين ألف روبية، وعلى ارتفاع ١٢٠٠ متر، وبتحتاجون جاكيت.", category: "sight", rating: 4.6, priceBand: 1, startTime: "11:00" },
+      { name: "Jati Harum", nameAr: "جاتي هاروم", why: "A bamboo terrace on the Jatiluwih road: nasi goreng, chicken sate and a young coconut opened at the table, with the whole valley of terraces under the railing.", whyAr: "مصطبة خيزران على طريق جاتيلويه: ناسي غورينغ وسيخ دجاج وجوزة هند صغيرة تنفتح عند الطاولة، والوادي كله مدرجات تحت الدرابزين.", category: "food", rating: 4.2, priceBand: 1, startTime: "13:30", dietary: ["unverified"] },
       { name: "Jatiluwih Rice Terraces", nameAr: "مدرجات جاتيلويه", why: "UNESCO-listed, an hour from the nearest tour bus: terraces to the horizon, a four-kilometre loop path through them, and no swings, no cafés, no queue.", whyAr: "مدرجة على قائمة اليونسكو وبعيدة ساعة عن أقرب باص سياحي: مدرجات لين الأفق، ومسار دائري أربعة كيلو بينها، وبلا مراجيح ولا كوفيات ولا طوابير.", category: "nature", rating: 4.6, priceBand: 1, startTime: "14:30" },
     ],
   },
@@ -64,8 +66,8 @@ const UBUD_DAYS: CuratedDay[] = [
     places: [
       { name: "Sacred Monkey Forest Sanctuary", nameAr: "غابة القرود المقدسة", why: "Three temples in a ravine of banyan trees with around 1,200 macaques living in them — sunglasses off, nothing in your hands, and they will ignore you.", whyAr: "ثلاثة معابد بوادي أشجار بانيان ويسكنها قرابة ١٢٠٠ قرد — شيلوا النظارات وما تمسكون شي بأيديكم، وبيتجاهلونكم.", category: "nature", rating: 4.4, priceBand: 1, startTime: "09:00" },
       { name: "Goa Gajah", nameAr: "غوا غاجاه", why: "The «Elephant Cave» is a demon's mouth carved into rock in the 11th century — you are inside it in five minutes, but the bathing pools below are where people sit.", whyAr: "«كهف الفيل» فم شيطان منحوت بالصخر من القرن الحادي عشر — تخلصونه بخمس دقايق، لكن برك الاغتسال تحته هي اللي يقعد عندها الناس.", category: "sight", rating: 4.4, priceBand: 1, startTime: "11:30" },
+      { name: "Sanak Masakan Padang", nameAr: "ساناك مساكان بادانغ", why: "Padang food is Sumatran Muslim cooking: you point at the bowls stacked in the window — beef rendang, jackfruit curry, fried chicken — and pay only for what you take.", whyAr: "أكل بادانغ مطبخ مسلمي سومطرة: تأشرون على الصحون المرصوصة بالواجهة — رندانغ لحم وكاري كاتهل ودجاج مقلي — وتدفعون على اللي تاخذونه بس.", category: "food", rating: 4.2, priceBand: 1, startTime: "12:45", dietary: ["halal-friendly"] },
       { name: "Pura Taman Saraswati", nameAr: "معبد تامان ساراسواتي", why: "A lotus pond with the temple at the end of it, two minutes from the market and free to walk into — come at two, when the flowers are open.", whyAr: "بركة لوتس والمعبد بآخرها، على بعد دقيقتين من السوق ودخولها مجاني — تعالوا الساعة اثنين، وقت ما تكون الزهور مفتحة.", category: "sight", rating: 4.5, priceBand: 0, startTime: "14:00" },
-      { name: "Ubud Art Market", nameAr: "سوق أوبود للحرف", why: "Directly opposite the palace and everything is negotiable — open at a third of the asking price, and the back rows are cheaper than the front ones.", whyAr: "قبال القصر مباشرة وكل شي قابل للفصال — ابدأوا بثلث السعر، والصفوف الخلفية أرخص من الأمامية.", category: "shop", rating: 4.1, priceBand: 1, startTime: "16:00" },
     ],
   },
 ];
@@ -80,6 +82,7 @@ const SEMINYAK_DAYS: CuratedDay[] = [
     places: [
       { name: "Seminyak Beach", nameAr: "شاطئ سمينياك", why: "Bali's west coast faces the sunset, which is the whole reason this strip exists — the sand is dark volcanic grey and the current is real, so swim between the flags.", whyAr: "ساحل بالي الغربي يواجه الغروب، وهذا كل سبب وجود هالشريط — الرمل رمادي بركاني والتيار قوي فعلًا، فاسبحوا بين الأعلام.", category: "nature", rating: 4.3, priceBand: 0, startTime: "16:30" },
       { name: "Petitenget Temple", nameAr: "معبد بيتيتنغيت", why: "A small sea temple standing on the beach itself with the sunset behind it — offerings on the steps every evening, and you can stand at the wall without going in.", whyAr: "معبد بحري صغير واقف على الشاطئ نفسه والغروب خلفه — قرابين على درجه كل مساء، وتقدرون توقفون عند السور بدون دخول.", category: "sight", rating: 4.4, priceBand: 0, startTime: "18:15" },
+      { name: "Ayam Betutu Asli Gilimanuk", nameAr: "أيام بيتوتو أصلي غيليمانوك", why: "One dish, done for fifty years: a whole chicken steamed in a paste of lemongrass, shallot and chilli, with rice and blanched greens — there is nothing else on the menu, so just say how hot.", whyAr: "طبق واحد من خمسين سنة: دجاجة كاملة على البخار بخلطة ليمون عشبي وبصل وفلفل، مع رز وخضار مسلوقة — ما فيه غيره بالمنيو، فقولوا بس كم تبونها حارة.", category: "food", rating: 4.3, priceBand: 1, startTime: "19:30", dietary: ["unverified"] },
     ],
   },
   {
@@ -88,6 +91,7 @@ const SEMINYAK_DAYS: CuratedDay[] = [
     titleAr: "شمالًا للحقول وتانه لوت",
     places: [
       { name: "Batu Bolong Beach", nameAr: "شاطئ باتو بولونغ", why: "Go at eight while the surf school is the only thing on the sand — there is a temple on the rocks at the north end that the tide cuts off twice a day.", whyAr: "روحوا الساعة ثمانية والشاطئ ما فيه غير مدرسة الأمواج — وفيه معبد على الصخور بالطرف الشمالي يقطعه المد مرتين باليوم.", category: "nature", rating: 4.3, priceBand: 0, startTime: "08:00" },
+      { name: "Warung Varuna", nameAr: "وارونغ فارونا", why: "Breakfast two lanes back from Batu Bolong: nasi campur built in front of you from the trays — rice, tempeh, sambal, a skewer of grilled chicken — and iced coffee with it.", whyAr: "فطور على بعد زقاقين من باتو بولونغ: ناسي تشامبور يتركّب قدامكم من الصواني — رز وتمبيه وسامبال وسيخ دجاج مشوي — ومعاه قهوة مثلجة.", category: "food", rating: 4.3, priceBand: 1, startTime: "09:30", dietary: ["unverified"] },
       { name: "Taman Ayun Temple", nameAr: "معبد تامان آيون", why: "A royal temple inside its own moat, with eleven-tier thatched towers you look at from a garden path — the calmest big temple on the island, because the coaches skip it.", whyAr: "معبد ملكي داخل خندق مائي، وأبراج بأحد عشر طبقة من القش تشوفونها من ممشى الحديقة — أهدأ معبد كبير بالجزيرة، لأن الباصات تعديه.", category: "sight", rating: 4.5, priceBand: 1, startTime: "11:00" },
       { name: "Tanah Lot", nameAr: "تانه لوت", why: "A temple on a rock that becomes an island twice a day — check the tide before you leave, and watch from the northern cliff path rather than the packed terrace.", whyAr: "معبد على صخرة تصير جزيرة مرتين باليوم — شوفوا جدول المد قبل ما تطلعون، وتفرجوا من ممشى الجرف الشمالي بدل المدرج المزحوم.", category: "sight", rating: 4.6, priceBand: 1, startTime: "16:30" },
     ],
@@ -100,7 +104,7 @@ const SEMINYAK_DAYS: CuratedDay[] = [
       { name: "Uluwatu Temple", nameAr: "معبد أولواتو", why: "Seventy metres of cliff straight down to the sea with a temple on the lip of it — hold on to your sunglasses, the monkeys here are professionals.", whyAr: "سبعين متر جرف نازل عمودي على البحر وفوق حافته معبد — امسكوا نظاراتكم زين، قرود هالمكان محترفة.", category: "sight", rating: 4.6, priceBand: 1, startTime: "10:00" },
       { name: "Padang Padang Beach", nameAr: "شاطئ بادانغ بادانغ", why: "You reach it through a crack in the rock and down a staircase — it is small, and the entrance is exactly why it is worth the steps.", whyAr: "توصلونه من شق بالصخر وبعده درج نازل — صغير، ومدخله بالضبط هو اللي يخلي الدرج يستاهل.", category: "nature", rating: 4.4, priceBand: 1, startTime: "12:30" },
       { name: "Melasti Beach", nameAr: "شاطئ ميلاستي", why: "A road cut down through white limestone cliffs to a flat turquoise bay — the descent is the photograph, and the water is the calmest in the south.", whyAr: "طريق محفور بين جروف جيرية بيضاء ينزل لخليج فيروزي هادي — النزلة هي الصورة، والماء أهدأ ماء بالجنوب.", category: "nature", rating: 4.5, priceBand: 0, startTime: "15:00" },
-      { name: "Jimbaran Bay", nameAr: "خليج جيمباران", why: "Tables on the sand, fish chosen by weight, and planes coming in low over the bay — agree the price per kilo before they put it on the grill.", whyAr: "طاولات على الرمل، وسمك تختارونه بالوزن، والطيارات تعدي واطية فوق الخليج — اتفقوا على سعر الكيلو قبل ما يحطونه على الجمر.", category: "food", rating: 4.4, priceBand: 2, startTime: "18:00" },
+      { name: "Jimbaran Bay", nameAr: "خليج جيمباران", why: "Tables on the sand, fish chosen by weight, and planes coming in low over the bay — agree the price per kilo before they put it on the grill.", whyAr: "طاولات على الرمل، وسمك تختارونه بالوزن، والطيارات تعدي واطية فوق الخليج — اتفقوا على سعر الكيلو قبل ما يحطونه على الجمر.", category: "food", rating: 4.4, priceBand: 2, startTime: "18:00", dietary: ["seafood", "unverified"] },
     ],
   },
 ];
@@ -114,7 +118,7 @@ const MALDIVES_DAYS: CuratedDay[] = [
     titleAr: "ماليه… وبعدها الماء",
     places: [
       { name: "Hukuru Miskiy", nameAr: "مسجد هوكورو ميسكي", why: "The old Friday mosque is built of carved coral stone, not brick — 1658, and the interior lacquer work has never been replaced. Ask at the Islamic Centre for the key.", whyAr: "المسجد الجامع القديم مبني من حجر المرجان المنحوت مو الطوب — سنة ١٦٥٨، وزخارف الورنيش بداخله ما تغيرت أبدًا. اسألوا بالمركز الإسلامي عن المفتاح.", category: "sight", rating: 4.6, priceBand: 0, startTime: "10:30" },
-      { name: "Malé Fish Market", nameAr: "سوق السمك بماليه", why: "Tuna the length of your arm coming off the boats onto a wet tiled floor at midday — it is the one place in the country that is neither a resort nor a queue.", whyAr: "تونة بطول ذراعكم تنزل من القوارب على أرض بلاط مبلولة وقت الظهر — المكان الوحيد بالبلد اللي لا منتجع ولا طابور.", category: "food", rating: 4.3, priceBand: 1, startTime: "12:00" },
+      { name: "Malé Fish Market", nameAr: "سوق السمك بماليه", why: "Tuna the length of your arm coming off the boats onto a wet tiled floor at midday — it is the one place in the country that is neither a resort nor a queue.", whyAr: "تونة بطول ذراعكم تنزل من القوارب على أرض بلاط مبلولة وقت الظهر — المكان الوحيد بالبلد اللي لا منتجع ولا طابور.", category: "food", rating: 4.3, priceBand: 1, startTime: "12:00", dietary: ["halal", "seafood"] },
       { name: "Velana International Airport", nameAr: "مطار فيلانا الدولي", why: "The seaplane terminal is a shuttle ride from arrivals and the flight is the best twenty minutes of the trip — ask for a seat behind the pilot, and note the last seaplane leaves before sunset.", whyAr: "صالة الطائرات المائية على بعد باص من صالة الوصول، والرحلة أحلى عشرين دقيقة بالسفرة — اطلبوا مقعد خلف الكابتن، وانتبهوا إن آخر طيارة مائية تطلع قبل الغروب.", category: "sight", rating: 4.5, priceBand: 3, startTime: "15:00" },
     ],
   },
@@ -133,6 +137,7 @@ const MALDIVES_DAYS: CuratedDay[] = [
     titleAr: "الجزر اللي يسكنها الناس",
     places: [
       { name: "Maafushi", nameAr: "مافوشي", why: "A local island of about three thousand people, half an hour by speedboat: a harbour, a school, a mosque and guesthouses. This is the Maldives that is a country, not a lagoon.", whyAr: "جزيرة أهلية فيها قرابة ثلاثة آلاف نسمة، نص ساعة بالقارب السريع: ميناء ومدرسة ومسجد وبيوت ضيافة. هذي المالديف كبلد، مو كبحيرة.", category: "walk", rating: 4.2, priceBand: 1, startTime: "09:30" },
+      { name: "Hiyala Mariyaad", nameAr: "هيالا مارياد", why: "Maldivian home food on Maafushi's one street: garudhiya, a clear tuna broth you pour over rice with lime and chilli, and mas huni with flatbread if anything is left from the morning.", whyAr: "أكل مالديفي بيتي بشارع مافوشي الوحيد: «غارودِيا» مرق تونة صافي تصبونه على الرز مع ليمون وفلفل، و«ماس هوني» مع خبز رقاق إذا بقي شي من الصبح.", category: "food", rating: 4.2, priceBand: 1, startTime: "12:00", dietary: ["halal", "seafood"] },
       { name: "Gulhi", nameAr: "غولهي", why: "Twenty minutes further north and a tenth the size — a fishing island with one street, and a sandbank off its western tip that surfaces at low tide.", whyAr: "عشرين دقيقة شمالًا وبعُشر الحجم — جزيرة صيد بشارع واحد، وفيها لسان رملي بطرفها الغربي يطلع وقت الجزر.", category: "nature", rating: 4.3, priceBand: 1, startTime: "13:30" },
     ],
   },
@@ -272,6 +277,8 @@ export const INDONESIA_MALDIVES_COORDS: Record<string, readonly [number, number]
   /* Ubud and around */
   "Campuhan Ridge Walk": [-8.5063, 115.2551],
   "Ubud Palace": [-8.5069, 115.2625],
+  "Fair Warung Balé": [-8.5074, 115.2652],
+  "Jati Harum": [-8.3651, 115.1427],
   "Tegallalang Rice Terrace": [-8.4313, 115.2794],
   "Tirta Empul": [-8.4156, 115.3153],
   "Gunung Kawi": [-8.4227, 115.3122],
@@ -282,12 +289,14 @@ export const INDONESIA_MALDIVES_COORDS: Record<string, readonly [number, number]
   "Sacred Monkey Forest Sanctuary": [-8.5188, 115.2585],
   "Goa Gajah": [-8.5236, 115.2872],
   "Pura Taman Saraswati": [-8.5063, 115.2632],
-  "Ubud Art Market": [-8.5072, 115.2622],
+  "Sanak Masakan Padang": [-8.5091, 115.265],
 
   /* The coast and the south */
   "Seminyak Beach": [-8.6913, 115.157],
   "Petitenget Temple": [-8.6798, 115.1513],
+  "Ayam Betutu Asli Gilimanuk": [-8.7007, 115.1764],
   "Batu Bolong Beach": [-8.6577, 115.1287],
+  "Warung Varuna": [-8.6548, 115.1317],
   "Taman Ayun Temple": [-8.5417, 115.1725],
   "Tanah Lot": [-8.6212, 115.0868],
   "Uluwatu Temple": [-8.8291, 115.0849],
@@ -308,5 +317,6 @@ export const INDONESIA_MALDIVES_COORDS: Record<string, readonly [number, number]
   "Banana Reef": [4.2683, 73.5417],
   "Kuda Bandos": [4.2783, 73.4943],
   Maafushi: [3.943, 73.4906],
+  "Hiyala Mariyaad": [3.9439, 73.4906],
   Gulhi: [3.9716, 73.4936],
 };

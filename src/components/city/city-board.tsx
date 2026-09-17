@@ -230,9 +230,22 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         )}
         {shown.map((p) => (
           <li key={p.key} className="rounded-2xl border border-border bg-card p-3 flex items-start gap-3">
-            <span className="w-10 h-10 rounded-xl bg-muted inline-flex items-center justify-center text-[18px] shrink-0">
-              {p.fromSave ? "🔖" : CAT_EMOJI[p.category] ?? "📍"}
-            </span>
+            {/* A picture is the difference between a name you can judge
+                and a name you can't. Landmarks have one; many small
+                kitchens don't, and those keep the category mark. */}
+            {p.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={p.photoUrl}
+                alt=""
+                loading="lazy"
+                className="w-14 h-14 rounded-xl object-cover bg-muted shrink-0"
+              />
+            ) : (
+              <span className="w-14 h-14 rounded-xl bg-muted inline-flex items-center justify-center text-[20px] shrink-0">
+                {p.fromSave ? "🔖" : CAT_EMOJI[p.category] ?? "📍"}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-[14.5px]">{ar ? p.nameAr : p.name}</span>

@@ -26,7 +26,7 @@ const BANGKOK_DAYS: CuratedDay[] = [
     places: [
       { name: "Chao Phraya express boat from Sathorn", nameAr: "قارب تشاو فرايا السريع من ساتورن", why: "The orange-flag boat is the cheapest ride in the city and the best view in it — board at Sathorn and stay on until the light goes.", whyAr: "قارب العلم البرتقالي أرخص مواصلة بالمدينة وأحلى إطلالة فيها — اركبوا من ساتورن واقعدوا فيه لين يروح الضوء.", category: "sight", rating: 4.5, priceBand: 0, startTime: "16:30" },
       { name: "Wat Arun", nameAr: "معبد وات أرون", why: "Cross at Tha Tien and climb the central prang as the sun drops — the porcelain covering it is broken Chinese ballast, and it catches the last light.", whyAr: "اعبروا من تا تيين واطلعوا البرج الأوسط والشمس نازلة — الخزف اللي يكسوه بقايا صحون صينية، ويلمع بآخر ضوء.", category: "sight", rating: 4.7, priceBand: 1, startTime: "17:45" },
-      { name: "Asiatique The Riverfront", nameAr: "آسياتيك الواجهة النهرية", why: "Old riverside warehouses turned night market, with a free shuttle boat from Sathorn — come for the walk along the water, not the ferris wheel.", whyAr: "مخازن قديمة على النهر تحولت سوق ليلي، وفيه قارب مجاني من ساتورن — تعالوا للمشية على الماء، مو للعجلة الدوارة.", category: "shop", rating: 4.2, priceBand: 1, startTime: "19:30" },
+      { name: "Yaowarat", nameAr: "شارع ياواراج", why: "Chinatown's main road only turns into a kitchen after dark — river prawns split and grilled over charcoal, oyster omelettes off a flat pan, chestnuts turned in a wok of hot black stones on the pavement. Pork is everywhere here too.", whyAr: "الشارع الرئيسي بالحي الصيني ما يصير مطبخ إلا بعد الظلام — روبيان نهري مشقوق ومشوي على الفحم، وعجة محار من على الصاج، وكستناء تتقلّب بمقلاة حجارة سودا حارة على الرصيف. ولحم الخنزير موجود بكل مكان هنا كذلك.", category: "food", rating: 4.5, priceBand: 1, startTime: "19:30", dietary: ["seafood", "pork-served"] },
     ],
   },
   {
@@ -36,7 +36,7 @@ const BANGKOK_DAYS: CuratedDay[] = [
     places: [
       { name: "Grand Palace", nameAr: "القصر الكبير", why: "Be at the gate at eight, shoulders and knees covered or you're renting a shirt — and the Emerald Buddha hall empties for ten minutes at nine while the groups do the courtyard.", whyAr: "كونوا عند البوابة الساعة ثمانية، وبملابس تغطي الأكتاف والركب وإلا بتستأجرون — وقاعة بوذا الزمردي تفضى عشر دقايق الساعة تسعة وقت ما تكون المجموعات بالساحة.", category: "sight", rating: 4.6, priceBand: 2, startTime: "08:00" },
       { name: "Wat Pho", nameAr: "معبد وات فو", why: "The reclining Buddha is forty-six metres long and cannot be photographed whole, so stop trying — walk the corridor and look at the feet, inlaid in mother-of-pearl.", whyAr: "بوذا المستلقي طوله ٤٦ متر وما ينصور كامل، فلا تتعبون نفسكم — امشوا الممر وشوفوا القدمين، مطعّمة بعرق اللؤلؤ.", category: "sight", rating: 4.6, priceBand: 1, startTime: "10:30" },
-      { name: "Tha Maharaj", nameAr: "تا مهاراج", why: "A shaded riverside terrace five minutes from the palace gate — the only lunch in the old city that isn't a plastic stool in 34 degrees.", whyAr: "شرفة مظللة على النهر على بعد خمس دقايق من باب القصر — الغداء الوحيد بالمدينة القديمة اللي مو كرسي بلاستيك بحر ٣٤ درجة.", category: "food", rating: 4.2, priceBand: 2, startTime: "12:30" },
+      { name: "Tha Maharaj", nameAr: "تا مهاراج", why: "A shaded riverside terrace five minutes from the palace gate — green curry, river prawns and mango sticky rice with the boats going past, and it's the only lunch in the old city that isn't a plastic stool in 34 degrees.", whyAr: "شرفة مظللة على النهر على بعد خمس دقايق من باب القصر — كاري أخضر وروبيان نهري ورز حلو بالمانجو والقوارب تمر قدامكم، وهو الغداء الوحيد بالمدينة القديمة اللي مو كرسي بلاستيك بحر ٣٤ درجة.", category: "food", rating: 4.2, priceBand: 2, startTime: "12:30", dietary: ["seafood", "unverified"] },
       { name: "Wat Saket Golden Mount", nameAr: "معبد الجبل الذهبي", why: "Three hundred and forty-four steps spiralling up an artificial hill — go at five, the bells at the top are there to be rung, and the old city turns gold underneath you.", whyAr: "٣٤٤ درجة تلتف حول تلة صناعية — اطلعوا الساعة خمسة، الأجراس فوق موجودة عشان تُقرع، والمدينة القديمة تتذهّب تحتكم.", category: "sight", rating: 4.5, priceBand: 1, startTime: "16:30" },
     ],
   },
@@ -45,7 +45,7 @@ const BANGKOK_DAYS: CuratedDay[] = [
     title: "Markets, silk, and a new park",
     titleAr: "أسواق وحرير وحديقة جديدة",
     places: [
-      { name: "Or Tor Kor Market", nameAr: "سوق أور تور كور", why: "The government fruit market across the road from Chatuchak — mangosteen and durian cut and boxed, and clean enough to eat standing at the stall.", whyAr: "سوق الفواكه الحكومي قبال تشاتوتشاك — مانغوستين ودوريان مقطّع ومعلّب، ونظيف لدرجة تاكلونه وأنتم واقفين.", category: "food", rating: 4.5, priceBand: 2, startTime: "09:30" },
+      { name: "Or Tor Kor Market", nameAr: "سوق أور تور كور", why: "The government fruit market across the road from Chatuchak — mangosteen and durian cut and boxed, and clean enough to eat standing at the stall.", whyAr: "سوق الفواكه الحكومي قبال تشاتوتشاك — مانغوستين ودوريان مقطّع ومعلّب، ونظيف لدرجة تاكلونه وأنتم واقفين.", category: "food", rating: 4.5, priceBand: 2, startTime: "09:30", dietary: ["vegetarian"] },
       { name: "Chatuchak Weekend Market", nameAr: "سوق تشاتوتشاك", why: "Fifteen thousand stalls, and it only runs Saturday and Sunday — drop a pin on the gate you came in by, or you will not find it again.", whyAr: "خمسة عشر ألف بسطة، وما يفتح إلا السبت والأحد — حطوا علامة على البوابة اللي دخلتوا منها، وإلا ما بتلقونها.", category: "shop", rating: 4.4, priceBand: 1, startTime: "11:00", openDays: [6, 0] },
       { name: "Jim Thompson House", nameAr: "بيت جيم طومسون", why: "Six teak houses moved here by the American who rebuilt Thai silk, then walked into a Malaysian jungle in 1967 and was never found. The guided tour is included and short.", whyAr: "ستة بيوت ساج نقلها الأمريكي اللي أحيا صناعة الحرير التايلاندي، وبعدين دخل غابة ماليزية سنة ١٩٦٧ وما رجع. الجولة مشمولة وقصيرة.", category: "sight", rating: 4.5, priceBand: 1, startTime: "15:00" },
       { name: "Benjakitti Forest Park", nameAr: "منتزه بنجاكيتي", why: "A tobacco factory turned wetland in 2022 — a raised boardwalk over the reeds with the towers behind it, and at six the whole city is jogging it.", whyAr: "مصنع تبغ تحول لأرض رطبة سنة ٢٠٢٢ — ممشى مرفوع فوق القصب والأبراج خلفه، والساعة ستة تكون المدينة كلها تركض فيه.", category: "nature", rating: 4.6, priceBand: 0, startTime: "17:30" },
@@ -58,7 +58,7 @@ const BANGKOK_DAYS: CuratedDay[] = [
     places: [
       { name: "Bang Krachao", nameAr: "بانغ كراتشاو", why: "A jungle peninsula inside the city: a twenty-baht boat across from Klong Toei, then a rented bicycle on concrete paths raised above the swamp. Go before the heat.", whyAr: "شبه جزيرة غابة داخل المدينة: قارب بعشرين بات من كلونغ توي، وبعدها دراجة مستأجرة على ممرات خرسانية مرفوعة فوق المستنقع. روحوا قبل الحر.", category: "nature", rating: 4.5, priceBand: 1, startTime: "08:30" },
       { name: "Wat Paknam Phasi Charoen", nameAr: "معبد وات باكنام", why: "Take the lift to the fifth floor: a green glass stupa under a dome painted with the whole cosmos. It is free, and almost nobody outside Thailand knows it is there.", whyAr: "اطلعوا بالمصعد للدور الخامس: قبة زجاجية خضراء تحت سقف مرسوم عليه الكون كله. مجاني، وبالكاد أحد برا تايلاند يدري فيه.", category: "sight", rating: 4.7, priceBand: 0, startTime: "12:00" },
-      { name: "ICONSIAM", nameAr: "آيكون سيام", why: "The indoor floating market on the ground floor is the reason to come — real vendors in real boats, out of the heat — and the riverside deck outside is the best free view in the city.", whyAr: "السوق العائم المسقوف بالدور الأرضي هو السبب — باعة حقيقيين بقوارب حقيقية وبعيد عن الحر — والشرفة على النهر برا أحسن إطلالة مجانية بالمدينة.", category: "shop", rating: 4.5, priceBand: 2, startTime: "15:30" },
+      { name: "ICONSIAM", nameAr: "آيكون سيام", why: "SookSiam, the indoor floating market on the ground floor, is the reason to come — boat noodles, grilled river prawns and mango sticky rice sold from real vendors in real boats, out of the heat — and the riverside deck outside is the best free view in the city. Boat noodles are pork or beef.", whyAr: "«سوك سيام»، السوق العائم المسقوف بالدور الأرضي، هو السبب — نودلز القوارب وروبيان نهري مشوي ورز حلو بالمانجو من باعة حقيقيين بقوارب حقيقية وبعيد عن الحر — والشرفة على النهر برا أحسن إطلالة مجانية بالمدينة. ونودلز القوارب إما لحم خنزير أو بقر.", category: "food", rating: 4.5, priceBand: 2, startTime: "15:30", dietary: ["seafood", "pork-served"] },
     ],
   },
 ];
@@ -73,6 +73,7 @@ const PHUKET_DAYS: CuratedDay[] = [
     places: [
       { name: "Kata Beach", nameAr: "شاطئ كاتا", why: "An hour south of the airport, and the last twenty minutes of that road is the point — a wide bay, calm water from November to April, and nothing like Patong.", whyAr: "ساعة جنوب المطار، وآخر عشرين دقيقة من الطريق هي المقصد — خليج واسع وماء هادي من نوفمبر لأبريل، ولا يشبه باتونغ أبدًا.", category: "nature", rating: 4.5, priceBand: 0, startTime: "16:00" },
       { name: "Karon Viewpoint", nameAr: "مطل كارون", why: "Fifteen minutes uphill from Kata: three bays in one frame, and the sun goes down at the right-hand end of it. Come at six, leave at seven.", whyAr: "ربع ساعة طلوع من كاتا: ثلاثة خلجان بإطار واحد، والشمس تغيب بطرفه الأيمن. تعالوا الساعة ستة وارجعوا سبعة.", category: "sight", rating: 4.5, priceBand: 0, startTime: "18:00" },
+      { name: "Kata Walking Street Night Market", nameAr: "سوق كاتا الليلي", why: "One street behind the beach, closed to cars after dark — whole squid grilled flat, chicken satay over coals, pad thai off a wok and mango sticky rice. Order by pointing; almost nothing is over a hundred baht.", whyAr: "شارع واحد خلف الشاطئ، يُقفل بوجه السيارات بعد الظلام — حبار كامل مشوي مفرود، وسيخ دجاج ساتاي على الجمر، وباد تاي من المقلاة، ورز حلو بالمانجو. اطلبوا بالإشارة؛ وبالكاد شي يتعدى مئة بات.", category: "food", rating: 4.2, priceBand: 1, startTime: "19:30", dietary: ["seafood", "unverified"] },
     ],
   },
   {
@@ -81,7 +82,7 @@ const PHUKET_DAYS: CuratedDay[] = [
     titleAr: "البلدة القديمة… وبوذا الكبير وقت الغروب",
     places: [
       { name: "Phuket Old Town", nameAr: "بلدة بوكيت القديمة", why: "Thalang Road is Sino-Portuguese: tin money, Chinese courtyards, Portuguese fronts — walk it before eleven while the arcades are still in shade.", whyAr: "شارع ثالانغ صيني-برتغالي: فلوس القصدير وأفنية صينية وواجهات برتغالية — امشوه قبل الحادية عشرة والأروقة لا زالت بالظل.", category: "walk", rating: 4.5, priceBand: 0, startTime: "09:30" },
-      { name: "Soi Romanee", nameAr: "زقاق روماني", why: "One short lane of painted shophouses off Thalang, restored door by door — it is the photograph of Phuket that isn't a beach.", whyAr: "زقاق قصير من بيوت ملوّنة يتفرع من ثالانغ، رمّموه باب باب — وهو صورة بوكيت الوحيدة اللي مو شاطئ.", category: "walk", rating: 4.4, priceBand: 0, startTime: "10:45" },
+      { name: "Raya Restaurant", nameAr: "مطعم رايا", why: "Yellow crab curry poured over fermented rice noodles, in a 1930s Sino-Portuguese house with its original floor tiles — this is Phuket's own cooking, which is not Bangkok's.", whyAr: "كاري سلطعون أصفر يُسكب على نودلز رز مخمّرة، بدار سينو-برتغالية من الثلاثينات وأرضيتها الأصلية — هذا طبخ بوكيت نفسها، وهو مو طبخ بانكوك.", category: "food", rating: 4.5, priceBand: 2, startTime: "12:00", dietary: ["seafood"] },
       { name: "Wat Chalong", nameAr: "معبد وات شالونغ", why: "The island's main temple, and the top floor of the pagoda holds a bone fragment of the Buddha — shoes come off at the stairs, not at the door.", whyAr: "معبد الجزيرة الرئيسي، وبالدور الأعلى من البرج شظية عظم منسوبة لبوذا — الأحذية تنخلع عند الدرج مو عند الباب.", category: "sight", rating: 4.5, priceBand: 0, startTime: "14:30" },
       { name: "Big Buddha Phuket", nameAr: "بوذا الكبير ببوكيت", why: "Forty-five metres of white marble on the ridge between two coasts — come for the last hour of light, when both seas are visible and the marble turns orange.", whyAr: "خمسة وأربعين متر رخام أبيض على الحافة بين ساحلين — تعالوا بآخر ساعة ضوء، لما يبان البحران ويصير الرخام برتقالي.", category: "sight", rating: 4.6, priceBand: 0, startTime: "16:30" },
     ],
@@ -92,7 +93,7 @@ const PHUKET_DAYS: CuratedDay[] = [
     titleAr: "خليج فانغ نغا والقرية على الأعمدة",
     places: [
       { name: "Ao Phang Nga National Park", nameAr: "محمية آو فانغ نغا", why: "Leave from Ao Por on the north-east coast rather than Phuket town — you're on the water an hour earlier and inside the limestone before the Krabi boats arrive.", whyAr: "اطلعوا من آو بور بالساحل الشمالي الشرقي بدل مدينة بوكيت — بتكونون بالماء قبل بساعة وبين الصخور قبل ما توصل قوارب كرابي.", category: "nature", rating: 4.6, priceBand: 2, startTime: "08:30" },
-      { name: "Ko Panyi", nameAr: "جزيرة كو باني", why: "A Muslim fishing village of around 1,800 people built entirely on stilts over the water, with its own mosque, school, and a floating football pitch the children built themselves. Eat lunch here.", whyAr: "قرية صيد مسلمة فيها قرابة ١٨٠٠ نسمة مبنية كاملة على أعمدة فوق الماء، ولها مسجدها ومدرستها وملعب كرة عائم بناه أطفالها بأنفسهم. تغدوا هنا.", category: "food", rating: 4.4, priceBand: 1, startTime: "11:30" },
+      { name: "Ko Panyi", nameAr: "جزيرة كو باني", why: "A Muslim fishing village of around 1,800 people built entirely on stilts over the water, with its own mosque, school, and a floating football pitch the children built themselves. Eat lunch here.", whyAr: "قرية صيد مسلمة فيها قرابة ١٨٠٠ نسمة مبنية كاملة على أعمدة فوق الماء، ولها مسجدها ومدرستها وملعب كرة عائم بناه أطفالها بأنفسهم. تغدوا هنا.", category: "food", rating: 4.4, priceBand: 1, startTime: "11:30", dietary: ["halal", "seafood"] },
       { name: "James Bond Island", nameAr: "جزيرة جيمس بوند", why: "Ko Tapu is a twenty-metre limestone needle photographed since 1974 — you get ten minutes on a small beach, and the ride between the cliffs is the real thing.", whyAr: "كو تابو إبرة جيرية بعشرين متر تنصوّر من سنة ١٩٧٤ — عندكم عشر دقايق على شاطئ صغير، والمشوار بين الجروف هو الحلو فعلًا.", category: "sight", rating: 4.3, priceBand: 1, startTime: "14:00" },
     ],
   },
@@ -102,7 +103,7 @@ const PHUKET_DAYS: CuratedDay[] = [
     titleAr: "الطرف الجنوبي",
     places: [
       { name: "Nai Harn Beach", nameAr: "شاطئ ناي هارن", why: "The last real beach before the island ends — a lagoon behind it, no hotel strip in front of it, and the best swimming on Phuket in the dry season.", whyAr: "آخر شاطئ حقيقي قبل ما تنتهي الجزيرة — بحيرة خلفه وما فيه صف فنادق قدامه، وأحسن سباحة ببوكيت بموسم الجفاف.", category: "nature", rating: 4.6, priceBand: 0, startTime: "09:30" },
-      { name: "Rawai Seafood Market", nameAr: "سوق سمك راواي", why: "Pick your fish off the ice and carry it across the road — the kitchens opposite cook it by weight, and you pay a third of a hotel's price for the same snapper.", whyAr: "اختاروا سمككم من على الثلج وعدوا فيه الشارع — المطابخ المقابلة تطبخه بالوزن، وبتدفعون ثلث سعر الفندق لنفس السمكة.", category: "food", rating: 4.3, priceBand: 2, startTime: "13:00" },
+      { name: "Rawai Seafood Market", nameAr: "سوق سمك راواي", why: "Pick your fish, crab or tiger prawns off the ice and carry them across the road — the kitchens opposite grill or steam them by weight, and you pay a third of a hotel's price for the same snapper. Rawai is a Muslim fishing village, and most of those kitchens are halal.", whyAr: "اختاروا سمككم أو السلطعون أو الروبيان النمري من على الثلج وعدوا فيه الشارع — المطابخ المقابلة تشويه أو تبخّره بالوزن، وبتدفعون ثلث سعر الفندق لنفس السمكة. وراواي قرية صيد مسلمة، وأغلب هالمطابخ حلال.", category: "food", rating: 4.3, priceBand: 2, startTime: "13:00", dietary: ["seafood", "halal-friendly"] },
       { name: "Promthep Cape", nameAr: "رأس بروم تيب", why: "The southernmost point, and the whole island drives out here for sunset — park at the lighthouse end and walk the ridge away from the terrace.", whyAr: "أقصى نقطة جنوب، والجزيرة كلها تجي هنا للغروب — اركنوا عند المنارة وامشوا على الحافة بعيد عن المدرج.", category: "sight", rating: 4.6, priceBand: 0, startTime: "17:30" },
     ],
   },
@@ -253,7 +254,7 @@ export const THAILAND_COORDS: Record<string, readonly [number, number]> = {
   /* Bangkok */
   "Chao Phraya express boat from Sathorn": [13.7188, 100.5139],
   "Wat Arun": [13.7437, 100.4889],
-  "Asiatique The Riverfront": [13.7045, 100.5028],
+  Yaowarat: [13.7412, 100.5083],
   "Grand Palace": [13.75, 100.4913],
   "Wat Pho": [13.7465, 100.4927],
   "Tha Maharaj": [13.7573, 100.4907],
@@ -275,8 +276,9 @@ export const THAILAND_COORDS: Record<string, readonly [number, number]> = {
   /* Phuket */
   "Kata Beach": [7.8189, 98.2986],
   "Karon Viewpoint": [7.7789, 98.3047],
+  "Kata Walking Street Night Market": [7.8246, 98.2982],
   "Phuket Old Town": [7.8842, 98.3889],
-  "Soi Romanee": [7.8847, 98.3877],
+  "Raya Restaurant": [7.8859, 98.3909],
   "Wat Chalong": [7.8462, 98.337],
   "Big Buddha Phuket": [7.8277, 98.3122],
   "Ao Phang Nga National Park": [8.27, 98.5],

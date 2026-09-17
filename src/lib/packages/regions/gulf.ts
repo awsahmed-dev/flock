@@ -33,7 +33,7 @@ const DUBAI_DAYS: CuratedDay[] = [
       { name: "Al Fahidi Historical Neighbourhood", nameAr: "حي الفهيدي التاريخي", why: "Wind-tower lanes barely wide enough for two people — go before ten, while the coral-stone walls are still throwing shade.", whyAr: "أزقة البراجيل بالكاد تسع شخصين — روحوا قبل العاشرة وجدران الحجر البحري لسا ترمي ظل.", category: "sight", rating: 4.4, priceBand: 0, startTime: "09:00" },
       { name: "Abra across Dubai Creek", nameAr: "عبرة عبر خور دبي", why: "One dirham each way on a wooden boat nobody has seen a reason to modernise — you pay the man on board, not on the dock.", whyAr: "درهم واحد بالاتجاه على قارب خشب ما أحد لقى سبب يطوره — تدفعون للمعلم داخل القارب مو على الرصيف.", category: "walk", rating: 4.7, priceBand: 0, startTime: "11:00" },
       { name: "Deira Gold Souk", nameAr: "سوق الذهب بديرة", why: "Ask the price by the gram and the making charge separately — that is how everyone who lives here buys it, and the spice souk is two lanes over.", whyAr: "اسألوا على سعر الجرام والمصنعية كل وحدة لحالها — كذا يشتري كل اللي عايش هنا، وسوق التوابل على بعد زقاقين.", category: "shop", rating: 4.3, priceBand: 2, startTime: "11:45" },
-      { name: "Al Seef", nameAr: "السيف", why: "The new stretch built to look old actually works after dark — eat on the water and watch the abras cut across in front of you.", whyAr: "المقطع الجديد المبني على الطراز القديم يشتغل فعلًا بعد المغرب — كلوا على الماي وشوفوا العبرات تقطع قدامكم.", category: "food", rating: 4.4, priceBand: 2, startTime: "17:30" },
+      { name: "Al Seef", nameAr: "السيف", why: "The heritage strip on the water: machboos and grilled hammour at tables a metre from the creek, with the abras cutting across in front of you. It only works after dark.", whyAr: "الشريط التراثي على الماء: مجبوس وهامور مشوي على طاولات على بعد متر من الخور، والعبرات تقطع قدامكم. وما يشتغل إلا بعد المغرب.", category: "food", rating: 4.4, priceBand: 2, startTime: "17:30", dietary: ["halal"] },
     ],
   },
   {
@@ -42,7 +42,7 @@ const DUBAI_DAYS: CuratedDay[] = [
     titleAr: "وسط المدينة… من فوق لتحت",
     places: [
       { name: "Dubai Frame", nameAr: "برواز دبي", why: "Stand on the glass floor at the top and the two halves of the city line up exactly — old Dubai behind you, new Dubai in front.", whyAr: "اوقفوا على الأرضية الزجاجية فوق وبتلقون نصفي المدينة على استقامة وحدة — دبي القديمة خلفكم والجديدة قدامكم.", category: "sight", rating: 4.5, priceBand: 1, startTime: "09:30" },
-      { name: "Dubai Aquarium & Underwater Zoo", nameAr: "دبي أكواريوم وحديقة الحيوانات المائية", why: "You can see the whole tank for free from the mall floor and only pay to walk through the tunnel — look first, decide after.", whyAr: "تشوفون الحوض كامل ببلاش من داخل المول وما تدفعون إلا عشان تمشون بالنفق — شوفوا أول وقرروا بعدين.", category: "sight", rating: 4.4, priceBand: 2, startTime: "12:30" },
+      { name: "Al Hallab Restaurant & Sweets", nameAr: "مطعم وحلويات الحلاب", why: "Lebanese mezze and a charcoal mixed grill, then knafeh soaked in orange-blossom syrup — ask for a terrace table facing the fountain lake, and you eat with the Burj in front of you.", whyAr: "مزّات لبنانية ومشاوي على الفحم، وبعدها كنافة مغمورة بقطر ماء الزهر — اطلبوا طاولة بالشرفة المطلة على بحيرة النافورة، وبتاكلون والبرج قدامكم.", category: "food", rating: 4.4, priceBand: 2, startTime: "12:30", dietary: ["halal"] },
       { name: "Burj Khalifa", nameAr: "برج خليفة", why: "Book the slot that starts an hour before Maghrib: you go up in daylight and come down after the whole city has switched on.", whyAr: "احجزوا الموعد اللي يبدأ قبل المغرب بساعة: تطلعون والدنيا نهار وتنزلون والمدينة كلها مضوية.", category: "sight", rating: 4.7, priceBand: 3, startTime: "17:00" },
       { name: "The Dubai Fountain", nameAr: "نافورة دبي", why: "Watch from the bridge to Souk Al Bahar rather than the mall terrace — same show, no crush, and you can actually hear the music.", whyAr: "شوفوها من الجسر اللي يودي سوق البحار مو من شرفة المول — نفس العرض وبدون زحمة، وتسمعون الموسيقى فعلًا.", category: "sight", rating: 4.7, priceBand: 0, startTime: "19:00" },
     ],
@@ -55,7 +55,7 @@ const DUBAI_DAYS: CuratedDay[] = [
       { name: "Jumeirah Mosque", nameAr: "مسجد جميرا", why: "One of the few mosques in the city open to visitors all morning — the white stone is at its best before the sun clears the minarets.", whyAr: "من المساجد القليلة بالمدينة اللي تفتح للزوار طول الصبح — والحجر الأبيض بأحلى حالاته قبل ما تعلى الشمس فوق المآذن.", category: "sight", rating: 4.5, priceBand: 0, startTime: "09:30" },
       { name: "Etihad Museum", nameAr: "متحف الاتحاد", why: "Built over the house where the union was signed in 1971 — the seven pens in the last room are the actual pens.", whyAr: "مبني فوق البيت اللي وُقّع فيه الاتحاد سنة ١٩٧١ — والأقلام السبعة بآخر قاعة هي نفسها الأصلية.", category: "sight", rating: 4.4, priceBand: 1, startTime: "11:30" },
       { name: "Kite Beach", nameAr: "كايت بيتش", why: "Come at four when the sand has cooled — Burj Al Arab stands at the end of the beach and nobody charges you to look at it.", whyAr: "تعالوا الساعة أربع لما يبرد الرمل — برج العرب واقف بآخر الشاطئ وما أحد ياخذ منكم فلوس عشان تشوفونه.", category: "nature", rating: 4.5, priceBand: 0, startTime: "16:30" },
-      { name: "Souk Madinat Jumeirah", nameAr: "سوق مدينة جميرا", why: "The wooden waterways inside are the reason to come; the shops are the same ones as every mall, so don't plan around them.", whyAr: "الممرات المائية الخشبية جوّا هي سبب الزيارة؛ أما المحلات فهي نفسها اللي بكل مول، فلا تبنون عليها.", category: "walk", rating: 4.5, priceBand: 2, startTime: "18:30" },
+      { name: "Bu Qtair Fish Restaurant", nameAr: "مطعم بو قطير", why: "A fishermen's shack by the harbour: you pick the hammour or the kingfish off the tray, they fry it in masala batter and hand it over with rice and paratha — plastic tables on the sand, and a queue from six.", whyAr: "كشك صيادين عند الميناء: تختارون الهامور أو الكنعد من الصينية، ويقلونه بخلطة مسالا ويعطونكم إياه مع رز وبراتا — طاولات بلاستيك على الرمل، والطابور يبدأ من الساعة ستة.", category: "food", rating: 4.5, priceBand: 1, startTime: "18:30", dietary: ["halal", "seafood"] },
     ],
   },
   {
@@ -66,7 +66,7 @@ const DUBAI_DAYS: CuratedDay[] = [
       { name: "The View at The Palm", nameAr: "ذا فيو آت ذا بالم", why: "Fifty-two floors up is where the palm shape finally makes sense — from the ground it just looks like more coast.", whyAr: "من الطابق ٥٢ بس يبان شكل النخلة؛ من تحت تحسونه مجرد ساحل زيادة.", category: "sight", rating: 4.5, priceBand: 2, startTime: "10:00" },
       { name: "Atlantis The Palm", nameAr: "أتلانتس النخلة", why: "The Lost Chambers aquarium is walk-in and takes an hour; the waterpark takes the whole day — pick one before you get in the car.", whyAr: "أكواريوم الغرف المفقودة دخوله مباشر وياخذ ساعة؛ أما المدينة المائية فتاخذ اليوم كله — اختاروا وحدة قبل ما تركبون السيارة.", category: "sight", rating: 4.5, priceBand: 3, startTime: "12:30" },
       { name: "Dubai Marina Walk", nameAr: "ممشى مرسى دبي", why: "Seven kilometres of promenade under the towers — walk the stretch between the mall and the yacht club and turn back, that's the good part.", whyAr: "سبعة كيلو ممشى تحت الأبراج — امشوا المقطع بين المول ونادي اليخوت وارجعوا، هذا أحلى جزء فيه.", category: "walk", rating: 4.5, priceBand: 0, startTime: "16:30" },
-      { name: "The Walk at JBR", nameAr: "ذا ووك بجي بي آر", why: "Where Dubai eats outdoors from November to March — the tables on the sand side go first, so send someone ahead.", whyAr: "هنا تتعشى دبي برا من نوفمبر لمارس — طاولات جهة الرمل تروح أول، فقدّموا واحد منكم.", category: "food", rating: 4.4, priceBand: 2, startTime: "18:30" },
+      { name: "The Walk at JBR", nameAr: "ذا ووك بجي بي آر", why: "Shawarma, mixed grills and juice at pavement tables from November to March, which is when Dubai eats outdoors — the tables on the sand side go first, so send someone ahead.", whyAr: "شاورما ومشاوي مشكلة وعصيرات على طاولات الرصيف من نوفمبر لمارس، وهي الفترة اللي تتعشى فيها دبي برا — طاولات جهة الرمل تروح أول، فقدّموا واحد منكم.", category: "food", rating: 4.4, priceBand: 2, startTime: "18:30", dietary: ["halal"] },
     ],
   },
   {
@@ -76,7 +76,7 @@ const DUBAI_DAYS: CuratedDay[] = [
     places: [
       { name: "Dubai Miracle Garden", nameAr: "حديقة المعجزة دبي", why: "Forty-five million flowers in open desert, and it only opens November to May — go at nine, before the heat and the coaches.", whyAr: "خمسة وأربعين مليون زهرة بقلب الصحرا، وما تفتح إلا من نوفمبر لمايو — روحوا الساعة تسع قبل الحر والباصات.", category: "nature", rating: 4.4, priceBand: 2, startTime: "09:30" },
       { name: "IMG Worlds of Adventure", nameAr: "آي إم جي عالم من المغامرات", why: "The largest indoor theme park there is, which in this city is the whole point — it is the same temperature in August as in January.", whyAr: "أكبر مدينة ألعاب مغلقة بالعالم، وهذي فايدتها بهالمدينة — نفس الجو بأغسطس ونفسه بيناير.", category: "sight", rating: 4.2, priceBand: 3, startTime: "13:00" },
-      { name: "Global Village", nameAr: "القرية العالمية", why: "Ninety countries in pavilions you walk between and the food is the real reason — come on a weeknight, weekend parking alone costs you an hour.", whyAr: "تسعين دولة بأجنحة تمشون بينها، والأكل هو السبب الحقيقي — تعالوا يوم أسبوع، لأن مواقف الويكند لحالها تاخذ ساعة.", category: "food", rating: 4.3, priceBand: 1, startTime: "18:00" },
+      { name: "Global Village", nameAr: "القرية العالمية", why: "Ninety country pavilions and the food is the real reason: Afghan mantu, Yemeni mandi, Turkish gözleme, one plate from each as you walk — come on a weeknight, weekend parking alone costs you an hour.", whyAr: "تسعين جناح دولة، والأكل هو السبب الحقيقي: منتو أفغاني، ومندي يمني، وجوزلمه تركية، صحن من كل جناح وأنتم ماشين — تعالوا يوم أسبوع، لأن مواقف الويكند لحالها تاخذ ساعة.", category: "food", rating: 4.3, priceBand: 1, startTime: "18:00", dietary: ["halal"] },
     ],
   },
 ];
@@ -91,7 +91,7 @@ const ABU_DHABI_DAYS: CuratedDay[] = [
     places: [
       { name: "Sheikh Zayed Grand Mosque", nameAr: "جامع الشيخ زايد الكبير", why: "Come for Fajr and stay as the light comes up — the marble changes colour, and the courtyard is yours until visitor hours start at nine.", whyAr: "تعالوا لصلاة الفجر واقعدوا لين يطلع الضوء — الرخام يتغير لونه، والصحن كله لكم قبل ما تبدأ ساعات الزيارة التاسعة.", category: "sight", rating: 4.8, priceBand: 0, startTime: "05:30" },
       { name: "Qasr Al Watan", nameAr: "قصر الوطن", why: "A working presidential palace that opens its state rooms — the Great Hall's dome is thirty-seven metres and they let you stand directly under the middle of it.", whyAr: "قصر رئاسي شغّال يفتح قاعاته الرسمية — قبة القاعة الكبرى سبعة وثلاثين متر ويخلونكم توقفون تحت نصها بالضبط.", category: "sight", rating: 4.7, priceBand: 2, startTime: "10:30" },
-      { name: "Emirates Palace", nameAr: "قصر الإمارات", why: "The lobby dome is open to anyone who walks in dressed properly — go for the gold-leaf ceiling, stay for the coffee that has gold on top of it.", whyAr: "بهو القبة مفتوح لأي أحد يدخل بلبس محترم — ادخلوا عشان سقف ورق الذهب، واقعدوا عشان القهوة المرشوشة ذهب.", category: "rest", rating: 4.6, priceBand: 3, startTime: "15:30" },
+      { name: "Bait El Khetyar", nameAr: "مطعم بيت الختيار", why: "Lebanese mezze laid down twenty plates at a time and a charcoal mixed grill after it — order the arayes and the fattoush, and leave room, they keep bringing bread.", whyAr: "مزّات لبنانية تنزل عشرين صحن دفعة وحدة وبعدها مشاوي مشكلة على الفحم — اطلبوا العرايس والفتوش، وخلّوا مكان، الخبز ما يوقف.", category: "food", rating: 4.4, priceBand: 2, startTime: "13:00", dietary: ["halal"] },
       { name: "Corniche Family Beach", nameAr: "شاطئ العائلات بالكورنيش", why: "Eight kilometres of Corniche with one fenced family section in the middle — a few dirhams gets you loungers, showers and lifeguards.", whyAr: "ثمانية كيلو كورنيش وبنصه قسم عائلي مسوّر — بكم درهم تلقون كراسي ودشات ومنقذين.", category: "nature", rating: 4.5, priceBand: 1, startTime: "17:30" },
     ],
   },
@@ -102,6 +102,7 @@ const ABU_DHABI_DAYS: CuratedDay[] = [
     places: [
       { name: "Louvre Abu Dhabi", nameAr: "اللوفر أبوظبي", why: "Stand under the dome around midday and the 'rain of light' does exactly what the architect promised it would.", whyAr: "اوقفوا تحت القبة وقت الظهر و«مطر الضوء» يسوي بالضبط اللي وعد فيه المعماري.", category: "sight", rating: 4.7, priceBand: 2, startTime: "09:30" },
       { name: "Manarat Al Saadiyat", nameAr: "منارة السعديات", why: "Free, cold, and the exhibitions turn over every few weeks — this is where you sit out the worst two hours of the afternoon.", whyAr: "مجاني وبارد والمعارض تتبدل كل كم أسبوع — هنا تقضون أسوأ ساعتين بالعصر.", category: "sight", rating: 4.4, priceBand: 0, startTime: "12:30" },
+      { name: "Beirut Sur Mer", nameAr: "بيروت سور مير", why: "On the Mamsha promenade between the museums and the beach: whole fish picked off the ice and grilled, fattoush, and hot bread with sumac.", whyAr: "على ممشى السعديات بين المتاحف والشاطئ: سمك كامل تختارونه من على الثلج وينشوى قدامكم، وفتوش، وخبز سخن بالسماق.", category: "food", rating: 4.3, priceBand: 3, startTime: "14:00", dietary: ["halal", "seafood"] },
       { name: "Saadiyat Public Beach", nameAr: "شاطئ السعديات العام", why: "A protected turtle-nesting beach, so no buildings behind it — walk left from the entrance and in five minutes you are past the last umbrella.", whyAr: "شاطئ محمي لتعشيش السلاحف، فما فيه عمارات خلفه — امشوا يسار من المدخل وبخمس دقايق تتجاوزون آخر شمسية.", category: "nature", rating: 4.6, priceBand: 1, startTime: "16:00" },
     ],
   },
@@ -112,6 +113,7 @@ const ABU_DHABI_DAYS: CuratedDay[] = [
     places: [
       { name: "Ferrari World Abu Dhabi", nameAr: "عالم فيراري أبوظبي", why: "Formula Rossa hits 240 km/h in under five seconds, and the queue for it is shortest in the first hour after the gates open.", whyAr: "فورمولا روسا توصل ٢٤٠ كم/س بأقل من خمس ثواني، وأقصر طابور لها بأول ساعة بعد فتح الأبواب.", category: "sight", rating: 4.6, priceBand: 3, startTime: "10:00" },
       { name: "Yas Mall", nameAr: "ياس مول", why: "Joined to the park by a covered bridge, which in Abu Dhabi in July is not a small detail.", whyAr: "موصول بالمدينة بجسر مسقوف، وهذي بأبوظبي بشهر يوليو مو تفصيلة بسيطة.", category: "shop", rating: 4.4, priceBand: 2, startTime: "15:30" },
+      { name: "Dolmabahce Turkish Cuisine", nameAr: "مطعم دولمة باهتشه التركي", why: "Iskender kebab under melted butter and yoghurt, lahmacun straight off the stone, and Turkish tea after — eat here before the track opens, not at the circuit kiosks.", whyAr: "كباب إسكندر تحت الزبدة واللبن، ولحم بعجين طالع من الحجر، وشاي تركي بعده — كلوا هنا قبل ما تفتح الحلبة، مو من أكشاك الحلبة.", category: "food", rating: 4.3, priceBand: 2, startTime: "17:30", dietary: ["halal"] },
       { name: "Yas Marina Circuit", nameAr: "حلبة مرسى ياس", why: "On TrainYAS nights the Formula 1 track opens free to anyone with a bike or running shoes — the pit straight under the floodlights is what you'll remember.", whyAr: "بليالي «TrainYAS» تنفتح حلبة الفورمولا ١ مجانًا لأي أحد معه سيكل أو جزمة ركض — والمستقيم الرئيسي تحت الكشافات هو اللي بيعلق بذاكرتكم.", category: "walk", rating: 4.6, priceBand: 0, startTime: "19:00" },
     ],
   },
@@ -137,7 +139,7 @@ const ALULA_DAYS: CuratedDay[] = [
     places: [
       { name: "Dadan (Al-Khuraybah)", nameAr: "دادان (الخريبة)", why: "The lion tombs are cut high into the red cliff and viewed from a platform below — this is the one site in AlUla where binoculars earn their weight.", whyAr: "مقابر الأسود محفورة عالي بالجرف الأحمر وتشوفونها من منصة تحتها — هذا الموقع الوحيد بالعلا اللي يستاهل تحملون فيه منظار.", category: "sight", rating: 4.6, priceBand: 2, startTime: "09:00" },
       { name: "Jabal Ikmah", nameAr: "جبل عكمة", why: "An open-air library — hundreds of Dadanitic inscriptions down both walls of the canyon, and the guide will read one out in a language nobody has spoken for two thousand years.", whyAr: "مكتبة مفتوحة — مئات النقوش الدادانية على جدران الوادي من الجهتين، والمرشد بيقرأ لكم وحدة بلغة ما نطق فيها أحد من ألفين سنة.", category: "sight", rating: 4.6, priceBand: 1, startTime: "11:00" },
-      { name: "AlJadidah Arts District", nameAr: "حي الجديدة للفنون", why: "Where AlUla actually eats — a strip of restaurants and small galleries a short walk from Old Town, and it only fills up after Isha.", whyAr: "هنا تتعشى العلا فعلًا — شارع مطاعم وقالريهات صغيرة على مشية قصيرة من البلدة القديمة، وما يزحم إلا بعد العشا.", category: "food", rating: 4.4, priceBand: 2, startTime: "18:30" },
+      { name: "AlJadidah Arts District", nameAr: "حي الجديدة للفنون", why: "Where AlUla actually eats: a lane of small kitchens and galleries a short walk from Old Town — grills, shawarma, and dates with Saudi coffee after. It only fills up once Isha is done.", whyAr: "هنا تتعشى العلا فعلًا: زقاق مطابخ صغيرة وقالريهات على مشية قصيرة من البلدة القديمة — مشاوي وشاورما، وبعدها تمر وقهوة سعودية. وما يزحم إلا بعد العشا.", category: "food", rating: 4.4, priceBand: 2, startTime: "18:30", dietary: ["halal"] },
     ],
   },
   {
@@ -147,6 +149,7 @@ const ALULA_DAYS: CuratedDay[] = [
     places: [
       { name: "Sharaan Nature Reserve", nameAr: "محمية شرعان الطبيعية", why: "Arabian leopard country, entered only by 4x4 with a ranger — reserve the day before, they cap the number of vehicles that go in.", whyAr: "أرض النمر العربي، وما تدخلونها إلا بدفع رباعي ومع حارس — احجزوا من اليوم اللي قبل، عدد السيارات الداخلة محدود.", category: "nature", rating: 4.6, priceBand: 3, startTime: "08:00" },
       { name: "Maraya", nameAr: "مرايا", why: "The largest mirrored building on earth, and from thirty metres away it disappears into the canyon wall completely.", whyAr: "أكبر مبنى مرايا بالعالم، ومن مسافة ثلاثين متر يختفي تمامًا داخل جدار الوادي.", category: "sight", rating: 4.7, priceBand: 1, startTime: "12:00" },
+      { name: "Somewhere AlUla", nameAr: "مطعم سمواير بالعلا", why: "A terrace in a palm grove below the old town: musakhan rolled with sumac and onion, batata harra with truffle, and omm ali made from croissant — eat before you drive out to the stars.", whyAr: "مصطبة بين النخل تحت البلدة القديمة: مسخّن ملفوف بالسماق والبصل، وبطاطا حارة بالكمأ، وأم علي معمولة بالكرواسون — كلوا قبل ما تطلعون للنجوم.", category: "food", rating: 4.5, priceBand: 2, startTime: "17:00", dietary: ["halal"] },
       { name: "Gharameel Nature Reserve", nameAr: "محمية الغراميل", why: "Certified dark sky: the rock pillars go black and on a moonless night you see the Milky Way with your own eyes — drive out after Isha.", whyAr: "محمية سماء مظلمة معتمدة: الأعمدة الصخرية تصير سودا، وبليلة بدون قمر تشوفون درب التبانة بعينكم — اطلعوا لها بعد العشا.", category: "nature", rating: 4.7, priceBand: 2, startTime: "19:30" },
     ],
   },
@@ -162,6 +165,7 @@ const SALALAH_DAYS: CuratedDay[] = [
     places: [
       { name: "Sultan Qaboos Mosque Salalah", nameAr: "جامع السلطان قابوس بصلالة", why: "Salalah's grand mosque, and unlike the Muscat one it is never crowded — between Fajr and Dhuhr the courtyard is yours.", whyAr: "جامع صلالة الكبير، وعكس جامع مسقط ما يزحم أبد — بين الفجر والظهر الصحن كله لكم.", category: "sight", rating: 4.6, priceBand: 0, startTime: "09:00" },
       { name: "Al Haffa Souq", nameAr: "سوق الحافة", why: "Frankincense is sold by grade, not by weight — ask for hojari, the pale green kind, and make them burn a piece before you buy any of it.", whyAr: "اللبان ينباع بالدرجة مو بالوزن — اطلبوا الحوجري، الأخضر الفاتح، وخلّوهم يبخّرون قطعة قدامكم قبل ما تشترون.", category: "shop", rating: 4.3, priceBand: 1, startTime: "11:00" },
+      { name: "Bin Ateeq Restaurant", nameAr: "مطعم بن عتيق", why: "Omani food eaten on the floor of your own curtained room — order the shuwa, lamb buried and slow-cooked for a day, with maqbous rice under it.", whyAr: "أكل عُماني تاكلونه على الأرض بغرفة مستقلة بستارة — اطلبوا الشواء، لحم مدفون ومطبوخ يوم كامل، وتحته رز مقبوس.", category: "food", rating: 4.3, priceBand: 1, startTime: "13:00", dietary: ["halal"] },
       { name: "Al Baleed Archaeological Park", nameAr: "منتزه البليد الأثري", why: "The ruined port that shipped all of it, and in summer it only opens at four — walk the ramparts at dusk and leave the museum for after dark.", whyAr: "الميناء الخرب اللي كان يصدّره كله، وبالصيف ما يفتح إلا الساعة أربع — امشوا على الأسوار وقت المغرب وخلّوا المتحف بعد الظلام.", category: "sight", rating: 4.5, priceBand: 1, startTime: "16:30" },
     ],
   },
@@ -183,6 +187,7 @@ const SALALAH_DAYS: CuratedDay[] = [
     places: [
       { name: "Al Mughsail beach", nameAr: "شاطئ المغسيل", why: "Forty minutes west of the city: white sand under a black cliff, and on a weekday there is almost nobody on it.", whyAr: "أربعين دقيقة غرب المدينة: رمل أبيض تحت جرف أسود، وبيوم أسبوع بالكاد تلقون أحد عليه.", category: "nature", rating: 4.6, priceBand: 0, startTime: "09:30" },
       { name: "Marneef Cave", nameAr: "كهف المرنيف", why: "The blowholes fire hardest in the hour either side of high tide — check the tide table before you drive out or you get a damp hiss and a photo of a hole.", whyAr: "النافورات تطلع بأقواها بساعة قبل المد وساعة بعده — شوفوا جدول المد قبل ما تطلعون، وإلا بتلقون مجرد فشّة رطبة وصورة حفرة.", category: "sight", rating: 4.5, priceBand: 0, startTime: "11:00" },
+      { name: "Mughsayl Beach Restaurant", nameAr: "مطعم شاطئ المغسيل", why: "The only kitchen on this whole stretch of coast: kingfish grilled over coals with rice and lemon, at plastic tables a hundred metres from the blowholes.", whyAr: "المطبخ الوحيد على هالساحل كله: كنعد مشوي على الفحم مع رز وليمون، وطاولات بلاستيك على بعد مية متر من النافورات.", category: "food", rating: 4.1, priceBand: 1, startTime: "12:30", dietary: ["halal", "seafood"] },
       { name: "Fazayah Beach", nameAr: "شاطئ فزايه", why: "Down a hairpin track past Mughsail — 4x4 only, no shade, no shop, and the best beach in Dhofar by a distance.", whyAr: "نزلة لفات بعد المغسيل — دفع رباعي بس، ولا ظل ولا دكان، وأحلى شاطئ بظفار بفارق واضح.", category: "nature", rating: 4.7, priceBand: 0, startTime: "15:00" },
     ],
   },
@@ -193,7 +198,7 @@ const SALALAH_DAYS: CuratedDay[] = [
     places: [
       { name: "Job's Tomb (Nabi Ayoub)", nameAr: "ضريح النبي أيوب", why: "On a hilltop thirty kilometres above the city, and in khareef the drive up through the cloud is half the reason to go.", whyAr: "على رأس تلة ثلاثين كيلو فوق المدينة، وبالخريف تكون الطلعة نفسها وأنتم تخترقون الضباب نص السبب.", category: "sight", rating: 4.5, priceBand: 0, startTime: "09:00" },
       { name: "Wadi Dawkah", nameAr: "وادي دوكة", why: "Five thousand frankincense trees in a dry valley on the Thumrait road — scratch a trunk and the resin beads up white in front of you.", whyAr: "خمسة آلاف شجرة لبان بوادي جاف على طريق ثمريت — اخدشوا جذع وبيطلع الصمغ أبيض قدامكم.", category: "nature", rating: 4.3, priceBand: 1, startTime: "12:00" },
-      { name: "Hawana Salalah", nameAr: "حوانا صلالة", why: "The marina end of town — lagoon, boardwalk, and the only part of Salalah still awake and busy after ten at night.", whyAr: "طرف المدينة عند المارينا — بحيرة وممشى خشبي، والجزء الوحيد بصلالة اللي لسا صاحي ويزحم بعد العشر بالليل.", category: "food", rating: 4.4, priceBand: 2, startTime: "17:00" },
+      { name: "Hawana Salalah", nameAr: "حوانا صلالة", why: "The marina end of town: grilled kingfish and mishkak skewers off the coals on the boardwalk — the only part of Salalah still awake and busy after ten at night.", whyAr: "طرف المدينة عند المارينا: كنعد مشوي ومشاكيك من على الجمر على الممشى الخشبي — والجزء الوحيد بصلالة اللي لسا صاحي ويزحم بعد العشر بالليل.", category: "food", rating: 4.4, priceBand: 2, startTime: "17:00", dietary: ["halal"] },
     ],
   },
 ];
@@ -441,13 +446,13 @@ export const GULF_COORDS: Record<string, readonly [number, number]> = {
   "Deira Gold Souk": [25.2701, 55.2981],
   "Al Seef": [25.2607, 55.3091],
   "Dubai Frame": [25.2355, 55.3004],
-  "Dubai Aquarium & Underwater Zoo": [25.1977, 55.2788],
+  "Al Hallab Restaurant & Sweets": [25.1959, 55.2777],
   "Burj Khalifa": [25.197, 55.2741],
   "The Dubai Fountain": [25.1951, 55.2752],
   "Jumeirah Mosque": [25.2341, 55.2655],
   "Etihad Museum": [25.2414, 55.2693],
   "Kite Beach": [25.163, 55.2067],
-  "Souk Madinat Jumeirah": [25.1334, 55.1858],
+  "Bu Qtair Fish Restaurant": [25.1515, 55.1972],
   "The View at The Palm": [25.114, 55.1398],
   "Atlantis The Palm": [25.133, 55.1187],
   "Dubai Marina Walk": [25.0856, 55.1476],
@@ -459,13 +464,15 @@ export const GULF_COORDS: Record<string, readonly [number, number]> = {
   /* ── Abu Dhabi ───────────────────────────────────────────────────────── */
   "Sheikh Zayed Grand Mosque": [24.4125, 54.4743],
   "Qasr Al Watan": [24.4626, 54.3068],
-  "Emirates Palace": [24.4624, 54.3175],
+  "Bait El Khetyar": [24.4882, 54.3712],
   "Corniche Family Beach": [24.4715, 54.3361],
   "Louvre Abu Dhabi": [24.5337, 54.3986],
   "Manarat Al Saadiyat": [24.5345, 54.4191],
+  "Beirut Sur Mer": [24.539, 54.4105],
   "Saadiyat Public Beach": [24.5488, 54.4368],
   "Ferrari World Abu Dhabi": [24.4841, 54.6099],
   "Yas Mall": [24.4857, 54.608],
+  "Dolmabahce Turkish Cuisine": [24.456, 54.6149],
   "Yas Marina Circuit": [24.4718, 54.6058],
 
   /* ── Al Ain ──────────────────────────────────────────────────────────── */
@@ -482,6 +489,7 @@ export const GULF_COORDS: Record<string, readonly [number, number]> = {
   "Jabal Ikmah": [26.6855, 37.9029],
   "Sharaan Nature Reserve": [26.8663, 38.2442],
   Maraya: [26.7431, 37.8653],
+  "Somewhere AlUla": [26.6295, 37.9139],
 
   /* ── Khaybar ─────────────────────────────────────────────────────────── */
   "Khaybar Old Town": [25.6986, 39.2925],
@@ -490,6 +498,7 @@ export const GULF_COORDS: Record<string, readonly [number, number]> = {
   /* ── Salalah ─────────────────────────────────────────────────────────── */
   "Sultan Qaboos Mosque Salalah": [17.0199, 54.0871],
   "Al Haffa Souq": [17.0116, 54.1059],
+  "Bin Ateeq Restaurant": [17.0208, 54.1202],
   "Al Baleed Archaeological Park": [17.0064, 54.1306],
   "Ain Razat": [17.1299, 54.2381],
   "Wadi Darbat": [17.0667, 54.4833],
@@ -497,6 +506,7 @@ export const GULF_COORDS: Record<string, readonly [number, number]> = {
   "Taqah Castle": [17.0372, 54.4036],
   "Al Mughsail beach": [16.8831, 53.7931],
   "Marneef Cave": [16.8764, 53.7666],
+  "Mughsayl Beach Restaurant": [16.8768, 53.7675],
   "Job's Tomb (Nabi Ayoub)": [17.1105, 53.9949],
   "Wadi Dawkah": [17.339, 54.0764],
   "Hawana Salalah": [17.034, 54.2992],

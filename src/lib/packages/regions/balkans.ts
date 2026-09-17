@@ -31,7 +31,7 @@ const SARAJEVO_DAYS: CuratedDay[] = [
     places: [
       { name: "Sebilj", nameAr: "سبيل باشتشارشيا", why: "The wooden fountain everyone meets at — drink from it, the local line is that you'll come back to the city if you do.", whyAr: "السبيل الخشبي اللي يتواعد عنده الكل — اشربوا منه، وأهل البلد يقولون إن اللي يشرب منه يرجع للمدينة.", category: "sight", rating: 4.6, priceBand: 0, startTime: "16:30" },
       { name: "Kazandžiluk", nameAr: "سوق النحّاسين", why: "One narrow lane of coppersmiths still hammering at six in the evening — that noise is the shops working, not a show.", whyAr: "زقاق ضيق فيه نحّاسين لايزالون يطرقون الساعة ستة المسا — الصوت شغل حقيقي مو عرض.", category: "shop", rating: 4.5, priceBand: 1, startTime: "17:30" },
-      { name: "Ćevabdžinica Željo", nameAr: "مطعم چيفابجينيتسا جيليو", why: "Ćevapi in a somun bread with raw onion and kajmak — order by the count of ten, and it is halal, like nearly every grill in this quarter.", whyAr: "چيفابي بخبز الصومون مع بصل نيء وقيمر — اطلبوا بعدد عشرة، وهو حلال مثل تقريبًا كل المشاوي بهالحي.", category: "food", rating: 4.5, priceBand: 1, startTime: "19:00" },
+      { name: "Ćevabdžinica Željo", nameAr: "مطعم چيفابجينيتسا جيليو", why: "Ćevapi in a somun bread with raw onion and kajmak — order by the count of ten, and it is halal, like nearly every grill in this quarter.", whyAr: "چيفابي بخبز الصومون مع بصل نيء وقيمر — اطلبوا بعدد عشرة، وهو حلال مثل تقريبًا كل المشاوي بهالحي.", category: "food", rating: 4.5, priceBand: 1, startTime: "19:00", dietary: ["halal"] },
     ],
   },
   {
@@ -41,7 +41,7 @@ const SARAJEVO_DAYS: CuratedDay[] = [
     places: [
       { name: "Gazi Husrev-beg Mosque", nameAr: "جامع غازي خسرو بك", why: "Built in 1531 and still the city's main mosque — the courtyard fountain and the old clock tower next door keep lunar time, the only one left in the world.", whyAr: "بُني سنة ١٥٣١ ولا يزال جامع المدينة الرئيسي — وشادروان الصحن وبرج الساعة اللي جنبه يضبطون التوقيت القمري، الوحيد الباقي بالعالم.", category: "sight", rating: 4.8, priceBand: 0, startTime: "09:30" },
       { name: "Morića Han", nameAr: "خان موريتشا", why: "The last surviving caravanserai in the city — walk into the courtyard, sit under the vine, and the traffic outside stops existing.", whyAr: "آخر خان باقٍ بالمدينة — ادخلوا الفناء واقعدوا تحت الدالية وبينقطع صوت الشارع تمامًا.", category: "rest", rating: 4.5, priceBand: 1, startTime: "11:00" },
-      { name: "Sarajevo Meeting of Cultures", nameAr: "ملتقى الحضارات", why: "A line in the pavement on Ferhadija: Ottoman bazaar on one side, Austro-Hungarian boulevard on the other, one step apart.", whyAr: "خط بالرصيف بشارع فرحاديا: بازار عثماني من جهة، وبوليفار نمساوي مجري من الجهة الثانية، وبينهم خطوة.", category: "walk", rating: 4.5, priceBand: 0, startTime: "12:30" },
+      { name: "Aščinica ASDŽ", nameAr: "أشتشينيتسا ASDŽ", why: "Point at the pots in the window: stuffed onions, okra stew, dolma and a bowl of begova čorba — a halal kitchen, and they close when the pots run out in the afternoon.", whyAr: "أشّروا على القدور بالواجهة: بصل محشي ويخنة بامية ودولمة وصحن «بيغوفا تشوربا» — مطبخ حلال، ويسكّرون أول ما تخلص القدور بالعصر.", category: "food", rating: 4.5, priceBand: 1, startTime: "12:30", dietary: ["halal"] },
       { name: "Latin Bridge", nameAr: "الجسر اللاتيني", why: "The corner beside it is where the First World War started — the bridge is ordinary, the plaque is two sentences, and standing there is the point.", whyAr: "الزاوية اللي جنبه هي وين بدأت الحرب العالمية الأولى — الجسر عادي واللوحة سطرين، والوقوف هناك هو المقصد.", category: "sight", rating: 4.4, priceBand: 0, startTime: "14:00" },
     ],
   },
@@ -64,7 +64,7 @@ const SARAJEVO_DAYS: CuratedDay[] = [
       { name: "Trebević cable car", nameAr: "تلفريك تريبيفيتش", why: "Nine minutes from the bottom of the old town to a mountain — the original line was destroyed in the war and this one reopened in 2018.", whyAr: "تسع دقايق من أسفل البلدة القديمة لجبل كامل — الخط الأصلي دُمّر بالحرب وهذا فتح من جديد سنة ٢٠١٨.", category: "nature", rating: 4.7, priceBand: 1, startTime: "10:00" },
       { name: "Vidikovac Trebević", nameAr: "مطل تريبيفيتش", why: "A ten-minute walk from the top station to a platform over the valley — this is the photograph, not the one from the cable car.", whyAr: "عشر دقايق مشي من المحطة العليا لمنصة فوق الوادي — هذي هي الصورة، مو اللي من التلفريك.", category: "sight", rating: 4.6, priceBand: 0, startTime: "11:00" },
       { name: "1984 Olympic bobsleigh track", nameAr: "مضمار البوبسليد الأولمبي ١٩٨٤", why: "A concrete Olympic track abandoned in the forest and painted end to end — you can walk down the inside of it the whole way.", whyAr: "مضمار أولمبي خرساني متروك بالغابة ومرسوم من أوله لآخره — وتقدرون تنزلون من داخله لين النهاية.", category: "walk", rating: 4.6, priceBand: 0, startTime: "12:30" },
-      { name: "Inat Kuća", nameAr: "بيت العناد", why: "The owner made the Austrians move his whole house across the river brick by brick rather than sell it — Bosnian home cooking, and the story is on the wall.", whyAr: "صاحبه خلى النمساويين ينقلون بيته كامل عبر النهر طوبة طوبة بدل ما يبيعه — أكل بوسني بيتي، والقصة معلّقة على الجدار.", category: "food", rating: 4.3, priceBand: 2, startTime: "15:00" },
+      { name: "Inat Kuća", nameAr: "بيت العناد", why: "Bosnian home cooking — stuffed vine leaves, veal baked under the sač, and a plate of pita — in the house whose owner made the Austrians move it across the river brick by brick rather than sell it.", whyAr: "أكل بوسني بيتي — ورق عنب محشي، ولحم عجل مخبوز تحت الصاج، وصحن «بيتا» — بالبيت اللي خلّى صاحبه النمساويين ينقلونه عبر النهر طوبة طوبة بدل ما يبيعه.", category: "food", rating: 4.3, priceBand: 2, startTime: "15:00", dietary: ["unverified"] },
     ],
   },
 ];
@@ -79,7 +79,7 @@ const MOSTAR_STAY_DAYS: CuratedDay[] = [
     places: [
       { name: "Stari Most at dusk", nameAr: "الجسر القديم وقت المغرب", why: "The day trips are gone by five and the bridge is lit from below by eight — the two hours in between are why you stayed.", whyAr: "رحلات اليوم تمشي الساعة خمسة والجسر يضوي من تحت الساعة ثمانية — والساعتين اللي بينهم هي سبب مبيتكم.", category: "sight", rating: 4.9, priceBand: 0, startTime: "18:00" },
       { name: "Kriva Ćuprija", nameAr: "الجسر الأعوج", why: "The small bridge upstream was the practice run for the big one, built nine years earlier — and nobody is standing on it.", whyAr: "الجسر الصغير أعلى المجرى كان بروفة للكبير، مبني قبله بتسع سنين — وما أحد واقف عليه.", category: "walk", rating: 4.5, priceBand: 0, startTime: "19:00" },
-      { name: "Restoran Šadrvan", nameAr: "مطعم شادروان", why: "Tables set out in the lane under a vine — ask for the Bosnian plate for two and you'll be given enough for three.", whyAr: "طاولات منصوبة بالزقاق تحت دالية — اطلبوا «الصحن البوسني» لشخصين وبيجيكم يكفي ثلاثة.", category: "food", rating: 4.4, priceBand: 1, startTime: "20:00" },
+      { name: "Restoran Šadrvan", nameAr: "مطعم شادروان", why: "Tables set out in the lane under a vine — ask for the Bosnian plate for two and you'll be given enough for three.", whyAr: "طاولات منصوبة بالزقاق تحت دالية — اطلبوا «الصحن البوسني» لشخصين وبيجيكم يكفي ثلاثة.", category: "food", rating: 4.4, priceBand: 1, startTime: "20:00", dietary: ["unverified"] },
     ],
   },
   {
@@ -89,6 +89,7 @@ const MOSTAR_STAY_DAYS: CuratedDay[] = [
     places: [
       { name: "Počitelj", nameAr: "قرية بوتشيتيل", why: "A stepped Ottoman village stacked on a cliff over the Neretva — climb to the Šišman Ibrahim-pašina mosque and the tower above it.", whyAr: "قرية عثمانية مدرّجة مركومة على جرف فوق نهر نيريتفا — اطلعوا لجامع شيشمان إبراهيم باشا وللبرج اللي فوقه.", category: "sight", rating: 4.6, priceBand: 0, startTime: "10:00" },
       { name: "Kravice Waterfalls", nameAr: "شلالات كرافيتسه", why: "A 25-metre horseshoe of falls into a green pool — go before noon in summer, the car park fills and then the pool does.", whyAr: "حدوة حصان من الشلالات بارتفاع ٢٥ متر تصب ببركة خضرا — روحوا قبل الظهر بالصيف، الموقف ينملي وبعده البركة.", category: "nature", rating: 4.7, priceBand: 1, startTime: "12:30" },
+      { name: "Restoran Vrelo", nameAr: "مطعم فريلو", why: "Trout out of the Buna, grilled whole and served with kajmak and bread on a terrace built over the water — ask for a table on the lower deck, right at the river.", whyAr: "سمك تروتة من نهر البونا، مشوي كامل ويجي مع قيمر وخبز على شرفة مبنية فوق الماء — اطلبوا طاولة بالدور الأسفل، على حافة النهر مباشرة.", category: "food", rating: 4.4, priceBand: 2, startTime: "14:30", dietary: ["seafood"] },
       { name: "Blagaj Tekke", nameAr: "تكية بلاغاي", why: "A dervish lodge built against a cliff where the Buna river comes straight out of the rock — the water is the coldest thing you'll touch all trip.", whyAr: "تكية درويشية ملصوقة بجرف، ومن تحته يطلع نهر البونا من الصخر مباشرة — والماي أبرد شي بتلمسونه بالرحلة كلها.", category: "sight", rating: 4.7, priceBand: 1, startTime: "16:00" },
     ],
   },
@@ -105,6 +106,7 @@ const BAKU_DAYS: CuratedDay[] = [
       { name: "Qız Qalası", nameAr: "برج العذراء", why: "Nobody agrees what this tower was for, in eight hundred years of trying — climb it for the roofs, then argue about it downstairs.", whyAr: "ما أحد متفق على وظيفة هالبرج من ثمانمئة سنة وهم يحاولون — اطلعوه عشان السطوح، وتجادلوا عنه تحت.", category: "sight", rating: 4.5, priceBand: 1, startTime: "17:00" },
       { name: "İçərişəhər lanes", nameAr: "أزقة المدينة الداخلية", why: "The walled old city is small enough to get lost in for exactly forty minutes — every lane comes out at the wall eventually.", whyAr: "المدينة القديمة المسوّرة صغيرة بحيث تضيعون فيها أربعين دقيقة بالضبط — وكل زقاق يطلعكم على السور بالآخر.", category: "walk", rating: 4.6, priceBand: 0, startTime: "18:00" },
       { name: "Fountains Square", nameAr: "ساحة النافورات", why: "Where the city comes out after dark, families included, and it stays busy past midnight in summer.", whyAr: "وين تطلع المدينة بعد الظلمة، والعوائل معهم، وتظل مزدحمة لبعد منتصف الليل بالصيف.", category: "walk", rating: 4.4, priceBand: 0, startTime: "19:30" },
+      { name: "Dolma Restaurant Baku", nameAr: "مطعم دولما بباكو", why: "Dolma three ways — vine leaf, aubergine and pepper — with garlic yoghurt, and lamb kufta the size of a fist. Two minutes from the old city gate.", whyAr: "دولمة بثلاث طرق — ورق عنب وباذنجان وفلفل — مع لبن بالثوم، وكفتة غنم بحجم القبضة. دقيقتين من باب المدينة القديمة.", category: "food", rating: 4.4, priceBand: 2, startTime: "20:30", dietary: ["unverified"] },
     ],
   },
   {
@@ -114,7 +116,7 @@ const BAKU_DAYS: CuratedDay[] = [
     places: [
       { name: "Shirvanshahs' Palace", nameAr: "قصر الشروانشاهات", why: "A 15th-century royal complex of separate stone pavilions rather than one building — the domed burial vault at the back is the finest carving in it.", whyAr: "مجمع ملكي من القرن الخامس عشر أجنحته حجرية منفصلة مو مبنى واحد — والمدفن المقبب بالخلف فيه أجمل نقش.", category: "sight", rating: 4.6, priceBand: 1, startTime: "09:30" },
       { name: "Juma Mosque", nameAr: "الجامع (جمعة مسجد)", why: "A working Friday mosque inside the old city walls, rebuilt in 1899 on a much older base — quiet, small, and open between prayers.", whyAr: "جامع جمعة شغّال داخل أسوار المدينة القديمة، أُعيد بناؤه سنة ١٨٩٩ على أساس أقدم بكثير — هادي وصغير ومفتوح بين الصلوات.", category: "sight", rating: 4.5, priceBand: 0, startTime: "11:00" },
-      { name: "Nizami Street", nameAr: "شارع نظامي", why: "A pedestrian kilometre of pale stone façades — walk it after two, when the buildings on the north side stop being in their own shadow.", whyAr: "كيلو مشاة بواجهات حجرية فاتحة — امشوه بعد الثانية، لما تطلع مباني الجهة الشمالية من ظلها.", category: "shop", rating: 4.4, priceBand: 2, startTime: "14:00" },
+      { name: "Qutab house", nameAr: "بيت القُتاب", why: "Qutab cooked on a domed iron plate in front of you: paper-thin dough folded over minced lamb, greens or pumpkin, dusted with sumac — three each is lunch.", whyAr: "قُتاب يُخبز على صاج مقبب قدامكم: عجين رفيع مطوي على لحم مفروم أو خضار أو قرع، ومرشوش سماق — ثلاثة للواحد وهذا الغدا.", category: "food", rating: 4.3, priceBand: 1, startTime: "12:30", dietary: ["unverified"] },
       { name: "Taza Pir Mosque", nameAr: "مسجد تازه بير", why: "Baku's main mosque, finished in 1914 with a gilded dome and minarets — fifteen minutes' walk from the old city and visitors are welcome outside prayer.", whyAr: "جامع باكو الرئيسي، اكتمل سنة ١٩١٤ بقبة ومآذن مذهّبة — خمسطعش دقيقة مشي من المدينة القديمة، والزوار مرحّب بهم بغير أوقات الصلاة.", category: "sight", rating: 4.7, priceBand: 0, startTime: "16:30" },
     ],
   },
@@ -137,6 +139,7 @@ const BAKU_DAYS: CuratedDay[] = [
       { name: "Ateshgah Fire Temple", nameAr: "معبد النار آتشغاه", why: "A pentagonal caravanserai built round a natural gas vent by Indian merchants — the flame is piped now, and the cells around it are the real thing.", whyAr: "خان خماسي الأضلاع بناه تجار هنود حول فتحة غاز طبيعية — اللهب اليوم موصول بأنبوب، لكن الحجرات حوله أصلية.", category: "sight", rating: 4.4, priceBand: 1, startTime: "10:30" },
       { name: "Yanar Dag", nameAr: "يانار داغ", why: "A ten-metre stretch of hillside that has been on fire continuously for decades — it is better after dark, and better still in wind.", whyAr: "شريط من المنحدر بطول عشرة أمتار مشتعل بلا انقطاع من عقود — أحلى بعد الظلمة، وأحلى منها بالهوا.", category: "nature", rating: 4.3, priceBand: 1, startTime: "13:30" },
       { name: "Heydar Aliyev Center", nameAr: "مركز حيدر علييف", why: "Zaha Hadid's building with no straight line anywhere in it — the exterior is free to walk around and is most of the reason people come.", whyAr: "مبنى زها حديد اللي ما فيه ولا خط مستقيم — الخارج مجاني وتقدرون تلفون حوله، وهو أغلب سبب الزيارة.", category: "sight", rating: 4.7, priceBand: 1, startTime: "16:30" },
+      { name: "Sumakh", nameAr: "مطعم سوماخ", why: "Azerbaijani cooking done properly: piti in a sealed clay pot you tear bread into, saffron plov under a pastry crust, and dushbara dumplings you eat by the spoonful.", whyAr: "مطبخ أذربيجاني على أصوله: «بيتي» بقدر فخار مسكّر تفتّون فيه الخبز، وبلوّ بالزعفران تحت قشرة عجين، ودوشبرة صغيرة تاكلونها بالملعقة.", category: "food", rating: 4.5, priceBand: 2, startTime: "18:30", dietary: ["unverified"] },
     ],
   },
 ];
@@ -360,7 +363,7 @@ export const BALKANS_COORDS: Record<string, readonly [number, number]> = {
   "Ćevabdžinica Željo": [43.8589, 18.4293],
   "Gazi Husrev-beg Mosque": [43.8593, 18.4274],
   "Morića Han": [43.859, 18.4265],
-  "Sarajevo Meeting of Cultures": [43.8585, 18.4252],
+  "Aščinica ASDŽ": [43.8586, 18.4284],
   "Latin Bridge": [43.8576, 18.4287],
   Vijećnica: [43.859, 18.434],
   "Tunnel of Hope": [43.8189, 18.3362],
@@ -378,6 +381,7 @@ export const BALKANS_COORDS: Record<string, readonly [number, number]> = {
   "Koski Mehmed-Pasha Mosque": [43.338, 17.8146],
   "Kriva Ćuprija": [43.3365, 17.8138],
   "Restoran Šadrvan": [43.3374, 17.8151],
+  "Restoran Vrelo": [43.2564, 17.903],
   "Blagaj Tekke": [43.2569, 17.8931],
   Počitelj: [43.133, 17.742],
   "Kravice Waterfalls": [43.1567, 17.6081],
@@ -390,9 +394,11 @@ export const BALKANS_COORDS: Record<string, readonly [number, number]> = {
   "Qız Qalası": [40.3663, 49.8371],
   "İçərişəhər lanes": [40.3665, 49.834],
   "Fountains Square": [40.372, 49.8375],
+  "Dolma Restaurant Baku": [40.3699, 49.837],
   "Shirvanshahs' Palace": [40.3662, 49.8329],
   "Juma Mosque": [40.3662, 49.8353],
-  "Nizami Street": [40.3729, 49.84],
+  "Qutab house": [40.3686, 49.8356],
+  Sumakh: [40.382, 49.8685],
   "Taza Pir Mosque": [40.3737, 49.8323],
   "Azerbaijan Carpet Museum": [40.3642, 49.8318],
   "Mini Venice": [40.3678, 49.8425],
