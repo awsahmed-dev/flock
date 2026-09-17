@@ -585,8 +585,12 @@ const KAZBEGI_DAYTRIP: CuratedDay = {
 
 const SIGHNAGHI_DAYTRIP: CuratedDay = {
   key: "sighnaghi-daytrip",
-  title: "Wine country",
-  titleAr: "بلاد النبيذ",
+  // Named for what the day actually contains — a walled hill town, its
+  // wall walk and a monastery. It was titled "Wine country" / the Arabic
+  // equivalent, which for this audience is a reason not to open the card,
+  // and there was never a winery in it.
+  title: "Sighnaghi and the valley",
+  titleAr: "سيغناغي والوادي",
   places: [
     { name: "Sighnaghi", nameAr: "سيغناغي", why: "Walled hill town over the Alazani valley — two hours out, easy day.", whyAr: "بلدة مسورة على تلة فوق وادي ألازاني — ساعتين برا، يوم خفيف.", category: "sight", rating: 4.7, priceBand: 0, startTime: "09:30" },
     { name: "The town wall walk", nameAr: "ممشى سور البلدة", why: "Four kilometres of wall with twenty-three towers — climb at the Kedeli tower and the whole valley is in front of you.", whyAr: "أربعة كيلو سور وثلاثة وعشرين برج — اطلعوا من برج كيديلي والوادي كله قدامكم.", category: "walk", rating: 4.5, priceBand: 0, startTime: "11:30" },
@@ -980,10 +984,10 @@ const REGION_ROUTES: Route[] = [
     match: ["georgia", "tbilisi", "batumi", "kazbegi", "جورجيا", "تبليسي", "باتومي"],
     title: "The classic Georgia route",
     titleAr: "المسار الكلاسيكي لجورجيا",
-    subtitle: "Tbilisi, with the mountains and the wine country as day trips",
-    subtitleAr: "تبليسي، والجبال وبلاد النبيذ طلعات يوم",
-    provenance: "Old town, one mountain day, one wine day — the shape almost every Gulf trip takes.",
-    provenanceAr: "البلدة القديمة، ويوم جبال، ويوم نبيذ — شكل أغلب رحلات الخليج لجورجيا.",
+    subtitle: "Tbilisi, with the mountains and the valley towns as day trips",
+    subtitleAr: "تبليسي، والجبال وبلدات الوادي طلعات يوم",
+    provenance: "Old town, one mountain day, one valley day — the shape almost every Gulf trip takes.",
+    provenanceAr: "البلدة القديمة، ويوم جبال، ويوم وادي — شكل أغلب رحلات الخليج لجورجيا.",
     forWho: "One hotel the whole week.",
     forWhoAr: "فندق واحد الأسبوع كله.",
     legs: [{ baseId: "tbilisi", nightsRatio: 4 }],

@@ -179,6 +179,65 @@ describe("coordinates", () => {
   });
 });
 
+describe("curating for this audience", () => {
+  /**
+   * A day in Georgia shipped titled "Wine country" / «بلاد النبيذ» and
+   * contained a walled hill town, a wall walk and a monastery — not one
+   * winery. For a Gulf Muslim audience that title is a reason not to open
+   * the card, and nothing in the day earned it.
+   *
+   * This is not a filter and not a content ban. It asserts that no
+   * user-facing string in the corpus leads with alcohol, which is how
+   * every curator here has written anyway — this just stops the next one
+   * from doing it by accident in a language the reviewer doesn't read.
+   */
+  // Arabic needs real word boundaries: JS \b does not apply to Arabic
+  // letters, so a bare «بيرة» (beer) matches inside «كبيرة» (big) and
+  // «الكبيرة». Lookarounds for an Arabic letter give the boundary instead.
+  const AR_LETTER = "\\u0621-\\u064A\\u0671-\\u06D3";
+  const BOOZE = new RegExp(
+    "\\b(wine|winery|wineries|brewery|pub|pubs|bar crawl|cocktail|whisky|whiskey|vodka|beer)\\b" +
+      // `(?:ال)?` because the definite article prefixes the noun: without
+      // it «النبيذ» — the very string this test was written for — slips
+      // through, since «ل» is itself an Arabic letter and blocks the
+      // lookbehind.
+      `|(?<![${AR_LETTER}])(?:ال)?(نبيذ|خمر|خمور|بيرة|كحول)(?![${AR_LETTER}])`,
+    "i",
+  );
+
+  it("never leads a place or a day with alcohol", () => {
+    const hits: string[] = [];
+    for (const b of all) {
+      for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
+        for (const [field, v] of [["title", d.title], ["titleAr", d.titleAr]] as const) {
+          if (BOOZE.test(v)) hits.push(`${b.id}/${d.key} ${field}: ${v}`);
+        }
+        for (const p of d.places) {
+          for (const [field, v] of [["name", p.name], ["nameAr", p.nameAr], ["why", p.why], ["whyAr", p.whyAr]] as const) {
+            if (BOOZE.test(v)) hits.push(`${b.id}/${d.key}/${p.name} ${field}: ${v}`);
+          }
+        }
+      }
+    }
+    expect(hits, `alcohol in user-facing copy:\n${hits.join("\n")}`).toEqual([]);
+  });
+
+  it("never sells a route on it either", () => {
+    const hits: string[] = [];
+    for (const r of ROUTES) {
+      for (const [field, v] of [
+        ["title", r.title], ["titleAr", r.titleAr],
+        ["subtitle", r.subtitle], ["subtitleAr", r.subtitleAr],
+        ["provenance", r.provenance], ["provenanceAr", r.provenanceAr],
+        ["forWho", r.forWho], ["forWhoAr", r.forWhoAr],
+      ] as const) {
+        if (BOOZE.test(v)) hits.push(`${r.id} ${field}: ${v}`);
+      }
+    }
+    expect(hits, `alcohol in route copy:\n${hits.join("\n")}`).toEqual([]);
+  });
+});
+
 describe("routes", () => {
   it("have unique ids and reference known bases", () => {
     const ids = ROUTES.map((r) => r.id);
