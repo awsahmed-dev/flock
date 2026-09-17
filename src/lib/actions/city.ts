@@ -329,7 +329,8 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
     baseId,
     title: place.name,
     titleAr: place.nameAr,
-    type: "activity",
+    // Same as the projection: a meal is a meal, not an "activity".
+    type: place.category === "food" ? "meal" : "activity",
     locationName: place.name,
     locationLat: place.lat,
     locationLng: place.lng,
@@ -422,7 +423,7 @@ export async function fillFreeDays(tripId: string, baseId: string) {
       baseId,
       title: p.name,
       titleAr: p.nameAr,
-      type: "activity" as const,
+      type: (p.category === "food" ? "meal" : "activity") as "meal" | "activity",
       startTime: p.startTime ?? DAY_SLOTS[i] ?? null,
       locationName: p.name,
       locationLat: p.lat,

@@ -195,8 +195,13 @@ describe("curating for this audience", () => {
   // letters, so a bare «بيرة» (beer) matches inside «كبيرة» (big) and
   // «الكبيرة». Lookarounds for an Arabic letter give the boundary instead.
   const AR_LETTER = "\\u0621-\\u064A\\u0671-\\u06D3";
+  // A coffee bar, a juice bar and a sushi bar are not what this is about.
+  // Strip the harmless compounds before testing rather than dropping "bar",
+  // which is the word that actually slipped through: four of one tester's
+  // seven dinners were alleys sold to her on "six seats per bar".
+  const NOT_A_BAR = /\b(coffee|juice|snack|sushi|salad|oyster|noodle|ramen|tapas|sand)[- ]bars?\b/gi;
   const BOOZE = new RegExp(
-    "\\b(wine|winery|wineries|brewery|pub|pubs|bar crawl|cocktail|whisky|whiskey|vodka|beer)\\b" +
+    "\\b(wine|winery|wineries|brewery|pub|pubs|bar|bars|cocktail|cocktails|whisky|whiskey|vodka|beer|beers|sake bar)\\b" +
       // `(?:ال)?` because the definite article prefixes the noun: without
       // it «النبيذ» — the very string this test was written for — slips
       // through, since «ل» is itself an Arabic letter and blocks the
@@ -210,11 +215,11 @@ describe("curating for this audience", () => {
     for (const b of all) {
       for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
         for (const [field, v] of [["title", d.title], ["titleAr", d.titleAr]] as const) {
-          if (BOOZE.test(v)) hits.push(`${b.id}/${d.key} ${field}: ${v}`);
+          if (BOOZE.test(v.replace(NOT_A_BAR, ""))) hits.push(`${b.id}/${d.key} ${field}: ${v}`);
         }
         for (const p of d.places) {
           for (const [field, v] of [["name", p.name], ["nameAr", p.nameAr], ["why", p.why], ["whyAr", p.whyAr]] as const) {
-            if (BOOZE.test(v)) hits.push(`${b.id}/${d.key}/${p.name} ${field}: ${v}`);
+            if (BOOZE.test(v.replace(NOT_A_BAR, ""))) hits.push(`${b.id}/${d.key}/${p.name} ${field}: ${v}`);
           }
         }
       }
@@ -231,7 +236,7 @@ describe("curating for this audience", () => {
         ["provenance", r.provenance], ["provenanceAr", r.provenanceAr],
         ["forWho", r.forWho], ["forWhoAr", r.forWhoAr],
       ] as const) {
-        if (BOOZE.test(v)) hits.push(`${r.id} ${field}: ${v}`);
+        if (BOOZE.test(v.replace(NOT_A_BAR, ""))) hits.push(`${r.id} ${field}: ${v}`);
       }
     }
     expect(hits, `alcohol in route copy:\n${hits.join("\n")}`).toEqual([]);

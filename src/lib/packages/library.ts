@@ -46,7 +46,7 @@ const TOKYO_DAYS: CuratedDay[] = [
     titleAr: "الوصول… وعلى مهل",
     places: [
       { name: "Shibuya Crossing", nameAr: "تقاطع شيبويا", why: "The first 'we're really here' moment — go at dusk when the screens light up.", whyAr: "أول لحظة تحس فيها إنك وصلت فعلًا — روحوا وقت المغرب لما تشتغل الشاشات.", category: "sight", rating: 4.6, priceBand: 0, startTime: "17:00" },
-      { name: "Nonbei Yokocho", nameAr: "نونبي يوكوتشو", why: "Tiny lantern-lit alley behind the noise — six seats per bar, no menus in English, all the better.", whyAr: "زقاق ضيق بفوانيس خلف الزحمة — ستة كراسي بكل محل، وبدون قائمة إنجليزية، وهذا أحلى.", category: "food", rating: 4.5, priceBand: 2, startTime: "19:30" },
+      { name: "Nonbei Yokocho", nameAr: "نونبي يوكوتشو", why: "Six narrow lanes of counter kitchens — grilled skewers and small plates, four or five seats a shop. Go before 7 or expect to wait.", whyAr: "ستة أزقة ضيقة كلها مطابخ صغيرة — أسياخ مشوية وأطباق صغيرة، وأربعة أو خمسة كراسي بكل محل. روحوا قبل السابعة أو استعدوا تنتظرون.", category: "food", rating: 4.5, priceBand: 2, startTime: "19:30" },
     ],
   },
   {
@@ -68,7 +68,7 @@ const TOKYO_DAYS: CuratedDay[] = [
       { name: "Meiji Jingu", nameAr: "ضريح ميجي", why: "Forest in the middle of the city — the gravel path is the point.", whyAr: "غابة بقلب المدينة — الممشى الحصوي هو المقصد.", category: "nature", rating: 4.6, priceBand: 0, startTime: "09:00" },
       { name: "Omotesandō", nameAr: "أوموتيساندو", why: "Architecture street. Window-shop it even if you buy nothing.", whyAr: "شارع العمارة. تمشوا وتفرجوا حتى لو ما اشتريتوا شي.", category: "walk", rating: 4.4, priceBand: 2, startTime: "11:30" },
       { name: "Shinjuku Gyoen", nameAr: "حديقة شينجوكو", why: "The one garden worth the entry fee — three garden styles in one.", whyAr: "الحديقة الوحيدة اللي تستاهل التذكرة — ثلاث طرز بمكان واحد.", category: "nature", rating: 4.7, priceBand: 1, startTime: "14:30" },
-      { name: "Omoide Yokocho", nameAr: "أومويدي يوكوتشو", why: "Smoke, skewers, and elbow room for nobody. Dinner standing up.", whyAr: "دخان وأسياخ وزحمة — عشاء وأنتم واقفين.", category: "food", rating: 4.4, priceBand: 2, startTime: "19:00" },
+      { name: "Omoide Yokocho", nameAr: "أومويدي يوكوتشو", why: "Charcoal-grilled chicken skewers, eaten standing at the counter — smoky, loud, and a few hundred yen a skewer.", whyAr: "أسياخ دجاج مشوية على الفحم، تاكلونها وقوف عند الطاولة — دخان وضجة، والسيخ بمئات قليلة من الينات.", category: "food", rating: 4.4, priceBand: 2, startTime: "19:00" },
     ],
   },
   {
@@ -89,7 +89,7 @@ const TOKYO_DAYS: CuratedDay[] = [
       { name: "Shimokitazawa", nameAr: "شيموكيتازاوا", why: "Second-hand racks and six-seat coffee bars — come on a weekday afternoon, it's a different place on Saturday.", whyAr: "رفوف ملابس مستعملة وكوفيات بستة كراسي — تعالوا يوم أسبوع بعد الظهر، السبت مكان ثاني تمامًا.", category: "shop", rating: 4.5, priceBand: 1, startTime: "11:00" },
       { name: "Nakameguro canal", nameAr: "قناة ناكاميغورو", why: "The canal itself, not the cherry season — the shops tucked under the railway are open all year.", whyAr: "القناة نفسها مو موسم الكرز — المحلات المندسّة تحت سكة القطار فاتحة طول السنة.", category: "walk", rating: 4.5, priceBand: 1, startTime: "14:30" },
       { name: "Daikanyama T-Site", nameAr: "دايكانياما تي-سايت", why: "A bookshop with an armchair section that will take an hour off you without asking.", whyAr: "مكتبة فيها ركن كراسي بيسحب منكم ساعة بدون ما يستأذن.", category: "shop", rating: 4.5, priceBand: 1, startTime: "16:30" },
-      { name: "Ebisu Yokochō", nameAr: "إيبيسو يوكوتشو", why: "A covered arcade of tiny counters under one roof — sit at whichever one has room and order what the next table has.", whyAr: "ممر مسقوف كله طاولات صغيرة تحت سقف واحد — اقعدوا عند أي وحدة فيها مكان واطلبوا اللي عند الطاولة الجنب.", category: "food", rating: 4.3, priceBand: 2, startTime: "19:30" },
+      { name: "Ebisu Yokochō", nameAr: "إيبيسو يوكوتشو", why: "A covered arcade of about twenty tiny kitchens under one roof — seafood, grilled meat, okonomiyaki — each with its own menu. Walk the row once before you pick.", whyAr: "ممر مسقوف فيه حوالي عشرين مطبخ صغير تحت سقف واحد — بحريات ومشاوي وأوكونومي ياكي — وكل واحد بقائمته. لفّوا الممر مرة قبل ما تختارون.", category: "food", rating: 4.3, priceBand: 2, startTime: "19:30" },
     ],
   },
   {
@@ -143,7 +143,7 @@ const KYOTO_DAYS: CuratedDay[] = [
     places: [
       { name: "Nijō Castle", nameAr: "قلعة نيجو", why: "The corridor floors squeak on purpose — that was the security system, and you can hear it working under you.", whyAr: "أرضيات الممرات تصرصر بقصد — هذا كان نظام الحماية، وتسمعونه يشتغل تحتكم.", category: "sight", rating: 4.5, priceBand: 1, startTime: "09:00" },
       { name: "Kyoto Imperial Palace", nameAr: "القصر الإمبراطوري بكيوتو", why: "Free to enter, and the gravel courtyards are the emptiest large space in the city.", whyAr: "دخوله مجاني، وساحاته الحصوية أوسع مكان فاضي بالمدينة.", category: "sight", rating: 4.4, priceBand: 0, startTime: "11:30" },
-      { name: "Pontochō alley", nameAr: "زقاق بونتوتشو", why: "One lane wide with the river down one side — pick a place with a menu you can actually read and eat on the terrace.", whyAr: "زقاق بعرض واحد والنهر من جهة — اختاروا مكان قائمته تقدرون تقرونها وكلوا على الشرفة.", category: "food", rating: 4.5, priceBand: 2, startTime: "18:30" },
+      { name: "Pontochō alley", nameAr: "زقاق بونتوتشو", why: "One lane wide with the Kamo river down one side — in summer the kitchens build terraces out over the water. Ask for the terrace.", whyAr: "زقاق بعرض واحد ونهر كامو من جهة — بالصيف المطاعم تبني شرفات فوق الماء. اطلبوا الشرفة.", category: "food", rating: 4.5, priceBand: 2, startTime: "18:30" },
     ],
   },
   {

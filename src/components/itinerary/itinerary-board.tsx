@@ -1388,6 +1388,7 @@ function SortableItemRow({
   // handle-only (dnd-kit listeners live on the grip button), so a horizontal
   // pointer drag on the row body never activates the vertical DnD sensor.
   const { isRtl, locale } = useLocale();
+  const [tipOpen, setTipOpen] = useState(false);
   const [dx, setDx] = useState(0);
   const swipeStartX = useRef<number | null>(null);
   function onSwipeDown(e: React.PointerEvent) {
@@ -1605,8 +1606,14 @@ function SortableItemRow({
           </div>
         )}
 
+        {/* Was clamped to one line with no way to expand, so tips read
+            "The canal itself, not the cherry seaso…" — a tester had to guess
+            at half of them. Tap to read the rest. */}
         {((locale === "ar" && item.topTipAr) || item.topTip) && (
-          <p className="text-xs italic text-muted-foreground line-clamp-1">
+          <p
+            onClick={(e) => { e.stopPropagation(); setTipOpen((v) => !v); }}
+            className={`text-xs italic text-muted-foreground cursor-pointer ${tipOpen ? "" : "line-clamp-2"}`}
+          >
             💡 {(locale === "ar" && item.topTipAr) || item.topTip}
           </p>
         )}
