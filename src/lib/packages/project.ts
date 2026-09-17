@@ -1,6 +1,8 @@
 import type { Base, BaseId, CuratedDay, CuratedPlace, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
 import { addDays } from "@/lib/packages/allocate";
 import type { AllocatedLeg } from "@/lib/packages/allocate";
+import { gatewayErrands } from "@/lib/packages/gateways";
+import type { GatewayState } from "@/lib/packages/gateways";
 
 /**
  * The day grid is a PROJECTION of the trip's shape, not a stored blob.
@@ -91,7 +93,9 @@ export function relink(segments: Segment[], bases: Record<BaseId, Base>): Segmen
     if (s.transportInMode && s.transportInMinutes != null) return s;
     const from = bases[segments[i - 1].baseId];
     const to = bases[s.baseId];
-    if (!from || !to) return { ...s, transportInMode: "train" as const, transportInMinutes: 120 };
+    // A base with no coordinates cannot be measured, so we say the mode
+    // and stop. A made-up duration would be printed as fact.
+    if (!from || !to) return { ...s, transportInMode: s.transportInMode ?? ("train" as const), transportInMinutes: null };
     return { ...s, ...estimateLeg(from, to) };
   });
 }
@@ -376,16 +380,26 @@ function placeSaves(
  * until this existed.
  */
 export interface Errand {
-  kind: "stay" | "transport";
+  kind: "stay" | "transport" | "roundtrip" | "flightIn" | "flightOut";
   baseId: BaseId;
   nights?: number;
   mode?: string;
   done: boolean;
 }
 
-export function errandsFor(segments: Segment[]): Errand[] {
+export function errandsFor(segments: Segment[], gateways?: GatewayState): Errand[] {
   const out: Errand[] = [];
   if (!segments.length) return out;
+
+  // The flights come first because they are booked first and cost the most.
+  // The list used to open with a hotel and never mention getting to the
+  // country at all, which understated the trip by its two largest tickets.
+  if (gateways) {
+    for (const g of gatewayErrands(gateways)) {
+      out.push({ kind: g.kind, baseId: g.baseId, done: false });
+    }
+  }
+
   redate(segments, segments[0].checkIn).forEach((s, i) => {
     if (i > 0 && s.transportInMode) {
       out.push({

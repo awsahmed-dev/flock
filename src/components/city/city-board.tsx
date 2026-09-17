@@ -180,7 +180,16 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
                     <span className="text-[11px] text-muted-foreground tabular-nums w-11 shrink-0" dir="ltr">
                       {st.startTime ?? "—"}
                     </span>
-                    <span className="min-w-0 flex-1">{(ar && st.titleAr) || st.title}</span>
+                    <span className="min-w-0 flex-1">
+                      {(ar && st.titleAr) || st.title}
+                      {/* The plan used to be a column of names, which is only
+                          legible to someone who already knows the city. */}
+                      {((ar && st.whatAr) || st.what) && (
+                        <span className="block text-[11.5px] text-muted-foreground leading-snug mt-0.5">
+                          {(ar && st.whatAr) || st.what}
+                        </span>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -261,6 +270,13 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
                   </span>
                 )}
               </div>
+              {/* What it is, then why to go. In that order, because the
+                  second sentence is unreadable without the first. */}
+              {(ar ? p.whatAr : p.what) && (
+                <p className="mt-0.5 text-[12.5px] text-foreground/80 leading-snug">
+                  {ar ? p.whatAr : p.what}
+                </p>
+              )}
               {(ar ? p.whyAr : p.why) && (
                 <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">
                   {ar ? p.whyAr : p.why}

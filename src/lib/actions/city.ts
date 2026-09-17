@@ -10,6 +10,7 @@ import { parseOr } from "@/lib/actions/validate";
 import { BASES } from "@/lib/packages/library";
 import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
+import { whatIs } from "@/lib/packages/descriptions";
 import type { Base, BaseId, PlaceCategory } from "@/lib/packages/types";
 import { eachDate } from "@/lib/packages/allocate";
 
@@ -42,6 +43,13 @@ export interface CityPlace {
   key: string;
   name: string;
   nameAr: string;
+  /**
+   * The flat sentence that says what this place IS, shown above the `why`.
+   * A name on its own is homework: "I don't know what are you talking about
+   * because I don't know the places."
+   */
+  what?: string | null;
+  whatAr?: string | null;
   why: string;
   whyAr: string;
   category: PlaceCategory;
@@ -68,7 +76,14 @@ export interface CityDay {
 export interface CityPlannedDay {
   date: string;
   travel: boolean;
-  stops: { title: string; titleAr: string | null; startTime: string | null; rating: number | null }[];
+  stops: {
+    title: string;
+    titleAr: string | null;
+    what: string | null;
+    whatAr: string | null;
+    startTime: string | null;
+    rating: number | null;
+  }[];
 }
 
 export interface CityBoard {
@@ -161,6 +176,8 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         key: `c:${p.name}`,
         name: p.name,
         nameAr: p.nameAr,
+        what: whatIs(p.name)?.what ?? null,
+        whatAr: whatIs(p.name)?.whatAr ?? null,
         why: p.why,
         whyAr: p.whyAr,
         category: p.category,
@@ -220,6 +237,11 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
       .map((s) => ({
         title: s.title,
         titleAr: s.titleAr,
+        // Looked up by the English title rather than stored on the row:
+        // the description is authored content, and copying it into every
+        // itinerary row would leave stale text behind on the next edit.
+        what: whatIs(s.title)?.what ?? null,
+        whatAr: whatIs(s.title)?.whatAr ?? null,
         startTime: s.startTime ? String(s.startTime).slice(0, 5) : null,
         rating: s.rating,
       })),

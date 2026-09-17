@@ -21,6 +21,7 @@ import { photoFor } from "@/lib/packages/photos";
 import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
 import { allocateNights, routeCapacity, tripNightsBetween } from "@/lib/packages/allocate";
 import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor, type SaveForPlan } from "@/lib/packages/project";
+import { gatewayState, orderForGateways, type GatewayState } from "@/lib/packages/gateways";
 
 /**
  * «شكل الرحلة» — the trip's structure, and the day grid projected from it.
@@ -104,6 +105,19 @@ export interface ShapeView {
   addable: { id: BaseId; name: string; nameAr: string; typicalNights: number }[];
   days: ProjectedDay[];
   errands: { kind: string; baseId: BaseId; name: string; nameAr: string; nights?: number; mode?: string; done: boolean }[];
+  /**
+   * Where the trip enters and leaves. Always present, because every trip
+   * has two ends whether or not anyone chose them — `arriveSet`/`departSet`
+   * say whether they were chosen or inherited from the shape.
+   */
+  gateways: GatewayState & {
+    arriveName: string;
+    arriveNameAr: string;
+    departName: string;
+    departNameAr: string;
+    /** reversing the chain would satisfy both ends — offer the one-tap fix */
+    canAlign: boolean;
+  };
   isOwner: boolean;
   memberCount: number;
 }
@@ -269,8 +283,14 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     };
   });
 
+  const g = gatewayState(segments, trip.arriveBaseId, trip.departBaseId);
+  const nameOf = (id: BaseId | null) =>
+    id ? (LIB[id]?.name ?? id.replace(/^custom:/, "")) : "";
+  const nameArOf = (id: BaseId | null) =>
+    id ? (LIB[id]?.nameAr ?? id.replace(/^custom:/, "")) : "";
+
   const days = projectDays(segments, LIB, trip.startDate);
-  const errands = errandsFor(segments).map((e) => ({
+  const errands = errandsFor(segments, g).map((e) => ({
     ...e,
     // LIB, not BASES — a custom base printed its raw id, so the checklist
     // read "custom:lisbon hotel · 7 nights".
@@ -296,6 +316,18 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     addable,
     days,
     errands,
+    gateways: {
+      ...g,
+      arriveName: nameOf(g.arrive),
+      arriveNameAr: nameArOf(g.arrive),
+      departName: nameOf(g.depart),
+      departNameAr: nameArOf(g.depart),
+      // Only offer "move the trip to match" when it would actually work.
+      // A button that throws when pressed is worse than no button.
+      canAlign:
+        (g.arriveMismatch || g.departMismatch) &&
+        orderForGateways(segments, (s) => s.baseId, trip.arriveBaseId, trip.departBaseId).reversed,
+    },
     isOwner: role === "owner",
     memberCount: members.length,
   };
@@ -449,7 +481,25 @@ async function persist(tripId: string, segments: Segment[], tripStart: string, u
     };
   }
   const fresh = relink(redate(segments, tripStart), lib);
+
+  // A gateway must never point at a city the trip no longer visits.
+  //
+  // Every path that rewrites the shape ends here — adopting a route,
+  // starting blank, any edit, a date change that drops a stay — so this is
+  // the one place the guarantee can actually hold. Enforcing it at each
+  // call site is how the grid and the shape drifted apart the last time.
+  // Clearing hands that end back to the shape, which is always true.
+  const here = new Set(fresh.map((s) => s.baseId));
+  const ends = await db
+    .select({ arrive: trips.arriveBaseId, depart: trips.departBaseId })
+    .from(trips)
+    .where(eq(trips.id, tripId));
+  const clear: { arriveBaseId?: null; departBaseId?: null } = {};
+  if (ends[0]?.arrive && !here.has(ends[0].arrive)) clear.arriveBaseId = null;
+  if (ends[0]?.depart && !here.has(ends[0].depart)) clear.departBaseId = null;
+
   await db.transaction(async (tx) => {
+    if (Object.keys(clear).length) await tx.update(trips).set(clear).where(eq(trips.id, tripId));
     await tx.delete(tripSegments).where(eq(tripSegments.tripId, tripId));
     if (fresh.length) {
       await tx.insert(tripSegments).values(
@@ -488,12 +538,35 @@ export async function adoptRoute(tripId: string, routeId: string) {
   const alloc = allocateNights(route, BASES, nights);
   if (!alloc.legs.length) throw new Error("Nothing to plan");
 
-  const segments = segmentsFromLegs(alloc.legs, trip.startDate);
+  // If the trip already knows which city it flies into and out of — set on
+  // a previous shape, then re-adopted — walk the route in whichever
+  // direction honours that. Lisbon → Porto and Porto → Lisbon are the same
+  // curated content; only one of them matches your tickets.
+  const ordered = orderForGateways(
+    alloc.legs,
+    (l) => l.baseId,
+    trip.arriveBaseId,
+    trip.departBaseId,
+  );
+  // Reversing invalidates every curated transport leg — the train that
+  // brought you INTO Porto is not the train out of it. `relink` re-derives
+  // them from real distance, and the first leg must carry none at all.
+  const legs = ordered.reversed
+    ? ordered.items.map((l, i) => ({
+        ...l,
+        transportInMode: i === 0 ? null : l.transportInMode,
+        transportInMinutes: null,
+      }))
+    : ordered.items;
+
+  const segments = segmentsFromLegs(legs, trip.startDate);
   await persist(tripId, segments, trip.startDate, user.id);
   return {
     bases: alloc.legs.length,
     dropped: alloc.dropped.map((d) => BASES[d]?.nameAr ?? d),
     overflow: alloc.overflow,
+    /** the route was walked backwards to match the flights — say so */
+    reversed: ordered.reversed,
   };
 }
 
@@ -564,6 +637,14 @@ const zEdit = z.discriminatedUnion("op", [
   z.object({ op: z.literal("dayTrip"), baseId: z.string().max(60), tripId: z.string().max(60), on: z.boolean() }),
   z.object({ op: z.literal("transport"), baseId: z.string().max(60), mode: z.enum(MODES) }),
   z.object({ op: z.literal("lock"), baseId: z.string().max(60), lock: z.enum(["flight", "hotel"]).nullable() }),
+  /** "I land in Porto" / "I fly home from Lisbon" — null clears it back to the shape's own end */
+  z.object({
+    op: z.literal("gateway"),
+    end: z.enum(["arrive", "depart"]),
+    baseId: z.string().max(60).nullable(),
+  }),
+  /** the other repair for a mismatch: move the shape to match the flights */
+  z.object({ op: z.literal("alignGateways") }),
 ]);
 export type ShapeEdit = z.infer<typeof zEdit>;
 
@@ -594,6 +675,9 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   // and Kyoto the second, with no message either time — same button, two
   // answers, and no way to tell where his night had gone.
   const before = new Map(segments.map((sg) => [sg.baseId, segmentNights(sg)]));
+  const orderBefore = segments.map((sg) => sg.baseId).join(">");
+  /** a change the nights map can't see — setting an end, or losing one */
+  let gatewayChanged = false;
 
   switch (e.op) {
     case "nights": {
@@ -617,6 +701,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       const pos = new Map(e.order.map((id, i) => [id, i]));
       segments.sort((a, b) => (pos.get(a.baseId) ?? 99) - (pos.get(b.baseId) ?? 99));
       segments.forEach((s, i) => (s.order = i));
+      clearLegs(segments);
       break;
     }
     case "add": {
@@ -653,8 +738,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         order: segments.length,
         checkIn: trip.startDate,
         checkOut: addIso(trip.startDate, got),
-        transportInMode: "train",
-        transportInMinutes: 120,
+        // No fabricated duration. A flat "2h" on every added city was
+        // printed as fact and was an hour adrift of the real Lisbon–Porto
+        // train; `relink` estimates from actual distance instead.
+        transportInMode: null,
+        transportInMinutes: null,
         dayTrips: [],
         lockedBy: null,
       });
@@ -688,8 +776,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         order: segments.length,
         checkIn: trip.startDate,
         checkOut: addIso(trip.startDate, got),
-        transportInMode: "train",
-        transportInMinutes: 120,
+        // No fabricated duration. A flat "2h" on every added city was
+        // printed as fact and was an hour adrift of the real Lisbon–Porto
+        // train; `relink` estimates from actual distance instead.
+        transportInMode: null,
+        transportInMinutes: null,
         dayTrips: [],
         lockedBy: null,
         customName: e.name,
@@ -739,6 +830,35 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       seg.lockedBy = e.lock;
       break;
     }
+    case "gateway": {
+      // You can only fly into a city the trip actually visits. Allowing a
+      // free-floating airport would put a city on the booking checklist
+      // that appears nowhere in the plan.
+      if (e.baseId && !find(e.baseId)) throw new Error("Add that city to the trip first");
+      await db
+        .update(trips)
+        .set(e.end === "arrive" ? { arriveBaseId: e.baseId } : { departBaseId: e.baseId })
+        .where(eq(trips.id, tripId));
+      gatewayChanged = true;
+      break;
+    }
+    case "alignGateways": {
+      // The other half of the repair. A mismatch offers two honest fixes —
+      // change the flights, or move the trip — and this is the second. It
+      // reverses rather than rotates, because a chain that starts in the
+      // middle is a plan that doubles back.
+      const ord = orderForGateways(
+        segments,
+        (s) => s.baseId,
+        trip.arriveBaseId,
+        trip.departBaseId,
+      );
+      if (!ord.reversed) throw new Error("Reordering can't reach those two ends");
+      segments = ord.items;
+      segments.forEach((s, i) => (s.order = i));
+      clearLegs(segments);
+      break;
+    }
   }
 
   // The trip length is fixed by its dates; the shape must always cover it
@@ -761,6 +881,10 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   // has nowhere to go — reads as a frozen screen. Say what is really
   // blocking it, and point at the fix.
   const unchanged =
+    !gatewayChanged &&
+    // A reorder moves no nights at all, so counting only nights called every
+    // drag a no-op and told the user nothing had happened.
+    segments.map((sg) => sg.baseId).join(">") === orderBefore &&
     segments.length === before.size &&
     segments.every((sg) => before.get(sg.baseId) === segmentNights(sg));
 
@@ -810,6 +934,23 @@ export async function reactToBase(tripId: string, baseId: string, reaction: "lov
     );
   await db.insert(segmentReactions).values({ tripId, baseId, userId: user.id, reaction });
   revalidatePath(`/trips/${tripId}/shape`);
+}
+
+/**
+ * Forget every inbound leg, so `relink` re-derives them all.
+ *
+ * Reordering changes what each leg IS, not just where it sits. Reversing
+ * Lisbon -> Coimbra -> Porto leaves Coimbra still advertising the 90-minute
+ * Lisbon train while it is now reached from Porto: a real duration for a
+ * journey nobody is taking, which is the same class of lie as the flat "2h"
+ * we removed. Only a leg whose two endpoints are unchanged may be kept, and
+ * after a reorder that is none of them.
+ */
+function clearLegs(segments: Segment[]) {
+  for (const s of segments) {
+    s.transportInMode = null;
+    s.transportInMinutes = null;
+  }
 }
 
 function addIso(iso: string, n: number): string {

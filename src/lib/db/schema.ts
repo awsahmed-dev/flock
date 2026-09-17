@@ -96,6 +96,13 @@ export const trips = pgTable("trips", {
   destination: text("destination").notNull(),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
+  /**
+   * Open-jaw: the city flown into, and the city flown home from. Both NULL
+   * means a round trip through the shape's own first and last base, which is
+   * most trips and must never require an answer up front.
+   */
+  arriveBaseId: text("arrive_base_id"),
+  departBaseId: text("depart_base_id"),
   budgetTotal: real("budget_total"),
   /** QA BUG-11: 'flat' = the number IS the trip budget; 'per_person' = multiply by crew size. */
   budgetType: text("budget_type").notNull().default("flat"),

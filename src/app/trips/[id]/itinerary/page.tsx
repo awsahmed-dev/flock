@@ -10,6 +10,7 @@ import { eq, asc, inArray, and, or, isNull, sql } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
 import { BASES } from "@/lib/packages/library";
+import { whatIs } from "@/lib/packages/descriptions";
 import { getLocale } from "@/lib/i18n";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
 import { eachDayOfInterval, parseISO } from "date-fns";
@@ -172,6 +173,14 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
         baseNames={Object.fromEntries(
           Object.values(BASES).map((b) => [b.id, locale === "ar" ? b.nameAr : b.name]),
         )}
+      // Only the titles actually on this trip: the corpus is 530 entries and
+      // has no business in the client bundle.
+      whatByTitle={Object.fromEntries(
+        serializedItems
+          .map((i) => [i.title, whatIs(i.title)] as const)
+          .filter(([, w]) => w)
+          .map(([title, w]) => [title, w!]),
+      )}
       tripId={id}
       days={days}
       items={serializedItems as any}

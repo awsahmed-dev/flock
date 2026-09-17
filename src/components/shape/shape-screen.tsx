@@ -60,6 +60,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
   const [busy, startTransition] = useTransition();
   const [order, setOrder] = useState<string[] | null>(null);
   const [cityInput, setCityInput] = useState("");
+  const [gwOpen, setGwOpen] = useState<"arrive" | "depart" | null>(null);
 
   // Keep local state in sync with server revalidations. Every edit calls a
   // server action and then router.refresh(), which re-renders this component
@@ -170,6 +171,31 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
         </div>
       </div>
 
+      {/* ── where the trip enters ───────────────────────────────────── */}
+      <GatewayRow
+        end="arrive"
+        view={view}
+        bases={bases}
+        ar={ar}
+        t={t}
+        canEdit={canEdit}
+        busy={busy}
+        open={gwOpen === "arrive"}
+        onToggle={() => setGwOpen((v) => (v === "arrive" ? null : "arrive"))}
+        onSet={(baseId) =>
+          run(async () => {
+            await editShape(tripId, { op: "gateway", end: "arrive", baseId });
+            setGwOpen(null);
+          })
+        }
+        onAlign={() =>
+          run(async () => {
+            await editShape(tripId, { op: "alignGateways" });
+            toast.success(t("shape.gatewayReversed"));
+          })
+        }
+      />
+
       {/* ── the bases ───────────────────────────────────────────────── */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={bases.map((b) => b.id)} strategy={verticalListSortingStrategy}>
@@ -219,6 +245,31 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* ── and where it leaves ─────────────────────────────────────── */}
+      <GatewayRow
+        end="depart"
+        view={view}
+        bases={bases}
+        ar={ar}
+        t={t}
+        canEdit={canEdit}
+        busy={busy}
+        open={gwOpen === "depart"}
+        onToggle={() => setGwOpen((v) => (v === "depart" ? null : "depart"))}
+        onSet={(baseId) =>
+          run(async () => {
+            await editShape(tripId, { op: "gateway", end: "depart", baseId });
+            setGwOpen(null);
+          })
+        }
+        onAlign={() =>
+          run(async () => {
+            await editShape(tripId, { op: "alignGateways" });
+            toast.success(t("shape.gatewayReversed"));
+          })
+        }
+      />
 
       {/* ── add a base ──────────────────────────────────────────────── */}
       {canEdit && (
@@ -311,10 +362,16 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                             place: ar ? e.nameAr : e.name,
                             nights: t("shape.nights", { count: e.nights ?? 0 }),
                           })
-                        : t("shape.errandTransport", {
-                            mode: t(`shape.mode_${e.mode}`),
-                            place: ar ? e.nameAr : e.name,
-                          })}
+                        : e.kind === "roundtrip" || e.kind === "flightIn" || e.kind === "flightOut"
+                          ? // The two biggest tickets on the trip, and this
+                            // list never mentioned them until now.
+                            t(`shape.errand${e.kind[0].toUpperCase()}${e.kind.slice(1)}`, {
+                              city: ar ? e.nameAr : e.name,
+                            })
+                          : t("shape.errandTransport", {
+                              mode: t(`shape.mode_${e.mode}`),
+                              place: ar ? e.nameAr : e.name,
+                            })}
                     </span>
                   </li>
                 ))
@@ -636,6 +693,157 @@ function fmtDate(iso: string, ar: boolean) {
     timeZone: "UTC",
   });
 }
+/**
+ * "You land in Lisbon" / "You fly home from Porto".
+ *
+ * Nothing is asked up front: both ends default to the shape's own first and
+ * last base, so a round trip — most trips — reads as a statement and needs
+ * no answer. It only becomes a question when you make it one.
+ *
+ * When the stored end and the shape disagree, the row says so and offers
+ * BOTH repairs rather than picking one. Silently rewriting the shape to
+ * match a flight, or the flight to match a shape, is the class of bug that
+ * left nine rows stranded in the database when the trip's dates moved.
+ */
+function GatewayRow({
+  end,
+  view,
+  bases,
+  ar,
+  t,
+  canEdit,
+  busy,
+  open,
+  onToggle,
+  onSet,
+  onAlign,
+}: {
+  end: "arrive" | "depart";
+  view: ShapeView;
+  bases: BaseCard[];
+  ar: boolean;
+  t: (k: string, p?: Record<string, string | number>) => string;
+  canEdit: boolean;
+  busy: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onSet: (baseId: string | null) => void;
+  onAlign: () => void;
+}) {
+  const g = view.gateways;
+  const isArrive = end === "arrive";
+  const city = isArrive ? (ar ? g.arriveNameAr : g.arriveName) : ar ? g.departNameAr : g.departName;
+  const mismatch = isArrive ? g.arriveMismatch : g.departMismatch;
+  const missing = isArrive ? g.arriveMissing : g.departMissing;
+  const shapeEnd = isArrive ? bases[0] : bases[bases.length - 1];
+  const shapeCity = shapeEnd ? (ar ? shapeEnd.nameAr : shapeEnd.name) : "";
+
+  if (!city && !missing) return null;
+
+  return (
+    <div className="px-4 py-1">
+      <div
+        className={`rounded-2xl border bg-card ${
+          mismatch || missing ? "border-[color:var(--clr-dune)]" : "border-border"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={canEdit ? onToggle : undefined}
+          disabled={!canEdit || busy}
+          className="w-full min-h-12 px-3.5 py-2 flex items-center gap-2.5 text-start"
+        >
+          <Airplane
+            size={16}
+            className="text-muted-foreground shrink-0"
+            // An arrival and a departure are the same icon pointing two
+            // ways round; one icon for both reads as a duplicated row.
+            style={{ transform: isArrive ? "rotate(45deg)" : "rotate(-45deg)" }}
+          />
+          <span className="text-[12.5px] text-muted-foreground shrink-0">
+            {t(isArrive ? "shape.gatewayArrive" : "shape.gatewayDepart")}
+          </span>
+          <span className="text-[13.5px] font-bold min-w-0 flex-1 truncate">{city}</span>
+          {g.openJaw && (
+            <span className="text-[10px] font-bold rounded-full bg-primary/12 text-primary px-2 py-0.5 shrink-0">
+              {t("shape.gatewayOpenJaw")}
+            </span>
+          )}
+          {canEdit && <CaretRight size={14} className="text-muted-foreground shrink-0 rtl:rotate-180" />}
+        </button>
+
+        {(mismatch || missing) && (
+          <div className="px-3.5 pb-3 pt-0.5 space-y-2">
+            <p className="text-[12px] text-[color:var(--clr-dune)] leading-snug">
+              {missing
+                ? t(isArrive ? "shape.gatewayMissingArrive" : "shape.gatewayMissingDepart", {
+                    gateway: city,
+                  })
+                : t(isArrive ? "shape.gatewayMismatchArrive" : "shape.gatewayMismatchDepart", {
+                    city: shapeCity,
+                    gateway: city,
+                  })}
+            </p>
+            {canEdit && (
+              <div className="flex flex-wrap gap-2">
+                {/* Only offered when reversing actually reaches both ends —
+                    a button that throws when pressed is worse than none. */}
+                {g.canAlign && !missing && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={onAlign}
+                    className="min-h-11 px-3.5 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-bold"
+                  >
+                    {t("shape.gatewayAlign")}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onSet(null)}
+                  className="min-h-11 px-3.5 rounded-xl border border-border text-[12.5px] font-semibold"
+                >
+                  {t("shape.gatewayUseShape", { city: shapeCity })}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {open && canEdit && (
+          <div className="px-3.5 pb-3 pt-0.5">
+            <p className="text-[11.5px] text-muted-foreground mb-2">{t("shape.gatewayPick")}</p>
+            <div className="flex flex-wrap gap-2">
+              {bases.map((b) => {
+                const active = (isArrive ? g.arrive : g.depart) === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onSet(b.id)}
+                    className={`min-h-11 px-3.5 rounded-full border text-[13px] font-semibold ${
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    {ar ? b.nameAr : b.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              {g.openJaw ? t("shape.gatewayOpenJaw") : t("shape.gatewaySameCity")}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function fmtRange(a: string, b: string, locale: string) {
   const f = (iso: string) =>
     new Date(`${iso}T00:00:00Z`).toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" });

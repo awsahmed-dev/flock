@@ -59,6 +59,12 @@ interface Props {
   items: Item[];
   /** base id → display name, so a day can say which city you're in */
   baseNames?: Record<string, string>;
+  /**
+   * English title → the flat sentence saying what that place is. Built on
+   * the server for only the titles on this trip, rather than shipping the
+   * whole 530-entry corpus to the browser.
+   */
+  whatByTitle?: Record<string, { what: string; whatAr: string }>;
   currency: string;
   destination: string;
   destinationCenter: [number, number] | null;
@@ -139,6 +145,7 @@ export function ItineraryBoard({
   days,
   items: initialItems,
   baseNames = {},
+  whatByTitle,
   currency,
   destination,
   destinationCenter,
@@ -608,6 +615,7 @@ export function ItineraryBoard({
                         <SortableItemRow
                           key={item.id}
                           item={item}
+                          what={whatByTitle?.[item.title] ?? null}
                           bookingMeta={bookingsByStop[String(item.id).split("#")[0]] ?? null}
                           number={idx + 1}
                           paletteDot={palette.dot}
@@ -1036,6 +1044,7 @@ export function ItineraryBoard({
                           <SortableItemRow
                             key={item.id}
                             item={item}
+                            what={whatByTitle?.[item.title] ?? null}
                             bookingMeta={bookingsByStop[String(item.id).split("#")[0]] ?? null}
                             number={idx + 1}
                             paletteDot={palette.dot}
@@ -1359,6 +1368,7 @@ function SortableItemRow({
   onDelete,
   onStatusCycle,
   bookingMeta = null,
+  what = null,
 }: {
   item: Item;
   number: number;
@@ -1374,6 +1384,8 @@ function SortableItemRow({
   onDelete: () => void;
   onStatusCycle: () => void;
   bookingMeta?: { bookingType: string; confirmationNumber: string | null; pdfUrl: string | null; nights: number | null } | null;
+  /** the flat sentence saying what this place is — a name alone is homework */
+  what?: { what: string; whatAr: string } | null;
 }) {
   const t = useT();
   // Sprint 5: booking anchors retired — legacy anchor rows behave like
@@ -1555,6 +1567,15 @@ function SortableItemRow({
             <span className="hidden sm:inline">{t(TypeCfg.labelKey)}</span>
           </span>
         </div>
+
+        {/* What the place IS, before any argument about why to go.
+            "I don't know what are you talking about because I don't know
+            the places" — the tip below assumes you already do. */}
+        {what && (
+          <p className="text-[13px] text-muted-foreground leading-snug">
+            {locale === "ar" ? what.whatAr : what.what}
+          </p>
+        )}
 
         {(item.startTime || item.rating != null || item.costEstimate != null || item.locationName || bookingMeta) && (
           <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground">
