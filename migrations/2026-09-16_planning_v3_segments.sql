@@ -85,3 +85,8 @@ alter table trip_segments add column if not exists custom_name text;
 alter table trip_segments add column if not exists custom_name_ar text;
 alter table trip_segments add column if not exists custom_lat double precision;
 alter table trip_segments add column if not exists custom_lng double precision;
+-- Plans built before meals were typed call every restaurant an "activity",
+-- so a ramen counter renders exactly like a temple. Existing rows are
+-- retyped by scripts/backfill-meal-types.mjs, which reads the curated
+-- category from lib/packages so the list can never drift from the source.
+-- New plans get it from the projection.

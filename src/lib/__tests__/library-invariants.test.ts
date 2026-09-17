@@ -243,6 +243,47 @@ describe("curating for this audience", () => {
   });
 });
 
+describe("meals", () => {
+  /**
+   * The founder opened the app and said "it only brings attraction places,
+   * I don't see any restaurants". He was right, twice over: plans built
+   * before meals were typed rendered restaurants with a temple's icon, and
+   * underneath that the corpus barely has any — 42% of curated days have
+   * no meal on them at all, and seven bases have none anywhere.
+   *
+   * This test does not demand a meal on every day. It pins the current
+   * state so the gap is visible in CI instead of in someone's holiday, and
+   * it tightens as the authoring pass lands. Lower the numbers, never
+   * raise them.
+   */
+  const BASES_WITH_NO_MEAL = 7;
+  const MIN_DAYS_WITH_A_MEAL = 0.4;
+
+  it("tracks how thin the food really is", () => {
+    let total = 0;
+    let withFood = 0;
+    const none: string[] = [];
+    for (const b of all) {
+      if (!b.maxNights) continue;
+      let any = 0;
+      for (const d of b.days) {
+        total++;
+        if (d.places.some((p) => p.category === "food")) {
+          withFood++;
+          any++;
+        }
+      }
+      if (any === 0) none.push(b.id);
+    }
+    expect(none.length, `bases with no meal anywhere: ${none.join(", ")}`).toBeLessThanOrEqual(
+      BASES_WITH_NO_MEAL,
+    );
+    expect(withFood / total, `${withFood}/${total} curated days carry a meal`).toBeGreaterThanOrEqual(
+      MIN_DAYS_WITH_A_MEAL,
+    );
+  });
+});
+
 describe("opening days", () => {
   /**
    * A tester was scheduled into Feira da Ladra on a Thursday while the

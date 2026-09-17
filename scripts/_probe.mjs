@@ -1,0 +1,16 @@
+import { chromium } from "playwright-core";
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const BASE = "https://flock-git-feat-inspire-surfaces-aws-projects-a7d3a8cc.vercel.app";
+const SHARE = "?_vercel_share=E6a2e4985EHAfV5m2Xc4mcNLcFGQXioW";
+const browser = await chromium.launch({ executablePath: CHROME });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const page = await ctx.newPage();
+await page.goto(BASE + "/" + SHARE, { waitUntil: "domcontentloaded", timeout: 60000 });
+await page.waitForTimeout(3000);
+console.log("url after share:", page.url());
+await page.goto(BASE + "/auth/login", { waitUntil: "domcontentloaded", timeout: 60000 });
+await page.waitForTimeout(3500);
+console.log("login url:", page.url());
+console.log(await page.evaluate(() => ({ title: document.title, inputs: [...document.querySelectorAll("input")].map(i => i.type + ":" + (i.name || i.placeholder || "")).join(","), text: document.body.innerText.slice(0, 200) })));
+await page.screenshot({ path: "/tmp/paxawa-drag/probe-login.png" });
+await browser.close();
