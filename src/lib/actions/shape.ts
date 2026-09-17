@@ -93,6 +93,8 @@ export interface RouteCard {
   dropped: string[];
   overflow: number;
   capacity: number;
+  /** the chain is shown backwards, because that is what the flights say */
+  reversed: boolean;
 }
 
 export interface ShapeView {
@@ -141,6 +143,9 @@ function resolveBase(r: typeof tripSegments.$inferSelect): Base {
     country: "",
     lat: r.customLat ?? 0,
     lng: r.customLng ?? 0,
+    // 0,0 is a real place in the Gulf of Guinea, and two cities parked
+    // there are zero apart. Say we do not know instead of implying we do.
+    coordsUnknown: r.customLat == null || r.customLng == null,
     photoQuery: name,
     match: [name.toLowerCase()],
     typicalNights: 1,
@@ -190,6 +195,11 @@ export async function listRoutes(tripId: string): Promise<RouteCard[]> {
     : findRoutes(trip.name ?? "");
   return matches.map((route) => {
     const a = allocateNights(route, BASES, nights);
+    // Preview the chain in the direction it will actually be adopted. If the
+    // trip already knows it lands in Porto, a card reading "Lisbon → Porto"
+    // is advertising something the tap will not produce.
+    const ordered = orderForGateways(a.legs, (l) => l.baseId, trip.arriveBaseId, trip.departBaseId);
+    const shown = ordered.items;
     return {
       id: route.id,
       title: route.title,
@@ -200,7 +210,7 @@ export async function listRoutes(tripId: string): Promise<RouteCard[]> {
       provenanceAr: route.provenanceAr,
       forWho: route.forWho,
       forWhoAr: route.forWhoAr,
-      chain: a.legs.map((l) => ({
+      chain: shown.map((l) => ({
         name: BASES[l.baseId].name,
         nameAr: BASES[l.baseId].nameAr,
         nights: l.nights,
@@ -208,6 +218,7 @@ export async function listRoutes(tripId: string): Promise<RouteCard[]> {
       dropped: a.dropped.map((d) => BASES[d]?.nameAr ?? d),
       overflow: a.overflow,
       capacity: routeCapacity(route, BASES),
+      reversed: ordered.reversed,
     };
   });
 }
@@ -463,6 +474,46 @@ async function reproject(
       .where(and(eq(itineraryItems.tripId, tripId), lt(itineraryItems.dayDate, first)));
   }
 
+  // Inside the trip's dates is not good enough: a stop has to be inside its
+  // OWN city's dates.
+  //
+  // Reversing Lisbon → Porto leaves both cities' dates valid, so the guard
+  // above sees nothing wrong — but a restaurant someone chose in Lisbon
+  // stayed on 8 October, which after the reversal belongs to Porto. The
+  // plan then showed a Lisbon dinner among four Porto sights, on a day it
+  // also labelled Porto. Anything the crew chose is pulled back onto a day
+  // of the city it actually belongs to.
+  // Arrival and departure days are deliberately thin — an afternoon and a
+  // morning — so a re-homed stop goes onto a full day of that city where
+  // one exists, rather than being dropped onto the morning you fly out.
+  const spanOf = new Map<BaseId, string[]>();
+  for (const d of days) {
+    const list = spanOf.get(d.baseId) ?? [];
+    if (!d.departure && !d.travel) list.push(d.date);
+    spanOf.set(d.baseId, list);
+  }
+  const anyDayOf = new Map<BaseId, string[]>();
+  for (const d of days) {
+    const list = anyDayOf.get(d.baseId) ?? [];
+    list.push(d.date);
+    anyDayOf.set(d.baseId, list);
+  }
+  const stranded = await db
+    .select({ id: itineraryItems.id, dayDate: itineraryItems.dayDate, baseId: itineraryItems.baseId })
+    .from(itineraryItems)
+    .where(eq(itineraryItems.tripId, tripId));
+  for (const row of stranded) {
+    if (!row.baseId) continue;
+    const all = anyDayOf.get(row.baseId);
+    // A base that left the trip entirely is the other guard's problem; a
+    // base that merely moved gets its stop moved with it.
+    if (!all?.length || all.includes(String(row.dayDate))) continue;
+    const span = spanOf.get(row.baseId);
+    // A full day of that city if it has one, else whatever it has.
+    const target = span?.length ? span[span.length - 1] : all[all.length - 1];
+    await db.update(itineraryItems).set({ dayDate: target }).where(eq(itineraryItems.id, row.id));
+  }
+
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/shape`);
   return rows.length;
@@ -476,6 +527,7 @@ async function persist(tripId: string, segments: Segment[], tripStart: string, u
     lib[sg.baseId] = {
       id: sg.baseId, name, nameAr: sg.customNameAr || name, country: "",
       lat: sg.customLat ?? 0, lng: sg.customLng ?? 0, photoQuery: name,
+      coordsUnknown: sg.customLat == null || sg.customLng == null,
       match: [name.toLowerCase()], typicalNights: 1, maxNights: 60,
       reachable: [], pairsWith: [], days: [],
     };
@@ -853,7 +905,14 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         trip.arriveBaseId,
         trip.departBaseId,
       );
-      if (!ord.reversed) throw new Error("Reordering can't reach those two ends");
+      // Already pointing the right way is success, not failure. Two people
+      // on the same shape screen both tapping the repair had the loser told
+      // "Reordering can't reach those two ends" about a trip that was, by
+      // then, correctly ordered.
+      const g0 = gatewayState(segments, trip.arriveBaseId, trip.departBaseId);
+      if (!ord.reversed && (g0.arriveMismatch || g0.departMismatch)) {
+        throw new Error("Reordering can't reach those two ends");
+      }
       segments = ord.items;
       segments.forEach((s, i) => (s.order = i));
       clearLegs(segments);

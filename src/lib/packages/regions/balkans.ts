@@ -78,7 +78,7 @@ const MOSTAR_STAY_DAYS: CuratedDay[] = [
     titleAr: "موستار بعد ما تمشي الباصات",
     places: [
       { name: "Stari Most at dusk", nameAr: "الجسر القديم وقت المغرب", why: "The day trips are gone by five and the bridge is lit from below by eight — the two hours in between are why you stayed.", whyAr: "رحلات اليوم تمشي الساعة خمسة والجسر يضوي من تحت الساعة ثمانية — والساعتين اللي بينهم هي سبب مبيتكم.", category: "sight", rating: 4.9, priceBand: 0, startTime: "18:00" },
-      { name: "Kriva Ćuprija", nameAr: "الجسر الأعوج", why: "The small bridge upstream was the practice run for the big one, built nine years earlier — and nobody is standing on it.", whyAr: "الجسر الصغير أعلى المجرى كان بروفة للكبير، مبني قبله بتسع سنين — وما أحد واقف عليه.", category: "walk", rating: 4.5, priceBand: 0, startTime: "19:00" },
+      { name: "Kriva Ćuprija", nameAr: "الجسر الأعوج", why: "The small bridge over the side stream was the practice run for the big one, built eight years earlier — and nobody is standing on it.", whyAr: "الجسر الصغير فوق الجدول الجانبي كان بروفة للكبير، مبني قبله بثمان سنين — وما أحد واقف عليه.", category: "walk", rating: 4.5, priceBand: 0, startTime: "19:00" },
       { name: "Restoran Šadrvan", nameAr: "مطعم شادروان", why: "Tables set out in the lane under a vine — ask for the Bosnian plate for two and you'll be given enough for three.", whyAr: "طاولات منصوبة بالزقاق تحت دالية — اطلبوا «الصحن البوسني» لشخصين وبيجيكم يكفي ثلاثة.", category: "food", rating: 4.4, priceBand: 1, startTime: "20:00", dietary: ["unverified"] },
     ],
   },

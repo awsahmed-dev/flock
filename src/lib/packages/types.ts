@@ -78,6 +78,16 @@ export interface Base {
   country: string;
   lat: number;
   lng: number;
+  /**
+   * We do not know where this is.
+   *
+   * A custom city the user typed may arrive with no coordinates. Parking it
+   * at 0,0 made it *look* measurable: two such cities sit on the same point,
+   * so the leg estimator confidently returned "20m" for Samarkand to
+   * Tashkent. Anything that measures distance must check this first.
+   */
+  coordsUnknown?: boolean;
+
   /** what to ask Google for when fetching the card photo */
   photoQuery: string;
   /** destination-string fragments that should resolve to this base */

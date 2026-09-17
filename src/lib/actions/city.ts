@@ -11,6 +11,7 @@ import { BASES } from "@/lib/packages/library";
 import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
 import { whatIs } from "@/lib/packages/descriptions";
+import { withoutCity } from "@/lib/packages/describe-in-context";
 import type { Base, BaseId, PlaceCategory } from "@/lib/packages/types";
 import { eachDate } from "@/lib/packages/allocate";
 
@@ -176,8 +177,10 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         key: `c:${p.name}`,
         name: p.name,
         nameAr: p.nameAr,
-        what: whatIs(p.name)?.what ?? null,
-        whatAr: whatIs(p.name)?.whatAr ?? null,
+        // This whole screen is headed by the city, so the line does not
+        // need to end with it five times in a row.
+        what: withoutCity(whatIs(p.name)?.what, base.name) || null,
+        whatAr: withoutCity(whatIs(p.name)?.whatAr, base.nameAr) || null,
         why: p.why,
         whyAr: p.whyAr,
         category: p.category,
@@ -240,8 +243,8 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         // Looked up by the English title rather than stored on the row:
         // the description is authored content, and copying it into every
         // itinerary row would leave stale text behind on the next edit.
-        what: whatIs(s.title)?.what ?? null,
-        whatAr: whatIs(s.title)?.whatAr ?? null,
+        what: withoutCity(whatIs(s.title)?.what, base.name) || null,
+        whatAr: withoutCity(whatIs(s.title)?.whatAr, base.nameAr) || null,
         startTime: s.startTime ? String(s.startTime).slice(0, 5) : null,
         rating: s.rating,
       })),

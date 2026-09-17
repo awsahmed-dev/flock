@@ -102,6 +102,11 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
         setView(snapshot);
         setOrder(null);
         toast.error(err instanceof Error ? err.message : t("shape.failed"));
+        // Re-read the server rather than trusting the snapshot. On a group
+        // trip the failure is often "somebody else just changed this", and
+        // reverting to what we had leaves the screen asserting a state that
+        // is no longer true — with an error message describing neither.
+        router.refresh();
       }
     });
   }
@@ -763,12 +768,15 @@ function GatewayRow({
           <span className="text-[12.5px] text-muted-foreground shrink-0">
             {t(isArrive ? "shape.gatewayArrive" : "shape.gatewayDepart")}
           </span>
+          {/* The city name wins every fight on this row.
+              An "open jaw — two separate tickets" pill used to sit here and
+              ate the whole line: Samarkand rendered as "…nd", Sapporo as
+              three letters. On the one screen whose entire job is naming
+              two cities, the name was the only thing never legible — and
+              the pill was redundant anyway, since the two rows already say
+              different cities. It lives in the picker below now, where
+              there is room for it. */}
           <span className="text-[13.5px] font-bold min-w-0 flex-1 truncate">{city}</span>
-          {g.openJaw && (
-            <span className="text-[10px] font-bold rounded-full bg-primary/12 text-primary px-2 py-0.5 shrink-0">
-              {t("shape.gatewayOpenJaw")}
-            </span>
-          )}
           {canEdit && <CaretRight size={14} className="text-muted-foreground shrink-0 rtl:rotate-180" />}
         </button>
 

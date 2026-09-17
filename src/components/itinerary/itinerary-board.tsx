@@ -1571,8 +1571,12 @@ function SortableItemRow({
         {/* What the place IS, before any argument about why to go.
             "I don't know what are you talking about because I don't know
             the places" — the tip below assumes you already do. */}
+        {/* Weighted above the tip, not level with it. Both lines were the
+            same muted grey, so the placard voice and the friend's voice
+            read as one undifferentiated block — and the tip, which is the
+            better content, was the one being clamped. */}
         {what && (
-          <p className="text-[13px] text-muted-foreground leading-snug">
+          <p className="text-[13px] text-foreground/75 leading-snug">
             {locale === "ar" ? what.whatAr : what.what}
           </p>
         )}

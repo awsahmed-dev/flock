@@ -90,12 +90,23 @@ export function redate(segments: Segment[], tripStart: string): Segment[] {
 export function relink(segments: Segment[], bases: Record<BaseId, Base>): Segment[] {
   return segments.map((s, i) => {
     if (i === 0) return { ...s, transportInMode: null, transportInMinutes: null };
-    if (s.transportInMode && s.transportInMinutes != null) return s;
     const from = bases[segments[i - 1].baseId];
     const to = bases[s.baseId];
-    // A base with no coordinates cannot be measured, so we say the mode
-    // and stop. A made-up duration would be printed as fact.
-    if (!from || !to) return { ...s, transportInMode: s.transportInMode ?? ("train" as const), transportInMinutes: null };
+
+    // A leg we cannot measure has no duration — and that outranks whatever
+    // is already stored.
+    //
+    // This check has to come BEFORE the stored-value shortcut below, not
+    // after. Nothing in the app lets a person type a duration, so a stored
+    // number between two cities we cannot place was generated, and the only
+    // generator that could have produced it is one of the hardcoded
+    // fallbacks since removed. Leaving it in place kept printing "2h" for
+    // Tashkent to Samarkand long after the code that invented it was gone.
+    if (!from || !to || from.coordsUnknown || to.coordsUnknown) {
+      return { ...s, transportInMode: s.transportInMode ?? ("train" as const), transportInMinutes: null };
+    }
+
+    if (s.transportInMode && s.transportInMinutes != null) return s;
     return { ...s, ...estimateLeg(from, to) };
   });
 }

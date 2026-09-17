@@ -41,6 +41,11 @@ export function RoutesScreen({
     try {
       const r = await adoptRoute(tripId, routeId);
       if (r.dropped.length) toast.info(t("routes.dropped", { places: r.dropped.join(t("common.listSep")) }));
+      // The card said "Lisbon → Porto" and the plan came out Porto → Lisbon,
+      // because the trip already knew which city it lands in. That is the
+      // right answer, but it must not arrive without a word — the whole
+      // point of the route card is that you get what you tapped.
+      if (r.reversed) toast.info(t("shape.gatewayReversed"));
       toast.success(t("routes.adopted"));
       router.push(r.bases > 1 ? `/trips/${tripId}/shape` : `/trips/${tripId}/itinerary`);
       router.refresh();
@@ -137,6 +142,15 @@ export function RoutesScreen({
                 </span>
               ))}
             </div>
+
+            {/* The subtitle names the route the way its author wrote it,
+                but the chain above is in the order this trip will actually
+                be walked. Without this line the card contradicts itself. */}
+            {r.reversed && (
+              <p className="mt-2 text-[12px] text-[color:var(--clr-dune)] leading-snug">
+                {t("shape.gatewayReversed")}
+              </p>
+            )}
 
             <p className="mt-2.5 text-[12.5px] text-muted-foreground leading-relaxed">
               {ar ? r.provenanceAr : r.provenance}

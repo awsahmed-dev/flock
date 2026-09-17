@@ -134,10 +134,19 @@ export type GatewayErrand =
  * shown as two, or the checklist quietly understates the work.
  */
 export function gatewayErrands(g: GatewayState): GatewayErrand[] {
-  if (!g.arrive || !g.depart) return [];
-  if (g.arrive === g.depart) return [{ kind: "roundtrip", baseId: g.arrive }];
-  return [
-    { kind: "flightIn", baseId: g.arrive },
-    { kind: "flightOut", baseId: g.depart },
-  ];
+  // An end naming a city the trip does not visit buys nothing. A tester set
+  // both ends to Porto on a Lisbon-only trip and the checklist told him to
+  // book "Return flights to Porto" — a city appearing nowhere in his
+  // itinerary. The row above already flags it and offers the repair; the
+  // checklist stays quiet until it is real.
+  const arrive = g.arriveMissing ? null : g.arrive;
+  const depart = g.departMissing ? null : g.depart;
+
+  if (!arrive && !depart) return [];
+  if (arrive && depart && arrive === depart) return [{ kind: "roundtrip", baseId: arrive }];
+
+  const out: GatewayErrand[] = [];
+  if (arrive) out.push({ kind: "flightIn", baseId: arrive });
+  if (depart) out.push({ kind: "flightOut", baseId: depart });
+  return out;
 }

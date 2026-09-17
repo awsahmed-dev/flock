@@ -221,7 +221,6 @@ export const PLACE_COORDS: Record<string, readonly [number, number]> = {
   "Makhuntseti Waterfall": [41.5749, 41.8583],
   "Queen Tamar's Arch Bridge": [41.5708, 41.8598],
   "Mtirala National Park": [41.6599, 41.8521],
-  "Dzveli Tsiskvili": [41.5726, 41.696],
 
   /* ── Georgia day trips ───────────────────────────────────────────────── */
   "Ananuri Fortress": [42.1637, 44.7031],

@@ -129,7 +129,7 @@ const PHI_PHI_DAYTRIP: CuratedDay = {
   titleAr: "بي بي بيوم",
   places: [
     { name: "Maya Bay", nameAr: "خليج مايا", why: "Closed for four years to let the reef recover and reopened with rules: no boats in the bay, no swimming off the sand, one hour. Take the first ferry and you get it nearly empty.", whyAr: "سكّروه أربع سنوات لين تعافت الشعاب وفتحوه بشروط: ما فيه قوارب داخل الخليج ولا سباحة من الرمل، وساعة وحدة بس. خذوا أول عبّارة وبتلقونه شبه فاضي.", category: "nature", rating: 4.5, priceBand: 2, startTime: "09:30" },
-    { name: "Pileh Lagoon", nameAr: "بحيرة بيليه", why: "A flooded crater ringed by cliffs, with water the colour of a swimming pool — get in from the boat, the walls go straight down.", whyAr: "فوهة مغمورة محاطة بجروف، ولون مائها مثل المسابح — انزلوا من القارب، الجدران نازلة عمودي.", category: "nature", rating: 4.7, priceBand: 2, startTime: "11:00" },
+    { name: "Pileh Lagoon", nameAr: "بحيرة بيليه", why: "A shallow lagoon walled in by limestone cliffs, with water the colour of a swimming pool — get in from the boat, the walls go straight down.", whyAr: "بحيرة ضحلة تحيط بها جروف جيرية، ولون مائها مثل المسابح — انزلوا من القارب، الجدران نازلة عمودي.", category: "nature", rating: 4.7, priceBand: 2, startTime: "11:00" },
     { name: "Phi Phi Don", nameAr: "جزيرة في في دون", why: "The only inhabited island of the group — climb to the viewpoint above Tonsai for the two bays meeting at the sandbar, then take the boat back before the afternoon wind.", whyAr: "الجزيرة المسكونة الوحيدة بالمجموعة — اطلعوا للمطل فوق تونساي وشوفوا الخليجين يلتقيان عند الحاجز الرملي، وارجعوا بالقارب قبل ريح العصر.", category: "walk", rating: 4.3, priceBand: 1, startTime: "13:00" },
   ],
 };
