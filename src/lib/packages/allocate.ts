@@ -108,8 +108,12 @@ export function allocateNights(
       return {
         baseId: l.baseId,
         nights: nights[i],
-        transportInMode: t?.mode ?? (prev ? "flight" : null),
-        transportInMinutes: t?.minutes ?? (prev ? 120 : null),
+        // No hardcoded 120: a curated leg lost on a re-add used to come
+        // back as a flat "2h" and be printed as fact, an hour adrift of the
+        // real 2h50 Lisbon–Porto train. `relink` estimates from the real
+        // distance instead, so leave it unset here and let it.
+        transportInMode: t?.mode ?? null,
+        transportInMinutes: t?.minutes ?? null,
       };
     }),
     dropped,

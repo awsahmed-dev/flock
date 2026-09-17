@@ -1587,9 +1587,13 @@ function SortableItemRow({
               </span>
             )}
             {item.locationName && (
-              <span className="inline-flex items-center gap-1 truncate max-w-[180px]">
-                <MapPin className="w-4 h-4" /> {item.locationName}
-              </span>
+              /* Curated stops set locationName to the title, so every row
+                 printed its own name twice — a wasted line on every stop. */
+              item.locationName !== item.title && (
+                <span className="inline-flex items-center gap-1 truncate max-w-[180px]">
+                  <MapPin className="w-4 h-4" /> {item.locationName}
+                </span>
+              )
             )}
             {item.costEstimate != null && (
               /* §11-E: <bdi> isolates Arabic currency marks (ر.س) so digits

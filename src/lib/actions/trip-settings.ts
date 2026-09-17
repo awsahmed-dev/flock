@@ -42,14 +42,19 @@ export async function updateTrip(formData: FormData) {
   // Without this a shortened trip kept stays running past its own end, and
   // a moved start date left the stored segments four days out of step with
   // the screen.
+  let droppedBases: string[] = [];
   if (before && (before.startDate !== startDate || before.endDate !== endDate)) {
-    await refitShapeToTrip(tripId).catch(() => {});
+    droppedBases = (await refitShapeToTrip(tripId).catch(() => ({ dropped: [] }))).dropped;
   }
 
   revalidatePath(`/trips/${tripId}`);
   revalidatePath(`/trips/${tripId}/shape`);
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/settings`);
+
+  // The caller announces this — a shorter trip can cost you a whole city,
+  // and that must never happen in silence.
+  return { droppedBases };
 }
 
 /**

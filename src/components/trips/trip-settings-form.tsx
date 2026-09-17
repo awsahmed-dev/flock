@@ -48,8 +48,20 @@ export function TripSettingsForm({ tripId, name, destination, startDate, endDate
     fd.set("tripId", tripId);
     startTransition(async () => {
       try {
-        await updateTrip(fd);
-        toast.success(t("trip.settingsUpdated"));
+        const r = await updateTrip(fd);
+        // A shorter trip can cost a whole city. Say which, rather than
+        // letting three days of planning disappear quietly.
+        if (r?.droppedBases?.length) {
+          toast.warning(
+            t("trip.datesDroppedBases", {
+              places: r.droppedBases.join(t("common.listSep")),
+              count: r.droppedBases.length,
+            }),
+            { duration: 8000 },
+          );
+        } else {
+          toast.success(t("trip.settingsUpdated"));
+        }
       } catch {
         toast.error(t("trip.settingsUpdateFailed"));
       }

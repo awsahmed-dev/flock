@@ -342,7 +342,8 @@
     "clearWarning": "This can't be undone — every itinerary item will be removed.",
     "clearingPlan": "Clearing…",
     "planCleared": "Itinerary cleared",
-    "clearFailed": "Couldn't clear — try again"
+    "clearFailed": "Couldn't clear — try again",
+    "datesDroppedBases": "{count, plural, one {Shorter trip — we removed {places} from the plan} other {Shorter trip — we removed {places} from the plan}}"
   },
   "cards": {
     "plan": "Plan",
@@ -1800,7 +1801,7 @@
     "adopting": "Setting up your plan…",
     "adopted": "Done — your plan is in",
     "failed": "Couldn't set that up — try again",
-    "freeDays": "{count, plural, one {# of them a free day} other {# of them free days}}",
+    "freeDays": "{count, plural, one {including one free day} other {including # free days}}",
     "startHere": "Start your plan in {place}",
     "noneBodyV2": "We don't curate a route here yet — but we can start the shape, lay out your days, and you add the cities you want."
   },
@@ -1864,7 +1865,10 @@
     "addAnyCity": "Type any city…",
     "addIt": "Add",
     "noSuggestions": "No suggestions for this destination — type a city above",
-    "daysAllEmpty": "{count, plural, one {# day to fill} other {# days to fill}}"
+    "daysAllEmpty": "{count, plural, one {# day to fill} other {# days to fill}}",
+    "pastCurated": "Past this we have no more curated days in {place} — the extra nights come as free days to fill",
+    "freeBeyond": "free days beyond",
+    "tookFrom": "{count, plural, one {Taken from {place}} other {# nights taken from {place}}}"
   },
   "city": {
     "all": "All",

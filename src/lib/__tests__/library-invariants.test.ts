@@ -243,6 +243,50 @@ describe("curating for this audience", () => {
   });
 });
 
+describe("opening days", () => {
+  /**
+   * A tester was scheduled into Feira da Ladra on a Thursday while the
+   * card's own tip read "Tuesdays and Saturdays only" — two lines of the
+   * app's own text contradicting each other on one card. The constraint
+   * lived in prose; nothing could read it.
+   */
+  it("never schedules a place on a day it is shut", () => {
+    const bad: string[] = [];
+    for (const route of ROUTES) {
+      // Walk a year of start dates so every weekday alignment is covered.
+      for (let offset = 0; offset < 7; offset++) {
+        const start = new Date(Date.UTC(2026, 3, 5 + offset)).toISOString().slice(0, 10);
+        const alloc = allocateNights(route, BASES, Math.min(10, routeCapacity(route, BASES)));
+        const days = projectDays(segmentsFromLegs(alloc.legs, start), BASES, start);
+        for (const d of days) {
+          const weekday = new Date(`${d.date}T00:00:00Z`).getUTCDay();
+          for (const p of d.places) {
+            if (p.openDays && !p.openDays.includes(weekday)) {
+              bad.push(`${route.id} @ ${start}: ${p.name} on ${d.date} (weekday ${weekday})`);
+            }
+          }
+        }
+      }
+    }
+    expect(bad, `scheduled while closed:\n${bad.slice(0, 10).join("\n")}`).toEqual([]);
+  });
+
+  it("keeps the constraint and the prose in agreement", () => {
+    // If the copy names specific days, the data must say so too — that
+    // mismatch is what shipped.
+    const SAYS_DAYS = /\b(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\b[^.]*\bonly\b|\bonly\b[^.]*\b(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\b/i;
+    const untagged: string[] = [];
+    for (const b of all) {
+      for (const d of [...b.days, ...(b.dayTrip ? [b.dayTrip] : [])]) {
+        for (const p of d.places) {
+          if (SAYS_DAYS.test(p.why) && !p.openDays) untagged.push(`${b.id}/${p.name}: ${p.why}`);
+        }
+      }
+    }
+    expect(untagged, `copy names opening days but openDays is unset:\n${untagged.join("\n")}`).toEqual([]);
+  });
+});
+
 describe("routes", () => {
   it("have unique ids and reference known bases", () => {
     const ids = ROUTES.map((r) => r.id);

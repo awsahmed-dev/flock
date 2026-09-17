@@ -24,6 +24,13 @@ export interface CuratedPlace {
   startTime?: string;
   /** the move between bases, not somewhere you go */
   leg?: boolean;
+  /**
+   * Days of the week this place actually opens, 0 = Sunday. Omit when it
+   * opens daily. A tester was scheduled into a flea market on a Thursday
+   * while the card's own tip read "Tuesdays and Saturdays only" — the
+   * constraint was in the prose and nothing could read it.
+   */
+  openDays?: number[];
 }
 
 export interface CuratedDay {

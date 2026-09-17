@@ -196,6 +196,9 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                     for (const x of r.movedTo ?? []) {
                       toast.info(t("shape.gaveTo", { place: ar ? x.nameAr : x.name, count: x.nights }));
                     }
+                    for (const x of r.takenFrom ?? []) {
+                      toast.info(t("shape.tookFrom", { place: ar ? x.nameAr : x.name, count: x.nights }));
+                    }
                   })
                 }
                 onRemove={() =>
@@ -502,16 +505,19 @@ function BaseRow({
               disabled={!canEdit || busy}
               onClick={() => {
                 if (locked) return toast.info(t("shape.lockedReason"));
-                if (atMax) return toast.info(t("shape.maxHint"));
+                // Past the curated depth is allowed — say what it costs and
+                // then do it. A dimmed button with two grey words under it
+                // is not an argument.
+                if (atMax) toast.info(t("shape.pastCurated", { place: ar ? base.nameAr : base.name }));
                 onNights(base.nights + 1);
               }}
               aria-label="+"
-              className={`w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center ${locked || atMax ? "opacity-40" : ""}`}
+              className={`w-11 h-11 rounded-xl border border-border inline-flex items-center justify-center ${locked ? "opacity-40" : ""}`}
             >
               <Plus size={16} />
             </button>
             {atMax && !locked && (
-              <span className="text-[10.5px] text-muted-foreground">{t("shape.maxReached")}</span>
+              <span className="text-[10.5px] text-muted-foreground">{t("shape.freeBeyond")}</span>
             )}
           </div>
 

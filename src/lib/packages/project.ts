@@ -1,4 +1,4 @@
-import type { Base, BaseId, CuratedPlace, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
+import type { Base, BaseId, CuratedDay, CuratedPlace, ProjectedDay, Segment, TransportMode } from "@/lib/packages/types";
 import { addDays } from "@/lib/packages/allocate";
 import type { AllocatedLeg } from "@/lib/packages/allocate";
 
@@ -214,7 +214,19 @@ export function projectDays(
         continue;
       }
 
-      const shape = pool.shift();
+      // Pick a shape this weekday can actually honour. Shapes are otherwise
+      // taken in order; this only reorders when a day-constrained place
+      // would land on a day it is shut.
+      const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+      const fits = (sh: CuratedDay) =>
+        sh.places.every((pl) => !pl.openDays || pl.openDays.includes(weekday));
+      let shapeIdx = pool.findIndex(fits);
+      if (shapeIdx === -1) shapeIdx = 0;
+      const shape = pool.splice(shapeIdx, 1)[0];
+      // If it still carries something shut today, leave that one out rather
+      // than sending someone to a closed door.
+      const openHere = (ps: CuratedPlace[]) =>
+        ps.filter((pl) => !pl.openDays || pl.openDays.includes(weekday));
       // The move itself is a stop. The shape knew "train, 2h 15m" and the
       // day it happened on said nothing at all — no checkout, no train, no
       // "today you go to Kyoto" — on a multi-city trip that is the single
@@ -250,8 +262,8 @@ export function projectDays(
         places: !shape
           ? leg
           : isTravel
-            ? [...leg, ...afternoonOf(shape.places, longHaul ? 1 : 2)]
-            : shape.places,
+            ? [...leg, ...afternoonOf(openHere(shape.places), longHaul ? 1 : 2)]
+            : openHere(shape.places),
       });
     }
   });

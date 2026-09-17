@@ -596,10 +596,17 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       const seg = find(e.baseId);
       if (!seg) throw new Error("Not in this trip");
       if (seg.lockedBy) throw new Error("This stay is booked");
-      const base = BASES[seg.baseId];
-      // The ceiling is the whole reason "13 nights in Tokyo" can't happen.
-      const n = Math.min(e.nights, Math.max(1, base?.maxNights ?? 1));
-      seg.checkOut = addIso(seg.checkIn, n);
+      // The ceiling is ADVICE, not a rule.
+      //
+      // It exists so the generator never claims 13 curated nights in Tokyo.
+      // Applying it to the user's own stepper froze the control completely:
+      // on a 9-night Portugal trip the allocator had already spent the
+      // overflow night (Lisbon 6 against a max of 5), so every "+" was
+      // disabled and every "−" had nowhere to send its night. "The steppers
+      // are decorative. It's my holiday."
+      //
+      // Past the ceiling you simply get free days, and the UI says so.
+      seg.checkOut = addIso(seg.checkIn, Math.max(1, e.nights));
       break;
     }
     case "reorder": {
@@ -736,10 +743,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   const total = segments.reduce((n, s) => n + segmentNights(s), 0);
   if (total !== tripNights && segments.length) {
     const diff = tripNights - total;
+    // Any unlocked stay can absorb the drift — a stay past its curated
+    // depth just gains a free day, which is the honest outcome.
     const flex = [...segments].reverse().find((s) => {
       if (s.lockedBy) return false;
-      const b = BASES[s.baseId];
-      return diff > 0 ? segmentNights(s) + diff <= (b?.maxNights ?? 99) : segmentNights(s) + diff >= 1;
+      return diff > 0 ? true : segmentNights(s) + diff >= 1;
     });
     if (flex) flex.checkOut = addIso(flex.checkIn, segmentNights(flex) + diff);
   }
@@ -754,19 +762,28 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
 
   const saved = await persist(tripId, segments, trip.startDate, user.id);
 
-  const movedTo = saved
+  // Report the OTHER side of the trade. Pressing "+" on Lisbon and being
+  // told "the night went to Lisbon" says nothing you didn't just do; what
+  // you want to know is which stay paid for it.
+  const touched = e.op === "nights" ? e.baseId : null;
+  const label = (id: BaseId) => ({
+    name: BASES[id]?.name ?? id.replace(/^custom:/, ""),
+    nameAr: BASES[id]?.nameAr ?? id.replace(/^custom:/, ""),
+  });
+  const deltas = saved
     .map((sg) => ({ baseId: sg.baseId, delta: segmentNights(sg) - (before.get(sg.baseId) ?? 0) }))
-    .filter((x) => x.delta > 0 && before.has(x.baseId))
-    .map((x) => ({
-      name: BASES[x.baseId]?.name ?? x.baseId,
-      nameAr: BASES[x.baseId]?.nameAr ?? x.baseId,
-      nights: x.delta,
-    }));
+    .filter((x) => before.has(x.baseId) && x.delta !== 0 && x.baseId !== touched);
+  const gave = deltas.filter((x) => x.delta < 0).map((x) => ({ ...label(x.baseId), nights: -x.delta }));
+  const got = deltas.filter((x) => x.delta > 0).map((x) => ({ ...label(x.baseId), nights: x.delta }));
+  const movedTo = got;
+  const takenFrom = gave;
 
   return {
     ok: true,
     /** nothing moved — the UI must explain why rather than look broken */
     noop: unchanged,
+    /** stays that gave nights up, for the other half of the sentence */
+    takenFrom,
     borrowedFrom: borrowedFrom.map((b) => ({
       name: BASES[b.baseId]?.name ?? b.baseId,
       nameAr: BASES[b.baseId]?.nameAr ?? b.baseId,
@@ -944,22 +961,28 @@ export async function removedCount(tripId: string) {
  * So dates are the trip's, always, and the shape is re-dated and re-fitted
  * to them whenever they move.
  */
-export async function refitShapeToTrip(tripId: string) {
+export async function refitShapeToTrip(tripId: string): Promise<{ dropped: string[] }> {
   const user = await getCurrentUser();
-  if (!user) return;
+  if (!user) return { dropped: [] };
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
-  if (!trip) return;
+  if (!trip) return { dropped: [] };
 
   const rows = await db
     .select()
     .from(tripSegments)
     .where(eq(tripSegments.tripId, tripId))
     .orderBy(tripSegments.sortOrder);
-  if (!rows.length) return;
+  if (!rows.length) return { dropped: [] };
 
   let segments = redate(rows.map(toSegment), trip.startDate);
   const want = tripNightsBetween(trip.startDate, trip.endDate);
-  if (want <= 0) return;
+  if (want <= 0) return { dropped: [] };
+
+  // Shortening a trip drops whole stays. A tester pulled his end date back
+  // three days and Porto vanished — the city, the hotel, the train and
+  // three days of content — with no warning and no undo. It still has to
+  // happen, but it must be reported.
+  const dropped: string[] = [];
 
   // Trim from the tail when the trip shrank; drop whole stays that no
   // longer fit rather than leaving them hanging past the end.
@@ -971,7 +994,8 @@ export async function refitShapeToTrip(tripId: string) {
       last.checkOut = addIso(last.checkIn, n - 1);
       total -= 1;
     } else {
-      segments.pop();
+      const gone = segments.pop()!;
+      dropped.push(BASES[gone.baseId]?.name ?? gone.customName ?? gone.baseId.replace(/^custom:/, ""));
       total -= n;
     }
     segments = redate(segments, trip.startDate);
@@ -983,4 +1007,5 @@ export async function refitShapeToTrip(tripId: string) {
   }
 
   await persist(tripId, redate(segments, trip.startDate), trip.startDate, user.id);
+  return { dropped };
 }
