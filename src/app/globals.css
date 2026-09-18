@@ -592,27 +592,11 @@ button, a, [role="button"] {
   touch-action: manipulation;
 }
 
-/* «KUL → DOH» lost its arrow.
-   IBM Plex Sans Arabic claims U+2192 but its BOLD face draws nothing for
-   it — 3.9px of blank where M is 11.5px. Titles are bold, so every flight
-   leg in the plan read "KUL   DOH" with a hole in the middle. Because the
-   Arabic face claims the codepoint, the Inter fallback below is never
-   consulted for it.
-   So hand the arrow block to a font that can draw it, before anything
-   else gets a say. local() only — no download for a handful of glyphs —
-   and if a device has none of these the rule simply does not apply and we
-   are no worse off than before. */
-@font-face {
-  font-family: "PaxArrows";
-  src: local("Helvetica Neue"), local("Arial"), local("Segoe UI"), local("Roboto"), local("DejaVu Sans");
-  unicode-range: U+2190-21FF, U+2794-27BF;
-}
-
 /* Sprint 9 Part 3 (Step 4): when Arabic is active the layout attaches
    --font-arabic (IBM Plex Sans Arabic) to <html>; this rule makes it the
    primary family. Falls back to Inter for Latin glyphs inside Arabic UI. */
 html[dir="rtl"] body {
-  font-family: "PaxArrows", var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
 }
 
 /* Flight-mode ship: blog reads light now — .blog-light rescopes the

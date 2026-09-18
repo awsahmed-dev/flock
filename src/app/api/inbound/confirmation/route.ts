@@ -86,7 +86,11 @@ export async function POST(req: Request) {
     const type = it.kind === "flight" ? "flight" : it.kind === "hotel" ? "stay" : "other";
     const stopType = type === "flight" ? "booking_flight" : type === "stay" ? "booking_stay" : "booking_other";
     const itemType = type === "flight" ? "transport" : type === "stay" ? "accommodation" : "other";
-    const name = it.from && it.to && it.kind !== "hotel" ? `${it.title} · ${it.from} → ${it.to}` : it.title;
+    // "KUL-DOH", not "KUL → DOH". The arrow did not survive the Arabic UI:
+    // in the plan, every leg read "KUL   DOH" with a hole where the glyph
+    // should be. A hyphen is how airlines write a route anyway, and it
+    // renders in every font we ship, in both directions.
+    const name = it.from && it.to && it.kind !== "hotel" ? `${it.title} · ${it.from}-${it.to}` : it.title;
     const [stop] = await db.insert(itineraryItems).values({
       tripId: trip.id, dayDate: clamp(it.date), title: it.provider ? `${it.provider} — ${name}` : name, type: itemType,
       startTime: it.time, status: "confirmed", stopType, sortOrder: -1, createdBy: actor, provider: "manual",

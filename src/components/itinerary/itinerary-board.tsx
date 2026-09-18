@@ -1440,13 +1440,16 @@ function SortableItemRow({
   const style = { transform: CSS.Transform.toString(transform), transition };
   const TypeCfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;
   // A booked flight is "transport", and transport draws a car. So a Doha
-  // connection sat in the plan under a little orange car. When the booking
-  // tells us what it actually is, it wins — the generic type is only a
-  // fallback for stops nobody has booked.
+  // connection sat in the plan under a little orange car.
+  //
+  // The stop's OWN stopType is the signal, not bookingMeta: these rows are
+  // flights entered by hand and have no row in the bookings table at all,
+  // so keying off bookingMeta left the car exactly where it was.
+  const booking = item.stopType ?? bookingMeta?.bookingType ?? "";
   const TypeIcon =
-    bookingMeta?.bookingType === "flight"
+    booking === "booking_flight" || booking === "flight"
       ? Plane
-      : bookingMeta?.bookingType === "stay"
+      : booking === "booking_stay" || booking === "stay"
         ? Bed
         : TypeCfg.icon;
 
