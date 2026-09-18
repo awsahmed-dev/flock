@@ -15,7 +15,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { errorText } from "@/components/i18n/error-text";
-import { addPlaceToCity, fillFreeDays, type CityBoard as Board } from "@/lib/actions/city";
+import { addPlaceToCity, fillFreeDays, type CityBoard as Board  } from "@/lib/actions/city";
+import { refused } from "@/lib/actions/refusal";
 import { PlaceInfoSheet } from "@/components/city/place-info-sheet";
 import { format } from "@/lib/i18n/date-fns";
 import { parseISO } from "date-fns";
@@ -61,6 +62,10 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
     startTransition(async () => {
       try {
         const r = await addPlaceToCity({ tripId, baseId: board.baseId, placeKey: key });
+        if (refused(r)) {
+          toast.error(errorText(t, r, "city.failed"));
+          return;
+        }
         if (r.already) return;
         const label = format(parseISO(r.day!), "EEE d MMM");
         toast.success(
@@ -79,6 +84,10 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
     setWorking(true);
     try {
       const r = await fillFreeDays(tripId, board.baseId);
+      if (refused(r)) {
+        toast.error(errorText(t, r, "city.failed"));
+        return;
+      }
       const first = r.days[0];
       toast.success(
         first && first.spreadKm > 0

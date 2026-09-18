@@ -35,10 +35,12 @@ import { SavesTray } from "@/components/saves/saves-tray";
 import { WhatsNow } from "@/components/now/whats-now";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { lightenDay, undoLighten } from "@/lib/actions/shape";
-import { fillFreeDays } from "@/lib/actions/city";
+import { fillFreeDays  } from "@/lib/actions/city";
+import { refused } from "@/lib/actions/refusal";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { errorText } from "@/components/i18n/error-text";
 import { stayParam } from "@/lib/packages/stay-key";
 import { PlanModeSwitch } from "./plan-mode-switch";
 import { BookMode } from "./book-mode";
@@ -896,10 +898,14 @@ export function ItineraryBoard({
                       startTransition(async () => {
                         try {
                           const r = await fillFreeDays(tripId, baseIdForDay(focusedDay)!);
+                          if (refused(r)) {
+                            toast.error(errorText(t, r, "city.failed"));
+                            return;
+                          }
                           toast.success(t("city.filled", { count: r.days.length }));
                           router.refresh();
                         } catch (err) {
-                          toast.error(err instanceof Error ? err.message : t("city.failed"));
+                          toast.error(errorText(t, err, "city.failed"));
                         }
                       })
                     }

@@ -905,7 +905,32 @@ export type ShapeEdit = z.infer<typeof zEdit>;
  * segments and re-project the days — doing that in six places is how the
  * grid and the shape drift apart.
  */
+/**
+ * Every refusal this file can produce, as something the client can read.
+ *
+ * A thrown Error does NOT survive a server action in production: React
+ * replaces its message with "An error occurred in the Server Components
+ * render. The specific message is omitted…" before the browser sees it.
+ * So the careful Arabic sentence written here never arrived — the user
+ * got that English paragraph, or at best a generic fallback.
+ *
+ * A RETURNED value is ordinary data and is never redacted. Expected
+ * refusals — "no nights free", "already the end of the trip" — come back
+ * as one, and only genuine faults (not signed in, not the owner, a bad
+ * payload) still throw, because those are not conversations with the
+ * user.
+ */
 export async function editShape(tripId: string, edit: ShapeEdit) {
+  try {
+    return await runEdit(tripId, edit);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.startsWith("err.")) return { ok: false as const, error: msg };
+    throw err;
+  }
+}
+
+async function runEdit(tripId: string, edit: ShapeEdit) {
   const user = await requireOwner(tripId);
   const e = parseOr(zEdit, edit, "Invalid edit");
   const trip = await getTrip(tripId);

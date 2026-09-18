@@ -20,7 +20,16 @@ export function errorText(
   /** what to say when the error is not one of ours */
   fallbackKey = "shape.failed",
 ): string {
-  const raw = err instanceof Error ? err.message : "";
+  // Accepts three shapes, because a refusal now travels as returned data
+  // ("err.noNightsFree"), while a genuine fault still arrives as an Error.
+  const raw =
+    typeof err === "string"
+      ? err
+      : err instanceof Error
+        ? err.message
+        : typeof (err as { error?: unknown })?.error === "string"
+          ? ((err as { error: string }).error)
+          : "";
   if (raw.startsWith("err.")) {
     const said = t(raw);
     // `t` hands back the key when it has no entry for it; showing

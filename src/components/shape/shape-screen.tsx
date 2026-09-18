@@ -35,6 +35,7 @@ import {
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { errorText } from "@/components/i18n/error-text";
 import { editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
+import { refused } from "@/lib/actions/refusal";
 import { stayParam } from "@/lib/packages/stay-key";
 
 /**
@@ -99,7 +100,16 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
     optimistic?.();
     startTransition(async () => {
       try {
-        await fn();
+        // A refusal is a RETURNED value now, not a throw — production
+        // strips a thrown message before the browser sees it. The calls
+        // that ignore the result still need to say what happened.
+        const out = await fn();
+        if (refused(out)) {
+          toast.error(errorText(t, out));
+          setView(snapshot);
+          router.refresh();
+          return;
+        }
         router.refresh();
       } catch (err) {
         setView(snapshot);
@@ -230,6 +240,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 onNights={(n) =>
                   run(async () => {
                     const r = await editShape(tripId, { op: "nights", baseId: b.key, nights: n });
+                    if (refused(r)) return toast.error(errorText(t, r));
                     for (const d of r.dropped ?? []) {
                       toast.info(t("routes.dropped", { places: ar ? d.nameAr : d.name }));
                     }
@@ -248,6 +259,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 onRemove={() =>
                   run(async () => {
                     const r = await editShape(tripId, { op: "remove", baseId: b.key });
+                    if (refused(r)) return toast.error(errorText(t, r));
                     for (const x of r.movedTo ?? []) {
                       toast.info(t("shape.gaveTo", { place: ar ? x.nameAr : x.name, count: x.nights }));
                     }
@@ -312,6 +324,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
               setCityInput("");
               run(async () => {
                 const r = await editShape(tripId, { op: "addCustom", name });
+                if (refused(r)) return toast.error(errorText(t, r));
                 for (const x of r.borrowedFrom ?? []) {
                   toast.info(t("shape.borrowed", { place: ar ? x.nameAr : x.name, count: x.nights }));
                 }
@@ -351,6 +364,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 onClick={() =>
                   run(async () => {
                     const r = await editShape(tripId, { op: "add", baseId: a.id });
+                    if (refused(r)) return toast.error(errorText(t, r));
                     // Never move someone's nights in silence.
                     for (const b of r.borrowedFrom ?? []) {
                       toast.info(t("shape.borrowed", { place: ar ? b.nameAr : b.name, count: b.nights }));

@@ -398,7 +398,25 @@ const zAdd = z.object({
  * arrival day, and never a day in a city this place isn't in — that was the
  * bug where a Kyoto restaurant landed on a Tokyo morning.
  */
+/**
+ * Expected refusals come back as data, not as a throw.
+ *
+ * React strips a thrown message out of a server action in production —
+ * the browser receives "An error occurred in the Server Components
+ * render…" instead — so the Arabic sentence written here never reached
+ * anyone. A returned value is not redacted. Real faults still throw.
+ */
 export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
+  try {
+    return await runAddPlaceToCity(input);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.startsWith("err.")) return { ok: false as const, error: msg };
+    throw err;
+  }
+}
+
+async function runAddPlaceToCity(input: z.infer<typeof zAdd>) {
   const { tripId, baseId, placeKey, dayDate } = parseOr(zAdd, input, "Invalid request");
   const { user, role } = await requireMember(tripId);
   if (role !== "owner") throw new Error("err.ownerOnlyPlan");
@@ -507,6 +525,16 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
  * it did and why, because a rearrangement you can't see is the wizard again.
  */
 export async function fillFreeDays(tripId: string, baseId: string) {
+  try {
+    return await runFillFreeDays(tripId, baseId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.startsWith("err.")) return { ok: false as const, error: msg };
+    throw err;
+  }
+}
+
+async function runFillFreeDays(tripId: string, baseId: string) {
   const { user, role } = await requireMember(tripId);
   if (role !== "owner") throw new Error("err.ownerOnlyPlan");
   const board = await getCityBoard(tripId, baseId);
