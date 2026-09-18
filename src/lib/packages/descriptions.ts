@@ -19,7 +19,6 @@ export interface PlaceDescription {
 }
 
 export const PLACE_WHAT: Record<string, PlaceDescription> = {
-  "Acharuli Khachapuri House": { what: "A khachapuri restaurant in Batumi, usually with a queue.", whatAr: "مطعم خاتشابوري في باتومي، أمامه طابور في الغالب." },
   "1984 Olympic bobsleigh track": { what: "A disused concrete bobsleigh track in the forest above Sarajevo.", whatAr: "مضمار بوبسليد خرساني مهجور في غابة تعلو سراييفو." },
   "21st Century Museum of Contemporary Art": { what: "A round glass art museum in central Kanazawa.", whatAr: "متحف فنّ دائري زجاجي في وسط كانازاوا." },
   "9 Pyramids Lounge": { what: "A sit-down restaurant inside the fence of the pyramid plateau in Cairo.", whatAr: "مطعم بطاولات داخل سور هضبة الأهرامات في القاهرة." },

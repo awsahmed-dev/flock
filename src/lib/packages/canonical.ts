@@ -70,7 +70,7 @@ const JAPAN: CanonPackage = {
       title: "Land, and ease in", titleAr: "الوصول… وعلى مهل", city: "Tokyo", cityAr: "طوكيو",
       places: [
         { name: "Shibuya Crossing", nameAr: "تقاطع شيبويا", why: "The first 'we're really here' moment — go at dusk when the screens light up.", whyAr: "أول لحظة تحس فيها إنك وصلت فعلًا — روحوا وقت المغرب لما تشتغل الشاشات.", category: "sight", rating: 4.6, priceBand: 0, startTime: "17:00" },
-        { name: "Nonbei Yokocho", nameAr: "نونبي يوكوتشو", why: "Tiny lantern-lit alley behind the noise — six seats per bar, no menus in English, all the better.", whyAr: "زقاق ضيق بفوانيس خلف الزحمة — ستة كراسي بكل محل، وبدون قائمة إنجليزية، وهذا أحلى.", category: "food", rating: 4.5, priceBand: 2, startTime: "19:30" },
+                { name: "Nonbei Yokocho", nameAr: "نونبي يوكوتشو", why: "A lantern-lit alley of counter kitchens behind the station — six stools a place, no English menus, all the better.", whyAr: "زقاق مضاء بالفوانيس فيه مطابخ صغيرة على الكاونتر خلف المحطة — ست كراسي بالمحل، وما فيه قوائم إنجليزية، وهذا أحلى.", category: "food" },
       ],
     },
     {
@@ -181,8 +181,8 @@ const GEORGIA: CanonPackage = {
   titleAr: "المسار الكلاسيكي لجورجيا",
   subtitle: "Tbilisi → the mountains → back",
   subtitleAr: "تبليسي ← الجبال ← ورجعة",
-  provenance: "Old town, one mountain day, one wine day — the shape almost every Gulf trip takes.",
-  provenanceAr: "البلدة القديمة، ويوم جبال، ويوم نبيذ — شكل أغلب رحلات الخليج لجورجيا.",
+  provenance: "Old town, one mountain day, one valley day — the shape almost every Gulf trip takes.",
+  provenanceAr: "البلدة القديمة، ويوم جبال، ويوم وادي — شكل أغلب رحلات الخليج لجورجيا.",
   cities: [{ name: "Tbilisi", nameAr: "تبليسي", nights: 5 }],
   days: [
     {
@@ -201,7 +201,7 @@ const GEORGIA: CanonPackage = {
       ],
     },
     {
-      title: "Wine country", titleAr: "بلاد النبيذ", city: "Tbilisi", cityAr: "تبليسي",
+      title: "Sighnaghi and the valley", titleAr: "سيغناغي والوادي", city: "Tbilisi", cityAr: "تبليسي",
       places: [
         { name: "Sighnaghi", nameAr: "سيغناغي", why: "Walled hill town over the Alazani valley — two hours out, easy day.", whyAr: "بلدة مسورة على تلة فوق وادي ألازاني — ساعتين برا، يوم خفيف.", category: "sight", rating: 4.7, priceBand: 0, startTime: "09:30" },
         { name: "Bodbe Monastery", nameAr: "دير بودبي", why: "Cypress avenue and a valley view that stops the conversation.", whyAr: "ممشى السرو وإطلالة وادي توقف الكلام.", category: "sight", rating: 4.7, priceBand: 0, startTime: "13:00" },

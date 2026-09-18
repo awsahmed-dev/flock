@@ -193,6 +193,7 @@ export function PlaceDetailPanel({
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent
+        closeLabel={t("common.close")}
         side="bottom"
         showCloseButton={false}
         transition={{ type: "spring", stiffness: 150, damping: 22 }}

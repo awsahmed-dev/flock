@@ -43,7 +43,8 @@
     "remove": "Remove",
     "undo": "Undo",
     "all": "All",
-    "listSep": ", "
+    "listSep": ", ",
+    "itemActions": "Item actions"
   },
   "form": {
     "pickFileFirst": "Pick a file first",
@@ -1867,7 +1868,7 @@
     "noSuggestions": "No suggestions for this destination — type a city above",
     "daysAllEmpty": "{count, plural, one {# day to fill} other {# days to fill}}",
     "pastCurated": "Past this we have no more curated days in {place} — the extra nights come as free days to fill",
-    "freeBeyond": "free days beyond",
+    "freeBeyond": "{count, plural, one {# free day here} other {# free days here}}",
     "tookFrom": "{count, plural, one {Taken from {place}} other {# nights taken from {place}}}",
     "gatewayArrive": "You land in",
     "gatewayDepart": "You fly home from",

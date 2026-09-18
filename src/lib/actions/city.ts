@@ -184,7 +184,8 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         why: p.why,
         whyAr: p.whyAr,
         category: p.category,
-        rating: p.rating ?? null,
+        // Curated places carry no rating — see CuratedPlace.
+        rating: null,
         lat: c?.[0] ?? null,
         lng: c?.[1] ?? null,
         inPlan: onPlan.has(p.name),
@@ -258,7 +259,12 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     lng: base.lng,
     checkIn: String(seg.checkIn),
     checkOut: String(seg.checkOut),
-    nights: dates.length,
+    // Nights, not days. `dates` is the DAY list and is deliberately one
+    // longer for the last base so the departure day appears — reusing it
+    // here made the city header claim "7 ليالٍ" on a six-night trip, two
+    // clicks after the shape screen had correctly said six. A number the
+    // reader can check on their fingers, and it was wrong.
+    nights: Math.max(0, span.length - 1),
     days,
     // Must agree with fillFreeDays, which skips arrival days. They
     // disagreed, so the button offered "Fill the free day" and the action
@@ -426,7 +432,10 @@ export async function fillFreeDays(tripId: string, baseId: string) {
   for (const day of free) {
     if (!pool.length) break;
     // Seed with the strongest remaining place, then walk outward.
-    const seed = pool.reduce((a, b) => ((b.rating ?? 0) > (a.rating ?? 0) ? b : a));
+    // Seed with the first place the curator listed. It used to seed with
+    // the highest rated, which sounds better until you know the ratings
+    // were invented — curation order is the real signal and always was.
+    const seed = pool[0];
     const chosen = [seed];
     pool = pool.filter((p) => p.key !== seed.key);
     while (chosen.length < perDay && pool.length) {
@@ -462,7 +471,7 @@ export async function fillFreeDays(tripId: string, baseId: string) {
       notes: p.why || null,
       topTip: p.why || null,
       topTipAr: p.whyAr || null,
-      rating: p.rating ?? null,
+      rating: null,
       // Asked for by name, so it survives a reshape like any other choice.
       provider: "chosen" as const,
       status: "confirmed" as const,

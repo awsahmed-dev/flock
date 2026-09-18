@@ -43,7 +43,8 @@
     "remove": "إزالة",
     "undo": "تراجع",
     "all": "الكل",
-    "listSep": "، "
+    "listSep": "، ",
+    "itemActions": "خيارات العنصر"
   },
   "form": {
     "pickFileFirst": "اختر ملفًا أولًا",
@@ -1867,7 +1868,7 @@
     "noSuggestions": "ما عندنا اقتراحات لهذي الوجهة — اكتب المدينة فوق",
     "daysAllEmpty": "{count, plural, one {يوم واحد بانتظار الملء} two {يومان بانتظار الملء} few {# أيام بانتظار الملء} many {# يومًا بانتظار الملء} other {# يوم بانتظار الملء}}",
     "pastCurated": "بعد كذا ما عندنا أيام مختارة في {place} — الليالي الزيادة تجيكم أيام حرة تملونها",
-    "freeBeyond": "بعدها أيام حرة",
+    "freeBeyond": "{count, plural, one {يوم حر واحد هنا} two {يومان حران هنا} few {# أيام حرة هنا} many {# يومًا حرًا هنا} other {# يوم حر هنا}}",
     "tookFrom": "{count, plural, one {أخذناها من {place}} two {أخذناهما من {place}} few {أخذنا الـ# ليالٍ من {place}} many {أخذنا الـ# ليلة من {place}} other {أخذنا الـ# ليلة من {place}}}",
     "gatewayArrive": "تنزلون في",
     "gatewayDepart": "ترجعون من",

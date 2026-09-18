@@ -403,6 +403,17 @@ export async function planSavedPlace(saveId: string, dayDate: string) {
   // database and be invisible in the UI, which is the worst of both.
   if (day < trip.startDate || day > trip.endDate) throw new Error("Day is outside the trip");
 
+  // Which city owns this day. Without it the row had a null base_id, so
+  // every "is this stop in the right city" guard skipped straight over it.
+  const segsForDay = await db
+    .select({ baseId: tripSegments.baseId, checkIn: tripSegments.checkIn, checkOut: tripSegments.checkOut })
+    .from(tripSegments)
+    .where(eq(tripSegments.tripId, row.tripId!))
+    .orderBy(tripSegments.sortOrder);
+  const owning = segsForDay.find((sg) => day >= String(sg.checkIn) && day < String(sg.checkOut));
+  // The departure day sits on the last stay's checkOut, which belongs to it.
+  const baseForDay = (owning ?? segsForDay[segsForDay.length - 1])?.baseId ?? null;
+
   const itemId = await db.transaction(async (tx) => {
     const [item] = await tx
       .insert(itineraryItems)
@@ -410,7 +421,11 @@ export async function planSavedPlace(saveId: string, dayDate: string) {
         tripId: row.tripId!,
         dayDate: day,
         title: row.placeName,
-        type: "activity",
+        // A saved restaurant is a meal. This path hardcoded "activity", so
+        // a place the crew saved with category "food" was filed as a sight
+        // — the same bug the curated path was fixed for, on the one route
+        // into the plan nobody re-checked.
+        type: row.category === "food" ? "meal" : "activity",
         locationName: row.address ?? row.placeName,
         locationLat: row.lat,
         locationLng: row.lng,
@@ -418,7 +433,17 @@ export async function planSavedPlace(saveId: string, dayDate: string) {
         photoUrl: row.photoRef,
         rating: row.rating,
         address: row.address,
-        provider: row.placeId ? "google" : "manual",
+        /**
+         * Chosen, not generated.
+         *
+         * Tagging these "google"/"manual" meant the projection did not
+         * recognise them as already placed: every later edit re-injected
+         * the same save as a second, differently-dated copy, and the
+         * original was never cleaned up. Three rebuilds, three duplicates.
+         * "chosen" is what protects a decision from a regeneration.
+         */
+        provider: "chosen",
+        baseId: baseForDay,
         // Something the crew saved and then chose to schedule is a decision,
         // not a proposal awaiting votes.
         status: "confirmed",

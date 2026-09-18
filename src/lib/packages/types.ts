@@ -18,7 +18,25 @@ export interface CuratedPlace {
   why: string;
   whyAr: string;
   category: PlaceCategory;
-  rating?: number;
+  /**
+   * Deliberately absent: a curated place has NO rating.
+   *
+   * All 530 of them used to carry one, and every one was invented. The
+   * giveaway was the shape of the set — a smooth bell from 4.1 to 4.9 with
+   * no 3.x and no 5.0, which no real review data has ever looked like — and
+   * the proof was a single Batumi restaurant that had been entered twice
+   * under two spellings of its own name and carried 4.3 on one card and 4.5
+   * on the other. A sourced number cannot disagree with itself.
+   *
+   * They rendered as "★ 4.7" beside a place name, which reads as a review
+   * score, while we told the user review counts were impossible without a
+   * Google key. A real rating on a place the crew SAVED comes from Google
+   * and still shows; nothing we author does.
+   *
+   * That real one rides here, under a name the corpus cannot plausibly
+   * fill by hand, and a test asserts no curated place ever sets it.
+   */
+  savedRating?: number;
   /** 0 = free … 3 = expensive */
   priceBand?: 0 | 1 | 2 | 3;
   startTime?: string;
@@ -39,7 +57,19 @@ export interface CuratedPlace {
    *  vegetarian     — real vegetarian mains, not a side salad
    *  vegan          — the same, without dairy or egg
    *  pork-served    — say it out loud rather than let someone find out
+   *  alcohol-served — the same courtesy, for the same reason
    *  unverified     — we looked and could not confirm
+   *
+   * `alcohol-served` was added late, and its absence had already done
+   * damage: with no way to say "this kitchen has a bar", four named
+   * restaurants with full wine lists were sitting under a `halal` tag.
+   *
+   * A NEIGHBOURHOOD CANNOT BE HALAL. Twelve of these tags were on streets,
+   * markets and promenades, which no one can certify — the tag was being
+   * derived from the country rather than the kitchen. Every Turkish food
+   * entry was blanket-tagged, which is exactly where the two worst errors
+   * came from. Where the venue cannot carry the claim, the honest tag is
+   * `unverified`, and a tester already said she would rather be told that.
    */
   dietary?: (
     | "halal"
@@ -48,6 +78,7 @@ export interface CuratedPlace {
     | "vegetarian"
     | "vegan"
     | "pork-served"
+    | "alcohol-served"
     | "unverified"
   )[];
 

@@ -220,6 +220,9 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 onNights={(n) =>
                   run(async () => {
                     const r = await editShape(tripId, { op: "nights", baseId: b.id, nights: n });
+                    for (const d of r.dropped ?? []) {
+                      toast.info(t("routes.dropped", { places: ar ? d.nameAr : d.name }));
+                    }
                     if (r.noop) {
                       toast.info(t("shape.nowhereToGo"));
                       return;
@@ -578,8 +581,17 @@ function BaseRow({
             >
               <Plus size={16} />
             </button>
-            {atMax && !locked && (
-              <span className="text-[10.5px] text-muted-foreground">{t("shape.freeBeyond")}</span>
+            {/* "free days beyond" was wired to `atMax`, which says nothing
+                about whether any free day exists. A base sitting exactly at
+                its curated depth on a fully-covered trip showed it anyway —
+                contradicting the green "every day assigned" banner one card
+                above, and appearing under a city with another city after
+                it. Only nights PAST the curated depth are free days, and
+                now it says how many. */}
+            {base.nights > base.maxNights && !locked && (
+              <span className="text-[10.5px] text-muted-foreground">
+                {t("shape.freeBeyond", { count: base.nights - base.maxNights })}
+              </span>
             )}
           </div>
 

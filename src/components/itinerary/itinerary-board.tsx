@@ -1458,7 +1458,7 @@ function SortableItemRow({
         <button
           type="button"
           onClick={onDelete}
-          aria-label="Delete"
+          aria-label={t("common.delete")}
           className="absolute inset-y-0 end-0 w-[72px] flex items-center justify-center bg-destructive text-white"
         >
           <Trash2 className="w-5 h-5" />
@@ -1501,7 +1501,7 @@ function SortableItemRow({
                let the browser scroll and cancel the gesture. The grip owns its
                touches (touch-none) and is a real 36px target. */
             className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing -m-1.5 p-2.5 touch-none select-none"
-            aria-label="Drag to reorder"
+            aria-label={t("shape.reorder")}
           >
             <GripVertical className="w-4 h-4" />
           </button>

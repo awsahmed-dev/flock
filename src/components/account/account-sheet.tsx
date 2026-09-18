@@ -138,6 +138,7 @@ export function AccountSheet({
     // sheet — spring entry/exit per the brief's config, library-owned state.
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent
+        closeLabel={t("common.close")}
         side="bottom"
         transition={{ type: "spring", stiffness: 150, damping: 22 }}
         className="z-[60] h-auto max-h-[88vh] overflow-y-auto gap-0 rounded-t-2xl border-t border-border bg-card sm:mx-auto sm:max-w-md sm:rounded-t-2xl"

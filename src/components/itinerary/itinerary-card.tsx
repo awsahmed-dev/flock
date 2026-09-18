@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "@/components/i18n/locale-provider";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 
 import { useState, useTransition } from "react";
 import { useSortable } from "@dnd-kit/sortable";
@@ -63,6 +63,7 @@ export function ItineraryCard({
   const [editing, setEditing] = useState(false);
   const [, startTransition] = useTransition();
   const { locale } = useLocale();
+  const t = useT();
   const ar = locale === "ar";
 
   const {
@@ -212,7 +213,7 @@ export function ItineraryCard({
               <DropdownMenuTrigger
                 render={
                   <button
-                    aria-label="Item actions"
+                    aria-label={t("common.itemActions")}
                     className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted shrink-0 -mt-1 -me-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
                   >
                     <MoreHorizontal className="w-4 h-4 text-muted-foreground" />

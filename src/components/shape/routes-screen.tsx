@@ -40,7 +40,7 @@ export function RoutesScreen({
     setWorking(routeId);
     try {
       const r = await adoptRoute(tripId, routeId);
-      if (r.dropped.length) toast.info(t("routes.dropped", { places: r.dropped.join(t("common.listSep")) }));
+      if (r.dropped.length) toast.info(t("routes.dropped", { places: (ar ? r.droppedAr : r.dropped).join(t("common.listSep")) }));
       // The card said "Lisbon → Porto" and the plan came out Porto → Lisbon,
       // because the trip already knew which city it lands in. That is the
       // right answer, but it must not arrive without a word — the whole
@@ -137,7 +137,10 @@ export function RoutesScreen({
                   )}
                   <span className="rounded-full bg-primary/10 text-primary text-[12px] font-bold px-2.5 py-1">
                     {ar ? c.nameAr : c.name}
-                    <span className="opacity-70 font-semibold"> {c.nights}</span>
+                    {/* A bare numeral glued to a city name says nothing —
+                        nights, a rating, a position in the chain? It needs
+                        its noun, and Arabic needs it pluralised properly. */}
+                    <span className="opacity-70 font-semibold"> {t("shape.nights", { count: c.nights })}</span>
                   </span>
                 </span>
               ))}
@@ -171,7 +174,7 @@ export function RoutesScreen({
               )}
               {r.dropped.length > 0 && (
                 <span className="text-[11px] text-[color:var(--clr-dune)]">
-                  {t("routes.dropped", { places: r.dropped.join(t("common.listSep")) })}
+                  {t("routes.dropped", { places: (ar ? r.droppedAr : r.dropped).join(t("common.listSep")) })}
                 </span>
               )}
             </div>

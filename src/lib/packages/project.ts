@@ -380,7 +380,8 @@ function placeSaves(
       why: "From your saves",
       whyAr: "من محفوظاتكم",
       category: (save.category as CuratedPlace["category"]) ?? "sight",
-      rating: save.rating ?? undefined,
+      // A save's rating came from Google. Ours never did.
+      savedRating: save.rating ?? undefined,
     });
   }
 }

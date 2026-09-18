@@ -10,7 +10,7 @@ import {
   itineraryItems,
   savedPlaces,
 } from "@/lib/db/schema";
-import { and, eq, gt, lt, inArray } from "drizzle-orm";
+import { and, eq, gt, lt, inArray, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -91,6 +91,7 @@ export interface RouteCard {
   /** pre-scaled to THIS trip's nights — the small thing that makes it feel built for you */
   chain: { name: string; nameAr: string; nights: number }[];
   dropped: string[];
+  droppedAr: string[];
   overflow: number;
   capacity: number;
   /** the chain is shown backwards, because that is what the flights say */
@@ -215,7 +216,10 @@ export async function listRoutes(tripId: string): Promise<RouteCard[]> {
         nameAr: BASES[l.baseId].nameAr,
         nights: l.nights,
       })),
-      dropped: a.dropped.map((d) => BASES[d]?.nameAr ?? d),
+      // Was always nameAr, so an English route card listed its dropped
+      // cities in Arabic. The caller picks the language, as everywhere else.
+      dropped: a.dropped.map((d) => BASES[d]?.name ?? d),
+      droppedAr: a.dropped.map((d) => BASES[d]?.nameAr ?? d),
       overflow: a.overflow,
       capacity: routeCapacity(route, BASES),
       reversed: ordered.reversed,
@@ -347,6 +351,27 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
 /* ── writing ──────────────────────────────────────────────────────────── */
 
 /**
+ * Hold the trip while we rewrite its plan.
+ *
+ * Two crew members tapping the shape screen at the same moment ran two
+ * projections concurrently. Each one deletes the generated rows and
+ * re-inserts them — so both deleted (the second finding nothing left to
+ * delete) and both inserted, and the trip came out with every single stop
+ * in it twice, 1.3ms apart. On a group-travel app that is not an exotic
+ * race; it is Tuesday.
+ *
+ * A transaction-scoped advisory lock serialises them: the second waits,
+ * then rebuilds from what the first actually wrote. It releases on commit
+ * or rollback, so a failure cannot wedge the trip.
+ */
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function lockTrip(tx: Tx, tripId: string) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${tripId}, 0))`);
+}
+
+
+/**
  * Write the projected days into the itinerary. Only rows this feature owns
  * (`provider = "package"`) are replaced — anything the crew added by hand or
  * from Discover survives untouched, which is what lets the shape stay
@@ -422,7 +447,8 @@ async function reproject(
           notes: p.why || null,
           topTip: p.why || null,
           topTipAr: p.whyAr || null,
-          rating: p.rating ?? null,
+          // Only a real one, from a place the crew saved. See CuratedPlace.
+          rating: p.savedRating ?? null,
           priceLevel: p.priceBand ?? null,
           provider: "package",
           baseId: day.baseId,
@@ -434,6 +460,7 @@ async function reproject(
   }
 
   await db.transaction(async (tx) => {
+    await lockTrip(tx, tripId);
     const gone = await tx
       .delete(itineraryItems)
       .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "package")))
@@ -505,9 +532,29 @@ async function reproject(
   for (const row of stranded) {
     if (!row.baseId) continue;
     const all = anyDayOf.get(row.baseId);
-    // A base that left the trip entirely is the other guard's problem; a
-    // base that merely moved gets its stop moved with it.
-    if (!all?.length || all.includes(String(row.dayDate))) continue;
+
+    // The city left the trip altogether.
+    //
+    // Nothing was repairing this, so the stop simply stayed — keeping its
+    // old `base_id`, drifting onto whatever date the trip now ended on. A
+    // tester shrank a trip down to Tokyo and the plan went on recommending
+    // Kuromon Ichiba Market, an Osaka fish market four hundred kilometres
+    // away, on his last Tokyo morning. Surviving is good; surviving
+    // mislabelled inside another city's day is worse than being dropped,
+    // because the app renders it as local content.
+    //
+    // So it goes back to the saves tray rather than the bin: out of a plan
+    // it no longer belongs to, still there if the city comes back.
+    if (!all?.length) {
+      await db.delete(itineraryItems).where(eq(itineraryItems.id, row.id));
+      await db
+        .update(savedPlaces)
+        .set({ status: "saved", itemId: null })
+        .where(and(eq(savedPlaces.tripId, tripId), eq(savedPlaces.itemId, row.id)));
+      continue;
+    }
+
+    if (all.includes(String(row.dayDate))) continue;
     const span = spanOf.get(row.baseId);
     // A full day of that city if it has one, else whatever it has.
     const target = span?.length ? span[span.length - 1] : all[all.length - 1];
@@ -551,6 +598,7 @@ async function persist(tripId: string, segments: Segment[], tripStart: string, u
   if (ends[0]?.depart && !here.has(ends[0].depart)) clear.departBaseId = null;
 
   await db.transaction(async (tx) => {
+    await lockTrip(tx, tripId);
     if (Object.keys(clear).length) await tx.update(trips).set(clear).where(eq(trips.id, tripId));
     await tx.delete(tripSegments).where(eq(tripSegments.tripId, tripId));
     if (fresh.length) {
@@ -615,7 +663,8 @@ export async function adoptRoute(tripId: string, routeId: string) {
   await persist(tripId, segments, trip.startDate, user.id);
   return {
     bases: alloc.legs.length,
-    dropped: alloc.dropped.map((d) => BASES[d]?.nameAr ?? d),
+    dropped: alloc.dropped.map((d) => BASES[d]?.name ?? d),
+    droppedAr: alloc.dropped.map((d) => BASES[d]?.nameAr ?? d),
     overflow: alloc.overflow,
     /** the route was walked backwards to match the flights — say so */
     reversed: ordered.reversed,
@@ -636,7 +685,10 @@ export async function startBlankShape(
 ) {
   const user = await requireOwner(tripId);
   const trip = await getTrip(tripId);
-  const nights = Math.max(1, tripNightsBetween(trip.startDate, trip.endDate));
+  // A same-day trip really does have zero nights, and forcing one made the
+  // only segment end a day after the trip did — the exact drift every other
+  // rule here exists to prevent.
+  const nights = tripNightsBetween(trip.startDate, trip.endDate);
 
   const base = baseId ? getBase(baseId) : null;
   if (base) {
@@ -854,6 +906,12 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       const base = BASES[taker.baseId];
       const room = Math.max(0, (base?.maxNights ?? 99) - segmentNights(taker));
       taker.checkOut = addIso(taker.checkIn, segmentNights(taker) + Math.min(freed, room));
+      // Whatever followed the removed city is now reached from somewhere
+      // else. Dropping Kyoto from Tokyo → Kyoto → Osaka left Osaka still
+      // advertising the 15-minute Kyoto train as the way in from Tokyo,
+      // four hundred kilometres away. Same bug the reorder path already
+      // guards against; this path never got the guard.
+      clearLegs(segments);
       break;
     }
     case "dayTrip": {
@@ -921,18 +979,57 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   }
 
   // The trip length is fixed by its dates; the shape must always cover it
-  // exactly. Absorb any drift into the last unlocked stay.
+  // exactly. Everything below is about making that true again after an edit,
+  // and it used to fail in two opposite directions.
   segments = redate(segments, trip.startDate);
-  const total = segments.reduce((n, s) => n + segmentNights(s), 0);
-  if (total !== tripNights && segments.length) {
-    const diff = tripNights - total;
-    // Any unlocked stay can absorb the drift — a stay past its curated
-    // depth just gains a free day, which is the honest outcome.
-    const flex = [...segments].reverse().find((s) => {
-      if (s.lockedBy) return false;
-      return diff > 0 ? true : segmentNights(s) + diff >= 1;
-    });
-    if (flex) flex.checkOut = addIso(flex.checkIn, segmentNights(flex) + diff);
+  const dropped: BaseId[] = [];
+  {
+    // The stay the user just acted on must not pay for its own change.
+    //
+    // The absorber always scanned from the tail, so editing the LAST city
+    // on a fully-covered trip found that same city first and immediately
+    // undid the edit. Its stepper was dead on every complete plan — the
+    // normal end state — while reporting "nowhere to put that night".
+    const justTouched = e.op === "nights" ? e.baseId : null;
+
+    let guard = segments.length + 2;
+    let total = segments.reduce((n, sg) => n + segmentNights(sg), 0);
+
+    while (total !== tripNights && segments.length && guard-- > 0) {
+      const diff = tripNights - total;
+
+      const canTake = (sg: Segment) =>
+        !sg.lockedBy && sg.baseId !== justTouched && (diff > 0 || segmentNights(sg) > 1);
+      // Prefer a stay that isn't the one just edited; fall back to it only
+      // when nothing else can move, so the shape still closes.
+      const flex =
+        [...segments].reverse().find(canTake) ??
+        [...segments].reverse().find((sg) => !sg.lockedBy && (diff > 0 || segmentNights(sg) > 1));
+
+      if (flex) {
+        const room = diff > 0 ? diff : Math.max(diff, 1 - segmentNights(flex));
+        flex.checkOut = addIso(flex.checkIn, segmentNights(flex) + room);
+      } else if (diff < 0) {
+        // Nothing left to shorten: the trip is now shorter than it has
+        // cities. Drop a whole stay from the tail rather than give up.
+        //
+        // Giving up is what it used to do — one pass, one segment, and if
+        // no single stay could absorb the whole correction the step was
+        // silently skipped. Pulling a 9-night trip back to 4 left two
+        // cities running five days past the end, nine stops stranded on
+        // dates the trip no longer had, and no control on the screen able
+        // to repair any of it.
+        const victim = [...segments].reverse().find((sg) => !sg.lockedBy);
+        if (!victim || segments.length <= 1) break;
+        dropped.push(victim.baseId);
+        segments = segments.filter((sg) => sg !== victim);
+      } else {
+        break;
+      }
+
+      segments = redate(segments, trip.startDate);
+      total = segments.reduce((n, sg) => n + segmentNights(sg), 0);
+    }
   }
 
   // Did anything actually change? A minus that silently reverts — because
@@ -953,10 +1050,18 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   // told "the night went to Lisbon" says nothing you didn't just do; what
   // you want to know is which stay paid for it.
   const touched = e.op === "nights" ? e.baseId : null;
-  const label = (id: BaseId) => ({
-    name: BASES[id]?.name ?? id.replace(/^custom:/, ""),
-    nameAr: BASES[id]?.nameAr ?? id.replace(/^custom:/, ""),
-  });
+  // A custom city's real name is sitting in its own row; the slug is
+  // lowercased and hyphenated for URLs. "The night went to coimbra".
+  const customName = new Map(
+    rows.filter((r) => r.customName).map((r) => [r.baseId, r.customName as string]),
+  );
+  const label = (id: BaseId) => {
+    const typed = customName.get(id) ?? id.replace(/^custom:/, "");
+    return {
+      name: BASES[id]?.name ?? typed,
+      nameAr: BASES[id]?.nameAr ?? typed,
+    };
+  };
   const deltas = saved
     .map((sg) => ({ baseId: sg.baseId, delta: segmentNights(sg) - (before.get(sg.baseId) ?? 0) }))
     .filter((x) => before.has(x.baseId) && x.delta !== 0 && x.baseId !== touched);
@@ -977,6 +1082,12 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       nights: b.nights,
     })),
     movedTo,
+    /**
+     * Cities the shape had to give up to fit the trip's dates. Losing a
+     * whole stay in silence is how someone discovers on the day that Porto
+     * left their holiday.
+     */
+    dropped: dropped.map(label),
   };
 }
 
@@ -1057,7 +1168,10 @@ export async function lightenDay(tripId: string, dayDate: string) {
       return d(b) > d(a) ? b : a;
     });
   } else {
-    victim = rows.slice().sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0))[0];
+    // No coordinates to reason with, and no honest score to rank by, so
+    // drop the last stop of the day — the evening extra is what someone
+    // asking for a lighter day actually wants back.
+    victim = rows[rows.length - 1];
   }
 
   // Somewhere else in this city with room? Move it rather than bin it.
@@ -1072,7 +1186,13 @@ export async function lightenDay(tripId: string, dayDate: string) {
   const target = [...new Set(sameBase)]
     .filter((d) => d !== day && d !== arrival)
     .sort((a, b) => (counts.get(a) ?? 0) - (counts.get(b) ?? 0))[0];
-  const roomy = target && (counts.get(target) ?? 0) < rows.length - 1;
+  // Room enough if the target day would still be no busier than this one
+  // ENDS UP — this day loses a stop, so compare against `rows.length - 1`
+  // inclusively. The strict `<` meant a 4-stop day could only ever move
+  // onto a day of 2 or fewer; with curated days almost always 3 or 4, the
+  // move branch was unreachable in real data and "make it lighter"
+  // quietly went back to being the delete button it was fixed for.
+  const roomy = target && (counts.get(target) ?? 0) <= rows.length - 1;
 
   if (roomy) {
     await db

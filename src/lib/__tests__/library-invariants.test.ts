@@ -18,6 +18,7 @@ import { allocateNights, routeCapacity } from "@/lib/packages/allocate";
 import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
 import { segmentsFromLegs, projectDays } from "@/lib/packages/project";
+import { CANONICAL_PACKAGES } from "@/lib/packages/canonical";
 
 const all = Object.values(BASES);
 
@@ -137,7 +138,6 @@ describe("coordinates", () => {
     "Harrat Khaybar",         // a lava field the size of a province, not a point
     "Fazayah Beach",          // unmapped; a 4x4 track off the Mughsail road
     "Jabal Samhan viewpoint", // the mapped reserve point is not the escarpment lookout
-    "Acharuli Khachapuri House", // venue confirmed, coordinate not yet hand-checked
   ]);
 
   it("gives every curated place a coordinate, or a documented reason", () => {
@@ -252,6 +252,34 @@ describe("curating for this audience", () => {
       }
     }
     expect(hits, `alcohol in route copy:\n${hits.join("\n")}`).toEqual([]);
+  });
+
+  it("covers the OTHER corpus too", () => {
+    // The guard was written against the corpus the route picker reads, and
+    // passed — while a second, still-reachable package corpus went on
+    // shipping the same day titled «بلاد النبيذ», wine country, with no
+    // winery in it. A rule that only covers the file you were looking at
+    // is not a rule. Every user-facing string, wherever it lives.
+    const hits: string[] = [];
+    for (const pkg of CANONICAL_PACKAGES) {
+      for (const [field, v] of [
+        ["title", pkg.title], ["titleAr", pkg.titleAr],
+        ["provenance", pkg.provenance], ["provenanceAr", pkg.provenanceAr],
+      ] as const) {
+        if (v && BOOZE.test(String(v).replace(NOT_A_BAR, ""))) hits.push(`${pkg.title} ${field}: ${v}`);
+      }
+      for (const d of pkg.days ?? []) {
+        for (const [field, v] of [["title", d.title], ["titleAr", d.titleAr]] as const) {
+          if (v && BOOZE.test(String(v).replace(NOT_A_BAR, ""))) hits.push(`${pkg.title}/${d.title} ${field}: ${v}`);
+        }
+        for (const pl of d.places ?? []) {
+          for (const [field, v] of [["name", pl.name], ["nameAr", pl.nameAr], ["why", pl.why], ["whyAr", pl.whyAr]] as const) {
+            if (v && BOOZE.test(String(v).replace(NOT_A_BAR, ""))) hits.push(`${pkg.title}/${pl.name} ${field}: ${v}`);
+          }
+        }
+      }
+    }
+    expect(hits, `alcohol in the package corpus:\n${hits.join("\n")}`).toEqual([]);
   });
 });
 
