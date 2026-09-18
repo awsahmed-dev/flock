@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { getLocale, getDictionary, tFromDict } from "@/lib/i18n";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { itineraryItems, votes, voteOptions, chatMessages, profiles } from "@/lib/db/schema";
@@ -154,11 +155,21 @@ export async function voteOnPlannedItems(
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Trip not found");
 
+  // A vote is STORED and shown to the whole crew, so it cannot be a
+  // translation key resolved later — it has to be written in a language
+  // when it is created. Written in English regardless of locale, it put
+  // «Should we add "..." to our itinerary?» and the options "Yes, let's
+  // do it!" / "Skip it" in front of an Arabic-reading group.
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const t = (k: string, p?: Record<string, string | number>) =>
+    tFromDict(dict, k, p, locale);
+
   const voteQuestion =
     question ||
     (items.length === 1
-      ? `Should we add "${items[0].title}" to our itinerary?`
-      : `Which of these ${items.length} activities should we do?`);
+      ? t("vote.askAddOne", { title: items[0].title })
+      : t("vote.askPickOne", { count: items.length }));
 
   const [vote] = await db
     .insert(votes)
@@ -166,9 +177,7 @@ export async function voteOnPlannedItems(
     .returning();
 
   const optionLabels: string[] =
-    items.length === 1
-      ? ["Yes, let's do it!", "Skip it"]
-      : items.map((i) => i.title);
+    items.length === 1 ? [t("vote.yes"), t("vote.skip")] : items.map((i) => i.title);
 
   await db.insert(voteOptions).values(
     optionLabels.map((label, i) => ({ voteId: vote.id, label, sortOrder: i }))

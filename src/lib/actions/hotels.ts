@@ -5,6 +5,7 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
 import { votes, voteOptions, chatMessages } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
+import { getLocale, getDictionary, tFromDict } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 
 export interface HotelSuggestion {
@@ -30,7 +31,15 @@ export async function suggestHotel(
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) throw new Error("Trip not found");
 
-  const question = `Should we stay at ${hotel.name}?`;
+  // Stored and shown to the whole crew, so it is written in a language
+  // at creation time — a key resolved later would be too late. In
+  // English regardless of locale it asked an Arabic-reading group
+  // «Should we stay at ...?» and offered them "Yes" and "No".
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const t = (k: string, p?: Record<string, string | number>) => tFromDict(dict, k, p, locale);
+
+  const question = t("vote.askStay", { hotel: hotel.name });
 
   // Create vote
   const [vote] = await db
@@ -39,8 +48,8 @@ export async function suggestHotel(
     .returning();
 
   await db.insert(voteOptions).values([
-    { voteId: vote.id, label: `Yes — book ${hotel.name}`, sortOrder: 0 },
-    { voteId: vote.id, label: "No, let's look at other options", sortOrder: 1 },
+    { voteId: vote.id, label: t("vote.yesBook", { hotel: hotel.name }), sortOrder: 0 },
+    { voteId: vote.id, label: t("vote.noLook"), sortOrder: 1 },
   ]);
 
   // Post link card with rich hotel preview in chat

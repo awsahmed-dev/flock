@@ -1963,5 +1963,14 @@
     "unknownPlace": "Unknown place",
     "unknownRoute": "Unknown route",
     "whereAreYouGoing": "Where are you going?"
+  },
+  "vote": {
+    "askAddOne": "Should we add \"{title}\" to our itinerary?",
+    "askPickOne": "Which of these {count} activities should we do?",
+    "yes": "Yes, let's do it!",
+    "skip": "Skip it",
+    "askStay": "Should we stay at {hotel}?",
+    "yesBook": "Yes — book {hotel}",
+    "noLook": "No, let's look at other options"
   }
 }

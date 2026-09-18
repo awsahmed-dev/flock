@@ -1963,5 +1963,14 @@
     "unknownPlace": "مكان غير معروف",
     "unknownRoute": "مسار غير معروف",
     "whereAreYouGoing": "وين رايحين؟"
+  },
+  "vote": {
+    "askAddOne": "نضيف «{title}» للخطة؟",
+    "askPickOne": "أي نشاط من هذي الـ{count} نسوّيه؟",
+    "yes": "إي، نسوّيها",
+    "skip": "نتخطاها",
+    "askStay": "نسكن في {hotel}؟",
+    "yesBook": "إي، نحجز {hotel}",
+    "noLook": "لا، نشوف خيارات ثانية"
   }
 }
