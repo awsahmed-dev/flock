@@ -184,6 +184,8 @@ export const itineraryItems = pgTable("itinerary_items", {
   fsqCategory: text("fsq_category"),
   photoUrl: text("photo_url"),
   rating: real("rating"),
+  /** how many people that rating is made of — a rating without it says little */
+  ratingCount: integer("rating_count"),
   priceLevel: integer("price_level"),
   hoursSummary: text("hours_summary"),
   topTip: text("top_tip"),
@@ -1064,3 +1066,28 @@ export const packageReactionsRelations = relations(packageReactions, ({ one }) =
   pkg: one(tripPackages, { fields: [packageReactions.packageId], references: [tripPackages.id] }),
   user: one(profiles, { fields: [packageReactions.userId], references: [profiles.id] }),
 }));
+
+/**
+ * Google Places facts for the places we curate — see the migration.
+ *
+ * The corpus used to carry authored ratings. Discover was already talking
+ * to Google; the plan simply never asked. Nothing here is written by hand.
+ */
+export const placeFacts = pgTable("place_facts", {
+  /** the curated place's English name — the join key used everywhere else */
+  name: text("name").primaryKey(),
+  googlePlaceId: text("google_place_id"),
+  rating: real("rating"),
+  /** a rating means nothing without it: 4.4 from eleven people is not 4.4 from eleven thousand */
+  ratingCount: integer("rating_count"),
+  priceLevel: integer("price_level"),
+  photoRef: text("photo_ref"),
+  formattedAddress: text("formatted_address"),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
+  /** metres between Google's answer and our hand-checked coordinate */
+  offsetM: integer("offset_m"),
+  /** Google had nothing we could confidently match — recorded, not retried */
+  missing: boolean("missing").default(false).notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).defaultNow().notNull(),
+});

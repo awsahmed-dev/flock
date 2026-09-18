@@ -22,6 +22,8 @@ import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/p
 import { allocateNights, routeCapacity, tripNightsBetween } from "@/lib/packages/allocate";
 import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor, type SaveForPlan } from "@/lib/packages/project";
 import { gatewayState, orderForGateways, type GatewayState } from "@/lib/packages/gateways";
+import { fitToTrip } from "@/lib/packages/fit";
+import { factsFor, staleNames, refreshFact } from "@/lib/places/facts";
 
 /**
  * «شكل الرحلة» — the trip's structure, and the day grid projected from it.
@@ -416,6 +418,13 @@ async function reproject(
   for (const k of kept) gone.add(k.title);
 
   const days = projectDays(segments, lib, tripStart, saveRows as SaveForPlan[]);
+
+  // What Google already knows about these places. A cache read only — the
+  // refresh below runs after the plan is written, so a slow or missing
+  // Places API can never hold up someone's edit.
+  const namesOnPlan = days.flatMap((d) => d.places.map((p) => p.name));
+  const facts = await factsFor(namesOnPlan).catch(() => new Map());
+
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
   for (const day of days) {
     day.places
@@ -447,8 +456,10 @@ async function reproject(
           notes: p.why || null,
           topTip: p.why || null,
           topTipAr: p.whyAr || null,
-          // Only a real one, from a place the crew saved. See CuratedPlace.
-          rating: p.savedRating ?? null,
+          // Google's, or a save's. Never ours. `facts` is a cache read —
+          // no network on this path.
+          rating: facts.get(p.name)?.rating ?? p.savedRating ?? null,
+          ratingCount: facts.get(p.name)?.ratingCount ?? null,
           priceLevel: p.priceBand ?? null,
           provider: "package",
           baseId: day.baseId,
@@ -560,6 +571,23 @@ async function reproject(
     const target = span?.length ? span[span.length - 1] : all[all.length - 1];
     await db.update(itineraryItems).set({ dayDate: target }).where(eq(itineraryItems.id, row.id));
   }
+
+  // Then, off the critical path, ask Google about anything we have never
+  // looked up. Deliberately after the write and deliberately not awaited on
+  // the user's behalf: a plan must save at the same speed with or without a
+  // Places key, and the facts simply appear on the next render.
+  void (async () => {
+    try {
+      const todo = await staleNames(namesOnPlan);
+      for (const n of todo.slice(0, 40)) {
+        const configured = await refreshFact(n);
+        // No key: stop rather than fail forty more times in a row.
+        if (!configured) break;
+      }
+    } catch {
+      // Enrichment is a bonus; never let it surface as a failed edit.
+    }
+  })();
 
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/shape`);
@@ -979,58 +1007,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   }
 
   // The trip length is fixed by its dates; the shape must always cover it
-  // exactly. Everything below is about making that true again after an edit,
-  // and it used to fail in two opposite directions.
-  segments = redate(segments, trip.startDate);
-  const dropped: BaseId[] = [];
-  {
-    // The stay the user just acted on must not pay for its own change.
-    //
-    // The absorber always scanned from the tail, so editing the LAST city
-    // on a fully-covered trip found that same city first and immediately
-    // undid the edit. Its stepper was dead on every complete plan — the
-    // normal end state — while reporting "nowhere to put that night".
-    const justTouched = e.op === "nights" ? e.baseId : null;
-
-    let guard = segments.length + 2;
-    let total = segments.reduce((n, sg) => n + segmentNights(sg), 0);
-
-    while (total !== tripNights && segments.length && guard-- > 0) {
-      const diff = tripNights - total;
-
-      const canTake = (sg: Segment) =>
-        !sg.lockedBy && sg.baseId !== justTouched && (diff > 0 || segmentNights(sg) > 1);
-      // Prefer a stay that isn't the one just edited; fall back to it only
-      // when nothing else can move, so the shape still closes.
-      const flex =
-        [...segments].reverse().find(canTake) ??
-        [...segments].reverse().find((sg) => !sg.lockedBy && (diff > 0 || segmentNights(sg) > 1));
-
-      if (flex) {
-        const room = diff > 0 ? diff : Math.max(diff, 1 - segmentNights(flex));
-        flex.checkOut = addIso(flex.checkIn, segmentNights(flex) + room);
-      } else if (diff < 0) {
-        // Nothing left to shorten: the trip is now shorter than it has
-        // cities. Drop a whole stay from the tail rather than give up.
-        //
-        // Giving up is what it used to do — one pass, one segment, and if
-        // no single stay could absorb the whole correction the step was
-        // silently skipped. Pulling a 9-night trip back to 4 left two
-        // cities running five days past the end, nine stops stranded on
-        // dates the trip no longer had, and no control on the screen able
-        // to repair any of it.
-        const victim = [...segments].reverse().find((sg) => !sg.lockedBy);
-        if (!victim || segments.length <= 1) break;
-        dropped.push(victim.baseId);
-        segments = segments.filter((sg) => sg !== victim);
-      } else {
-        break;
-      }
-
-      segments = redate(segments, trip.startDate);
-      total = segments.reduce((n, sg) => n + segmentNights(sg), 0);
-    }
-  }
+  // exactly. This is the one rule the whole screen rests on, so it lives in
+  // a pure function a test can hammer — see fitToTrip.
+  const fitted = fitToTrip(segments, tripNights, trip.startDate, e.op === "nights" ? e.baseId : null);
+  segments = fitted.segments;
+  const dropped = fitted.dropped;
 
   // Did anything actually change? A minus that silently reverts — because
   // every other city is already at its useful maximum, so the freed night

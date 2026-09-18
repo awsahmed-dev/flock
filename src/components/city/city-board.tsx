@@ -11,6 +11,7 @@ import {
   BookmarkSimple,
   CircleNotch as Loader2,
   CaretRight,
+  MagnifyingGlass,
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { addPlaceToCity, fillFreeDays, type CityBoard as Board } from "@/lib/actions/city";
@@ -40,6 +41,11 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
   const [busy, startTransition] = useTransition();
   const [cat, setCat] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  // One day open at a time. The first free day if there is one — that is
+  // the day someone came to this screen to do something about.
+  const [openDay, setOpenDay] = useState<string | null>(
+    () => board.planned.find((d) => !d.travel && d.stops.length === 0)?.date ?? null,
+  );
 
   const available = board.places.filter((p) => !p.inPlan);
   const shown = useMemo(
@@ -155,7 +161,23 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         <p className="text-[12px] font-semibold text-muted-foreground">{t("city.yourDays")}</p>
         {board.planned.map((d) => (
           <div key={d.date} className="rounded-2xl border border-border bg-card overflow-hidden">
-            <div className="px-3.5 py-2.5 flex items-center gap-2 border-b border-border/60">
+            {/* Every day open at once made this screen a wall you scrolled
+                past rather than read — six cards, each four stops, before
+                you reach the part that answers the question you came with.
+                The header still carries the day, its badges and its count,
+                so nothing is hidden; it just isn't all shouted at once. */}
+            <button
+              type="button"
+              onClick={() => setOpenDay((v) => (v === d.date ? null : d.date))}
+              aria-expanded={openDay === d.date}
+              className="w-full text-start px-3.5 py-2.5 flex items-center gap-2 border-b border-border/60"
+            >
+              <CaretRight
+                size={13}
+                className={`shrink-0 text-muted-foreground transition-transform ${
+                  openDay === d.date ? "rotate-90" : "rtl:rotate-180"
+                }`}
+              />
               <span className="text-[12.5px] font-bold">
                 {format(parseISO(d.date), "EEE d MMM")}
               </span>
@@ -172,8 +194,8 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
               <span className="ms-auto text-[11px] text-muted-foreground">
                 {t("city.stopCount", { count: d.stops.length })}
               </span>
-            </div>
-            {d.stops.length > 0 ? (
+            </button>
+            {openDay !== d.date ? null : d.stops.length > 0 ? (
               <ul className="px-3.5 py-2 space-y-1.5">
                 {d.stops.map((st, j) => (
                   <li key={`${d.date}-${j}`} className="flex items-baseline gap-2.5 text-[13px]">
@@ -299,7 +321,21 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
       </ul>
 
 
-      <div className="px-4 mt-6">
+      {/* The list above is what we curate, which is finite by design.
+          Everything else in the city lives in Discover, which searches
+          Google — so this is the door out of our opinion and into the
+          whole place. */}
+      <div className="px-4 mt-4">
+        <Link
+          href={`/trips/${tripId}/discover?q=${encodeURIComponent(board.name)}`}
+          className="w-full min-h-12 rounded-2xl border border-dashed border-primary/50 text-primary font-semibold text-[13.5px] inline-flex items-center justify-center gap-2"
+        >
+          <MagnifyingGlass size={16} />
+          {t("city.searchMore", { place: ar ? board.nameAr : board.name })}
+        </Link>
+      </div>
+
+      <div className="px-4 mt-3">
         <Link
           href={`/trips/${tripId}/itinerary`}
           className="w-full min-h-12 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-1.5"

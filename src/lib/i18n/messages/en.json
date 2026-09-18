@@ -1912,6 +1912,7 @@
     "freeDay": "Free",
     "arrivalBody": "Arrival day — deliberately light.",
     "freeDayBody": "Nothing here yet.",
-    "stopCount": "{count, plural, =0 {no stops} one {# stop} other {# stops}}"
+    "stopCount": "{count, plural, =0 {no stops} one {# stop} other {# stops}}",
+    "searchMore": "Search all of {place} on Google"
   }
 }

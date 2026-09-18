@@ -84,6 +84,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           fsqCategory: null,
           photoUrl: null,
           rating: null,
+          ratingCount: null,
           priceLevel: null,
           hoursSummary: null,
           topTip: null,

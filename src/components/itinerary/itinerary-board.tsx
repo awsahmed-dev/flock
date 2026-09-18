@@ -1618,7 +1618,17 @@ function SortableItemRow({
             )}
             {item.rating != null && (
               <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                {/* A rating with no count was the original complaint —
+                    "4.4 with no context". 4.4 from eleven people and 4.4
+                    from eleven thousand are different claims, and only one
+                    of them is worth acting on. Both come from Google now;
+                    neither is ours. */}
                 ★ {item.rating.toFixed(1)}
+                {item.ratingCount != null && item.ratingCount > 0 && (
+                  <span className="opacity-60 font-normal tabular-nums">
+                    {" "}({item.ratingCount.toLocaleString(locale === "ar" ? "ar" : "en")})
+                  </span>
+                )}
               </span>
             )}
             {item.locationName && (
