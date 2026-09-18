@@ -419,6 +419,8 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
     topTip: place.why || null,
     topTipAr: place.whyAr || null,
     rating: place.rating ?? null,
+    ratingCount: place.ratingCount ?? null,
+    googlePlaceId: place.googlePlaceId ?? null,
     // "chosen", never "package": the shape regeneration deletes every
     // package row and rebuilds. A tester added Fushimi Inari, then
     // shortened TOKYO by one night — a different city — and Fushimi was
@@ -515,7 +517,17 @@ export async function fillFreeDays(tripId: string, baseId: string) {
       notes: p.why || null,
       topTip: p.why || null,
       topTipAr: p.whyAr || null,
-      rating: null,
+      // Carry Google's own numbers and its place id.
+      //
+      // This said `rating: null`. You pick a place off the board BECAUSE
+      // it reads 4.5 from 12,222 people — and the moment it landed on a
+      // day, the rating, the review count, the photo and the link back to
+      // Google were all dropped. The plan then showed a bare name, which
+      // is the thing the board exists to stop.
+      rating: p.rating ?? null,
+      ratingCount: p.ratingCount ?? null,
+      googlePlaceId: p.googlePlaceId ?? null,
+      photoUrl: p.photoUrl ?? null,
       // Asked for by name, so it survives a reshape like any other choice.
       provider: "chosen" as const,
       status: "confirmed" as const,
