@@ -22,7 +22,7 @@ import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/p
 import { allocateNights, routeCapacity, tripNightsBetween } from "@/lib/packages/allocate";
 import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor, type SaveForPlan } from "@/lib/packages/project";
 import { gatewayState, orderForGateways, type GatewayState } from "@/lib/packages/gateways";
-import { curatedBasesInCountry } from "@/lib/packages/destination-base";
+import { curatedBasesInCountry, customBaseId } from "@/lib/packages/destination-base";
 import { fitToTrip } from "@/lib/packages/fit";
 import { factsFor, staleNames, refreshFact } from "@/lib/places/facts";
 
@@ -760,7 +760,7 @@ export async function startBlankShape(
 
   const name = (custom?.name ?? trip.destination ?? trip.name ?? "").trim();
   if (!name) throw new Error("Where are you going?");
-  const slug = "custom:" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  const slug = customBaseId(name);
   await persist(
     tripId,
     [
@@ -914,8 +914,10 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // Any city, curated or not. "Add a base" could only ever offer cities
       // that pair with a curated route, so on a trip we do not curate there
       // was nothing to offer and no way to type your own.
-      const slug = "custom:" + e.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
-      if (!slug.replace("custom:", "")) throw new Error("Give the city a name");
+      // Test the NAME for emptiness, never the slug. Testing the slug is how
+      // «جدة» — a perfectly good name — came back "Give the city a name".
+      if (!e.name.trim()) throw new Error("Give the city a name");
+      const slug = customBaseId(e.name);
       if (segments.some((sg) => sg.baseId === slug)) throw new Error("Already in this trip");
       if (segments.length >= 8) throw new Error("That's a lot of moving");
 

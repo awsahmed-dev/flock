@@ -171,3 +171,25 @@ describe("a country is not a city", () => {
     expect(isCountryOnly("")).toBe(false);
   });
 });
+
+describe("a typed city keeps an id of its own", () => {
+  it("does not throw Arabic away", () => {
+    // Found live: «جدة» was stored as the id `custom:` because the slug
+    // rule only kept a-z0-9. In an Arabic-first app that gave every
+    // Arabic-named city the same id.
+    expect(customBaseId("جدة")).toBe("custom:جدة");
+    expect(customBaseId("الخرطوم")).toBe("custom:الخرطوم");
+    expect(customBaseId("تعز")).toBe("custom:تعز");
+  });
+
+  it("never returns the bare prefix", () => {
+    for (const name of ["جدة", "الرياض", "Jeddah", "🏖️", "…", "-"]) {
+      expect(customBaseId(name)).not.toBe("custom:");
+    }
+  });
+
+  it("gives two different cities two different ids", () => {
+    const ids = ["جدة", "الرياض", "مكة", "Jeddah", "🏖️", "…"].map(customBaseId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});

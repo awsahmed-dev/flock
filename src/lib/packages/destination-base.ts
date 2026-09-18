@@ -48,17 +48,35 @@ export function baseForDestination(destination: string): DestinationMatch {
   return { base: null, customName: head, how: "typed" };
 }
 
-/** The `custom:` id a typed city gets, matching what editShape writes. */
+/**
+ * The `custom:` id a typed city gets.
+ *
+ * The Arabic range in that character class is the whole point, and leaving
+ * it out is not a cosmetic bug. Two copies of this rule used to live in
+ * shape.ts without it, so «جدة» — every character of it outside a-z0-9 —
+ * slugged down to nothing and was stored as the id `custom:`. In an
+ * Arabic-first app that meant every city typed in Arabic shared one id, and
+ * a second one in the same trip collided with the first.
+ *
+ * The fallback exists for the same reason. A name that survives none of
+ * this — an emoji, punctuation alone — must still get an id of its own
+ * rather than join everyone else at the empty string.
+ */
 export function customBaseId(name: string): string {
-  return (
-    "custom:" +
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9؀-ۿ]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 40)
-  );
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9؀-ۿ]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40);
+  return "custom:" + (slug || `x${hash(name)}`);
+}
+
+/** A short stable id for a name that slugs to nothing. */
+function hash(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+  return Math.abs(h).toString(36);
 }
 
 /**
