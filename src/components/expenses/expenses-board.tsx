@@ -17,6 +17,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { simplifySettlements } from "@/lib/settle";
 import { BalancesBlock } from "@/components/money/balances-block";
 import { PersonalCapSheet } from "./personal-cap-sheet";
+import type { IconType } from "@/components/ui/icon-type";
 
 /* ─── Static configs ─────────────────────────────────────────────────── */
 
@@ -24,7 +25,7 @@ import { PersonalCapSheet } from "./personal-cap-sheet";
  * (CATEGORY_LABELS) so this map only carries icon + colors. */
 const CATEGORY_CONFIG: Record<
   string,
-  { icon: React.ElementType; bg: string; text: string; dot: string }
+  { icon: IconType; bg: string; text: string; dot: string }
 > = {
   accommodation: { icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
   transport:     { icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },

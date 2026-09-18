@@ -100,7 +100,14 @@ type GlassPanelProps = React.HTMLAttributes<HTMLDivElement> & {
  */
 export const GlassPanel = React.forwardRef<HTMLDivElement, GlassPanelProps>(
   function GlassPanel({ tone = "dark", as = "div", className, children, ...rest }, ref) {
-    const Comp = as as React.ElementType;
+    // Not `React.ElementType`. That is a union spanning every intrinsic
+    // tag — including the three.js elements @react-three/fiber adds to
+    // JSX.IntrinsicElements — so JSX intersects their props and `ref`,
+    // `className` and `children` all collapse to `never`.
+    //
+    // The four tags this accepts are all plain block elements taking the
+    // same div attributes, so that is what we say.
+    const Comp = as as unknown as React.FC<React.ComponentPropsWithRef<"div">>;
     return (
       <Comp
         ref={ref}

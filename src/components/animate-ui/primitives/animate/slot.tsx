@@ -68,11 +68,17 @@ function Slot<T extends HTMLElement = HTMLElement>({
     children.type !== null &&
     isMotionComponent(children.type);
 
+  // Typed as "a component taking these props and a ref", not as
+  // React.ElementType. The latter spans every intrinsic tag — including
+  // the three.js ones @react-three/fiber adds to JSX.IntrinsicElements —
+  // and JSX intersects props across the union until `ref` is `never`.
   const Base = React.useMemo(
     () =>
-      isAlreadyMotion
+      (isAlreadyMotion
         ? (children.type as React.ElementType)
-        : motion.create(children.type as React.ElementType),
+        : motion.create(children.type as React.ElementType)) as unknown as React.FC<
+        AnyProps & { ref?: React.Ref<T> }
+      >,
     [isAlreadyMotion, children.type],
   );
 

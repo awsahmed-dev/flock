@@ -8,10 +8,11 @@ import { fmtAmount as fmt } from "@/lib/numerals";
 import { type RateBundle } from "@/lib/fx";
 import { PageHeader } from "@/components/ui/page-header";
 import { useT } from "@/components/i18n/locale-provider";
+import type { IconType } from "@/components/ui/icon-type";
 
 const CATEGORY_CONFIG: Record<
   string,
-  { icon: React.ElementType; bg: string; text: string; dot: string; tint: string }
+  { icon: IconType; bg: string; text: string; dot: string; tint: string }
 > = {
   accommodation: { icon: Bed,           bg: "bg-blue-100 dark:bg-blue-950/40",     text: "text-blue-700 dark:text-blue-300",     dot: "bg-blue-500",    tint: "from-blue-500/20 to-blue-500/5" },
   transport:     { icon: Plane,         bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500",  tint: "from-orange-500/20 to-orange-500/5" },

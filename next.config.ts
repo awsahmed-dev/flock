@@ -4,14 +4,14 @@ const nextConfig: NextConfig = {
   // Tell Next.js 16 we're aware of the webpack/turbopack coexistence
   turbopack: {},
 
-  // Adding @react-three/fiber's type deps (@types/react-reconciler,
-  // @types/three) to the program broke generic ref inference in a handful
-  // of unrelated polymorphic components (animate-ui slot/highlight, glass,
-  // expense pages) — "not assignable to never" at type level only; the
-  // code runs fine. Type-checking still runs in dev/CI via `npx tsc`;
-  // don't let it block production builds while the proper per-site fixes
-  // land. TODO: fix the 9 sites and remove this.
-  typescript: { ignoreBuildErrors: true },
+  // No `typescript: { ignoreBuildErrors: true }`.
+  //
+  // It was here because @react-three/fiber's type deps collapsed prop
+  // inference in a few polymorphic components, and eleven "not
+  // assignable to never" errors were judged cosmetic. They were — but
+  // the flag is not: with it on, a genuinely broken refactor compiles
+  // and deploys. That nearly happened, so the eleven were fixed at
+  // source instead and the flag is gone.
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "maps.googleapis.com" },

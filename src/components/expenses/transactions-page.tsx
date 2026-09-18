@@ -12,10 +12,11 @@ import { convert, type RateBundle } from "@/lib/fx";
 import { ExpenseSheet } from "./expense-sheet";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import { PageHeader } from "@/components/ui/page-header";
+import type { IconType } from "@/components/ui/icon-type";
 
 const CATEGORY_CONFIG: Record<
   string,
-  { labelKey: string; icon: React.ElementType; bg: string; text: string; dot: string }
+  { labelKey: string; icon: IconType; bg: string; text: string; dot: string }
 > = {
   accommodation: { labelKey: "expenses.catStay", icon: Bed, bg: "bg-blue-100 dark:bg-blue-950/40", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
   transport:     { labelKey: "expenses.catTransport", icon: Plane, bg: "bg-orange-100 dark:bg-orange-950/40", text: "text-orange-700 dark:text-orange-300", dot: "bg-orange-500" },

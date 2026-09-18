@@ -18,8 +18,9 @@ import { convert, type RateBundle } from "@/lib/fx";
 import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal, Users, User, Receipt, X, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import type { IconType } from "@/components/ui/icon-type";
 
-const CATEGORIES: { value: ExpenseCategory; labelKey: string; icon: React.ElementType; color: string }[] = [
+const CATEGORIES: { value: ExpenseCategory; labelKey: string; icon: IconType; color: string }[] = [
   { value: "accommodation", labelKey: "expenses.catStay", icon: Bed, color: "text-blue-600 dark:text-blue-400" },
   { value: "transport", labelKey: "expenses.catTransport", icon: Plane, color: "text-orange-600 dark:text-orange-400" },
   { value: "food", labelKey: "expenses.catFood", icon: Utensils, color: "text-green-600 dark:text-green-400" },

@@ -252,10 +252,18 @@ function Highlight<T extends React.ElementType = 'div'>({
     return () => container.removeEventListener('scroll', onScroll);
   }, [mode, activeValue]);
 
+  // `Component` is generic over React.ElementType, which spans every
+  // intrinsic tag — including the three.js elements @react-three/fiber
+  // adds to JSX.IntrinsicElements. JSX intersects props across that
+  // union and they collapse to `never`, so a plain className fails to
+  // typecheck. What is passed here is always a block element taking div
+  // attributes; say that at the render site.
+  const Host = Component as unknown as React.FC<React.ComponentPropsWithRef<'div'>>;
+
   const render = (children: React.ReactNode) => {
     if (mode === 'parent') {
       return (
-        <Component
+        <Host
           ref={localRef}
           data-slot="motion-highlight-container"
           style={{ position: 'relative', zIndex: 1 }}
@@ -293,7 +301,7 @@ function Highlight<T extends React.ElementType = 'div'>({
             )}
           </AnimatePresence>
           {children}
-        </Component>
+        </Host>
       );
     }
 
