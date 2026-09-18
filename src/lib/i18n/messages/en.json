@@ -1915,6 +1915,9 @@
     "stopCount": "{count, plural, =0 {no stops} one {# stop} other {# stops}}",
     "searchMore": "Search all of {place} on Google",
     "fillThisDay": "Fill this day",
-    "fromGoogle": "Google"
+    "fromGoogle": "Google",
+    "reviews": "What people said",
+    "noGoogleInfo": "No photos or reviews for this one yet.",
+    "openInMaps": "Open in Google Maps"
   }
 }

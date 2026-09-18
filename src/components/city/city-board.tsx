@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { addPlaceToCity, fillFreeDays, type CityBoard as Board } from "@/lib/actions/city";
+import { PlaceInfoSheet } from "@/components/city/place-info-sheet";
 import { format } from "@/lib/i18n/date-fns";
 import { parseISO } from "date-fns";
 
@@ -41,6 +42,8 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
   const [busy, startTransition] = useTransition();
   const [cat, setCat] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  // The card you tapped, so its photos, rating and reviews can open.
+  const [info, setInfo] = useState<Board["places"][number] | null>(null);
 
   const available = board.places.filter((p) => !p.inPlan);
   const shown = useMemo(
@@ -187,7 +190,16 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
           </li>
         )}
         {shown.map((p) => (
-          <li key={p.key} className="rounded-2xl border border-border bg-card p-3 flex items-start gap-3">
+          <li key={p.key} className="relative rounded-2xl border border-border bg-card p-3 flex items-start gap-3">
+            {/* The whole card opens the place: pictures, score, reviews.
+                A name and one line of our prose is not enough to judge
+                somewhere you have never been. */}
+            <button
+              type="button"
+              onClick={() => setInfo(p)}
+              aria-label={ar ? p.nameAr : p.name}
+              className="absolute inset-0 z-0 rounded-2xl"
+            />
             {/* A picture is the difference between a name you can judge
                 and a name you can't. Landmarks have one; many small
                 kitchens don't, and those keep the category mark. */}
@@ -248,7 +260,7 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
                 disabled={busy}
                 onClick={() => add(p.key)}
                 aria-label={t("city.add")}
-                className="w-11 h-11 shrink-0 rounded-xl border border-border inline-flex items-center justify-center text-primary hover:bg-primary/10"
+                className="relative z-10 w-11 h-11 shrink-0 rounded-xl border border-border inline-flex items-center justify-center text-primary hover:bg-primary/10"
               >
                 <Plus size={17} />
               </button>
@@ -288,6 +300,22 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
           {t("shape.viewDays")}
         </Link>
       </div>
+
+      {info && (
+        <PlaceInfoSheet
+          placeId={info.googlePlaceId ?? null}
+          fallbackName={ar ? info.nameAr : info.name}
+          fallbackWhat={(ar ? info.whatAr : info.what) ?? null}
+          fallbackWhy={(ar ? info.whyAr : info.why) || null}
+          fallbackPhoto={info.photoUrl ?? null}
+          canAdd={board.isOwner && !info.inPlan}
+          onAdd={() => {
+            add(info.key);
+            setInfo(null);
+          }}
+          onClose={() => setInfo(null)}
+        />
+      )}
     </div>
   );
 }

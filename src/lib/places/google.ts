@@ -70,6 +70,10 @@ const DETAIL_MASK = [
   "formattedAddress",
   "regularOpeningHours",
   "editorialSummary",
+  // Travellers judge a place on pictures, a score and what people said.
+  // Two of those were already here; this is the third.
+  "reviews",
+  "googleMapsUri",
 ].join(",");
 
 const AUTOCOMPLETE_MASK = [

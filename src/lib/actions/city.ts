@@ -12,7 +12,7 @@ import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
 import { whatIs } from "@/lib/packages/descriptions";
 import { withoutCity } from "@/lib/packages/describe-in-context";
-import { cityIdeas } from "@/lib/places/facts";
+import { cityIdeas, factsFor } from "@/lib/places/facts";
 import type { Base, BaseId, PlaceCategory } from "@/lib/packages/types";
 import { eachDate } from "@/lib/packages/allocate";
 
@@ -60,6 +60,8 @@ export interface CityPlace {
   ratingCount?: number | null;
   /** came from Google rather than the curated corpus */
   fromGoogle?: boolean;
+  /** lets the card open its real Google page — photos, rating, reviews */
+  googlePlaceId?: string | null;
   lat: number | null;
   lng: number | null;
   /** already on a day of this trip */
@@ -172,6 +174,11 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
   // side "somewhere I might go in Tokyo" is one idea, not two.
   const curated: CityPlace[] = [];
   const seen = new Set<string>();
+  // What Google knows about the curated places, so their cards can open
+  // the same photos-rating-reviews sheet a Google suggestion does.
+  const curatedNames = [...base.days, ...(base.dayTrip ? [base.dayTrip] : [])]
+    .flatMap((d) => d.places.map((p) => p.name));
+  const facts = await factsFor(curatedNames).catch(() => new Map());
   const shapes = [...base.days, ...(base.dayTrip ? [base.dayTrip] : [])];
   for (const d of shapes) {
     for (const p of d.places) {
@@ -190,7 +197,9 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         whyAr: p.whyAr,
         category: p.category,
         // Curated places carry no rating — see CuratedPlace.
-        rating: null,
+        rating: facts.get(p.name)?.rating ?? null,
+        ratingCount: facts.get(p.name)?.ratingCount ?? null,
+        googlePlaceId: facts.get(p.name)?.googlePlaceId ?? null,
         lat: c?.[0] ?? null,
         lng: c?.[1] ?? null,
         inPlan: onPlan.has(p.name),
@@ -225,6 +234,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
       inPlan: false,
       fromSave: false,
       fromGoogle: true,
+      googlePlaceId: g.placeId,
       startTime: null,
       photoUrl: g.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(g.photoRef)}&w=400` : null,
     });
