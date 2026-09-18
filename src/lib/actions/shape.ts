@@ -1147,7 +1147,12 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       };
       segments = e.end === "arrive" ? [leg, ...segments] : [...segments, leg];
       segments.forEach((s, i) => (s.order = i));
-      clearLegs(segments);
+      // Deliberately NOT clearLegs. Adding a stay at one end changes how
+      // you reach that stay and nothing else — every other leg is the
+      // journey it always was. Clearing them all wiped a «طيران» between
+      // Jeddah and Riyadh and let the estimator, which cannot place two
+      // custom cities, replace it with «قطار» on a route that has no
+      // train. The new leg's mode is null and relink fills just that one.
       break;
     }
   }
