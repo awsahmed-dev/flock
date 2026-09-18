@@ -1913,6 +1913,7 @@
     "arrivalBody": "يوم الوصول — خفيف على قصد.",
     "freeDayBody": "ما في شي بهذا اليوم بعد.",
     "stopCount": "{count, plural, =0 {بدون محطات} one {محطة} two {محطتان} few {# محطات} many {# محطة} other {# محطة}}",
-    "searchMore": "ابحثوا في {place} كلها على قوقل"
+    "searchMore": "ابحثوا في {place} كلها على قوقل",
+    "fillThisDay": "عبّي هذا اليوم"
   }
 }

@@ -5,7 +5,7 @@ import { listTripSaves } from "@/lib/actions/saves";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { db } from "@/lib/db";
-import { itineraryItems, documents, packingItems, tripPhotos } from "@/lib/db/schema";
+import { itineraryItems, documents, packingItems, tripPhotos, tripSegments } from "@/lib/db/schema";
 import { eq, asc, inArray, and, or, isNull, sql } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
@@ -168,6 +168,23 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
   // take the itinerary down with it — an empty tray is a fine degradation.
   const tripSaves = await listTripSaves(id).catch(() => []);
 
+  // Which city owns each day, straight from the shape. An empty day has no
+  // stops to infer a city from, and that is exactly the day where knowing
+  // the city matters most.
+  const segsForDays = await db
+    .select({ baseId: tripSegments.baseId, checkIn: tripSegments.checkIn, checkOut: tripSegments.checkOut })
+    .from(tripSegments)
+    .where(eq(tripSegments.tripId, id))
+    .orderBy(tripSegments.sortOrder)
+    .catch(() => []);
+  const baseByDay: Record<string, string> = {};
+  for (const d of days) {
+    const owning = segsForDays.find((sg) => d >= String(sg.checkIn) && d < String(sg.checkOut));
+    // The departure day sits on the last stay's checkOut and belongs to it.
+    const sg = owning ?? segsForDays[segsForDays.length - 1];
+    if (sg) baseByDay[d] = sg.baseId;
+  }
+
   return (
     <ItineraryBoard
         baseNames={Object.fromEntries(
@@ -175,6 +192,7 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
         )}
       // Only the titles actually on this trip: the corpus is 530 entries and
       // has no business in the client bundle.
+      baseByDay={baseByDay}
       whatByTitle={Object.fromEntries(
         serializedItems
           .map((i) => [i.title, whatIs(i.title)] as const)

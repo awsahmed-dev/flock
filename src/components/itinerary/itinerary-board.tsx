@@ -35,6 +35,7 @@ import { SavesTray } from "@/components/saves/saves-tray";
 import { WhatsNow } from "@/components/now/whats-now";
 import { updateItemSortOrders, deleteItineraryItem, updateItemStatus } from "@/lib/actions/itinerary";
 import { lightenDay, undoLighten } from "@/lib/actions/shape";
+import { fillFreeDays } from "@/lib/actions/city";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
@@ -65,6 +66,8 @@ interface Props {
    * whole 530-entry corpus to the browser.
    */
   whatByTitle?: Record<string, { what: string; whatAr: string }>;
+  /** day → base id, straight from the shape, so an empty day still has a city */
+  baseByDay?: Record<string, string>;
   currency: string;
   destination: string;
   destinationCenter: [number, number] | null;
@@ -146,6 +149,7 @@ export function ItineraryBoard({
   items: initialItems,
   baseNames = {},
   whatByTitle,
+  baseByDay = {},
   currency,
   destination,
   destinationCenter,
@@ -175,15 +179,19 @@ export function ItineraryBoard({
    * on day 8 instead of leaving you to work it out from the stop names.
    */
   const baseIdForDay = useCallback(
-    (day: string) => items.find((i) => i.dayDate === day && i.baseId)?.baseId ?? null,
-    [items],
+    // The shape says which city a day belongs to; the stops on it do not.
+    // Deriving this from `items` meant an EMPTY day had no city — so the
+    // one chip that answers "what do I do with this day" vanished at
+    // exactly the moment it was the only useful thing on the screen.
+    (day: string) => baseByDay[day] ?? items.find((i) => i.dayDate === day && i.baseId)?.baseId ?? null,
+    [items, baseByDay],
   );
   const baseForDay = useCallback(
     (day: string) => {
-      const id = items.find((i) => i.dayDate === day && i.baseId)?.baseId;
+      const id = baseByDay[day] ?? items.find((i) => i.dayDate === day && i.baseId)?.baseId;
       return id ? baseNames[id] ?? null : null;
     },
-    [items, baseNames],
+    [items, baseNames, baseByDay],
   );
   // Keep local state in sync with server revalidations: adding a place (or AI
   // Plan) calls a server action that revalidates this route, re-rendering us
@@ -870,6 +878,29 @@ export function ItineraryBoard({
                     {t("city.openCity", { place: baseForDay(focusedDay) ?? "" })}
                   </Link>
                 )}
+                {/* The third action, which existed only on the city screen —
+                    so the one place it was never offered was the empty day
+                    it exists for. Filling is scoped to this day's city and
+                    respects each place's own hour. */}
+                {isOwner && baseIdForDay(focusedDay) && getItemsForDay(focusedDay).length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startTransition(async () => {
+                        try {
+                          const r = await fillFreeDays(tripId, baseIdForDay(focusedDay)!);
+                          toast.success(t("city.filled", { count: r.days.length }));
+                          router.refresh();
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : t("city.failed"));
+                        }
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 text-primary px-3 min-h-9 text-[12px] font-semibold"
+                  >
+                    <Sparkles className="w-4 h-4" /> {t("city.fillThisDay")}
+                  </button>
+                )}
               </div>
             )}
 
@@ -1123,6 +1154,11 @@ export function ItineraryBoard({
                             <p className="text-[14px] text-muted-foreground leading-relaxed">
                               {t("itinerary.emptyDayBody")}
                             </p>
+                            {/* The two city-scoped doors live in the chip row
+                                above, which is the same control surface on
+                                every day. Repeating "What to do in Langkawi?"
+                                here as well put the same button on screen
+                                twice within one thumb's reach. */}
                             <button
                               type="button"
                               onClick={() => openAddFor(day)}
@@ -1132,11 +1168,14 @@ export function ItineraryBoard({
                               {t("itinerary.addStopTo", { day: format(parseISO(day), "EEEE") })}
                             </button>
                             <Link
-                              href={`/trips/${tripId}/discover`}
+                              href={`/trips/${tripId}/discover${
+                                baseForDay(day) ? `?q=${encodeURIComponent(baseForDay(day)!)}` : ""
+                              }`}
                               className="mt-2 w-full h-11 rounded-2xl bg-muted text-foreground font-semibold text-[14px] inline-flex items-center justify-center gap-2"
                             >
                               <Compass size={17} className="shrink-0 text-primary" />
-                              {t("itinerary.browseIdeas", { destination })}
+                              {/* Search the city you are in, not the country. */}
+                              {t("itinerary.browseIdeas", { destination: baseForDay(day) ?? destination })}
                             </Link>
                             {/* Now-redesign follow-up: day 1 usually starts with a
                                 flight or a check-in — third door opens the

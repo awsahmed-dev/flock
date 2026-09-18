@@ -156,74 +156,6 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         </div>
       )}
 
-      {/* ── what you're already doing here ─────────────────────────── */}
-      <div className="px-4 mt-4 space-y-2">
-        <p className="text-[12px] font-semibold text-muted-foreground">{t("city.yourDays")}</p>
-        {board.planned.map((d) => (
-          <div key={d.date} className="rounded-2xl border border-border bg-card overflow-hidden">
-            {/* Every day open at once made this screen a wall you scrolled
-                past rather than read — six cards, each four stops, before
-                you reach the part that answers the question you came with.
-                The header still carries the day, its badges and its count,
-                so nothing is hidden; it just isn't all shouted at once. */}
-            <button
-              type="button"
-              onClick={() => setOpenDay((v) => (v === d.date ? null : d.date))}
-              aria-expanded={openDay === d.date}
-              className="w-full text-start px-3.5 py-2.5 flex items-center gap-2 border-b border-border/60"
-            >
-              <CaretRight
-                size={13}
-                className={`shrink-0 text-muted-foreground transition-transform ${
-                  openDay === d.date ? "rotate-90" : "rtl:rotate-180"
-                }`}
-              />
-              <span className="text-[12.5px] font-bold">
-                {format(parseISO(d.date), "EEE d MMM")}
-              </span>
-              {d.travel && (
-                <span className="text-[10.5px] font-bold rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                  {t("city.arrival")}
-                </span>
-              )}
-              {d.stops.length === 0 && !d.travel && (
-                <span className="text-[10.5px] font-bold rounded-full bg-primary/12 text-primary px-2 py-0.5">
-                  {t("city.freeDay")}
-                </span>
-              )}
-              <span className="ms-auto text-[11px] text-muted-foreground">
-                {t("city.stopCount", { count: d.stops.length })}
-              </span>
-            </button>
-            {openDay !== d.date ? null : d.stops.length > 0 ? (
-              <ul className="px-3.5 py-2 space-y-1.5">
-                {d.stops.map((st, j) => (
-                  <li key={`${d.date}-${j}`} className="flex items-baseline gap-2.5 text-[13px]">
-                    <span className="text-[11px] text-muted-foreground tabular-nums w-11 shrink-0" dir="ltr">
-                      {st.startTime ?? "—"}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      {(ar && st.titleAr) || st.title}
-                      {/* The plan used to be a column of names, which is only
-                          legible to someone who already knows the city. */}
-                      {((ar && st.whatAr) || st.what) && (
-                        <span className="block text-[11.5px] text-muted-foreground leading-snug mt-0.5">
-                          {(ar && st.whatAr) || st.what}
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-3.5 py-3 text-[12.5px] text-muted-foreground">
-                {d.travel ? t("city.arrivalBody") : t("city.freeDayBody")}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-
       {/* ── what you could add ─────────────────────────────────────── */}
       <p className="px-4 mt-5 text-[12px] font-semibold text-muted-foreground">
         {t("city.couldAdd")}
@@ -320,6 +252,78 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         ))}
       </ul>
 
+
+      {/* ── and, second, what is already on these days ──────────────
+          This used to open the screen. But the question the button asks is
+          "what do I do in Kuala Lumpur?", and the answer to that is the
+          list above — not six expanded day cards you scroll past first.
+          A screen should answer its own question in its first inch. */}
+      <div className="px-4 mt-6 space-y-2">
+        <p className="text-[12px] font-semibold text-muted-foreground">{t("city.yourDays")}</p>
+        {board.planned.map((d) => (
+          <div key={d.date} className="rounded-2xl border border-border bg-card overflow-hidden">
+            {/* Every day open at once made this screen a wall you scrolled
+                past rather than read — six cards, each four stops, before
+                you reach the part that answers the question you came with.
+                The header still carries the day, its badges and its count,
+                so nothing is hidden; it just isn't all shouted at once. */}
+            <button
+              type="button"
+              onClick={() => setOpenDay((v) => (v === d.date ? null : d.date))}
+              aria-expanded={openDay === d.date}
+              className="w-full text-start px-3.5 py-2.5 flex items-center gap-2 border-b border-border/60"
+            >
+              <CaretRight
+                size={13}
+                className={`shrink-0 text-muted-foreground transition-transform ${
+                  openDay === d.date ? "rotate-90" : "rtl:rotate-180"
+                }`}
+              />
+              <span className="text-[12.5px] font-bold">
+                {format(parseISO(d.date), "EEE d MMM")}
+              </span>
+              {d.travel && (
+                <span className="text-[10.5px] font-bold rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                  {t("city.arrival")}
+                </span>
+              )}
+              {d.stops.length === 0 && !d.travel && (
+                <span className="text-[10.5px] font-bold rounded-full bg-primary/12 text-primary px-2 py-0.5">
+                  {t("city.freeDay")}
+                </span>
+              )}
+              <span className="ms-auto text-[11px] text-muted-foreground">
+                {t("city.stopCount", { count: d.stops.length })}
+              </span>
+            </button>
+            {openDay !== d.date ? null : d.stops.length > 0 ? (
+              <ul className="px-3.5 py-2 space-y-1.5">
+                {d.stops.map((st, j) => (
+                  <li key={`${d.date}-${j}`} className="flex items-baseline gap-2.5 text-[13px]">
+                    <span className="text-[11px] text-muted-foreground tabular-nums w-11 shrink-0" dir="ltr">
+                      {st.startTime ?? "—"}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      {(ar && st.titleAr) || st.title}
+                      {/* The plan used to be a column of names, which is only
+                          legible to someone who already knows the city. */}
+                      {((ar && st.whatAr) || st.what) && (
+                        <span className="block text-[11.5px] text-muted-foreground leading-snug mt-0.5">
+                          {(ar && st.whatAr) || st.what}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-3.5 py-3 text-[12.5px] text-muted-foreground">
+                {d.travel ? t("city.arrivalBody") : t("city.freeDayBody")}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* The list above is what we curate, which is finite by design.
           Everything else in the city lives in Discover, which searches
