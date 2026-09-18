@@ -659,8 +659,17 @@ async function reproject(
 
     if (all.includes(String(row.dayDate))) continue;
     const span = spanOf.get(row.baseId);
-    // A full day of that city if it has one, else whatever it has.
-    const target = span?.length ? span[span.length - 1] : all[all.length - 1];
+    // The NEAREST day of that city, not its last.
+    //
+    // These lists are per city, and a trip may hold two stays in one —
+    // out through Jeddah, back through Jeddah. Taking the last entry
+    // moved a stop from 9 October to 15 October, past Riyadh, into the
+    // return leg: a month adrift, silently, on every shape edit.
+    // Nearest keeps it in the leg it was always part of, and is a better
+    // answer for a single stay too — day two drifts to day three, not to
+    // the end of the week.
+    const from = span?.length ? span : all;
+    const target = nearestDate(from, String(row.dayDate));
     await db.update(itineraryItems).set({ dayDate: target }).where(eq(itineraryItems.id, row.id));
   }
 
@@ -1336,12 +1345,25 @@ export async function lightenDay(tripId: string, dayDate: string) {
   const user = await requireOwner(tripId);
   const day = parseOr(zDateOnly, dayDate, "Invalid day");
 
-  const all = await db
-    .select()
-    .from(itineraryItems)
-    .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "package")));
+  const [all, segsNow] = await Promise.all([
+    db
+      .select()
+      .from(itineraryItems)
+      .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "package"))),
+    db
+      .select()
+      .from(tripSegments)
+      .where(eq(tripSegments.tripId, tripId))
+      .orderBy(tripSegments.sortOrder),
+  ]);
   const rows = all.filter((r) => r.dayDate === day);
   if (rows.length <= 1) throw new Error("err.nothingLeftToDrop");
+
+  // Which STAY this day belongs to, by its dates. A trip may hold two
+  // stays in one city, and "somewhere else in this city" must not mean
+  // the other end of the trip.
+  const leg = segsNow.find((sg) => day >= String(sg.checkIn) && day < String(sg.checkOut))
+    ?? segsNow[segsNow.length - 1];
 
   // The outlier: furthest from the day's centre of gravity. Falls back to
   // the lowest rated when we have no coordinates to reason with.
@@ -1361,10 +1383,24 @@ export async function lightenDay(tripId: string, dayDate: string) {
     victim = rows[rows.length - 1];
   }
 
-  // Somewhere else in this city with room? Move it rather than bin it.
-  const sameBase = victim.baseId
-    ? all.filter((r) => r.baseId === victim.baseId).map((r) => r.dayDate)
-    : [];
+  // Somewhere else in this STAY with room? Move it rather than bin it.
+  //
+  // Scoped to the stay, not the city. A trip that returns to Jeddah has
+  // two, and this list held both: lightening a heavy day in October
+  // moved the stop to 4 November — past Riyadh, onto the day you fly
+  // back — because the return leg is nearly empty and therefore always
+  // looked like the emptiest day in "this city".
+  const sameBase =
+    victim.baseId && leg
+      ? all
+          .filter(
+            (r) =>
+              r.baseId === victim.baseId &&
+              String(r.dayDate) >= String(leg.checkIn) &&
+              String(r.dayDate) <= String(leg.checkOut),
+          )
+          .map((r) => r.dayDate)
+      : [];
   const counts = new Map<string, number>();
   for (const d of sameBase) counts.set(d, (counts.get(d) ?? 0) + 1);
   // Not onto the arrival day — that one is deliberately light because you
@@ -1519,4 +1555,19 @@ export async function refitShapeToTrip(tripId: string): Promise<{ dropped: strin
 
   await persist(tripId, redate(segments, trip.startDate), trip.startDate, user.id);
   return { dropped };
+}
+
+/** The date in `dates` closest to `to`. Ties go to the earlier day. */
+function nearestDate(dates: string[], to: string): string {
+  const t = Date.parse(`${to}T00:00:00Z`);
+  let best = dates[0];
+  let bestGap = Infinity;
+  for (const d of dates) {
+    const gap = Math.abs(Date.parse(`${d}T00:00:00Z`) - t);
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = d;
+    }
+  }
+  return best;
 }

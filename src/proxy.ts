@@ -60,9 +60,19 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // An expired session is a normal state, not an exception.
+  //
+  // `getUser()` throws AuthApiError "Invalid Refresh Token: Refresh Token
+  // Not Found" when a session has aged out or been revoked elsewhere —
+  // the single most frequent error in production, from people who simply
+  // left the tab open. Unhandled it escapes the middleware, so instead of
+  // being sent to the sign-in page they get a failed request. Signed out
+  // is exactly what the refusal means, and the guard below already knows
+  // what to do with that.
+  const user = await supabase.auth
+    .getUser()
+    .then((r) => r.data.user)
+    .catch(() => null);
 
   const path = request.nextUrl.pathname;
   const isAuthRoute = path.startsWith("/auth");

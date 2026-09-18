@@ -10,6 +10,7 @@ import { eq, asc, inArray, and, or, isNull, sql } from "drizzle-orm";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
 import { BASES } from "@/lib/packages/library";
+import { stayKeys } from "@/lib/packages/stay-key";
 import { whatIs } from "@/lib/packages/descriptions";
 import { getLocale } from "@/lib/i18n";
 import { ItineraryBoard } from "@/components/itinerary/itinerary-board";
@@ -183,12 +184,19 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
     .where(eq(tripSegments.tripId, id))
     .orderBy(tripSegments.sortOrder)
     .catch(() => []);
+  // Keyed by STAY, not city. A trip that returns to Jeddah has two, and
+  // a day that said only "jeddah" sent «املأ هذا اليوم» to whichever
+  // came first — so tapping it on a November day filled October and
+  // reported success, while the day you were looking at stayed empty.
+  const segKeys = stayKeys(segsForDays.map((sg) => sg.baseId));
   const baseByDay: Record<string, string> = {};
   for (const d of days) {
-    const owning = segsForDays.find((sg) => d >= String(sg.checkIn) && d < String(sg.checkOut));
+    const owningIdx = segsForDays.findIndex(
+      (sg) => d >= String(sg.checkIn) && d < String(sg.checkOut),
+    );
     // The departure day sits on the last stay's checkOut and belongs to it.
-    const sg = owning ?? segsForDays[segsForDays.length - 1];
-    if (sg) baseByDay[d] = sg.baseId;
+    const i = owningIdx >= 0 ? owningIdx : segsForDays.length - 1;
+    if (segsForDays[i]) baseByDay[d] = segKeys[i];
   }
 
   return (
@@ -201,13 +209,18 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
           ...Object.fromEntries(
             Object.values(BASES).map((b) => [b.id, locale === "ar" ? b.nameAr : b.name]),
           ),
+          // Once per stay AND once per city: the day grid looks names up
+          // by stay key, older callers still by city id.
           ...Object.fromEntries(
-            segsForDays
-              .filter((sg) => sg.customName || sg.customNameAr)
-              .map((sg) => [
-                sg.baseId,
-                (locale === "ar" ? sg.customNameAr || sg.customName : sg.customName || sg.customNameAr)!,
-              ]),
+            segsForDays.flatMap((sg, i) => {
+              const typed =
+                locale === "ar"
+                  ? sg.customNameAr || sg.customName
+                  : sg.customName || sg.customNameAr;
+              const name =
+                typed ?? (locale === "ar" ? BASES[sg.baseId]?.nameAr : BASES[sg.baseId]?.name);
+              return name ? [[sg.baseId, name], [segKeys[i], name]] : [];
+            }),
           ),
         }}
       // Only the titles actually on this trip: the corpus is 530 entries and

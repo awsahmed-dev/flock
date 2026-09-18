@@ -39,6 +39,7 @@ import { fillFreeDays } from "@/lib/actions/city";
 import { fmtAmount } from "@/lib/numerals";
 import { inferLocalCurrency, currencySymbol } from "@/lib/country-currency";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { stayParam } from "@/lib/packages/stay-key";
 import { PlanModeSwitch } from "./plan-mode-switch";
 import { BookMode } from "./book-mode";
 import { convert, type RateBundle } from "@/lib/fx";
@@ -877,7 +878,7 @@ export function ItineraryBoard({
                 )}
                 {baseIdForDay(focusedDay) && (
                   <Link
-                    href={`/trips/${tripId}/city/${encodeURIComponent(baseIdForDay(focusedDay) ?? "")}`}
+                    href={`/trips/${tripId}/city/${encodeURIComponent(stayParam(baseIdForDay(focusedDay) ?? ""))}`}
                     className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 min-h-9 text-[12px] font-semibold text-muted-foreground hover:text-primary hover:border-primary/40"
                   >
                     <Sparkles className="w-4 h-4" />

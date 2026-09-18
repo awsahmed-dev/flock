@@ -68,3 +68,23 @@ export function indexOfStay<T extends { baseId: string }>(segments: T[], key: st
   const seg = findStay(segments, key);
   return seg ? segments.indexOf(seg) : -1;
 }
+
+/**
+ * A stay key that can live in a URL path.
+ *
+ * «jeddah#2» cannot: everything from the "#" onward is a fragment and
+ * never reaches the server, so the return leg's page would silently open
+ * the arrival's. Percent-encoding would work in theory, but a colon in
+ * this same position already cost us every typed city's city page, so
+ * the character simply does not go into the path.
+ */
+export function stayParam(key: string): string {
+  const { baseId, occurrence } = parseStayKey(key);
+  return occurrence > 1 ? `${baseId}~${occurrence}` : baseId;
+}
+
+/** The stay key a URL segment names. Accepts a plain city id. */
+export function stayFromParam(param: string): string {
+  const m = /^(.*)~(\d+)$/.exec(param);
+  return m ? `${m[1]}#${m[2]}` : param;
+}

@@ -35,6 +35,7 @@ import {
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { errorText } from "@/components/i18n/error-text";
 import { editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
+import { stayParam } from "@/lib/packages/stay-key";
 
 /**
  * «شكل الرحلة» — the trip's structure, and the only screen that edits it.
@@ -606,7 +607,7 @@ function BaseRow({
           <div className="flex items-center gap-2 flex-wrap">
             {/* The city layer: what you actually do while based here. */}
             <Link
-              href={`/trips/${tripId}/city/${encodeURIComponent(base.id)}`}
+              href={`/trips/${tripId}/city/${encodeURIComponent(stayParam(base.key))}`}
               className="font-extrabold text-[16px] underline decoration-dotted underline-offset-4 decoration-muted-foreground/50"
             >
               {ar ? base.nameAr : base.name}

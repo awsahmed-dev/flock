@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
 import { getCityBoard } from "@/lib/actions/city";
+import { stayFromParam } from "@/lib/packages/stay-key";
 import { CityBoard } from "@/components/city/city-board";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -42,14 +43,15 @@ function decodeBaseId(raw: string): string {
 
 export default async function CityPage({ params }: Props) {
   const { id, baseId: rawBaseId } = await params;
-  const baseId = decodeBaseId(rawBaseId);
+  // The URL names a STAY — «jeddah» or «jeddah~2» — not just a city.
+  const stayKey = stayFromParam(decodeBaseId(rawBaseId));
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
   const trip = await getTripWithMembership(id, user.id);
   if (!trip) redirect("/dashboard");
 
-  const board = await getCityBoard(id, baseId).catch(() => null);
+  const board = await getCityBoard(id, stayKey).catch(() => null);
   if (!board) redirect(`/trips/${id}/shape`);
 
   return (

@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { parseOr } from "@/lib/actions/validate";
 import { BASES } from "@/lib/packages/library";
+import { findStay, stayParam } from "@/lib/packages/stay-key";
 import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
 import { whatIs } from "@/lib/packages/descriptions";
@@ -138,7 +139,12 @@ function boardCategory(c: string | null | undefined): PlaceCategory {
   return (c && GOOGLE_CATEGORY[c]) || "sight";
 }
 
-export async function getCityBoard(tripId: string, baseId: string): Promise<CityBoard | null> {
+/**
+ * @param stayKey which STAY — «jeddah» for the arrival, «jeddah#2» for
+ * the leg you come back on. A bare city id means the first visit, so
+ * every link written before a city could repeat still works.
+ */
+export async function getCityBoard(tripId: string, stayKey: string): Promise<CityBoard | null> {
   const { role } = await requireMember(tripId);
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
   if (!trip) return null;
@@ -147,8 +153,14 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     .from(tripSegments)
     .where(eq(tripSegments.tripId, tripId))
     .orderBy(tripSegments.sortOrder);
-  const seg = segs.find((s) => s.baseId === baseId);
+  // By STAY, not by city. Resolving Jeddah to whichever Jeddah came
+  // first meant the return leg had no page at all: its card opened the
+  // arrival's dates, and «املأ الأيام الفاضية» filled October while the
+  // November day you were looking at stayed empty.
+  const seg = findStay(segs, stayKey);
   if (!seg) return null;
+  const baseId = seg.baseId;
+  const segIndex = segs.indexOf(seg);
 
   // A city we do not curate still gets this screen — it just has nothing to
   // suggest yet, and everything to fill.
@@ -181,7 +193,11 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
   // which also owns the departure day. Without this the city header said
   // "Tue 13 → Sat 17" and then listed only 13–16, while the plan had a
   // stop on the 17th: two screens, two answers.
-  const isLast = segs[segs.length - 1]?.baseId === baseId;
+  // By POSITION. Comparing the city meant the first Jeddah of a
+  // Jeddah → Riyadh → Jeddah trip was treated as the last stay, so it
+  // claimed the departure day — which is Riyadh's check-in — and listed
+  // «طيران إلى الرياض» under what you are doing in Jeddah.
+  const isLast = segIndex === segs.length - 1;
   const span = eachDate(String(seg.checkIn), String(seg.checkOut));
   const dates = isLast ? span : span.slice(0, -1);
   const countFor = (d: string) => stops.filter((s) => s.dayDate === d).length;
@@ -340,8 +356,13 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
     freeDays: days.filter((d) => d.free && !d.travel).length,
     places: curated,
     planned,
+    // One chip per CITY, not per stay. A trip that returns to Jeddah has
+    // two Jeddah stays, and listing both here offered a choice between a
+    // city and itself — twice the same name, twice the same link, and a
+    // duplicate React key. This row means "the other cities"; the second
+    // leg is reached from its own card on the shape screen.
     siblings: segs
-      .filter((sg) => sg.baseId !== baseId)
+      .filter((sg, i) => sg.baseId !== baseId && segs.findIndex((x) => x.baseId === sg.baseId) === i)
       .map((sg) => ({
         id: sg.baseId,
         name: BASES[sg.baseId]?.name ?? sg.customName ?? sg.baseId.replace(/^custom:/, ""),
@@ -468,7 +489,7 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
     .where(and(eq(tripRemovedStops.tripId, tripId), eq(tripRemovedStops.title, place.name)));
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(baseId)}`);
+  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(stayParam(baseId))}`);
   return { day, reason, already: false as const };
 }
 
@@ -580,7 +601,7 @@ export async function fillFreeDays(tripId: string, baseId: string) {
   if (rows.length) await db.insert(itineraryItems).values(rows);
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(baseId)}`);
+  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(stayParam(baseId))}`);
   return {
     days: planned.map((d) => ({
       date: d.date,

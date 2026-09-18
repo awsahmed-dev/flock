@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stayKeys, parseStayKey, baseOfStay, findStay, indexOfStay } from "@/lib/packages/stay-key";
+import { stayKeys, parseStayKey, baseOfStay, findStay, indexOfStay, stayParam, stayFromParam } from "@/lib/packages/stay-key";
 import { gatewayState, gatewayErrands } from "@/lib/packages/gateways";
 import { fitToTrip } from "@/lib/packages/fit";
 import type { Segment } from "@/lib/packages/types";
@@ -147,5 +147,55 @@ describe("two stays in one city, measured apart", () => {
     // The same arithmetic keyed by city, which is what shipped first.
     const byCity = new Map([["jeddah", 5], ["riyadh", 4]]);
     expect(after[2] - (byCity.get("jeddah") ?? 0)).toBe(-4);
+  });
+});
+
+describe("a stay key in a URL", () => {
+  it("never puts a # in the path", () => {
+    // Everything after a "#" is a fragment and never reaches the server.
+    expect(stayParam("jeddah#2")).toBe("jeddah~2");
+    expect(stayParam("jeddah")).toBe("jeddah");
+    expect(stayParam("custom:جدة#2")).toBe("custom:جدة~2");
+  });
+
+  it("round-trips", () => {
+    for (const k of ["jeddah", "jeddah#2", "custom:جدة", "custom:جدة#3", "kuala_lumpur"]) {
+      expect(stayFromParam(stayParam(k))).toBe(k);
+    }
+  });
+
+  it("accepts a bare city id, as every existing link sends", () => {
+    expect(stayFromParam("tokyo")).toBe("tokyo");
+    expect(stayFromParam("custom:penang")).toBe("custom:penang");
+  });
+});
+
+describe("a city page addresses one stay", () => {
+  const segs = segs3(["jeddah", "riyadh", "jeddah"]);
+
+  it("reaches the return leg, not the arrival", () => {
+    expect(findStay(segs, "jeddah")).toBe(segs[0]);
+    expect(findStay(segs, "jeddah#2")).toBe(segs[2]);
+  });
+
+  it("knows the return leg is last and the arrival is not", () => {
+    // isLast decides who owns the departure day. Compared by CITY, the
+    // arrival passed too, and claimed a day that belongs to Riyadh.
+    const isLast = (k: string) => indexOfStay(segs, k) === segs.length - 1;
+    expect(isLast("jeddah")).toBe(false);
+    expect(isLast("jeddah#2")).toBe(true);
+    expect(isLast("riyadh")).toBe(false);
+  });
+
+  it("offers each other city once in the switcher", () => {
+    const siblingsFor = (k: string) => {
+      const me = findStay(segs, k)!.baseId;
+      return segs
+        .filter((sg, i) => sg.baseId !== me && segs.findIndex((x) => x.baseId === sg.baseId) === i)
+        .map((sg) => sg.baseId);
+    };
+    // Riyadh's page used to list Jeddah twice — same name, same link.
+    expect(siblingsFor("riyadh")).toEqual(["jeddah"]);
+    expect(siblingsFor("jeddah")).toEqual(["riyadh"]);
   });
 });
