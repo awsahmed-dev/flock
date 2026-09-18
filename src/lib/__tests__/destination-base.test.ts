@@ -5,6 +5,7 @@ import {
   countryOfDestination,
   curatedBasesInCountry,
   customBaseId,
+  isCountryOnly,
 } from "@/lib/packages/destination-base";
 
 /**
@@ -144,5 +145,29 @@ describe("the country a destination names", () => {
   it("says nothing for a country we do not cover", () => {
     expect(countryOfDestination("Taiz, Yemen")).toBeNull();
     expect(curatedBasesInCountry("Potato")).toEqual([]);
+  });
+});
+
+describe("a country is not a city", () => {
+  it("spots a bare country, in both languages", () => {
+    expect(isCountryOnly("السعودية")).toBe(true);
+    expect(isCountryOnly("Spain")).toBe(true);
+    expect(isCountryOnly("Yemen")).toBe(true);
+    expect(isCountryOnly("اليمن")).toBe(true);
+  });
+
+  it("leaves a city alone, even one we do not curate", () => {
+    // The head is where you sleep. Taiz is a city; Yemen after the comma
+    // does not make the trip a country trip.
+    expect(isCountryOnly("Taiz, Yemen")).toBe(false);
+    expect(isCountryOnly("الخرطوم")).toBe(false);
+    expect(isCountryOnly("Kuching, Sarawak, Malaysia")).toBe(false);
+    expect(isCountryOnly("Kuala Lumpur, Malaysia")).toBe(false);
+    expect(isCountryOnly("Tokyo, Japan")).toBe(false);
+  });
+
+  it("does not trip over nonsense or nothing", () => {
+    expect(isCountryOnly("Potato")).toBe(false);
+    expect(isCountryOnly("")).toBe(false);
   });
 });

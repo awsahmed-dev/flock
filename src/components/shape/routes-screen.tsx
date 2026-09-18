@@ -24,17 +24,50 @@ export function RoutesScreen({
   routes,
   destination,
   fallbackBaseId,
+  countryOnly = false,
+  inCountry = [],
 }: {
   tripId: string;
   routes: RouteCard[];
   destination: string;
   fallbackBaseId: string | null;
+  /** the destination names a country, so we must ask which city */
+  countryOnly?: boolean;
+  /** cities we curate in that country, as a shortcut */
+  inCountry?: { id: string; name: string; nameAr: string }[];
 }) {
   const t = useT();
   const { locale } = useLocale();
   const ar = locale === "ar";
   const router = useRouter();
   const [working, setWorking] = useState<string | null>(null);
+  const [city, setCity] = useState("");
+
+  async function startCity(name: string) {
+    setWorking("city");
+    try {
+      await startBlankShape(tripId, null, { name });
+      toast.success(t("routes.adopted"));
+      router.push(`/trips/${tripId}/shape`);
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("routes.failed"));
+      setWorking(null);
+    }
+  }
+
+  async function startCurated(baseId: string) {
+    setWorking(baseId);
+    try {
+      await startBlankShape(tripId, baseId);
+      toast.success(t("routes.adopted"));
+      router.push(`/trips/${tripId}/shape`);
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("routes.failed"));
+      setWorking(null);
+    }
+  }
 
   async function choose(routeId: string) {
     setWorking(routeId);
@@ -67,6 +100,69 @@ export function RoutesScreen({
       toast.error(e instanceof Error ? e.message : t("routes.failed"));
       setWorking(null);
     }
+  }
+
+  /* A country is not a place you sleep.
+     Treating one as a stay put "a hotel in Saudi Arabia, 31 nights" on the
+     booking list, and left a plan whose only city was a country. So ask,
+     rather than invent a city or pretend the country is one. */
+  if (countryOnly) {
+    return (
+      <div className="px-4 py-12">
+        <MapTrifold size={40} className="mx-auto text-muted-foreground" />
+        <h1 className="mt-4 text-[20px] font-extrabold text-center">
+          {t("routes.cityTitle", { place: destination })}
+        </h1>
+        <p className="mt-2 text-[14px] text-muted-foreground leading-relaxed max-w-sm mx-auto text-center">
+          {t("routes.cityBody")}
+        </p>
+
+        <form
+          className="mt-6 flex items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const name = city.trim();
+            if (name.length < 2) return;
+            startCity(name);
+          }}
+        >
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder={t("routes.cityPlaceholder")}
+            className="flex-1 min-w-0 h-12 rounded-2xl border border-border bg-card px-4 text-[14px]"
+          />
+          <button
+            type="submit"
+            disabled={!!working || city.trim().length < 2}
+            className="h-12 px-5 rounded-2xl bg-primary text-primary-foreground font-bold text-[14px] disabled:opacity-40 shrink-0"
+          >
+            {working === "city" ? <Loader2 className="w-4 h-4 animate-spin" /> : t("routes.cityStart")}
+          </button>
+        </form>
+
+        {/* The cities we curate in that country, if any — a real shortcut
+            rather than a list of everything we happen to have. */}
+        {inCountry.length > 0 && (
+          <>
+            <p className="mt-5 text-[12.5px] text-muted-foreground">{t("routes.cityOrPick")}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {inCountry.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  disabled={!!working}
+                  onClick={() => startCurated(b.id)}
+                  className="min-h-11 px-4 rounded-full border border-dashed border-primary/50 text-primary text-[13.5px] font-semibold"
+                >
+                  {ar ? b.nameAr : b.name}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
   }
 
   /* Nothing curated here — say so, and point at the thing that does work,

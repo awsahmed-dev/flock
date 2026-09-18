@@ -185,3 +185,58 @@ export function curatedBasesInCountry(destination: string): Base[] {
   if (!code) return [];
   return Object.values(BASES).filter((b) => b.country === code && b.maxNights > 0);
 }
+
+/**
+ * Countries we do not curate, but people type.
+ *
+ * Detection only — there is nothing to suggest in these, we just must not
+ * mistake one for a city. Kept to the ones this audience actually enters;
+ * a miss here is not a bug, it only means the old behaviour.
+ */
+const OTHER_COUNTRIES = [
+  "spain", "إسبانيا", "اسبانيا", "belgium", "بلجيكا", "sweden", "السويد",
+  "norway", "النرويج", "denmark", "الدنمارك", "ireland", "أيرلندا",
+  "yemen", "اليمن", "sudan", "السودان", "kuwait", "الكويت", "qatar", "قطر",
+  "bahrain", "البحرين", "jordan", "الأردن", "الاردن", "lebanon", "لبنان",
+  "syria", "سوريا", "iraq", "العراق", "morocco", "المغرب", "tunisia", "تونس",
+  "algeria", "الجزائر", "libya", "ليبيا", "iran", "إيران", "ايران",
+  "pakistan", "باكستان", "india", "الهند", "china", "الصين",
+  "korea", "south korea", "كوريا", "singapore", "سنغافورة",
+  "vietnam", "فيتنام", "philippines", "الفلبين", "sri lanka", "سريلانكا",
+  "nepal", "نيبال", "uzbekistan", "أوزبكستان", "اوزبكستان",
+  "kazakhstan", "كازاخستان", "germany", "ألمانيا", "المانيا",
+  "italy", "إيطاليا", "ايطاليا", "greece", "اليونان",
+  "switzerland", "سويسرا", "netherlands", "هولندا", "austria", "النمسا",
+  "poland", "بولندا", "czech", "التشيك", "hungary", "المجر",
+  "usa", "united states", "america", "أمريكا", "امريكا",
+  "canada", "كندا", "australia", "أستراليا", "استراليا",
+  "brazil", "البرازيل", "mexico", "المكسيك",
+  "south africa", "جنوب أفريقيا", "kenya", "كينيا", "tanzania", "تنزانيا",
+  "ethiopia", "إثيوبيا", "russia", "روسيا", "ukraine", "أوكرانيا",
+];
+
+/**
+ * The destination names a country and no city inside it.
+ *
+ * "I'll go for this city and I'll stay for three to five days" — the whole
+ * model is cities. A country is not a place you sleep, and treating one as
+ * a stay produced «فندق السعودية · ٣١ ليلة»: a hotel in Saudi Arabia for a
+ * month. Better to ask which city than to invent one or pretend a country
+ * is one.
+ */
+export function isCountryOnly(destination: string): boolean {
+  const d = foldArabic(destination);
+  if (!d) return false;
+  // A city we recognise anywhere in the string settles it.
+  if (baseForDestination(destination).how !== "typed") return false;
+  if (countryOfDestination(destination)) {
+    // The head must not itself be a city we simply do not curate: for
+    // "Taiz, Yemen" the head is Taiz, and Taiz is where you sleep.
+    const head = foldArabic(destination.split(/[,،]/)[0]);
+    return OTHER_COUNTRIES.concat(Object.values(COUNTRY_TERMS).flat()).some(
+      (c) => foldArabic(c) === head,
+    );
+  }
+  const head = foldArabic(destination.split(/[,،]/)[0]);
+  return OTHER_COUNTRIES.some((c) => foldArabic(c) === head);
+}

@@ -6,6 +6,7 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { listRoutes } from "@/lib/actions/shape";
 import { findBaseByText } from "@/lib/packages/library";
 import { RoutesScreen } from "@/components/shape/routes-screen";
+import { isCountryOnly, curatedBasesInCountry } from "@/lib/packages/destination-base";
 import { PageHeader } from "@/components/ui/page-header";
 
 interface Props {
@@ -35,6 +36,12 @@ export default async function RoutesPage({ params }: Props) {
         routes={routes}
         destination={destination}
         fallbackBaseId={fallback?.id ?? null}
+        countryOnly={isCountryOnly(destination)}
+        inCountry={curatedBasesInCountry(destination).map((b) => ({
+          id: b.id,
+          name: b.name,
+          nameAr: b.nameAr,
+        }))}
       />
     </div>
   );

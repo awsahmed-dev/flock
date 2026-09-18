@@ -1804,7 +1804,12 @@
     "failed": "Couldn't set that up — try again",
     "freeDays": "{count, plural, one {including one free day} other {including # free days}}",
     "startHere": "Start your plan in {place}",
-    "noneBodyV2": "We don't curate a route here yet — but we can start the shape, lay out your days, and you add the cities you want."
+    "noneBodyV2": "We don't curate a route here yet — but we can start the shape, lay out your days, and you add the cities you want.",
+    "cityTitle": "Which city in {place}?",
+    "cityBody": "A country isn't somewhere you sleep. Name the first city and we'll build the trip around it — you can add more after.",
+    "cityPlaceholder": "Riyadh, Jeddah, AlUla…",
+    "cityStart": "Start here",
+    "cityOrPick": "Or one we know well:"
   },
   "shape": {
     "title": "Trip shape",
