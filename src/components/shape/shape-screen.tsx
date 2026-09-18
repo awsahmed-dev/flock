@@ -217,6 +217,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 ar={ar}
                 t={t}
                 isGroup={view.memberCount > 1}
+                tripNights={view.tripNights}
                 onNights={(n) =>
                   run(async () => {
                     const r = await editShape(tripId, { op: "nights", baseId: b.id, nights: n });
@@ -415,8 +416,81 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
   );
 }
 
+/**
+ * The night count, typed.
+ *
+ * "I need to click 28 times to make Riyadh have 28 days." The stepper was
+ * the only way in, and a month-long stay is a perfectly ordinary trip —
+ * one tap per night is not a control, it is a punishment. The number was
+ * already the clearest thing in the row; now it is also the input.
+ *
+ * The +/− buttons stay. They are right for ±1, which is most edits, and
+ * for anyone who does not realise the number is tappable.
+ */
+function NightsField({
+  nights, max, disabled, label, onCommit,
+}: {
+  nights: number;
+  /** the trip's own length — nobody sleeps more nights than the trip has */
+  max: number;
+  disabled: boolean;
+  /** the formatted, pluralised count — «٦ ليالٍ» */
+  label: string;
+  onCommit: (n: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  function commit() {
+    setEditing(false);
+    // An empty box means "I changed my mind", not "zero nights".
+    const n = parseInt(draft.replace(/[^\d]/g, ""), 10);
+    if (!Number.isFinite(n)) return;
+    const clamped = Math.max(1, Math.min(max, n));
+    if (clamped !== nights) onCommit(clamped);
+  }
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          setDraft(String(nights));
+          setEditing(true);
+        }}
+        // The row is a drag handle. Without this a tap on the number is
+        // read as the start of a reorder and the field never opens.
+        onPointerDown={(e) => e.stopPropagation()}
+        aria-label={label}
+        className="min-w-[86px] h-11 px-2 text-center text-[13px] font-bold rounded-xl border border-dashed border-border/70 disabled:opacity-40"
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      type="text"
+      inputMode="numeric"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onFocus={(e) => e.target.select()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        if (e.key === "Escape") { e.preventDefault(); setEditing(false); }
+      }}
+      className="min-w-[86px] w-[86px] h-11 px-2 text-center text-[13px] font-bold rounded-xl border border-primary bg-background"
+    />
+  );
+}
+
 function BaseRow({
-  base, first, single, fullyCovers, canEdit, busy, ar, t, isGroup, tripId,
+  base, first, single, fullyCovers, canEdit, busy, ar, t, isGroup, tripId, tripNights,
   onNights, onRemove, onMode, onDayTrip, onLock, onReact,
 }: {
   base: BaseCard;
@@ -425,6 +499,8 @@ function BaseRow({
   /** this one base already covers the whole trip, so nights can't move */
   fullyCovers: boolean;
   tripId: string;
+  /** the whole trip's nights — the ceiling for a typed count */
+  tripNights: number;
   canEdit: boolean;
   busy: boolean;
   ar: boolean;
@@ -561,9 +637,13 @@ function BaseRow({
             >
               <Minus size={16} />
             </button>
-            <span className="min-w-[86px] text-center text-[13px] font-bold">
-              {t("shape.nights", { count: base.nights })}
-            </span>
+            <NightsField
+              nights={base.nights}
+              max={tripNights}
+              disabled={!canEdit || busy || locked}
+              label={t("shape.nights", { count: base.nights })}
+              onCommit={onNights}
+            />
             <button
               type="button"
               style={{ touchAction: "none" }}
