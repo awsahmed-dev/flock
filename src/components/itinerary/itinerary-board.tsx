@@ -662,7 +662,7 @@ export function ItineraryBoard({
                             );
                             startTransition(() => {
                               updateItemStatus(item.id, tripId, next).catch(() =>
-                                toast.error("Failed to update status"),
+                                toast.error(t("form.failedToUpdateStatus")),
                               );
                             });
                           }}
@@ -1119,7 +1119,7 @@ export function ItineraryBoard({
                               );
                               startTransition(() => {
                                 updateItemStatus(item.id, tripId, next).catch(() =>
-                                  toast.error("Failed to update status"),
+                                  toast.error(t("form.failedToUpdateStatus")),
                                 );
                               });
                             }}

@@ -99,7 +99,7 @@ export function AddItemDialog({ tripId, dayDate, sortOrder, onClose, onAdded, de
           completedAt: null,
         };
         onAdded(fake);
-        toast.success("Item added");
+        toast.success(t("form.itemAdded"));
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("paxawa:chat-refresh"));
         }

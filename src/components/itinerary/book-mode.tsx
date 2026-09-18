@@ -452,7 +452,7 @@ export function BookMode({
                 {t("plan.walletLinkSub")}
               </p>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-primary rtl:rotate-180" />
+            <ArrowUpRight className="w-4 h-4 text-primary rtl:-scale-x-100" />
           </div>
         </Link>
       )}
@@ -579,7 +579,7 @@ function NeedRow({
         className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br ${c.btn} text-white text-xs font-bold px-3 py-2 hover:opacity-90 transition-opacity shrink-0`}
       >
         {ctaLabel}
-        <ArrowUpRight className="w-4 h-4 rtl:rotate-180" />
+        <ArrowUpRight className="w-4 h-4 rtl:-scale-x-100" />
       </a>
     </div>
   );

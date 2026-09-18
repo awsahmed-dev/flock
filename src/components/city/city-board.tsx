@@ -14,6 +14,7 @@ import {
   MagnifyingGlass,
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { errorText } from "@/components/i18n/error-text";
 import { addPlaceToCity, fillFreeDays, type CityBoard as Board } from "@/lib/actions/city";
 import { PlaceInfoSheet } from "@/components/city/place-info-sheet";
 import { format } from "@/lib/i18n/date-fns";
@@ -69,7 +70,7 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
         );
         router.refresh();
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("city.failed"));
+        toast.error(errorText(t, e, "city.failed"));
       }
     });
   }
@@ -86,7 +87,7 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
       );
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("city.failed"));
+      toast.error(errorText(t, e, "city.failed"));
     } finally {
       setWorking(false);
     }

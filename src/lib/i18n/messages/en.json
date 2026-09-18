@@ -1931,5 +1931,37 @@
   },
   "trips": {
     "autoName": "{city} Trip"
+  },
+  "err": {
+    "addCityFirst": "Add that city to the trip first",
+    "alreadyEndsThere": "You already end the trip there",
+    "alreadyTheEnd": "Already the end of the trip",
+    "cannotReachEnds": "Reordering can't reach those two ends",
+    "nameTheCity": "Give the city a name",
+    "needSomewhereToSleep": "A trip needs somewhere to sleep",
+    "noDaysHere": "No days here",
+    "noFreeDaysHere": "No free days here",
+    "noGatewaySet": "No flight city set for that end",
+    "noNightsFree": "No nights free — shorten a stay first",
+    "noShapeYet": "No shape yet",
+    "notACityHere": "Not a city on this trip",
+    "notAMember": "Not a trip member",
+    "notEnoughDays": "Not enough days here",
+    "notInThisTrip": "Not in this trip",
+    "notSignedIn": "Not signed in",
+    "notStayable": "Not a base you can stay in",
+    "nothingLeftToAdd": "Nothing left to add here",
+    "nothingLeftToDrop": "Nothing left to drop here",
+    "nothingToPlan": "Nothing to plan",
+    "ownerOnlyPlan": "Only the trip owner can change the plan",
+    "ownerOnlyShape": "Only the trip owner can change the shape",
+    "stayIsBooked": "This stay is booked",
+    "tooFarForDayTrip": "Too far for a day trip",
+    "tooMuchMoving": "That's a lot of moving",
+    "tripNotFound": "Trip not found",
+    "tripTooShort": "Trip is too short to plan",
+    "unknownPlace": "Unknown place",
+    "unknownRoute": "Unknown route",
+    "whereAreYouGoing": "Where are you going?"
   }
 }

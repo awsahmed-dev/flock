@@ -88,7 +88,7 @@ export function ItineraryCard({
       try { await updateItemStatus(item.id, tripId, status); }
       catch {
         onOptimisticUpdate?.(item);
-        toast.error("Failed to update status");
+        toast.error(t("form.failedToUpdateStatus"));
       }
     });
   }
@@ -97,7 +97,7 @@ export function ItineraryCard({
     onOptimisticDelete?.(item.id);
     startTransition(async () => {
       try { await deleteItineraryItem(item.id, tripId); }
-      catch { toast.error("Failed to delete item"); }
+      catch { toast.error(t("form.failedToDeleteItem")); }
     });
   }
 

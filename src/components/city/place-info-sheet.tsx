@@ -181,7 +181,7 @@ export function PlaceInfoSheet({
                 rel="noopener noreferrer"
                 className="w-full h-11 rounded-2xl border border-border font-semibold text-[13.5px] inline-flex items-center justify-center gap-2"
               >
-                <ArrowSquareOut size={15} /> {t("city.openInMaps")}
+                <ArrowSquareOut size={15} className="rtl:-scale-x-100" /> {t("city.openInMaps")}
               </a>
             )}
           </div>

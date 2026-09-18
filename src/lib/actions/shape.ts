@@ -79,23 +79,23 @@ const MODES = ["train", "flight", "car", "bus", "ferry"] as const;
 
 async function requireMember(tripId: string) {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Not signed in");
+  if (!user) throw new Error("err.notSignedIn");
   const m = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, user.id)),
   });
-  if (!m) throw new Error("Not a trip member");
+  if (!m) throw new Error("err.notAMember");
   return { user, role: m.role };
 }
 
 async function requireOwner(tripId: string) {
   const { user, role } = await requireMember(tripId);
-  if (role !== "owner") throw new Error("Only the trip owner can change the shape");
+  if (role !== "owner") throw new Error("err.ownerOnlyShape");
   return user;
 }
 
 async function getTrip(tripId: string) {
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
-  if (!trip) throw new Error("Trip not found");
+  if (!trip) throw new Error("err.tripNotFound");
   return trip;
 }
 
@@ -751,12 +751,12 @@ export async function adoptRoute(tripId: string, routeId: string) {
   const user = await requireOwner(tripId);
   const trip = await getTrip(tripId);
   const route = ROUTES.find((r) => r.id === routeId);
-  if (!route) throw new Error("Unknown route");
+  if (!route) throw new Error("err.unknownRoute");
 
   const nights = tripNightsBetween(trip.startDate, trip.endDate);
-  if (nights < 1) throw new Error("Trip is too short to plan");
+  if (nights < 1) throw new Error("err.tripTooShort");
   const alloc = allocateNights(route, BASES, nights);
-  if (!alloc.legs.length) throw new Error("Nothing to plan");
+  if (!alloc.legs.length) throw new Error("err.nothingToPlan");
 
   // If the trip already knows which city it flies into and out of — set on
   // a previous shape, then re-adopted — walk the route in whichever
@@ -821,7 +821,7 @@ export async function startBlankShape(
   }
 
   const name = (custom?.name ?? trip.destination ?? trip.name ?? "").trim();
-  if (!name) throw new Error("Where are you going?");
+  if (!name) throw new Error("err.whereAreYouGoing");
   const slug = customBaseId(name);
   // Ask where it is now, once, rather than leaving the city unplaceable
   // for the life of the trip.
@@ -907,7 +907,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     .where(eq(tripSegments.tripId, tripId))
     .orderBy(tripSegments.sortOrder);
   let segments = rows.map(toSegment);
-  if (!segments.length) throw new Error("No shape yet");
+  if (!segments.length) throw new Error("err.noShapeYet");
 
   const tripNights = tripNightsBetween(trip.startDate, trip.endDate);
   // A trip may visit a city twice — out through Jeddah, back through
@@ -932,8 +932,8 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   switch (e.op) {
     case "nights": {
       const seg = find(e.baseId);
-      if (!seg) throw new Error("Not in this trip");
-      if (seg.lockedBy) throw new Error("This stay is booked");
+      if (!seg) throw new Error("err.notInThisTrip");
+      if (seg.lockedBy) throw new Error("err.stayIsBooked");
       // The ceiling is ADVICE, not a rule.
       //
       // It exists so the generator never claims 13 curated nights in Tokyo.
@@ -963,11 +963,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // Jeddah to fly home. What is never meant is two Jeddahs in a row,
       // which is a double-tap, not a return leg.
       if (segments[segments.length - 1]?.baseId === e.baseId) {
-        throw new Error("You already end the trip there");
+        throw new Error("err.alreadyEndsThere");
       }
       const base = BASES[e.baseId];
-      if (!base || base.maxNights < 1) throw new Error("Not a base you can stay in");
-      if (segments.length >= 8) throw new Error("That's a lot of moving");
+      if (!base || base.maxNights < 1) throw new Error("err.notStayable");
+      if (segments.length >= 8) throw new Error("err.tooMuchMoving");
       const want = Math.min(base.typicalNights || 1, base.maxNights);
 
       // Spend the unassigned nights FIRST. A tester went to fill two empty
@@ -990,7 +990,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         borrowedFrom.push({ baseId: donor.baseId, nights: take });
         got += take;
       }
-      if (got < 1) throw new Error("No nights free — shorten a stay first");
+      if (got < 1) throw new Error("err.noNightsFree");
 
       segments.push({
         baseId: base.id,
@@ -1013,7 +1013,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // was nothing to offer and no way to type your own.
       // Test the NAME for emptiness, never the slug. Testing the slug is how
       // «جدة» — a perfectly good name — came back "Give the city a name".
-      if (!e.name.trim()) throw new Error("Give the city a name");
+      if (!e.name.trim()) throw new Error("err.nameTheCity");
       const slug = customBaseId(e.name);
       const here = e.lat != null && e.lng != null
         ? { lat: e.lat, lng: e.lng }
@@ -1021,9 +1021,9 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // Same rule as `add`: coming back to a city is a real trip shape;
       // two of the same city back-to-back is a slip.
       if (segments[segments.length - 1]?.baseId === slug) {
-        throw new Error("You already end the trip there");
+        throw new Error("err.alreadyEndsThere");
       }
-      if (segments.length >= 8) throw new Error("That's a lot of moving");
+      if (segments.length >= 8) throw new Error("err.tooMuchMoving");
 
       const assignedNow = segments.reduce((n, sg) => n + segmentNights(sg), 0);
       const slack = Math.max(0, tripNights - assignedNow);
@@ -1037,7 +1037,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         borrowedFrom.push({ baseId: donor.baseId, nights: 1 });
         got += 1;
       }
-      if (got < 1) throw new Error("No nights free — shorten a stay first");
+      if (got < 1) throw new Error("err.noNightsFree");
 
       segments.push({
         baseId: slug,
@@ -1060,9 +1060,9 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     }
     case "remove": {
       const seg = find(e.baseId);
-      if (!seg) throw new Error("Not in this trip");
-      if (seg.lockedBy) throw new Error("This stay is booked");
-      if (segments.length <= 1) throw new Error("A trip needs somewhere to sleep");
+      if (!seg) throw new Error("err.notInThisTrip");
+      if (seg.lockedBy) throw new Error("err.stayIsBooked");
+      if (segments.length <= 1) throw new Error("err.needSomewhereToSleep");
       const freed = segmentNights(seg);
       // By identity. Filtering on the city id removed BOTH Jeddah legs
       // when the user asked to drop one of them.
@@ -1082,12 +1082,12 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     }
     case "dayTrip": {
       const seg = find(e.baseId);
-      if (!seg) throw new Error("Not in this trip");
+      if (!seg) throw new Error("err.notInThisTrip");
       const target = BASES[e.tripId];
-      if (!target) throw new Error("Unknown place");
+      if (!target) throw new Error("err.unknownPlace");
       if (e.on) {
-        if (!BASES[seg.baseId]?.reachable.includes(e.tripId)) throw new Error("Too far for a day trip");
-        if (seg.dayTrips.length >= segmentNights(seg) - 1) throw new Error("Not enough days here");
+        if (!BASES[seg.baseId]?.reachable.includes(e.tripId)) throw new Error("err.tooFarForDayTrip");
+        if (seg.dayTrips.length >= segmentNights(seg) - 1) throw new Error("err.notEnoughDays");
         if (!seg.dayTrips.includes(e.tripId)) seg.dayTrips.push(e.tripId);
       } else {
         seg.dayTrips = seg.dayTrips.filter((t) => t !== e.tripId);
@@ -1096,13 +1096,13 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     }
     case "transport": {
       const seg = find(e.baseId);
-      if (!seg) throw new Error("Not in this trip");
+      if (!seg) throw new Error("err.notInThisTrip");
       seg.transportInMode = e.mode;
       break;
     }
     case "lock": {
       const seg = find(e.baseId);
-      if (!seg) throw new Error("Not in this trip");
+      if (!seg) throw new Error("err.notInThisTrip");
       seg.lockedBy = e.lock;
       break;
     }
@@ -1110,7 +1110,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // You can only fly into a city the trip actually visits. Allowing a
       // free-floating airport would put a city on the booking checklist
       // that appears nowhere in the plan.
-      if (e.baseId && !find(e.baseId)) throw new Error("Add that city to the trip first");
+      if (e.baseId && !find(e.baseId)) throw new Error("err.addCityFirst");
       await db
         .update(trips)
         .set(e.end === "arrive" ? { arriveBaseId: e.baseId } : { departBaseId: e.baseId })
@@ -1135,7 +1135,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // then, correctly ordered.
       const g0 = gatewayState(segments, trip.arriveBaseId, trip.departBaseId);
       if (!ord.reversed && (g0.arriveMismatch || g0.departMismatch)) {
-        throw new Error("Reordering can't reach those two ends");
+        throw new Error("err.cannotReachEnds");
       }
       segments = ord.items;
       segments.forEach((s, i) => (s.order = i));
@@ -1144,14 +1144,14 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     }
     case "returnLeg": {
       const want = trip[e.end === "arrive" ? "arriveBaseId" : "departBaseId"];
-      if (!want) throw new Error("No flight city set for that end");
+      if (!want) throw new Error("err.noGatewaySet");
       // Only a city the trip already visits. Coming "back" to somewhere
       // you have never been is an add, and says so.
       const twin = segments.find((s) => s.baseId === want);
-      if (!twin) throw new Error("Not in this trip");
+      if (!twin) throw new Error("err.notInThisTrip");
       const atEnd = e.end === "arrive" ? segments[0] : segments[segments.length - 1];
-      if (atEnd.baseId === want) throw new Error("Already the end of the trip");
-      if (segments.length >= 8) throw new Error("That's a lot of moving");
+      if (atEnd.baseId === want) throw new Error("err.alreadyTheEnd");
+      if (segments.length >= 8) throw new Error("err.tooMuchMoving");
 
       // Find the nights the same way `add` does: spend the trip's own
       // slack first, and only then borrow — out loud — from the longest
@@ -1170,7 +1170,7 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         borrowedFrom.push({ baseId: donor.baseId, nights: take });
         got += take;
       }
-      if (got < 1) throw new Error("No nights free — shorten a stay first");
+      if (got < 1) throw new Error("err.noNightsFree");
 
       // Carry the twin's own name and coordinates: a custom city that
       // lost them would come back as a second, nameless stay.
@@ -1264,11 +1264,10 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
     noop: unchanged,
     /** stays that gave nights up, for the other half of the sentence */
     takenFrom,
-    borrowedFrom: borrowedFrom.map((b) => ({
-      name: BASES[b.baseId]?.name ?? b.baseId,
-      nameAr: BASES[b.baseId]?.nameAr ?? b.baseId,
-      nights: b.nights,
-    })),
+    // Through `label`, like every other name on this response. Alone
+    // among them this one fell back to the raw id, so a typed city read
+    // «أخذنا ليلة من custom:جدة» — the slug, prefix and all.
+    borrowedFrom: borrowedFrom.map((b) => ({ ...label(b.baseId), nights: b.nights })),
     movedTo,
     /**
      * Cities the shape had to give up to fit the trip's dates. Losing a
@@ -1342,7 +1341,7 @@ export async function lightenDay(tripId: string, dayDate: string) {
     .from(itineraryItems)
     .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "package")));
   const rows = all.filter((r) => r.dayDate === day);
-  if (rows.length <= 1) throw new Error("Nothing left to drop here");
+  if (rows.length <= 1) throw new Error("err.nothingLeftToDrop");
 
   // The outlier: furthest from the day's centre of gravity. Falls back to
   // the lowest rated when we have no coordinates to reason with.
@@ -1440,7 +1439,7 @@ export async function restoreDay(tripId: string, dayDate: string) {
     .from(tripSegments)
     .where(eq(tripSegments.tripId, tripId))
     .orderBy(tripSegments.sortOrder);
-  if (!seg.length) throw new Error("No shape yet");
+  if (!seg.length) throw new Error("err.noShapeYet");
 
   await db.delete(tripRemovedStops).where(eq(tripRemovedStops.tripId, tripId));
   const trip = await getTrip(tripId);

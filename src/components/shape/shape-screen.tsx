@@ -33,6 +33,7 @@ import {
   Question,
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { errorText } from "@/components/i18n/error-text";
 import { editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
 
 /**
@@ -102,7 +103,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
       } catch (err) {
         setView(snapshot);
         setOrder(null);
-        toast.error(err instanceof Error ? err.message : t("shape.failed"));
+        toast.error(errorText(t, err, "shape.failed"));
         // Re-read the server rather than trusting the snapshot. On a group
         // trip the failure is often "somebody else just changed this", and
         // reverting to what we had leaves the screen asserting a state that
@@ -873,7 +874,14 @@ function GatewayRow({
             className="text-muted-foreground shrink-0"
             // An arrival and a departure are the same icon pointing two
             // ways round; one icon for both reads as a duplicated row.
-            style={{ transform: isArrive ? "rotate(45deg)" : "rotate(-45deg)" }}
+            //
+            // Mirrored by hand, because the tilt is an inline transform
+            // and no `rtl:` utility can reach it. Left alone, both rows
+            // kept their left-to-right lean in Arabic and the one
+            // distinction this icon exists to draw was lost.
+            style={{
+              transform: `${ar ? "scaleX(-1) " : ""}rotate(${isArrive ? 45 : -45}deg)`,
+            }}
           />
           <span className="text-[12.5px] text-muted-foreground shrink-0">
             {t(isArrive ? "shape.gatewayArrive" : "shape.gatewayDepart")}

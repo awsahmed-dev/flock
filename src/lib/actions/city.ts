@@ -33,11 +33,11 @@ const DAY_SLOTS = ["09:30", "12:30", "15:30", "19:00"];
 
 async function requireMember(tripId: string) {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Not signed in");
+  if (!user) throw new Error("err.notSignedIn");
   const m = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, user.id)),
   });
-  if (!m) throw new Error("Not a trip member");
+  if (!m) throw new Error("err.notAMember");
   return { user, role: m.role };
 }
 
@@ -380,17 +380,17 @@ const zAdd = z.object({
 export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
   const { tripId, baseId, placeKey, dayDate } = parseOr(zAdd, input, "Invalid request");
   const { user, role } = await requireMember(tripId);
-  if (role !== "owner") throw new Error("Only the trip owner can change the plan");
+  if (role !== "owner") throw new Error("err.ownerOnlyPlan");
 
   const board = await getCityBoard(tripId, baseId);
-  if (!board) throw new Error("Not a city on this trip");
+  if (!board) throw new Error("err.notACityHere");
   const place = board.places.find((p) => p.key === placeKey);
-  if (!place) throw new Error("Unknown place");
+  if (!place) throw new Error("err.unknownPlace");
   if (place.inPlan) return { day: null, already: true as const };
 
   const usable = board.days.filter((d) => !d.travel);
   const pool = usable.length ? usable : board.days;
-  if (!pool.length) throw new Error("No days here");
+  if (!pool.length) throw new Error("err.noDaysHere");
 
   let day = dayDate && pool.some((d) => d.date === dayDate) ? dayDate : null;
   let reason: "asked" | "near" | "emptiest" = "asked";
@@ -487,16 +487,16 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
  */
 export async function fillFreeDays(tripId: string, baseId: string) {
   const { user, role } = await requireMember(tripId);
-  if (role !== "owner") throw new Error("Only the trip owner can change the plan");
+  if (role !== "owner") throw new Error("err.ownerOnlyPlan");
   const board = await getCityBoard(tripId, baseId);
-  if (!board) throw new Error("Not a city on this trip");
+  if (!board) throw new Error("err.notACityHere");
 
   const perDay = 4;
   const free = board.days.filter((d) => d.free && !d.travel);
-  if (!free.length) throw new Error("No free days here");
+  if (!free.length) throw new Error("err.noFreeDaysHere");
 
   let pool = board.places.filter((p) => !p.inPlan && p.lat != null && p.lng != null);
-  if (!pool.length) throw new Error("Nothing left to add here");
+  if (!pool.length) throw new Error("err.nothingLeftToAdd");
 
   const planned: { date: string; places: CityPlace[] }[] = [];
   for (const day of free) {

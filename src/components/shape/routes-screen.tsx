@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowRight, CaretRight, Compass, CircleNotch as Loader2, MapTrifold } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { errorText } from "@/components/i18n/error-text";
 import { adoptRoute, startBlankShape, type RouteCard } from "@/lib/actions/shape";
 
 /**
@@ -51,7 +52,7 @@ export function RoutesScreen({
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("routes.failed"));
+      toast.error(errorText(t, e, "routes.failed"));
       setWorking(null);
     }
   }
@@ -64,7 +65,7 @@ export function RoutesScreen({
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("routes.failed"));
+      toast.error(errorText(t, e, "routes.failed"));
       setWorking(null);
     }
   }
@@ -83,7 +84,7 @@ export function RoutesScreen({
       router.push(r.bases > 1 ? `/trips/${tripId}/shape` : `/trips/${tripId}/itinerary`);
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("routes.failed"));
+      toast.error(errorText(t, e, "routes.failed"));
       setWorking(null);
     }
   }
@@ -97,7 +98,7 @@ export function RoutesScreen({
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("routes.failed"));
+      toast.error(errorText(t, e, "routes.failed"));
       setWorking(null);
     }
   }
