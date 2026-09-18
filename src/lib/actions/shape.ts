@@ -988,6 +988,21 @@ async function runEdit(tripId: string, edit: ShapeEdit) {
       const keysNow = stayKeys(segments.map((s) => s.baseId));
       const slot = new Map(segments.map((s, i) => [s, pos.get(keysNow[i]) ?? 99]));
       segments.sort((a, b) => (slot.get(a) ?? 99) - (slot.get(b) ?? 99));
+      // Two stays in one city, side by side, is not a trip — it is one
+      // stay. `add` already refuses to create that; a drag could still
+      // arrange it, and then the leg between them measured 0km and the
+      // plan announced «قطار إلى جدة · ٢٠ دقيقة» — a train from Jeddah
+      // to Jeddah. Merge them instead of refusing: the nights are the
+      // same nights, and the user has just said where they want them.
+      for (let i = segments.length - 1; i > 0; i--) {
+        if (segments[i].baseId !== segments[i - 1].baseId) continue;
+        const gained = segmentNights(segments[i]);
+        segments[i - 1].checkOut = addIso(
+          segments[i - 1].checkIn,
+          segmentNights(segments[i - 1]) + gained,
+        );
+        segments.splice(i, 1);
+      }
       segments.forEach((s, i) => (s.order = i));
       clearLegs(segments);
       break;
@@ -1486,7 +1501,21 @@ export async function undoLighten(tripId: string, title: string) {
     .where(eq(tripSegments.tripId, tripId))
     .orderBy(tripSegments.sortOrder);
   if (rows.length) {
-    await reproject(tripId, relink(redate(rows.map(toSegment), trip.startDate), BASES), trip.startDate, user.id);
+    // With the trip's OWN bases, not just the curated library.
+    //
+    // Defaulting to BASES means projectDays cannot resolve a `custom:`
+    // segment, skips it, produces no days for that city — and the
+    // stranded-row sweep then deletes every stop carrying its id. On a
+    // trip mixing a curated city with a typed one, undoing a "lighten"
+    // quietly emptied the typed city.
+    const lib = basesFor(rows);
+    await reproject(
+      tripId,
+      relink(redate(rows.map(toSegment), trip.startDate), lib),
+      trip.startDate,
+      user.id,
+      lib,
+    );
   }
   return { ok: true };
 }

@@ -63,12 +63,6 @@ export function findStay<T extends { baseId: string }>(segments: T[], key: strin
   return undefined;
 }
 
-/** Index of the segment a stay key points at, or -1. */
-export function indexOfStay<T extends { baseId: string }>(segments: T[], key: string): number {
-  const seg = findStay(segments, key);
-  return seg ? segments.indexOf(seg) : -1;
-}
-
 /**
  * A stay key that can live in a URL path.
  *

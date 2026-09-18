@@ -214,11 +214,11 @@ export async function cityIdeas(
   // happened to get further. `after` holds the function open until the
   // work is done, which is exactly what this is for.
   try {
-    after(() => refreshCityIdeas(baseId, lat, lng, cityName));
+    after(() => refreshCityIdeas(baseId, lat, lng, cityName, (cached?.places as CityIdea[]) ?? null));
   } catch {
     // Called outside a request (a script, a test) — then a floating
     // promise is all there is, and it is fine.
-    void refreshCityIdeas(baseId, lat, lng, cityName);
+    void refreshCityIdeas(baseId, lat, lng, cityName, (cached?.places as CityIdea[]) ?? null);
   }
   return (cached?.places as CityIdea[]) ?? [];
 }
@@ -274,6 +274,8 @@ async function refreshCityIdeas(
   lat: number,
   lng: number,
   cityName?: string | null,
+  /** what the cache already holds, so a miss can keep it */
+  cachedPlaces?: CityIdea[] | null,
 ): Promise<void> {
   try {
     const toRow = (p: Place): CityIdea => ({
@@ -347,7 +349,18 @@ async function refreshCityIdeas(
     // failure once already: every bucket 400'd on a bad type string, the
     // city kept serving its old list, and nothing anywhere said why.
     if (!rows.length) {
+      // Keep the cached places, but STILL stamp the time.
+      //
+      // Returning without writing left fetchedAt stale, so the next
+      // render tried again — and a persistent failure (a bad key, a
+      // city whose every result fails `worth`) meant up to thirty
+      // Google requests on every page view, for ever, each holding the
+      // function open. A miss now cools down exactly like a hit.
       console.warn("[cityIdeas] no results for", baseId, "— keeping the cached list");
+      await db
+        .insert(cityIdeasTable)
+        .values({ baseId, places: (cachedPlaces ?? []) as CityIdea[], fetchedAt: new Date() })
+        .onConflictDoUpdate({ target: cityIdeasTable.baseId, set: { fetchedAt: new Date() } });
       return;
     }
 

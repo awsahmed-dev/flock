@@ -61,7 +61,7 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
   function add(key: string) {
     startTransition(async () => {
       try {
-        const r = await addPlaceToCity({ tripId, baseId: board.baseId, placeKey: key });
+        const r = await addPlaceToCity({ tripId, baseId: board.stayKey, placeKey: key });
         if (refused(r)) {
           toast.error(errorText(t, r, "city.failed"));
           return;
@@ -83,7 +83,7 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
   async function fill() {
     setWorking(true);
     try {
-      const r = await fillFreeDays(tripId, board.baseId);
+      const r = await fillFreeDays(tripId, board.stayKey);
       if (refused(r)) {
         toast.error(errorText(t, r, "city.failed"));
         return;

@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { stayKeys, parseStayKey, baseOfStay, findStay, indexOfStay, stayParam, stayFromParam } from "@/lib/packages/stay-key";
+import { stayKeys, parseStayKey, baseOfStay, findStay, stayParam, stayFromParam } from "@/lib/packages/stay-key";
+
+/** the test's own helper, now that production has no use for one */
+const indexOfStay = <T extends { baseId: string }>(segs: T[], k: string) => {
+  const s = findStay(segs, k);
+  return s ? segs.indexOf(s) : -1;
+};
 import { gatewayState, gatewayErrands } from "@/lib/packages/gateways";
 import { fitToTrip } from "@/lib/packages/fit";
 import type { Segment } from "@/lib/packages/types";
@@ -197,5 +203,29 @@ describe("a city page addresses one stay", () => {
     // Riyadh's page used to list Jeddah twice — same name, same link.
     expect(siblingsFor("riyadh")).toEqual(["jeddah"]);
     expect(siblingsFor("jeddah")).toEqual(["riyadh"]);
+  });
+});
+
+describe("a stay key resolves, a city id is stored", () => {
+  it("never lets a stay key become a row's base_id", () => {
+    // What a write must store. Storing «jeddah#2» in itinerary_items
+    // meant the shape's stranded-row sweep — which looks base ids up
+    // among projected days, keyed by CITY — found nothing, decided the
+    // city had left the trip, and deleted the row. Fill the return
+    // leg, nudge any stay, and the places vanish.
+    for (const key of ["jeddah", "jeddah#2", "custom:جدة#3"]) {
+      const stored = baseOfStay(key);
+      expect(stored).not.toContain("#");
+      // and it must be a city the projection will recognise
+      expect(stored).toBe(parseStayKey(key).baseId);
+    }
+  });
+
+  it("resolves the stay the page is showing, not the first one", () => {
+    const segs = segs3(["jeddah", "riyadh", "jeddah"]);
+    // The page is /city/jeddah~2; the write must land on segment 2.
+    expect(findStay(segs, stayFromParam("jeddah~2"))).toBe(segs[2]);
+    // ...while the row it writes still says the city.
+    expect(baseOfStay(stayFromParam("jeddah~2"))).toBe("jeddah");
   });
 });

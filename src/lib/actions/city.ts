@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { parseOr } from "@/lib/actions/validate";
 import { BASES } from "@/lib/packages/library";
-import { findStay, stayParam } from "@/lib/packages/stay-key";
+import { findStay, stayParam, baseOfStay } from "@/lib/packages/stay-key";
 import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
 import { whatIs } from "@/lib/packages/descriptions";
@@ -110,6 +110,16 @@ export interface CityBoard {
   /** what is already scheduled here, day by day — the primary question */
   planned: CityPlannedDay[];
   /** other bases on this trip, for the switcher */
+  /**
+   * Which STAY this board is — «jeddah» or «jeddah#2».
+   *
+   * `baseId` is the city, which is what a row stores. This is the leg you
+   * are looking at, and every write has to send it back: without it, both
+   * buttons on the return leg's page re-resolved the city to whichever
+   * stay came first, so «املأ» filled October while the November days on
+   * screen stayed empty — and said it had succeeded.
+   */
+  stayKey: string;
   siblings: { id: BaseId; name: string; nameAr: string }[];
   isOwner: boolean;
 }
@@ -337,6 +347,7 @@ export async function getCityBoard(tripId: string, stayKey: string): Promise<Cit
 
   return {
     baseId,
+    stayKey,
     name: base.name,
     nameAr: base.nameAr,
     lat: base.lat,
@@ -417,7 +428,10 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
 }
 
 async function runAddPlaceToCity(input: z.infer<typeof zAdd>) {
-  const { tripId, baseId, placeKey, dayDate } = parseOr(zAdd, input, "Invalid request");
+  const { tripId, baseId: stayKey, placeKey, dayDate } = parseOr(zAdd, input, "Invalid request");
+  // Resolve by STAY so the day belongs to the leg on screen; store the
+  // CITY, because that is what every reader of base_id expects.
+  const baseId = baseOfStay(stayKey);
   const { user, role } = await requireMember(tripId);
   if (role !== "owner") throw new Error("err.ownerOnlyPlan");
 
@@ -507,7 +521,7 @@ async function runAddPlaceToCity(input: z.infer<typeof zAdd>) {
     .where(and(eq(tripRemovedStops.tripId, tripId), eq(tripRemovedStops.title, place.name)));
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(stayParam(baseId))}`);
+  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(stayParam(stayKey))}`);
   return { day, reason, already: false as const };
 }
 
@@ -534,10 +548,21 @@ export async function fillFreeDays(tripId: string, baseId: string) {
   }
 }
 
-async function runFillFreeDays(tripId: string, baseId: string) {
+async function runFillFreeDays(tripId: string, stayKey: string) {
+  // The argument names a STAY — it may be «jeddah#2» — but what goes into
+  // itinerary_items.base_id is the CITY.
+  //
+  // Storing the stay key there was quietly destructive: the shape's
+  // stranded-row sweep looks the value up among the projected days, which
+  // are keyed by city, finds nothing, concludes the city left the trip
+  // and DELETES the row. Fill the return leg's days, nudge any stay by a
+  // night, and every place you just added is gone — and these are
+  // `chosen` rows, the ones the rest of this file protects hardest.
+  const baseId = baseOfStay(stayKey);
   const { user, role } = await requireMember(tripId);
   if (role !== "owner") throw new Error("err.ownerOnlyPlan");
-  const board = await getCityBoard(tripId, baseId);
+  // Resolved by stay, so the days are the ones you are looking at.
+  const board = await getCityBoard(tripId, stayKey);
   if (!board) throw new Error("err.notACityHere");
 
   const perDay = 4;
@@ -629,7 +654,7 @@ async function runFillFreeDays(tripId: string, baseId: string) {
   if (rows.length) await db.insert(itineraryItems).values(rows);
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(stayParam(baseId))}`);
+  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(stayParam(stayKey))}`);
   return {
     days: planned.map((d) => ({
       date: d.date,
