@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { placeFacts, cityIdeas as cityIdeasTable } from "@/lib/db/schema";
 import { eq, inArray, sql } from "drizzle-orm";
@@ -204,7 +205,21 @@ export async function cityIdeas(
   // person first opened a city whose cache had aged out paid for the round
   // trip with their own load time — and a page render wrote to the
   // database, which it has no business doing.
-  void refreshCityIdeas(baseId, lat, lng, cityName);
+  // `after` rather than a bare floating promise.
+  //
+  // A detached promise in a server render is not guaranteed to finish:
+  // the platform may suspend the function the moment the response is
+  // sent. Riyadh proved it — the page rendered, the refresh never
+  // completed, and the city kept its stale list until a second visit
+  // happened to get further. `after` holds the function open until the
+  // work is done, which is exactly what this is for.
+  try {
+    after(() => refreshCityIdeas(baseId, lat, lng, cityName));
+  } catch {
+    // Called outside a request (a script, a test) — then a floating
+    // promise is all there is, and it is fine.
+    void refreshCityIdeas(baseId, lat, lng, cityName);
+  }
   return (cached?.places as CityIdea[]) ?? [];
 }
 
@@ -273,7 +288,12 @@ async function refreshCityIdeas(
       lng: p.coords[0],
     });
     // A rating with nobody behind it is noise, not a recommendation.
-    const worth = (p: Place) => p.rating != null && (p.userRatingsTotal ?? 0) >= 50;
+    // Somewhere to sleep is not an answer to "what do we do here". We
+    // never ask for lodging, but a place can carry the type anyway and
+    // Google returns it: «voco Riyadh by IHG» sat in Riyadh's list of
+    // things to do.
+    const worth = (p: Place) =>
+      p.rating != null && (p.userRatingsTotal ?? 0) >= 50 && p.category !== "stay";
 
     // "Must-see" is not a place TYPE, so searchNearby cannot express it —
     // it only knows types inside a circle. Text search can, and it is how
