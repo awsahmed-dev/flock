@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { baseForDestination, basesForDestination, customBaseId } from "@/lib/packages/destination-base";
+import {
+  baseForDestination,
+  basesForDestination,
+  countryOfDestination,
+  curatedBasesInCountry,
+  customBaseId,
+} from "@/lib/packages/destination-base";
 
 /**
  * The rule that gave 42 pre-existing trips a shape. Every case here is a
@@ -116,5 +122,27 @@ describe("Arabic spelling variants resolve to the same city", () => {
     expect(baseForDestination("الإمارات").base?.id).toBe(
       baseForDestination("الامارات").base?.id,
     );
+  });
+});
+
+describe("the country a destination names", () => {
+  it("reads a country in either language", () => {
+    expect(countryOfDestination("السعودية")).toBe("SA");
+    expect(countryOfDestination("Saudi Arabia")).toBe("SA");
+    expect(countryOfDestination("اليابان")).toBe("JP");
+    expect(countryOfDestination("Kuching, Sarawak, Malaysia")).toBe("MY");
+  });
+
+  it("offers the cities we curate there", () => {
+    // The Saudi trip: a country is not a city, but the screen can still
+    // say which cities in it we know about.
+    const sa = curatedBasesInCountry("السعودية").map((b) => b.id);
+    expect(sa.length).toBeGreaterThan(0);
+    expect(sa).toContain("alula");
+  });
+
+  it("says nothing for a country we do not cover", () => {
+    expect(countryOfDestination("Taiz, Yemen")).toBeNull();
+    expect(curatedBasesInCountry("Potato")).toEqual([]);
   });
 });

@@ -22,6 +22,7 @@ import type { Base, BaseId, ProjectedDay, Segment, TransportMode } from "@/lib/p
 import { allocateNights, routeCapacity, tripNightsBetween } from "@/lib/packages/allocate";
 import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFor, type SaveForPlan } from "@/lib/packages/project";
 import { gatewayState, orderForGateways, type GatewayState } from "@/lib/packages/gateways";
+import { curatedBasesInCountry } from "@/lib/packages/destination-base";
 import { fitToTrip } from "@/lib/packages/fit";
 import { factsFor, staleNames, refreshFact } from "@/lib/places/facts";
 
@@ -260,10 +261,24 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
   ]);
 
   const used = new Set(segments.map((s) => s.baseId));
-  const addable = Object.values(BASES)
+  const paired = Object.values(BASES)
     .filter((b) => b.maxNights > 0 && !used.has(b.id))
-    .filter((b) => segments.some((s) => LIB[s.baseId]?.pairsWith.includes(b.id)))
-    .map((b) => ({ id: b.id, name: b.name, nameAr: b.nameAr, typicalNights: b.typicalNights }));
+    .filter((b) => segments.some((s) => LIB[s.baseId]?.pairsWith.includes(b.id)));
+
+  // Nothing pairs with a city we do not curate, so a trip to one — or to a
+  // whole country, like a 31-night «السعودية» — was offered no cities at
+  // all. Fall back to the ones we know in that country: we cannot say
+  // which city you meant, but we can say which ones we know about.
+  const fallback = paired.length
+    ? []
+    : curatedBasesInCountry(trip.destination ?? "").filter((b) => !used.has(b.id));
+
+  const addable = [...paired, ...fallback].map((b) => ({
+    id: b.id,
+    name: b.name,
+    nameAr: b.nameAr,
+    typicalNights: b.typicalNights,
+  }));
 
   const bases: BaseCard[] = segments.map((s) => {
     const b = LIB[s.baseId];

@@ -131,3 +131,57 @@ export function basesForDestination(destination: string): DestinationMatch[] {
   }
   return out;
 }
+
+/**
+ * Country names, in both languages, for the countries we curate.
+ *
+ * A trip to «السعودية» is a trip to a country, and we must not pretend a
+ * country is a city — that is how Kuching ended up in Kuala Lumpur. But
+ * the screen was then offering nothing at all: "add a base" only suggests
+ * cities that pair with a curated one, and a country-shaped custom base
+ * pairs with nothing. So a 31-night Saudi trip sat there with no city, no
+ * suggestions, and a checklist offering "a hotel in Saudi Arabia".
+ *
+ * These let us say the true, useful thing instead: we do not know which
+ * city you mean, but here are the ones we know in that country.
+ */
+const COUNTRY_TERMS: Record<string, string[]> = {
+  JP: ["japan", "اليابان"],
+  TR: ["turkey", "türkiye", "turkiye", "تركيا"],
+  GE: ["georgia", "جورجيا"],
+  PT: ["portugal", "البرتغال"],
+  GB: ["uk", "united kingdom", "britain", "england", "بريطانيا", "المملكة المتحدة", "انجلترا", "إنجلترا"],
+  FR: ["france", "فرنسا"],
+  BA: ["bosnia", "البوسنة"],
+  AZ: ["azerbaijan", "أذربيجان", "اذربيجان"],
+  MY: ["malaysia", "ماليزيا"],
+  TH: ["thailand", "تايلاند", "تايلند"],
+  ID: ["indonesia", "bali", "إندونيسيا", "اندونيسيا"],
+  MV: ["maldives", "المالديف"],
+  AE: ["uae", "emirates", "الإمارات", "الامارات"],
+  SA: ["saudi", "saudi arabia", "ksa", "السعودية", "المملكة العربية السعودية"],
+  OM: ["oman", "عمان", "عُمان"],
+  EG: ["egypt", "مصر"],
+};
+
+/** The ISO country a destination names, when it names one at all. */
+export function countryOfDestination(destination: string): string | null {
+  const d = foldArabic(destination);
+  if (!d) return null;
+  let best: { code: string; len: number } | null = null;
+  for (const [code, terms] of Object.entries(COUNTRY_TERMS)) {
+    for (const term of terms) {
+      const t = foldArabic(term);
+      if (!t || !d.includes(t)) continue;
+      if (!best || t.length > best.len) best = { code, len: t.length };
+    }
+  }
+  return best?.code ?? null;
+}
+
+/** Stayable curated bases in the country a destination names. */
+export function curatedBasesInCountry(destination: string): Base[] {
+  const code = countryOfDestination(destination);
+  if (!code) return [];
+  return Object.values(BASES).filter((b) => b.country === code && b.maxNights > 0);
+}
