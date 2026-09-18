@@ -25,6 +25,45 @@ import { gatewayState, orderForGateways, type GatewayState } from "@/lib/package
 import { curatedBasesInCountry, customBaseId } from "@/lib/packages/destination-base";
 import { fitToTrip } from "@/lib/packages/fit";
 import { stayKeys, findStay } from "@/lib/packages/stay-key";
+import { geocodeDestination } from "@/lib/geocode";
+
+/**
+ * Where a city the user typed actually is.
+ *
+ * A custom base with no coordinates is not a small gap. It cannot be
+ * measured, so the leg into it had no duration and fell back to inventing
+ * a mode; and it cannot be searched, so «املأ الباقي» had nothing to
+ * offer and the city page was empty. A 31-night Jeddah trip could not be
+ * filled in at all, because we had never asked where Jeddah is.
+ *
+ * Failure is fine — we simply keep what we had, which is nothing — but it
+ * must never block the edit the user actually asked for, hence the
+ * deadline.
+ */
+async function placeOf(
+  name: string,
+  /** the trip's destination — the country this city is meant to be in */
+  context?: string | null,
+): Promise<{ lat: number | null; lng: number | null }> {
+  // Ask with the country attached. Alone, «بينانغ» resolves to Bangka in
+  // Indonesia — a real place, 2,400km from the Penang the user meant, and
+  // returned with no less confidence than a correct answer. The trip
+  // already knows which country it is to; spending that context is the
+  // difference between a coordinate and a plausible wrong one.
+  const withContext = context && !name.includes(context) ? `${name}, ${context}` : name;
+  const tryOne = async (q: string) => {
+    try {
+      return await Promise.race([
+        geocodeDestination(q),
+        new Promise<null>((r) => setTimeout(() => r(null), 4000)),
+      ]);
+    } catch {
+      return null;
+    }
+  };
+  const hit = (await tryOne(withContext)) ?? (withContext === name ? null : await tryOne(name));
+  return { lat: hit?.lat ?? null, lng: hit?.lng ?? null };
+}
 import { factsFor, staleNames, refreshFact } from "@/lib/places/facts";
 
 /**
@@ -784,6 +823,11 @@ export async function startBlankShape(
   const name = (custom?.name ?? trip.destination ?? trip.name ?? "").trim();
   if (!name) throw new Error("Where are you going?");
   const slug = customBaseId(name);
+  // Ask where it is now, once, rather than leaving the city unplaceable
+  // for the life of the trip.
+  const where = custom?.lat != null && custom?.lng != null
+    ? { lat: custom.lat, lng: custom.lng }
+    : await placeOf(name, trip.destination);
   await persist(
     tripId,
     [
@@ -798,8 +842,8 @@ export async function startBlankShape(
         lockedBy: null,
         customName: name,
         customNameAr: name,
-        customLat: custom?.lat ?? null,
-        customLng: custom?.lng ?? null,
+        customLat: where.lat,
+        customLng: where.lng,
       },
     ],
     trip.startDate,
@@ -975,6 +1019,9 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // «جدة» — a perfectly good name — came back "Give the city a name".
       if (!e.name.trim()) throw new Error("Give the city a name");
       const slug = customBaseId(e.name);
+      const here = e.lat != null && e.lng != null
+        ? { lat: e.lat, lng: e.lng }
+        : await placeOf(e.name, trip.destination);
       // Same rule as `add`: coming back to a city is a real trip shape;
       // two of the same city back-to-back is a slip.
       if (segments[segments.length - 1]?.baseId === slug) {
@@ -1010,8 +1057,8 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
         lockedBy: null,
         customName: e.name,
         customNameAr: e.name,
-        customLat: e.lat ?? null,
-        customLng: e.lng ?? null,
+        customLat: here.lat,
+        customLng: here.lng,
       });
       break;
     }

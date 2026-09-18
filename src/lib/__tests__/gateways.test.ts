@@ -175,8 +175,15 @@ describe("legs after a reorder", () => {
       "custom:samarkand": alsoNowhere,
     });
     expect(out[1].transportInMinutes).toBeNull();
-    // The mode is still worth saying — you are moving, we just can't time it.
-    expect(out[1].transportInMode).toBe("train");
+    // This used to assert "train", on the reasoning that the mode is still
+    // worth saying because you are moving either way. It isn't the same
+    // claim: "you are travelling" is true, "you are taking a train" is a
+    // specific fact about a route we just admitted we cannot locate. It
+    // put «قطار» between Jeddah and Riyadh — 850km, no railway — next to
+    // a real measured leg with nothing to tell the two apart. The
+    // no-fabrication rule that already governs the duration governs the
+    // mode too; the UI asks instead.
+    expect(out[1].transportInMode).toBeNull();
   });
 
   it("drops a duration already stored against two cities it cannot locate", () => {

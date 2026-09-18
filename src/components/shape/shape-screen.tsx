@@ -30,6 +30,7 @@ import {
   CheckCircle,
   CalendarBlank,
   CaretRight,
+  Question,
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
@@ -529,7 +530,10 @@ function BaseRow({
   const [modeOpen, setModeOpen] = useState(false);
   const locked = !!base.lockedBy;
   const atMax = base.nights >= base.maxNights;
-  const Mode = base.transportInMode ? MODE_ICON[base.transportInMode] : Train;
+  // No mode is a real state, not a missing train. The leg between two
+  // cities we cannot place is one we have not measured and nobody has
+  // named, so the chip asks instead of asserting.
+  const Mode = base.transportInMode ? MODE_ICON[base.transportInMode] : Question;
 
   return (
     <div
@@ -551,7 +555,7 @@ function BaseRow({
             aria-label={t("shape.changeTransport")}
           >
             <Mode size={14} weight="fill" />
-            {t(`shape.mode_${base.transportInMode ?? "train"}`)}
+            {base.transportInMode ? t(`shape.mode_${base.transportInMode}`) : t("shape.modeUnknown")}
             {base.transportInMinutes != null && (
               <span className="text-muted-foreground font-medium">
                 {fmtMins(base.transportInMinutes, t)}

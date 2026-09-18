@@ -102,8 +102,13 @@ export function relink(segments: Segment[], bases: Record<BaseId, Base>): Segmen
     // generator that could have produced it is one of the hardcoded
     // fallbacks since removed. Leaving it in place kept printing "2h" for
     // Tashkent to Samarkand long after the code that invented it was gone.
+    // Nor a mode. Defaulting to "train" put «قطار» between Jeddah and
+    // Riyadh — 850km with no railway — and printed it as fact next to a
+    // real, measured leg, with nothing to tell the two apart. We do not
+    // know how you are getting there. A stored answer is kept, because
+    // somebody chose it; absent one we say nothing and ask.
     if (!from || !to || from.coordsUnknown || to.coordsUnknown) {
-      return { ...s, transportInMode: s.transportInMode ?? ("train" as const), transportInMinutes: null };
+      return { ...s, transportInMode: s.transportInMode ?? null, transportInMinutes: null };
     }
 
     if (s.transportInMode && s.transportInMinutes != null) return s;
@@ -264,8 +269,13 @@ export function projectDays(
       const leg: CuratedPlace[] = arrivedFromAnotherBase
         ? [
             {
-              name: `${MODE_EN[seg.transportInMode ?? "train"]} to ${base.name}`,
-              nameAr: `${MODE_AR[seg.transportInMode ?? "train"]} إلى ${base.nameAr}`,
+              // No mode stored means we could not measure the leg and
+              // nobody has told us. "Go to Jeddah" is true either way;
+              // "Train to Jeddah" would not be.
+              name: seg.transportInMode ? `${MODE_EN[seg.transportInMode]} to ${base.name}` : `Go to ${base.name}`,
+              nameAr: seg.transportInMode
+                ? `${MODE_AR[seg.transportInMode]} إلى ${base.nameAr}`
+                : `الانتقال إلى ${base.nameAr}`,
               why: durationLine(seg.transportInMinutes, "en"),
               whyAr: durationLine(seg.transportInMinutes, "ar"),
               category: "rest",

@@ -1839,6 +1839,7 @@
     "saving": "Updating…",
     "failed": "Couldn't update — try again",
     "mode_train": "Train",
+    "modeUnknown": "How?",
     "mode_flight": "Flight",
     "mode_car": "Car",
     "mode_bus": "Bus",

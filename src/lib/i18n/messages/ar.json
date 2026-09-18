@@ -1839,6 +1839,7 @@
     "saving": "نحدّث…",
     "failed": "ما قدرنا نحدّث — جرّب مرة ثانية",
     "mode_train": "قطار",
+    "modeUnknown": "كيف؟",
     "mode_flight": "طيران",
     "mode_car": "سيارة",
     "mode_bus": "باص",
