@@ -195,6 +195,17 @@ export async function cityIdeas(
   if (fresh) return (cached.places as CityIdea[]) ?? [];
   if (!lat && !lng) return (cached?.places as CityIdea[]) ?? [];
 
+  // Serve what we have and refresh behind the response.
+  //
+  // This used to await Google inside a page render, so whichever unlucky
+  // person first opened a city whose cache had aged out paid for the round
+  // trip with their own load time — and a page render wrote to the
+  // database, which it has no business doing.
+  void refreshCityIdeas(baseId, lat, lng);
+  return (cached?.places as CityIdea[]) ?? [];
+}
+
+async function refreshCityIdeas(baseId: string, lat: number, lng: number): Promise<void> {
   try {
     const found = await nearby({
       lat,
@@ -232,9 +243,7 @@ export async function cityIdeas(
         target: cityIdeasTable.baseId,
         set: { places: rows, fetchedAt: new Date() },
       });
-    return rows;
   } catch {
-    // No key, or Google is having a day. Serve whatever we last had.
-    return (cached?.places as CityIdea[]) ?? [];
+    // No key, or Google is having a day. The cached value already went out.
   }
 }

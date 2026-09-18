@@ -829,7 +829,13 @@ export function ItineraryBoard({
                 offering a place in the wrong city. */}
             {focusedDay && (
               <div className="mb-3 flex items-center gap-2 flex-wrap">
-                {isOwner && getItemsForDay(focusedDay).length > 1 && (
+                {/* Count only what this button can actually act on. It
+                    counted every stop while `lightenDay` only considers
+                    generated ones — so on any trip that predates this
+                    system, where nothing is generated, the button rendered,
+                    was tappable, and always failed. */}
+                {isOwner &&
+                  getItemsForDay(focusedDay).filter((i) => i.provider === "package").length > 1 && (
                   <button
                     type="button"
                     onClick={() =>

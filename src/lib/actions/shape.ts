@@ -408,13 +408,23 @@ async function reproject(
   ]);
   const gone = new Set(removed.map((r) => r.title));
 
-  // Anything the crew chose by hand stays put, and the projection must not
-  // offer it again — otherwise a reshape would duplicate it alongside the
-  // curated original.
+  // Anything already on this trip that this projection does not own stays
+  // put, and must not be offered again — otherwise a reshape duplicates it
+  // alongside the curated original.
+  //
+  // This used to look only at `provider = "chosen"`, which was right for
+  // trips built by this system and wrong for every trip that predates it.
+  // Older stops are "manual" or "google", so someone who had typed "Eiffel
+  // Tower" in by hand and then adopted a curated Paris route got it twice,
+  // on two different days, with no way to tell which was theirs.
+  //
+  // `package` rows are deliberately excluded: this projection replaces
+  // those, and treating them as untouchable would suppress the entire
+  // curated corpus on the second re-projection and hand back an empty plan.
   const kept = await db
     .select({ title: itineraryItems.title })
     .from(itineraryItems)
-    .where(and(eq(itineraryItems.tripId, tripId), eq(itineraryItems.provider, "chosen")));
+    .where(and(eq(itineraryItems.tripId, tripId), sql`${itineraryItems.provider} is distinct from 'package'`));
   for (const k of kept) gone.add(k.title);
 
   const days = projectDays(segments, lib, tripStart, saveRows as SaveForPlan[]);
