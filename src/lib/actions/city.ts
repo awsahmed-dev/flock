@@ -442,7 +442,7 @@ export async function addPlaceToCity(input: z.infer<typeof zAdd>) {
     .where(and(eq(tripRemovedStops.tripId, tripId), eq(tripRemovedStops.title, place.name)));
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  revalidatePath(`/trips/${tripId}/city/${baseId}`);
+  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(baseId)}`);
   return { day, reason, already: false as const };
 }
 
@@ -526,7 +526,7 @@ export async function fillFreeDays(tripId: string, baseId: string) {
   if (rows.length) await db.insert(itineraryItems).values(rows);
 
   revalidatePath(`/trips/${tripId}/itinerary`);
-  revalidatePath(`/trips/${tripId}/city/${baseId}`);
+  revalidatePath(`/trips/${tripId}/city/${encodeURIComponent(baseId)}`);
   return {
     days: planned.map((d) => ({
       date: d.date,

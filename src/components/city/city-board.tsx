@@ -144,7 +144,7 @@ export function CityBoard({ tripId, board }: { tripId: string; board: Board }) {
           {board.siblings.map((s) => (
             <Link
               key={s.id}
-              href={`/trips/${tripId}/city/${s.id}`}
+              href={`/trips/${tripId}/city/${encodeURIComponent(s.id)}`}
               className="shrink-0 min-h-10 px-3.5 rounded-full border border-border text-[13px] font-semibold inline-flex items-center gap-1.5"
             >
               {ar ? s.nameAr : s.name}

@@ -877,7 +877,7 @@ export function ItineraryBoard({
                 )}
                 {baseIdForDay(focusedDay) && (
                   <Link
-                    href={`/trips/${tripId}/city/${baseIdForDay(focusedDay)}`}
+                    href={`/trips/${tripId}/city/${encodeURIComponent(baseIdForDay(focusedDay) ?? "")}`}
                     className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 min-h-9 text-[12px] font-semibold text-muted-foreground hover:text-primary hover:border-primary/40"
                   >
                     <Sparkles className="w-4 h-4" />

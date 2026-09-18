@@ -17,8 +17,32 @@ interface Props {
  * Reachable only for a base the trip actually visits, because the whole
  * point is that this screen knows which days it is allowed to touch.
  */
+/**
+ * A base id is not URL-safe and must be decoded before it is compared.
+ *
+ * Every curated id — «tokyo», «kuala_lumpur» — survives a round trip
+ * through a URL unchanged, so this screen looked fine for years. A typed
+ * city does not: its id is «custom:penang», the colon is escaped
+ * somewhere between the link and the route, and the page then looked for
+ * a stay called «custom%3Apenang», found none, and bounced to the shape
+ * screen. Silently — a tap that just put you back where you started.
+ *
+ * So no city you typed yourself has ever had a city page, which is why
+ * «املأ الباقي» could not be reached on a trip to Jeddah at all.
+ */
+function decodeBaseId(raw: string): string {
+  try {
+    // Decoding an already-decoded id is a no-op; decoding a malformed one
+    // throws, and then the raw value is still the best guess we have.
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export default async function CityPage({ params }: Props) {
-  const { id, baseId } = await params;
+  const { id, baseId: rawBaseId } = await params;
+  const baseId = decodeBaseId(rawBaseId);
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 

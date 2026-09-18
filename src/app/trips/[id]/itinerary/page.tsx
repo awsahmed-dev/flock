@@ -172,7 +172,13 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
   // stops to infer a city from, and that is exactly the day where knowing
   // the city matters most.
   const segsForDays = await db
-    .select({ baseId: tripSegments.baseId, checkIn: tripSegments.checkIn, checkOut: tripSegments.checkOut })
+    .select({
+      baseId: tripSegments.baseId,
+      checkIn: tripSegments.checkIn,
+      checkOut: tripSegments.checkOut,
+      customName: tripSegments.customName,
+      customNameAr: tripSegments.customNameAr,
+    })
     .from(tripSegments)
     .where(eq(tripSegments.tripId, id))
     .orderBy(tripSegments.sortOrder)
@@ -187,9 +193,23 @@ export default async function ItineraryPage({ params, searchParams }: Props) {
 
   return (
     <ItineraryBoard
-        baseNames={Object.fromEntries(
-          Object.values(BASES).map((b) => [b.id, locale === "ar" ? b.nameAr : b.name]),
-        )}
+        // The curated corpus knows nothing about a city the user typed, so
+        // «وش نسوي في {المدينة}؟» rendered as «وش نسوي في ؟» on every trip
+        // to one — the question with its subject missing. The trip's own
+        // segments carry those names; they go in after, and win.
+        baseNames={{
+          ...Object.fromEntries(
+            Object.values(BASES).map((b) => [b.id, locale === "ar" ? b.nameAr : b.name]),
+          ),
+          ...Object.fromEntries(
+            segsForDays
+              .filter((sg) => sg.customName || sg.customNameAr)
+              .map((sg) => [
+                sg.baseId,
+                (locale === "ar" ? sg.customNameAr || sg.customName : sg.customName || sg.customNameAr)!,
+              ]),
+          ),
+        }}
       // Only the titles actually on this trip: the corpus is 530 entries and
       // has no business in the client bundle.
       baseByDay={baseByDay}

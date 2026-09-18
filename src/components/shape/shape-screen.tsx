@@ -605,7 +605,7 @@ function BaseRow({
           <div className="flex items-center gap-2 flex-wrap">
             {/* The city layer: what you actually do while based here. */}
             <Link
-              href={`/trips/${tripId}/city/${base.id}`}
+              href={`/trips/${tripId}/city/${encodeURIComponent(base.id)}`}
               className="font-extrabold text-[16px] underline decoration-dotted underline-offset-4 decoration-muted-foreground/50"
             >
               {ar ? base.nameAr : base.name}
