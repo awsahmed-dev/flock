@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { placeFacts, cityIdeas as cityIdeasTable } from "@/lib/db/schema";
 import { eq, inArray, sql } from "drizzle-orm";
 import { textSearch, nearby, PlacesNotConfiguredError } from "@/lib/places/google";
+import type { Place } from "@/lib/places/types";
 import { coordsFor } from "@/lib/packages/coords";
 
 /**
@@ -184,6 +185,8 @@ export async function cityIdeas(
   baseId: string,
   lat: number,
   lng: number,
+  /** the city's own name — lets us ask Google what it is famous for */
+  cityName?: string | null,
 ): Promise<CityIdea[]> {
   const [cached] = await db
     .select()
@@ -201,40 +204,103 @@ export async function cityIdeas(
   // person first opened a city whose cache had aged out paid for the round
   // trip with their own load time — and a page render wrote to the
   // database, which it has no business doing.
-  void refreshCityIdeas(baseId, lat, lng);
+  void refreshCityIdeas(baseId, lat, lng, cityName);
   return (cached?.places as CityIdea[]) ?? [];
 }
 
-async function refreshCityIdeas(baseId: string, lat: number, lng: number): Promise<void> {
+/**
+ * What to ask Google for, and how much of each.
+ *
+ * One request with all these types in a single `includedTypes` union is
+ * what we used to send, and it produced a Jeddah worth of shopping malls:
+ * thirteen of twenty results. searchNearby defaults to ranking by
+ * POPULARITY, popularity is review count, and a mall collects 75,000
+ * reviews while the Corniche collects 15,000. The Corniche WAS in the
+ * list — at sixteen and twenty, below twelve malls, so the day filler
+ * never reached it.
+ *
+ * Google does not balance a type union, so we balance it: one request per
+ * bucket, each competing only against its own kind, interleaved in this
+ * order. A mall can now take at most two places in a city, and it has to
+ * be a good one to get those.
+ */
+const IDEA_BUCKETS: { types: string[]; take: number }[] = [
+  { types: ["historical_landmark", "cultural_landmark", "monument"], take: 5 },
+  { types: ["tourist_attraction"], take: 5 },
+  { types: ["museum", "art_gallery", "cultural_center"], take: 4 },
+  { types: ["park", "beach", "garden"], take: 4 },
+  { types: ["mosque", "church"], take: 2 },
+  { types: ["aquarium", "zoo", "amusement_park"], take: 3 },
+  { types: ["restaurant"], take: 5 },
+  { types: ["cafe", "coffee_shop"], take: 3 },
+  // Last, and capped hardest. A mall is a real thing people do; it is not
+  // the reason anyone flew to Jeddah.
+  { types: ["market", "shopping_mall"], take: 2 },
+];
+
+/** Round-robin the buckets so the head of the list is varied, not one type. */
+function interleaveIdeas(lists: CityIdea[][]): CityIdea[] {
+  const out: CityIdea[] = [];
+  const seen = new Set<string>();
+  const max = Math.max(0, ...lists.map((l) => l.length));
+  for (let i = 0; i < max; i++) {
+    for (const list of lists) {
+      const p = list[i];
+      if (!p || seen.has(p.placeId)) continue;
+      seen.add(p.placeId);
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+async function refreshCityIdeas(
+  baseId: string,
+  lat: number,
+  lng: number,
+  cityName?: string | null,
+): Promise<void> {
   try {
-    const found = await nearby({
-      lat,
-      lng,
-      radius: 12_000,
-      includedTypes: [
-        "tourist_attraction",
-        "restaurant",
-        "park",
-        "museum",
-        "shopping_mall",
-        "cafe",
-      ],
-      max: 20,
+    const toRow = (p: Place): CityIdea => ({
+      placeId: p.placeId,
+      name: p.name,
+      category: p.category,
+      rating: p.rating,
+      ratingCount: p.userRatingsTotal,
+      photoRef: p.photoRef,
+      address: p.address,
+      lat: p.coords[1],
+      lng: p.coords[0],
     });
-    const rows: CityIdea[] = found
-      // A rating with nobody behind it is noise, not a recommendation.
-      .filter((p) => p.rating != null && (p.userRatingsTotal ?? 0) >= 50)
-      .map((p) => ({
-        placeId: p.placeId,
-        name: p.name,
-        category: p.category,
-        rating: p.rating,
-        ratingCount: p.userRatingsTotal,
-        photoRef: p.photoRef,
-        address: p.address,
-        lat: p.coords[1],
-        lng: p.coords[0],
-      }));
+    // A rating with nobody behind it is noise, not a recommendation.
+    const worth = (p: Place) => p.rating != null && (p.userRatingsTotal ?? 0) >= 50;
+
+    // "Must-see" is not a place TYPE, so searchNearby cannot express it —
+    // it only knows types inside a circle. Text search can, and it is how
+    // Al-Balad, the Floating Mosque and the Corniche reach the list at
+    // all. Still Google's answer, not ours. It leads.
+    const famous = cityName
+      ? await textSearch(`must-see attractions and landmarks in ${cityName}`, {
+          lat,
+          lng,
+          radius: 15_000,
+          languageCode: "ar",
+          max: 10,
+        }).catch(() => [])
+      : [];
+
+    const buckets = await Promise.all(
+      IDEA_BUCKETS.map((b) =>
+        nearby({ lat, lng, radius: 12_000, includedTypes: b.types, languageCode: "ar", max: 20 })
+          .then((ps) => ps.filter(worth).slice(0, b.take).map(toRow))
+          .catch(() => [] as CityIdea[]),
+      ),
+    );
+
+    const rows: CityIdea[] = interleaveIdeas([famous.filter(worth).map(toRow), ...buckets]);
+    // Never overwrite a good cached list with nothing because Google had
+    // a bad minute.
+    if (!rows.length) return;
 
     await db
       .insert(cityIdeasTable)

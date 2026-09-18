@@ -114,6 +114,30 @@ export interface CityBoard {
 }
 
 /** Everything you could add while based here, and where there's room. */
+/**
+ * Google's buckets are not our buckets.
+ *
+ * This was `g.category as PlaceCategory` — a cast, not a conversion.
+ * Google says "eat", "shopping", "coffee"; PlaceCategory says "food",
+ * "shop", "rest". None of those overlap, so every Google place carried a
+ * category outside the type it claimed, the board's filter chips counted
+ * almost nothing, and the `?? "sight"` fallback never fired because a
+ * wrong string is still a string.
+ */
+const GOOGLE_CATEGORY: Record<string, PlaceCategory> = {
+  sight: "sight",
+  eat: "food",
+  coffee: "food",
+  nightlife: "food",
+  shopping: "shop",
+  activity: "walk",
+  nature: "nature",
+  stay: "rest",
+};
+function boardCategory(c: string | null | undefined): PlaceCategory {
+  return (c && GOOGLE_CATEGORY[c]) || "sight";
+}
+
 export async function getCityBoard(tripId: string, baseId: string): Promise<CityBoard | null> {
   const { role } = await requireMember(tripId);
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
@@ -214,7 +238,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
   // stay uses all fourteen, after which this screen has nothing left to
   // suggest. The rest of the city comes from Google — the same API
   // Discover uses — cached per city for a week.
-  const ideas = await cityIdeas(baseId, base.lat, base.lng).catch(() => []);
+  const ideas = await cityIdeas(baseId, base.lat, base.lng, base.nameAr || base.name).catch(() => []);
   for (const g of ideas) {
     if (seen.has(g.name) || gone.has(g.name) || onPlan.has(g.name)) continue;
     seen.add(g.name);
@@ -226,7 +250,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
       whatAr: g.address,
       why: "",
       whyAr: "",
-      category: (g.category as PlaceCategory) ?? "sight",
+      category: boardCategory(g.category),
       rating: g.rating,
       ratingCount: g.ratingCount,
       lat: g.lat,
@@ -255,7 +279,7 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
       nameAr: s.placeName,
       why: "",
       whyAr: "",
-      category: (s.category as PlaceCategory) ?? "sight",
+      category: boardCategory(s.category),
       rating: s.rating,
       lat: s.lat,
       lng: s.lng,
@@ -481,17 +505,35 @@ export async function fillFreeDays(tripId: string, baseId: string) {
     // Seed with the first place the curator listed. It used to seed with
     // the highest rated, which sounds better until you know the ratings
     // were invented — curation order is the real signal and always was.
-    const seed = pool[0];
+    // Open the day on something worth leaving the hotel for.
+    //
+    // This took pool[0] and said the curator's order is the real signal.
+    // True for the curated corpus; meaningless for a city we do not
+    // curate, where the list is Google's and position 0 is just whatever
+    // has the most reviews in town. In Jeddah that was Red Sea Mall,
+    // then Cenomi Mall of Arabia, then جده بارك — the three day-seeds
+    // were literally list positions 1, 2 and 3.
+    const anchor = pool.find((p) => p.category === "sight" || p.category === "nature" || p.category === "walk");
+    const seed = anchor ?? pool[0];
     const chosen = [seed];
     pool = pool.filter((p) => p.key !== seed.key);
+    // One of each kind per day. The walk below only measured distance,
+    // and Jeddah's malls sit a few kilometres apart along one road, so
+    // every day went mall → mall → mall and called it an afternoon.
+    const used: Record<string, number> = { [seed.category]: 1 };
+    const CAP: Record<string, number> = { shop: 1, food: 2 };
     while (chosen.length < perDay && pool.length) {
       const last = chosen[chosen.length - 1];
-      const next = pool.reduce((a, b) =>
+      const eligible = pool.filter((p) => (used[p.category] ?? 0) < (CAP[p.category] ?? 99));
+      // Never stall a day over the cap — a repeat beats an empty slot.
+      const from = eligible.length ? eligible : pool;
+      const next = from.reduce((a, b) =>
         km([last.lat!, last.lng!], [b.lat!, b.lng!]) < km([last.lat!, last.lng!], [a.lat!, a.lng!]) ? b : a,
       );
       // Beyond 15km it is a different afternoon, not the same one.
       if (km([last.lat!, last.lng!], [next.lat!, next.lng!]) > 15) break;
       chosen.push(next);
+      used[next.category] = (used[next.category] ?? 0) + 1;
       pool = pool.filter((p) => p.key !== next.key);
     }
     // Order the day by when each place is actually for, and keep its own

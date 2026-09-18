@@ -915,10 +915,6 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   // is unchanged: a bare city id still means the first visit, so an
   // older client and every op written before this keep working.
   const find = (key: string) => findStay(segments, key);
-  const keyOf = (sg: Segment) => {
-    const keys = stayKeys(segments.map((x) => x.baseId));
-    return keys[segments.indexOf(sg)];
-  };
   /** Nights taken from an existing stay, so the UI can say so out loud. */
   const borrowedFrom: { baseId: BaseId; nights: number }[] = [];
   // Nights that LEFT this base and went somewhere else. A tester tapped
@@ -1242,9 +1238,21 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       nameAr: BASES[id]?.nameAr ?? typed,
     };
   };
+  // Compare stay against stay. `before` is keyed by stay key — a trip may
+  // hold two Jeddahs — and reading it by CITY here made the arithmetic
+  // nonsense: on Jeddah 5 / Riyadh 4 / Jeddah 2, taking one night off the
+  // return leg was reported as «أخذنا ٤ ليالٍ من جدة», because the
+  // one-night row was measured against the five-night stay. Adding a
+  // night to the return leg said Jeddah had LOST two. Every «+» and «−»
+  // on such a trip reported a number that never happened.
+  const savedKeys = stayKeys(saved.map((sg) => sg.baseId));
   const deltas = saved
-    .map((sg) => ({ baseId: sg.baseId, delta: segmentNights(sg) - (before.get(sg.baseId) ?? 0) }))
-    .filter((x) => before.has(x.baseId) && x.delta !== 0 && x.baseId !== touched);
+    .map((sg, i) => ({
+      key: savedKeys[i],
+      baseId: sg.baseId,
+      delta: segmentNights(sg) - (before.get(savedKeys[i]) ?? 0),
+    }))
+    .filter((x) => before.has(x.key) && x.delta !== 0 && x.key !== touched);
   const gave = deltas.filter((x) => x.delta < 0).map((x) => ({ ...label(x.baseId), nights: -x.delta }));
   const got = deltas.filter((x) => x.delta > 0).map((x) => ({ ...label(x.baseId), nights: x.delta }));
   const movedTo = got;

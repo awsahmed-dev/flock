@@ -12,6 +12,14 @@ import type { Place, PlaceCategory, PlaceFeatures } from "./types";
 export function toCategory(types: string[]): PlaceCategory {
   const t = new Set(types);
   if (t.has("lodging") || [...t].some((x) => x.includes("hotel"))) return "stay";
+  // A mall is a mall even though it has a food court.
+  //
+  // This sat BELOW the restaurant test, and Google tags a shopping centre
+  // with `restaurant` because it contains them — so Flamingo Mall and
+  // Cenomi U Walk are stored as "eat" on production. Anything that tries
+  // to limit how many malls land in one day is defeated before it starts
+  // while the malls are wearing someone else's label.
+  if (t.has("shopping_mall") || t.has("department_store")) return "shopping";
   if (t.has("cafe") || t.has("coffee_shop") || t.has("bakery")) return "coffee";
   if (
     t.has("restaurant") ||
@@ -28,10 +36,20 @@ export function toCategory(types: string[]): PlaceCategory {
     t.has("place_of_worship") ||
     t.has("park") ||
     t.has("landmark") ||
-    t.has("historical_place")
+    t.has("historical_place") ||
+    // Added by the Places API after this list was written. Without them
+    // Al-Balad — a UNESCO-listed old town — falls through to "other".
+    t.has("historical_landmark") ||
+    t.has("cultural_landmark") ||
+    t.has("monument") ||
+    t.has("mosque") ||
+    t.has("church") ||
+    t.has("beach") ||
+    t.has("garden") ||
+    t.has("plaza")
   )
     return "sight";
-  if (t.has("shopping_mall") || t.has("store") || t.has("market")) return "shopping";
+  if (t.has("store") || t.has("market")) return "shopping";
   if (
     t.has("amusement_park") ||
     t.has("zoo") ||

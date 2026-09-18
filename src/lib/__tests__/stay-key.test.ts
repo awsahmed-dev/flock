@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { stayKeys, parseStayKey, baseOfStay, findStay, indexOfStay } from "@/lib/packages/stay-key";
 import { gatewayState, gatewayErrands } from "@/lib/packages/gateways";
+import { fitToTrip } from "@/lib/packages/fit";
 import type { Segment } from "@/lib/packages/types";
 
 const segs3 = (ids: string[]): Segment[] =>
@@ -91,5 +92,60 @@ describe("the return leg, as a shape", () => {
     const g = gatewayState(segs3(["jeddah", "riyadh"]), "jeddah", "jeddah");
     expect(g.departMismatch).toBe(true);
     expect(g.departMissing).toBe(false);
+  });
+});
+
+describe("two stays in one city, measured apart", () => {
+  const seg = (baseId: string, order: number, nights: number, checkIn: string): Segment =>
+    ({
+      baseId, order, checkIn,
+      checkOut: new Date(Date.parse(checkIn + "T00:00:00Z") + nights * 86400000)
+        .toISOString().slice(0, 10),
+      transportInMode: null, transportInMinutes: null, dayTrips: [], lockedBy: null,
+    }) as Segment;
+
+  // Jeddah 5 / Riyadh 4 / Jeddah 2 — the shape the return leg creates.
+  const trip = () => [
+    seg("jeddah", 0, 5, "2026-10-05"),
+    seg("riyadh", 1, 4, "2026-10-10"),
+    seg("jeddah", 2, 2, "2026-10-14"),
+  ];
+
+  it("charges the other stays, never the one just edited", () => {
+    // Riyadh 4 → 6 on an 11-night trip: two nights must come from the
+    // Jeddah legs, and Riyadh must still be 6 afterwards. Keyed by city,
+    // "jeddah" exempted BOTH legs from paying.
+    const edited = trip();
+    edited[1].checkOut = "2026-10-16";
+    const out = fitToTrip(edited, 11, "2026-10-05", "riyadh");
+    const nights = (s: Segment) =>
+      (Date.parse(s.checkOut) - Date.parse(s.checkIn)) / 86400000;
+    expect(out.segments.reduce((n, s) => n + nights(s), 0)).toBe(11);
+    expect(nights(out.segments[1])).toBe(6);
+  });
+
+  it("can charge the first Jeddah while the second is the one edited", () => {
+    const edited = trip();
+    edited[2].checkOut = "2026-10-18";
+    const out = fitToTrip(edited, 11, "2026-10-05", "jeddah#2");
+    const nights = (s: Segment) =>
+      (Date.parse(s.checkOut) - Date.parse(s.checkIn)) / 86400000;
+    // The edited stay keeps what it was given; the trip still closes.
+    expect(nights(out.segments[2])).toBe(4);
+    expect(out.segments.reduce((n, s) => n + nights(s), 0)).toBe(11);
+  });
+
+  it("reports each stay's own change, not the city's", () => {
+    // The toast bug: `before` is keyed by stay, so reading it by city
+    // measured the 2-night return leg against the 5-night arrival and
+    // announced a four-night move that never happened.
+    const keys = stayKeys(trip().map((s) => s.baseId));
+    const before = new Map(keys.map((k, i) => [k, [5, 4, 2][i]]));
+    const after = [5, 5, 1];
+    const deltas = keys.map((k, i) => after[i] - (before.get(k) ?? 0));
+    expect(deltas).toEqual([0, 1, -1]);
+    // The same arithmetic keyed by city, which is what shipped first.
+    const byCity = new Map([["jeddah", 5], ["riyadh", 4]]);
+    expect(after[2] - (byCity.get("jeddah") ?? 0)).toBe(-4);
   });
 });
