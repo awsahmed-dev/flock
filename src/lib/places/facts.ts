@@ -289,18 +289,47 @@ async function refreshCityIdeas(
         }).catch(() => [])
       : [];
 
-    const buckets = await Promise.all(
-      IDEA_BUCKETS.map((b) =>
-        nearby({ lat, lng, radius: 12_000, includedTypes: b.types, languageCode: "ar", max: 20 })
-          .then((ps) => ps.filter(worth).slice(0, b.take).map(toRow))
-          .catch(() => [] as CityIdea[]),
-      ),
-    );
+    // One unrecognised type fails the WHOLE request, and Table A grows:
+    // `cultural_landmark`, `monument`, `garden` and friends were added
+    // after the types this file first shipped with. A bucket that 400s
+    // therefore retries its types one at a time and keeps whichever the
+    // API actually knows, so a wrong guess costs one type rather than a
+    // whole category — and a future rename degrades instead of blanking
+    // the city.
+    const askBucket = async (types: string[], take: number): Promise<CityIdea[]> => {
+      const ask = (t: string[]) =>
+        nearby({ lat, lng, radius: 12_000, includedTypes: t, languageCode: "ar", max: 20 });
+      try {
+        return (await ask(types)).filter(worth).slice(0, take).map(toRow);
+      } catch {
+        const out: CityIdea[] = [];
+        const seen = new Set<string>();
+        for (const t of types) {
+          try {
+            for (const p of (await ask([t])).filter(worth)) {
+              if (seen.has(p.placeId)) continue;
+              seen.add(p.placeId);
+              out.push(toRow(p));
+            }
+          } catch {
+            // That type is not one this API version knows. Skip it.
+          }
+        }
+        return out.slice(0, take);
+      }
+    };
+
+    const buckets = await Promise.all(IDEA_BUCKETS.map((b) => askBucket(b.types, b.take)));
 
     const rows: CityIdea[] = interleaveIdeas([famous.filter(worth).map(toRow), ...buckets]);
     // Never overwrite a good cached list with nothing because Google had
-    // a bad minute.
-    if (!rows.length) return;
+    // a bad minute — but say so, because this guard silently hid a total
+    // failure once already: every bucket 400'd on a bad type string, the
+    // city kept serving its old list, and nothing anywhere said why.
+    if (!rows.length) {
+      console.warn("[cityIdeas] no results for", baseId, "— keeping the cached list");
+      return;
+    }
 
     await db
       .insert(cityIdeasTable)
