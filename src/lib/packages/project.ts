@@ -188,13 +188,28 @@ export function projectDays(
   const out: ProjectedDay[] = [];
   let index = 0;
 
+  // One pool per CITY, not per stay.
+  //
+  // A trip that comes back — Jeddah, Riyadh, Jeddah — has two stays in one
+  // city, and a fresh pool for the second would replay the first day of
+  // Jeddah as though you had never been. You have been; you were there
+  // last week. The return leg carries on down the same list.
+  //
+  // It can now run dry, which a single stay could not: two legs together
+  // may outlast the city's curated days. That is already handled — a day
+  // with no shape left becomes an open day rather than a repeat.
+  const pools = new Map<string, CuratedDay[]>();
+  const poolFor = (id: string, base: Base) => {
+    let p = pools.get(id);
+    if (!p) pools.set(id, (p = base.days.slice()));
+    return p;
+  };
+
   ordered.forEach((seg, si) => {
     const base = bases[seg.baseId];
     if (!base) return;
     const nights = segmentNights(seg);
-    // Each curated shape is used at most once per stay. Because a base's
-    // maxNights never exceeds its shape count, this cannot run dry.
-    const pool = base.days.slice();
+    const pool = poolFor(seg.baseId, base);
     const trips = seg.dayTrips.filter((t) => bases[t]);
     let tripCursor = 0;
 

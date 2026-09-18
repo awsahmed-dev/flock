@@ -24,6 +24,7 @@ import { segmentsFromLegs, projectDays, redate, relink, segmentNights, errandsFo
 import { gatewayState, orderForGateways, type GatewayState } from "@/lib/packages/gateways";
 import { curatedBasesInCountry, customBaseId } from "@/lib/packages/destination-base";
 import { fitToTrip } from "@/lib/packages/fit";
+import { stayKeys, findStay } from "@/lib/packages/stay-key";
 import { factsFor, staleNames, refreshFact } from "@/lib/places/facts";
 
 /**
@@ -62,7 +63,14 @@ async function getTrip(tripId: string) {
 /* ── reading ──────────────────────────────────────────────────────────── */
 
 export interface BaseCard {
+  /** the CITY — the library key, the city page, the reactions */
   id: BaseId;
+  /**
+   * the STAY — «jeddah» for the first visit, «jeddah#2» for the return.
+   * Card identity: React keys, drag handles, and every edit op. Equal to
+   * `id` on the common trip that visits each city once.
+   */
+  key: string;
   name: string;
   nameAr: string;
   lat: number;
@@ -123,6 +131,13 @@ export interface ShapeView {
     departNameAr: string;
     /** reversing the chain would satisfy both ends — offer the one-tap fix */
     canAlign: boolean;
+    /**
+     * The flight city is already in the trip, just not at this end — so
+     * the honest repair is to go back to it for a night before flying
+     * home, rather than reorder the trip or rewrite the ticket.
+     */
+    canReturnArrive: boolean;
+    canReturnDepart: boolean;
   };
   isOwner: boolean;
   memberCount: number;
@@ -280,12 +295,14 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     typicalNights: b.typicalNights,
   }));
 
-  const bases: BaseCard[] = segments.map((s) => {
+  const cardKeys = stayKeys(segments.map((s) => s.baseId));
+  const bases: BaseCard[] = segments.map((s, si) => {
     const b = LIB[s.baseId];
     const mine = reacts.find((r) => r.baseId === s.baseId && r.userId === user.id);
     const forBase = reacts.filter((r) => r.baseId === s.baseId);
     return {
       id: b.id,
+      key: cardKeys[si],
       name: b.name,
       nameAr: b.nameAr,
       lat: b.lat,
@@ -359,6 +376,12 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
       canAlign:
         (g.arriveMismatch || g.departMismatch) &&
         orderForGateways(segments, (s) => s.baseId, trip.arriveBaseId, trip.departBaseId).reversed,
+      // Offered only when the city is genuinely elsewhere in the trip and
+      // the shape has room for one more stay.
+      canReturnArrive:
+        g.arriveMismatch && segments.length < 8 && segments.some((s) => s.baseId === g.arrive),
+      canReturnDepart:
+        g.departMismatch && segments.length < 8 && segments.some((s) => s.baseId === g.depart),
     },
     isOwner: role === "owner",
     memberCount: members.length,
@@ -807,6 +830,20 @@ const zEdit = z.discriminatedUnion("op", [
   }),
   /** the other repair for a mismatch: move the shape to match the flights */
   z.object({ op: z.literal("alignGateways") }),
+  /**
+   * The third repair, and usually the true one: come back.
+   *
+   * "I land in Jeddah, stay five days, go to Riyadh for the rest, then
+   * back to Jeddah and fly home from there." Neither existing repair says
+   * that. Reordering would put Riyadh first, which is not the trip; using
+   * the shape's own end would claim you fly home from Riyadh, which is
+   * not the ticket. The shape is simply missing its last night.
+   */
+  z.object({
+    op: z.literal("returnLeg"),
+    end: z.enum(["arrive", "depart"]),
+    nights: z.number().int().min(1).max(14).default(1),
+  }),
 ]);
 export type ShapeEdit = z.infer<typeof zEdit>;
 
@@ -829,15 +866,26 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   if (!segments.length) throw new Error("No shape yet");
 
   const tripNights = tripNightsBetween(trip.startDate, trip.endDate);
-  const find = (id: string) => segments.find((s) => s.baseId === id);
+  // A trip may visit a city twice — out through Jeddah, back through
+  // Jeddah — so "which stay" is a position, not a city. The wire format
+  // is unchanged: a bare city id still means the first visit, so an
+  // older client and every op written before this keep working.
+  const find = (key: string) => findStay(segments, key);
+  const keyOf = (sg: Segment) => {
+    const keys = stayKeys(segments.map((x) => x.baseId));
+    return keys[segments.indexOf(sg)];
+  };
   /** Nights taken from an existing stay, so the UI can say so out loud. */
   const borrowedFrom: { baseId: BaseId; nights: number }[] = [];
   // Nights that LEFT this base and went somewhere else. A tester tapped
   // minus on Tokyo twice and the freed night went to Osaka the first time
   // and Kyoto the second, with no message either time — same button, two
   // answers, and no way to tell where his night had gone.
-  const before = new Map(segments.map((sg) => [sg.baseId, segmentNights(sg)]));
-  const orderBefore = segments.map((sg) => sg.baseId).join(">");
+  // Keyed by STAY, not city: with two Jeddah legs a city-keyed map holds
+  // one entry for both, and "did anything change" answers wrongly.
+  const beforeKeys = stayKeys(segments.map((sg) => sg.baseId));
+  const before = new Map(segments.map((sg, i) => [beforeKeys[i], segmentNights(sg)]));
+  const orderBefore = beforeKeys.join(">");
   /** a change the nights map can't see — setting an end, or losing one */
   let gatewayChanged = false;
 
@@ -860,14 +908,23 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       break;
     }
     case "reorder": {
-      const pos = new Map(e.order.map((id, i) => [id, i]));
-      segments.sort((a, b) => (pos.get(a.baseId) ?? 99) - (pos.get(b.baseId) ?? 99));
+      // By stay, not by city: two Jeddah legs share a city and would sort
+      // to the same slot, so a drag would shuffle them arbitrarily.
+      const pos = new Map(e.order.map((k, i) => [k, i]));
+      const keysNow = stayKeys(segments.map((s) => s.baseId));
+      const slot = new Map(segments.map((s, i) => [s, pos.get(keysNow[i]) ?? 99]));
+      segments.sort((a, b) => (slot.get(a) ?? 99) - (slot.get(b) ?? 99));
       segments.forEach((s, i) => (s.order = i));
       clearLegs(segments);
       break;
     }
     case "add": {
-      if (find(e.baseId)) throw new Error("Already in this trip");
+      // A city may be visited twice — out through Jeddah, back through
+      // Jeddah to fly home. What is never meant is two Jeddahs in a row,
+      // which is a double-tap, not a return leg.
+      if (segments[segments.length - 1]?.baseId === e.baseId) {
+        throw new Error("You already end the trip there");
+      }
       const base = BASES[e.baseId];
       if (!base || base.maxNights < 1) throw new Error("Not a base you can stay in");
       if (segments.length >= 8) throw new Error("That's a lot of moving");
@@ -918,7 +975,11 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       // «جدة» — a perfectly good name — came back "Give the city a name".
       if (!e.name.trim()) throw new Error("Give the city a name");
       const slug = customBaseId(e.name);
-      if (segments.some((sg) => sg.baseId === slug)) throw new Error("Already in this trip");
+      // Same rule as `add`: coming back to a city is a real trip shape;
+      // two of the same city back-to-back is a slip.
+      if (segments[segments.length - 1]?.baseId === slug) {
+        throw new Error("You already end the trip there");
+      }
       if (segments.length >= 8) throw new Error("That's a lot of moving");
 
       const assignedNow = segments.reduce((n, sg) => n + segmentNights(sg), 0);
@@ -960,7 +1021,9 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       if (seg.lockedBy) throw new Error("This stay is booked");
       if (segments.length <= 1) throw new Error("A trip needs somewhere to sleep");
       const freed = segmentNights(seg);
-      segments = segments.filter((s) => s.baseId !== e.baseId);
+      // By identity. Filtering on the city id removed BOTH Jeddah legs
+      // when the user asked to drop one of them.
+      segments = segments.filter((s) => s !== seg);
       // Give the nights back rather than shortening the trip.
       const taker = segments.find((s) => !s.lockedBy) ?? segments[0];
       const base = BASES[taker.baseId];
@@ -1036,6 +1099,57 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
       clearLegs(segments);
       break;
     }
+    case "returnLeg": {
+      const want = trip[e.end === "arrive" ? "arriveBaseId" : "departBaseId"];
+      if (!want) throw new Error("No flight city set for that end");
+      // Only a city the trip already visits. Coming "back" to somewhere
+      // you have never been is an add, and says so.
+      const twin = segments.find((s) => s.baseId === want);
+      if (!twin) throw new Error("Not in this trip");
+      const atEnd = e.end === "arrive" ? segments[0] : segments[segments.length - 1];
+      if (atEnd.baseId === want) throw new Error("Already the end of the trip");
+      if (segments.length >= 8) throw new Error("That's a lot of moving");
+
+      // Find the nights the same way `add` does: spend the trip's own
+      // slack first, and only then borrow — out loud — from the longest
+      // stay. Taking them silently from Riyadh is how a tester lost two
+      // nights he had deliberately put there.
+      const assignedNow = segments.reduce((n, sg) => n + segmentNights(sg), 0);
+      let got = Math.min(e.nights, Math.max(0, tripNights - assignedNow));
+      while (got < e.nights) {
+        const donor = segments
+          .filter((sg) => !sg.lockedBy && segmentNights(sg) > 1)
+          .sort((a, b) => segmentNights(b) - segmentNights(a))[0];
+        if (!donor) break;
+        const take = Math.min(e.nights - got, segmentNights(donor) - 1);
+        if (take <= 0) break;
+        donor.checkOut = addIso(donor.checkIn, segmentNights(donor) - take);
+        borrowedFrom.push({ baseId: donor.baseId, nights: take });
+        got += take;
+      }
+      if (got < 1) throw new Error("No nights free — shorten a stay first");
+
+      // Carry the twin's own name and coordinates: a custom city that
+      // lost them would come back as a second, nameless stay.
+      const leg: Segment = {
+        baseId: want,
+        order: 0,
+        checkIn: trip.startDate,
+        checkOut: addIso(trip.startDate, got),
+        transportInMode: null,
+        transportInMinutes: null,
+        dayTrips: [],
+        lockedBy: null,
+        customName: twin.customName ?? null,
+        customNameAr: twin.customNameAr ?? null,
+        customLat: twin.customLat ?? null,
+        customLng: twin.customLng ?? null,
+      };
+      segments = e.end === "arrive" ? [leg, ...segments] : [...segments, leg];
+      segments.forEach((s, i) => (s.order = i));
+      clearLegs(segments);
+      break;
+    }
   }
 
   // The trip length is fixed by its dates; the shape must always cover it
@@ -1049,13 +1163,14 @@ export async function editShape(tripId: string, edit: ShapeEdit) {
   // every other city is already at its useful maximum, so the freed night
   // has nowhere to go — reads as a frozen screen. Say what is really
   // blocking it, and point at the fix.
+  const afterKeys = stayKeys(segments.map((sg) => sg.baseId));
   const unchanged =
     !gatewayChanged &&
     // A reorder moves no nights at all, so counting only nights called every
     // drag a no-op and told the user nothing had happened.
-    segments.map((sg) => sg.baseId).join(">") === orderBefore &&
+    afterKeys.join(">") === orderBefore &&
     segments.length === before.size &&
-    segments.every((sg) => before.get(sg.baseId) === segmentNights(sg));
+    segments.every((sg, i) => before.get(afterKeys[i]) === segmentNights(sg));
 
   const saved = await persist(tripId, segments, trip.startDate, user.id);
 

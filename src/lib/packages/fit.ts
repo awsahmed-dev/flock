@@ -1,6 +1,7 @@
 import type { BaseId, Segment } from "@/lib/packages/types";
 import { redate, segmentNights } from "@/lib/packages/project";
 import { addDays } from "@/lib/packages/allocate";
+import { findStay } from "@/lib/packages/stay-key";
 
 /**
  * Make the shape cover the trip exactly. No more, and no less.
@@ -37,8 +38,13 @@ export function fitToTrip(
   input: Segment[],
   tripNights: number,
   tripStart: string,
-  /** the stay the user just acted on — it must not pay for its own change */
-  justTouched: BaseId | null = null,
+  /**
+   * The stay the user just acted on — it must not pay for its own change.
+   *
+   * A STAY key, not a city: a trip can hold two Jeddah legs, and a city
+   * here would exempt both of them from funding an edit to one.
+   */
+  justTouched: string | null = null,
 ): Fitted {
   let segments = redate(input, tripStart);
   const dropped: BaseId[] = [];
@@ -51,8 +57,12 @@ export function fitToTrip(
   while (total !== tripNights && segments.length && guard-- > 0) {
     const diff = tripNights - total;
 
+    // Re-resolved every pass: the loop re-dates, which clones every
+    // segment, so a reference captured once goes stale after one turn.
+    const touched = justTouched ? findStay(segments, justTouched) : undefined;
+
     const canTake = (sg: Segment) =>
-      !sg.lockedBy && sg.baseId !== justTouched && (diff > 0 || segmentNights(sg) > 1);
+      !sg.lockedBy && sg !== touched && (diff > 0 || segmentNights(sg) > 1);
     // Prefer any stay other than the one just edited; fall back to it only
     // when nothing else can move, because the shape still has to close.
     const flex =

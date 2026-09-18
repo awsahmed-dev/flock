@@ -76,7 +76,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
   }
 
   const bases = order
-    ? order.map((id) => view.bases.find((b) => b.id === id)!).filter(Boolean)
+    ? order.map((k) => view.bases.find((b) => b.key === k)!).filter(Boolean)
     : view.bases;
 
   const assigned = bases.reduce((n, b) => n + b.nights, 0);
@@ -114,7 +114,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const ids = bases.map((b) => b.id);
+    const ids = bases.map((b) => b.key);
     const next = arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id)));
     setOrder(next);
     run(() => editShape(tripId, { op: "reorder", order: next }));
@@ -199,15 +199,21 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
             toast.success(t("shape.gatewayReversed"));
           })
         }
+        onReturn={() =>
+          run(async () => {
+            await editShape(tripId, { op: "returnLeg", end: "arrive", nights: 1 });
+            toast.success(t("shape.gatewayReturned"));
+          })
+        }
       />
 
       {/* ── the bases ───────────────────────────────────────────────── */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={bases.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={bases.map((b) => b.key)} strategy={verticalListSortingStrategy}>
           <div className="px-4 space-y-1">
             {bases.map((b, i) => (
               <BaseRow
-                key={b.id}
+                key={b.key}
                 base={b}
                 first={i === 0}
                 single={single}
@@ -220,7 +226,7 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 tripNights={view.tripNights}
                 onNights={(n) =>
                   run(async () => {
-                    const r = await editShape(tripId, { op: "nights", baseId: b.id, nights: n });
+                    const r = await editShape(tripId, { op: "nights", baseId: b.key, nights: n });
                     for (const d of r.dropped ?? []) {
                       toast.info(t("routes.dropped", { places: ar ? d.nameAr : d.name }));
                     }
@@ -238,15 +244,15 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                 }
                 onRemove={() =>
                   run(async () => {
-                    const r = await editShape(tripId, { op: "remove", baseId: b.id });
+                    const r = await editShape(tripId, { op: "remove", baseId: b.key });
                     for (const x of r.movedTo ?? []) {
                       toast.info(t("shape.gaveTo", { place: ar ? x.nameAr : x.name, count: x.nights }));
                     }
                   })
                 }
-                onMode={(m) => run(() => editShape(tripId, { op: "transport", baseId: b.id, mode: m }))}
-                onDayTrip={(id, on) => run(() => editShape(tripId, { op: "dayTrip", baseId: b.id, tripId: id, on }))}
-                onLock={(l) => run(() => editShape(tripId, { op: "lock", baseId: b.id, lock: l }))}
+                onMode={(m) => run(() => editShape(tripId, { op: "transport", baseId: b.key, mode: m }))}
+                onDayTrip={(id, on) => run(() => editShape(tripId, { op: "dayTrip", baseId: b.key, tripId: id, on }))}
+                onLock={(l) => run(() => editShape(tripId, { op: "lock", baseId: b.key, lock: l }))}
                 onReact={(r) => run(() => reactToBase(tripId, b.id, r))}
                 tripId={tripId}
               />
@@ -266,6 +272,12 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
         busy={busy}
         open={gwOpen === "depart"}
         onToggle={() => setGwOpen((v) => (v === "depart" ? null : "depart"))}
+        onReturn={() =>
+          run(async () => {
+            await editShape(tripId, { op: "returnLeg", end: "depart", nights: 1 });
+            toast.success(t("shape.gatewayReturned"));
+          })
+        }
         onSet={(baseId) =>
           run(async () => {
             await editShape(tripId, { op: "gateway", end: "depart", baseId });
@@ -513,7 +525,7 @@ function BaseRow({
   onLock: (l: "hotel" | null) => void;
   onReact: (r: "love" | "ok" | "skip") => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: base.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: base.key });
   const [modeOpen, setModeOpen] = useState(false);
   const locked = !!base.lockedBy;
   const atMax = base.nights >= base.maxNights;
@@ -814,6 +826,7 @@ function GatewayRow({
   onToggle,
   onSet,
   onAlign,
+  onReturn,
 }: {
   end: "arrive" | "depart";
   view: ShapeView;
@@ -826,6 +839,7 @@ function GatewayRow({
   onToggle: () => void;
   onSet: (baseId: string | null) => void;
   onAlign: () => void;
+  onReturn: () => void;
 }) {
   const g = view.gateways;
   const isArrive = end === "arrive";
@@ -888,12 +902,27 @@ function GatewayRow({
               <div className="flex flex-wrap gap-2">
                 {/* Only offered when reversing actually reaches both ends —
                     a button that throws when pressed is worse than none. */}
+                {/* Usually the true repair, so it leads: the trip is not
+                    in the wrong order and the ticket is not wrong — the
+                    shape is just missing the night you come back for. */}
+                {(isArrive ? g.canReturnArrive : g.canReturnDepart) && !missing && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={onReturn}
+                    className="min-h-11 px-3.5 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-bold"
+                  >
+                    {t(isArrive ? "shape.gatewayReturnArrive" : "shape.gatewayReturnDepart", {
+                      gateway: city,
+                    })}
+                  </button>
+                )}
                 {g.canAlign && !missing && (
                   <button
                     type="button"
                     disabled={busy}
                     onClick={onAlign}
-                    className="min-h-11 px-3.5 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-bold"
+                    className="min-h-11 px-3.5 rounded-xl border border-border text-[12.5px] font-semibold"
                   >
                     {t("shape.gatewayAlign")}
                   </button>
@@ -915,7 +944,10 @@ function GatewayRow({
           <div className="px-3.5 pb-3 pt-0.5">
             <p className="text-[11.5px] text-muted-foreground mb-2">{t("shape.gatewayPick")}</p>
             <div className="flex flex-wrap gap-2">
-              {bases.map((b) => {
+              {/* By CITY, not by stay. A trip that comes back to Jeddah
+                  has two Jeddah cards, and listing both here asks you to
+                  choose between a city and itself. */}
+              {bases.filter((b, i) => bases.findIndex((x) => x.id === b.id) === i).map((b) => {
                 const active = (isArrive ? g.arrive : g.depart) === b.id;
                 return (
                   <button
