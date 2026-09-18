@@ -1055,10 +1055,34 @@ export const ROUTES: Route[] = [...REGION_ROUTES, ...REGIONS.flatMap((r) => r.ro
  * side; picking one for the user is the thing the old single-package lookup
  * got wrong.
  */
+/**
+ * Fold the spellings of Arabic that mean the same word.
+ *
+ * Arabic is written with optional diacritics and several interchangeable
+ * letter forms, so one city has many correct spellings: a user's
+ * «تبلّيسي» carries a shadda our corpus's «تبليسي» does not, and the two
+ * never matched. On an Arabic-first product that is not an edge case, it
+ * is Tuesday — it silently sent a Tbilisi trip to a made-up custom city.
+ *
+ * Strips tashkeel and tatweel, and folds the alef, ya, ta-marbuta, hamza
+ * and waw variants onto one form. Applied to BOTH sides of every match.
+ */
+export function foldArabic(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+    .replace(/[\u0622\u0623\u0625\u0671]/g, "\u0627")
+    .replace(/\u0649/g, "\u064A")
+    .replace(/\u0629/g, "\u0647")
+    .replace(/\u0624/g, "\u0648")
+    .replace(/\u0626/g, "\u064A")
+    .trim();
+}
+
 export function findRoutes(destination: string): Route[] {
-  const d = (destination || "").toLowerCase();
-  if (!d.trim()) return [];
-  return ROUTES.filter((r) => r.match.some((m) => d.includes(m)));
+  const d = foldArabic(destination);
+  if (!d) return [];
+  return ROUTES.filter((r) => r.match.some((m) => d.includes(foldArabic(m))));
 }
 
 /**
@@ -1071,16 +1095,17 @@ export function findRoutes(destination: string): Route[] {
  * the country key is both longer and declared first.
  */
 export function findBaseByText(text: string): Base | null {
-  const d = (text || "").toLowerCase();
-  if (!d.trim()) return null;
+  const d = foldArabic(text);
+  if (!d) return null;
 
   let best: Base | null = null;
   let bestScore = 0;
   for (const base of Object.values(BASES)) {
     for (const m of base.match) {
-      if (!d.includes(m)) continue;
+      const folded = foldArabic(m);
+      if (!folded || !d.includes(folded)) continue;
       const isOwnName = m === base.id || m === base.name.toLowerCase() || m === base.nameAr;
-      const score = m.length + (isOwnName ? 100 : 0);
+      const score = folded.length + (isOwnName ? 100 : 0);
       if (score > bestScore) {
         best = base;
         bestScore = score;

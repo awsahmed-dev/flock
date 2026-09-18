@@ -1919,5 +1919,8 @@
     "reviews": "What people said",
     "noGoogleInfo": "No photos or reviews for this one yet.",
     "openInMaps": "Open in Google Maps"
+  },
+  "trips": {
+    "autoName": "{city} Trip"
   }
 }

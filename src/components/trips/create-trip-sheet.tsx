@@ -93,9 +93,12 @@ export function CreateTripSheet({ open, onClose }: { open: boolean; onClose: () 
   useEffect(() => {
     if (!nameDirty && destinationSettled) {
       const city = destinationSettled.split(",")[0].trim();
-      setName(city ? `${city} Trip` : "");
+      // Hardcoded English. An Arabic destination came out "السعودية Trip"
+      // — half the app's own language, half not, on the title of the
+      // thing the user is naming.
+      setName(city ? t("trips.autoName", { city }) : "");
     }
-  }, [destinationSettled, nameDirty]);
+  }, [destinationSettled, nameDirty, t]);
 
   const DURATIONS: { key: string; label: string; days: number }[] = [
     { key: "weekend", label: t("create.durWeekend"), days: 2 },

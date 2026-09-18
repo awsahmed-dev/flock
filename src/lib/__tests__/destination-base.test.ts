@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { baseForDestination, customBaseId } from "@/lib/packages/destination-base";
+import { baseForDestination, basesForDestination, customBaseId } from "@/lib/packages/destination-base";
 
 /**
  * The rule that gave 42 pre-existing trips a shape. Every case here is a
@@ -50,5 +50,71 @@ describe("which city a destination means", () => {
     expect(id("Ygg")).toBe("custom:ygg");
     expect(baseForDestination("").base).toBeNull();
     expect(baseForDestination("   ").customName).toBe("");
+  });
+});
+
+describe("splitting a multi-city destination", () => {
+  const ids = (s: string) =>
+    basesForDestination(s).map((m) => m.base?.id ?? customBaseId(m.customName));
+
+  it("splits a real list of cities", () => {
+    expect(ids("Kuala Lumpur, Langkawi, Penang")).toEqual([
+      "kuala_lumpur",
+      "langkawi",
+      "custom:penang",
+    ]);
+    expect(ids("Langkawi, Penang, Kuala Lumpur")).toEqual([
+      "langkawi",
+      "custom:penang",
+      "kuala_lumpur",
+    ]);
+    // One city we know is enough to prove the rest are cities too.
+    expect(ids("Penang, Langkawi")).toEqual(["custom:penang", "langkawi"]);
+  });
+
+  it("keeps the order the traveller wrote them in", () => {
+    expect(ids("Kyoto, Tokyo")).toEqual(["kyoto", "tokyo"]);
+    expect(ids("Tokyo, Kyoto")).toEqual(["tokyo", "kyoto"]);
+  });
+
+  it("does NOT split a city and its country", () => {
+    // The failure that would matter most: every autocompleted destination
+    // in the database looks like this.
+    expect(ids("Kuala Lumpur, Malaysia")).toEqual(["kuala_lumpur"]);
+    expect(ids("Tokyo, Japan")).toEqual(["tokyo"]);
+    expect(ids("Cairo, Egypt")).toEqual(["cairo"]);
+    expect(ids("Lisbon, Portugal")).toEqual(["lisbon"]);
+  });
+
+  it("does NOT invent a stay out of a region or an airport suffix", () => {
+    expect(ids("Kuching, Sarawak, Malaysia")).toEqual(["custom:kuching"]);
+    expect(ids("Tbilisi International Airport, تبلّيسي، جورجيا")).toEqual(["tbilisi"]);
+  });
+
+  it("drops a city repeated in the same list", () => {
+    expect(ids("Tokyo, Kyoto, Tokyo")).toEqual(["tokyo", "kyoto"]);
+  });
+
+  it("handles a single city, and nothing at all", () => {
+    expect(ids("Langkawi")).toEqual(["langkawi"]);
+    expect(ids("")).toEqual([]);
+  });
+});
+
+describe("Arabic spelling variants resolve to the same city", () => {
+  // Arabic is written with optional diacritics and interchangeable letter
+  // forms. A user typing the same city a different-but-correct way used to
+  // land on an invented custom base.
+  it("ignores diacritics", () => {
+    expect(baseForDestination("تبلّيسي").base?.id).toBe("tbilisi");
+    expect(baseForDestination("تبليسي").base?.id).toBe("tbilisi");
+  });
+
+  it("folds alef and ya variants", () => {
+    expect(baseForDestination("الامارات").base?.id).toBeTruthy();
+    expect(baseForDestination("الإمارات").base?.id).toBeTruthy();
+    expect(baseForDestination("الإمارات").base?.id).toBe(
+      baseForDestination("الامارات").base?.id,
+    );
   });
 });

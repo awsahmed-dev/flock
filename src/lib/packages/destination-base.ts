@@ -1,4 +1,4 @@
-import { findBaseByText, findRoutes, BASES } from "@/lib/packages/library";
+import { findBaseByText, findRoutes, foldArabic, BASES } from "@/lib/packages/library";
 import type { Base } from "@/lib/packages/types";
 
 /**
@@ -59,4 +59,75 @@ export function customBaseId(name: string): string {
       .replace(/^-|-$/g, "")
       .slice(0, 40)
   );
+}
+
+/**
+ * Every city a destination names, in the order it names them.
+ *
+ * "Kuala Lumpur, Langkawi, Penang" is three cities. "Kuala Lumpur,
+ * Malaysia" is one city and its country. Both are a comma-separated list
+ * and telling them apart is the whole problem — get it wrong in one
+ * direction and a three-city trip collapses into one, get it wrong in the
+ * other and a Kuching trip acquires an imaginary stay in Sarawak.
+ *
+ * The rule: a part only counts as a city if it is one we curate, or if at
+ * least two parts already are. That is deliberately conservative — it
+ * splits the lists we can be sure about and leaves anything ambiguous as a
+ * single stay, which is exactly what it does today. A trip that should
+ * have been split is one tap from being split by hand; a trip wrongly
+ * split has invented a leg the traveller never planned.
+ */
+export function basesForDestination(destination: string): DestinationMatch[] {
+  const parts = (destination || "")
+    .split(/[,،]/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length < 2) {
+    const one = baseForDestination(destination);
+    return one.customName ? [one] : [];
+  }
+
+  // A part that names a country is scenery, not a stay.
+  //
+  // Testing this with "does it resolve to a base?" does not work, because
+  // several bases deliberately carry their own country as a match key so
+  // that a bare "Malaysia" still lands somewhere. That made "Malaysia"
+  // look like a city and split "Kuching, Sarawak, Malaysia" into three
+  // stays. A part is only a city if it matches a base by the base's OWN
+  // name — otherwise it matched through a country key, and it is a country.
+  const ownName = (p: string) => {
+    const b = findBaseByText(p);
+    if (!b) return false;
+    const f = foldArabic(p);
+    return [b.id, b.name, b.nameAr].some((n) => {
+      const nf = foldArabic(String(n));
+      return nf.length > 0 && (f.includes(nf) || nf.includes(f));
+    });
+  };
+  const isCountry = (p: string) => !ownName(p) && findRoutes(p).length > 0;
+  const cities = parts.filter((p) => !isCountry(p));
+  const curated = cities.map((p) => findBaseByText(p)).filter(Boolean) as Base[];
+
+  // One recognised city among two or more parts is enough to tell us this
+  // is a list of cities, and then its unfamiliar neighbours are cities
+  // too: "Penang, Langkawi" splits because Langkawi is one we know.
+  //
+  // "Kuching, Sarawak, Malaysia" does not, because nothing in it is a city
+  // we recognise — so Sarawak stays what it is, a region we must not turn
+  // into a stay nobody planned.
+  if (cities.length < 2 || curated.length < 1) {
+    const one = baseForDestination(destination);
+    return one.customName ? [one] : [];
+  }
+
+  const seen = new Set<string>();
+  const out: DestinationMatch[] = [];
+  for (const p of cities) {
+    const base = findBaseByText(p);
+    const key = base ? base.id : customBaseId(p);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ base, customName: p, how: base ? "city" : "typed" });
+  }
+  return out;
 }
