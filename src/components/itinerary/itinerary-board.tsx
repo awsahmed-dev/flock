@@ -1439,7 +1439,16 @@ function SortableItemRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled: isAnchor });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const TypeCfg = TYPE_CONFIG[item.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.other;
-  const TypeIcon = TypeCfg.icon;
+  // A booked flight is "transport", and transport draws a car. So a Doha
+  // connection sat in the plan under a little orange car. When the booking
+  // tells us what it actually is, it wins — the generic type is only a
+  // fallback for stops nobody has booked.
+  const TypeIcon =
+    bookingMeta?.bookingType === "flight"
+      ? Plane
+      : bookingMeta?.bookingType === "stay"
+        ? Bed
+        : TypeCfg.icon;
 
   // Fix 3: horizontal swipe-left to reveal a delete zone. Reordering is
   // handle-only (dnd-kit listeners live on the grip button), so a horizontal

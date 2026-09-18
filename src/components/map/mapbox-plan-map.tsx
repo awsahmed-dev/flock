@@ -26,6 +26,32 @@ import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker, type Popu
  * recreated each items-change because Mapbox sources are cheap to swap.
  */
 
+/**
+ * Teach Mapbox to read Arabic.
+ *
+ * Mapbox GL does not shape or order right-to-left text on its own: without
+ * this plugin every Arabic label on the map comes out reversed and with the
+ * letters unjoined. On the Jeddah plan «مدارس دار الفرسان» rendered as
+ * «ناسرفلا راد سرادم» — the street names were not merely ugly, they were
+ * unreadable, on an Arabic-first product.
+ *
+ * Must be called before any map is constructed, and exactly once per page:
+ * calling it twice throws. Lazy, so the ~200KB only loads when a map does.
+ */
+function ensureRtlText() {
+  try {
+    if (mapboxgl.getRTLTextPluginStatus() !== "unavailable") return;
+    mapboxgl.setRTLTextPlugin(
+      "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.3.0/mapbox-gl-rtl-text.js",
+      null,
+      true,
+    );
+  } catch (e) {
+    // A map with badly-shaped labels still beats no map at all.
+    console.warn("[mapbox] RTL text plugin unavailable", e);
+  }
+}
+
 export interface PlanMapItem {
   id: string;
   title: string;
@@ -134,6 +160,7 @@ export function MapboxPlanMap({
       return;
     }
     mapboxgl.accessToken = token;
+    ensureRtlText();
 
     const initialCenter: [number, number] =
       destinationCenter ?? [items[0]?.lng ?? 0, items[0]?.lat ?? 0];
