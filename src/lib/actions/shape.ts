@@ -432,7 +432,11 @@ async function reproject(
   // What Google already knows about these places. A cache read only — the
   // refresh below runs after the plan is written, so a slow or missing
   // Places API can never hold up someone's edit.
-  const namesOnPlan = days.flatMap((d) => d.places.map((p) => p.name));
+  // Not the travel legs. "Flight to Langkawi" is the move between two
+  // cities, not somewhere you go — and asking Google about it came back
+  // with 4.3 from 5,096 reviews for some airport counter, printed on the
+  // plan as if the flight itself had been reviewed.
+  const namesOnPlan = days.flatMap((d) => d.places.filter((p) => !p.leg).map((p) => p.name));
   const facts = await factsFor(namesOnPlan).catch(() => new Map());
 
   const rows: (typeof itineraryItems.$inferInsert)[] = [];
@@ -467,9 +471,10 @@ async function reproject(
           topTip: p.why || null,
           topTipAr: p.whyAr || null,
           // Google's, or a save's. Never ours. `facts` is a cache read —
-          // no network on this path.
-          rating: facts.get(p.name)?.rating ?? p.savedRating ?? null,
-          ratingCount: facts.get(p.name)?.ratingCount ?? null,
+          // no network on this path. A leg is a journey, not a venue, so it
+          // carries no score however tempting the match looked.
+          rating: p.leg ? null : (facts.get(p.name)?.rating ?? p.savedRating ?? null),
+          ratingCount: p.leg ? null : (facts.get(p.name)?.ratingCount ?? null),
           priceLevel: p.priceBand ?? null,
           provider: "package",
           baseId: day.baseId,
