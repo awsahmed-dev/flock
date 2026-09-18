@@ -248,11 +248,25 @@ export async function createItineraryItemFromGooglePlace(input: {
       eq(itineraryItems.tripId, input.tripId),
       eq(itineraryItems.dayDate, input.dayDate),
     ),
-    columns: { sortOrder: true },
+    columns: { sortOrder: true, googlePlaceId: true, id: true },
   });
   const sortOrder = existingForDay.length;
 
   const p = input.place;
+
+  // The same place, twice on one day, is never what anyone meant.
+  //
+  // Found on production: "The Rabbit Hole" sits twice on 20 September in
+  // one Kuala Lumpur trip — the same Google place id, added 36 minutes
+  // apart. Another trip has the same stop twice six seconds apart, which
+  // is a double-tap. Nothing in the database prevents it and nothing in
+  // this path checked, so every re-save added another row.
+  //
+  // Adding it again is treated as already done rather than as an error:
+  // the place IS on the day, which is what the person wanted, and an
+  // error message for a tap that achieved the goal only confuses.
+  const already = existingForDay.find((x) => p.placeId && x.googlePlaceId === p.placeId);
+  if (already) return { id: already.id, dayDate: input.dayDate, duplicate: true as const };
   const photoUrl = p.photoRef
     ? `/api/discover/photo?ref=${encodeURIComponent(p.photoRef)}&w=800`
     : null;
