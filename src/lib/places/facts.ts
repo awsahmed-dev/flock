@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { placeFacts } from "@/lib/db/schema";
-import { inArray, sql } from "drizzle-orm";
-import { textSearch, PlacesNotConfiguredError } from "@/lib/places/google";
+import { placeFacts, cityIdeas as cityIdeasTable } from "@/lib/db/schema";
+import { eq, inArray, sql } from "drizzle-orm";
+import { textSearch, nearby, PlacesNotConfiguredError } from "@/lib/places/google";
 import { coordsFor } from "@/lib/packages/coords";
 
 /**
@@ -148,5 +148,93 @@ export async function refreshFact(name: string): Promise<boolean> {
     // A transient failure is not a miss — leave the row alone so the next
     // pass tries again rather than caching "Google has nothing".
     return true;
+  }
+}
+
+/* ── the rest of the city ─────────────────────────────────────────────── */
+
+/** A week. A city's places do not change hourly, and calls cost money. */
+const IDEAS_STALE_DAYS = 7;
+
+export interface CityIdea {
+  placeId: string;
+  name: string;
+  category: string;
+  rating: number | null;
+  ratingCount: number | null;
+  photoRef: string | null;
+  address: string | null;
+  lat: number;
+  lng: number;
+}
+
+/**
+ * What else there is to do in a city, from Google.
+ *
+ * The curated corpus is finite on purpose — Langkawi has fourteen places
+ * and a five-night stay uses all fourteen. After that the screen whose job
+ * is answering "what do I do here" has nothing left to say, which is
+ * exactly when someone starts asking.
+ *
+ * So the tail of that list comes from the Places API Discover already uses.
+ * Cached per city for a week: the difference between a feature and a bill.
+ * Returns [] with no key, and the screen falls back to its Discover door.
+ */
+export async function cityIdeas(
+  baseId: string,
+  lat: number,
+  lng: number,
+): Promise<CityIdea[]> {
+  const [cached] = await db
+    .select()
+    .from(cityIdeasTable)
+    .where(eq(cityIdeasTable.baseId, baseId));
+
+  const fresh =
+    cached && cached.fetchedAt.getTime() > Date.now() - IDEAS_STALE_DAYS * 86_400_000;
+  if (fresh) return (cached.places as CityIdea[]) ?? [];
+  if (!lat && !lng) return (cached?.places as CityIdea[]) ?? [];
+
+  try {
+    const found = await nearby({
+      lat,
+      lng,
+      radius: 12_000,
+      includedTypes: [
+        "tourist_attraction",
+        "restaurant",
+        "park",
+        "museum",
+        "shopping_mall",
+        "cafe",
+      ],
+      max: 20,
+    });
+    const rows: CityIdea[] = found
+      // A rating with nobody behind it is noise, not a recommendation.
+      .filter((p) => p.rating != null && (p.userRatingsTotal ?? 0) >= 50)
+      .map((p) => ({
+        placeId: p.placeId,
+        name: p.name,
+        category: p.category,
+        rating: p.rating,
+        ratingCount: p.userRatingsTotal,
+        photoRef: p.photoRef,
+        address: p.address,
+        lat: p.coords[1],
+        lng: p.coords[0],
+      }));
+
+    await db
+      .insert(cityIdeasTable)
+      .values({ baseId, places: rows, fetchedAt: new Date() })
+      .onConflictDoUpdate({
+        target: cityIdeasTable.baseId,
+        set: { places: rows, fetchedAt: new Date() },
+      });
+    return rows;
+  } catch {
+    // No key, or Google is having a day. Serve whatever we last had.
+    return (cached?.places as CityIdea[]) ?? [];
   }
 }

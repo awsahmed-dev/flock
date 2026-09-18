@@ -12,6 +12,7 @@ import { coordsFor } from "@/lib/packages/coords";
 import { photoFor } from "@/lib/packages/photos";
 import { whatIs } from "@/lib/packages/descriptions";
 import { withoutCity } from "@/lib/packages/describe-in-context";
+import { cityIdeas } from "@/lib/places/facts";
 import type { Base, BaseId, PlaceCategory } from "@/lib/packages/types";
 import { eachDate } from "@/lib/packages/allocate";
 
@@ -55,6 +56,10 @@ export interface CityPlace {
   whyAr: string;
   category: PlaceCategory;
   rating?: number | null;
+  /** how many people that rating is made of — Google's, never ours */
+  ratingCount?: number | null;
+  /** came from Google rather than the curated corpus */
+  fromGoogle?: boolean;
   lat: number | null;
   lng: number | null;
   /** already on a day of this trip */
@@ -194,6 +199,35 @@ export async function getCityBoard(tripId: string, baseId: string): Promise<City
         photoUrl: photoFor(p.name),
       });
     }
+  }
+
+  // The corpus is finite: Langkawi has fourteen places and a five-night
+  // stay uses all fourteen, after which this screen has nothing left to
+  // suggest. The rest of the city comes from Google — the same API
+  // Discover uses — cached per city for a week.
+  const ideas = await cityIdeas(baseId, base.lat, base.lng).catch(() => []);
+  for (const g of ideas) {
+    if (seen.has(g.name) || gone.has(g.name) || onPlan.has(g.name)) continue;
+    seen.add(g.name);
+    curated.push({
+      key: `g:${g.placeId}`,
+      name: g.name,
+      nameAr: g.name,
+      what: g.address,
+      whatAr: g.address,
+      why: "",
+      whyAr: "",
+      category: (g.category as PlaceCategory) ?? "sight",
+      rating: g.rating,
+      ratingCount: g.ratingCount,
+      lat: g.lat,
+      lng: g.lng,
+      inPlan: false,
+      fromSave: false,
+      fromGoogle: true,
+      startTime: null,
+      photoUrl: g.photoRef ? `/api/discover/photo?ref=${encodeURIComponent(g.photoRef)}&w=400` : null,
+    });
   }
 
   const near = (lat: number | null, lng: number | null) => {

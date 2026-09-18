@@ -1091,3 +1091,15 @@ export const placeFacts = pgTable("place_facts", {
   missing: boolean("missing").default(false).notNull(),
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * Google Places results for a curated base, cached — see the migration.
+ *
+ * The corpus is finite by design; a city is not. When a stay has used up
+ * everything we curate, this is where the rest of the city comes from.
+ */
+export const cityIdeas = pgTable("city_ideas", {
+  baseId: text("base_id").primaryKey(),
+  places: jsonb("places").default([]).notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).defaultNow().notNull(),
+});
