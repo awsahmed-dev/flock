@@ -40,7 +40,7 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
 
 export const metadata: Metadata = {
   // Required so OG image / canonical / alternates URLs resolve absolutely.

@@ -12,12 +12,16 @@
  * so generated invite URLs were rendering as "undefined/invite/<token>".
  */
 /**
- * Always-known production URL. Hard-coded because env-var-based resolution
+ * Always-known production URL. The app moved to sawia.paxawa.com; the
+ * apex becomes the studio, so falling back to it would send invite and
+ * share links to a site that no longer runs the app.
+ *
+ * Hard-coded because env-var-based resolution
  * proved unreliable (NEXT_PUBLIC_APP_URL was either unset or literally the
  * string "undefined" on the deployed Vercel project, which produced broken
  * "undefined/invite/<token>" links).
  */
-const PRODUCTION_URL = "https://paxawa.com";
+const PRODUCTION_URL = "https://sawia.paxawa.com";
 
 function isValidUrl(value: string | undefined | null): value is string {
   if (!value) return false;

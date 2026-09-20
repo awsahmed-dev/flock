@@ -16,7 +16,7 @@ import { BLOG_POSTS } from "@/lib/blog/posts";
  * without us forgetting to bump a date.
  */
 
-const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

@@ -7,7 +7,7 @@ import type { MetadataRoute } from "next";
  * pages to a crawler is wasted budget on their side.
  */
 
-const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {

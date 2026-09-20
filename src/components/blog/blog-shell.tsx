@@ -4,7 +4,10 @@ import { TAGS, type BlogPostMeta } from "@/lib/blog/posts";
 import { PostCover } from "@/components/blog/post-cover";
 import { SkyShell, GateChip, Barcode } from "@/components/landing/sky-shell";
 
-const SITE = "https://paxawa.com";
+// Env-driven like the rest of the app: the blog ships in this repo, so
+// it moved to sawia with it. A canonical left on the apex would point
+// at the studio, which 308s straight back here.
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
 
 interface Props {
   post: BlogPostMeta;

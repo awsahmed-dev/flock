@@ -43,7 +43,7 @@ function isRtl(locale: Locale) {
  */
 
 const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
 
 function EmailShell({
   preview,

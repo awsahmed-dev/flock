@@ -195,7 +195,7 @@ export default async function SharePage({ params }: Props) {
     .filter((i) => i.costEstimate)
     .reduce((s, i) => s + (i.costEstimate ?? 0), 0);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://paxawa.com";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
