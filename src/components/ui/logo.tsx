@@ -1,10 +1,14 @@
 import Image from "next/image";
 
 /**
- * Paxawa brand mark + wordmark, served from /public/logo/.
+ * Sawia brand mark + wordmark, served from /public/logo/.
+ *
+ * NOTE: the wordmark below is still the drawn PAXAWA letterforms — it is
+ * path data, not text, so it cannot be renamed here. A Sawia wordmark is
+ * an outstanding design asset; until it lands, the mark reads Paxawa.
  *
  *   <Logo variant="mark"     /> → just the icon (paw / wing form)
- *   <Logo variant="wordmark" /> → just the "Paxawa" letterforms
+ *   <Logo variant="wordmark" /> → just the wordmark letterforms
  *   <Logo variant="full"     /> → mark + wordmark side by side, properly
  *                                 baseline-aligned
  *
@@ -104,7 +108,7 @@ function WordmarkSvg() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className="block h-full w-auto"
-      aria-label="Paxawa"
+      aria-label="Sawia"
     >
       <path d="M80.08 34.01C78.87 52.09 67.46 61.71 50.16 64.81C47.16 65.35 44.43 65.52 41.32 65.47L38.55 65.78L23.78 65.83C23.28 65.83 22.64 66.38 22.46 66.92V100.51H0.0100098V0H45.88L50.43 0.46C69.93 1.97 81.4 14.25 80.08 34.01ZM49.28 46.23C56.57 42.66 58.85 33.87 55.96 26.27C55.18 24.21 53.56 22.16 51.74 20.78C48.21 18.11 43.83 17.48 39.47 17.3C35.63 17.13 31.89 17.1 28.03 17.27L22.8 17.51L22.52 22.74L22.44 47.59C22.44 48.01 23.38 48.69 23.78 48.69L39.09 48.5C42.54 48.46 46.07 47.81 49.28 46.23Z" fill="currentColor" />
       <path d="M410.78 22.4C411.06 21.31 411.49 20.3 412.8 20.3H428.08C428.66 20.94 428.45 21.98 428.21 22.76L426.13 29.5L421.77 43.7L414.41 68.9L407.22 95.32L405.74 100.53H385.63L380.15 78.77L374.9 56.36L373.23 49.49L371.46 55.47L369.23 64.43L366.32 75.54L360.86 98.49C361.02 99.13 360.42 100.53 359.77 100.53H340.6L333.98 76.89L327.14 52.53L320.5 28.65L319.57 25.02C319.16 23.42 318.78 22.11 318.79 20.31H340.83C341.99 20.32 342.09 22.3 342.26 23.05L345.8 38.43L347.05 43.5L353.24 68.52C353.53 69.68 353.44 70.95 354.76 71.2L355.85 65.82L356.77 61.89L357.92 56.68L362.42 38.75L365.57 25.82C366.03 23.91 366.24 22.2 367.29 20.32H383.52C384.91 20.32 385.42 21.36 385.67 22.45L386.61 26.47L387.75 31.31L396.26 65.44L397.21 69.73C397.43 70.7 397.72 71.83 398.81 71.71L400.16 65.26L408.52 31.29L409.71 26.47L410.76 22.42L410.78 22.4Z" fill="currentColor" />
@@ -136,7 +140,7 @@ export function LogoRaster({
   return (
     <Image
       src={src}
-      alt={variant === "mark" ? "Paxawa logo" : "Paxawa"}
+      alt={variant === "mark" ? "Sawia logo" : "Sawia"}
       width={w}
       height={size}
       className={className}

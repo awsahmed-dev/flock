@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sign up free",
   description:
-    "Create a free Paxawa account in minutes. Plan the trip together, vote on places, and split every expense with your crew.",
+    "Create a free Sawia account in minutes. Plan the trip together, vote on places, and split every expense with your crew.",
 };
 
 import { SignupForm } from "@/components/auth/signup-form";

@@ -206,7 +206,7 @@ export default async function DashboardPage() {
       {/* HEADER — date + greeting + account avatar. */}
       <header className="flex items-start justify-between px-4 pt-6 pb-4">
         <div className="min-w-0">
-          <Link href="/dashboard" aria-label="Paxawa" className="inline-block text-foreground">
+          <Link href="/dashboard" aria-label="Sawia" className="inline-block text-foreground">
             <Logo variant="full" size="sm" />
           </Link>
           <p className="type-caption text-tertiary mt-3 uppercase tracking-wider">

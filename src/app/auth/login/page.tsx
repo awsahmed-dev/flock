@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Log in",
   description:
-    "Log back in to Paxawa — your group trips, shared plans, votes and split expenses are right where the crew left them.",
+    "Log back in to Sawia — your group trips, shared plans, votes and split expenses are right where the crew left them.",
 };
 
 import { LoginForm } from "@/components/auth/login-form";

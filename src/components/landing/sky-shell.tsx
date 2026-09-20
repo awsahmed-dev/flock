@@ -78,7 +78,7 @@ export function SkyShell({
       {/* floating pill nav — same silhouette as the homepage */}
       <header className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
         <div className="pointer-events-auto flex items-center gap-4 sm:gap-5 rounded-full px-5 py-2.5 backdrop-blur-md shadow-lg bg-white/85 text-[#141414]">
-          <Link href="/" aria-label="Paxawa home" className="flex items-center">
+          <Link href="/" aria-label="Sawia home" className="flex items-center">
             <Logo variant="full" size="xs" />
           </Link>
           <Link
@@ -124,7 +124,7 @@ export function SkyShell({
             <Link href="/privacy" className="hover:text-[#141414] transition-colors">
               Privacy
             </Link>
-            <span className="normal-case tracking-normal font-bold">© {new Date().getFullYear()} Paxawa</span>
+            <span className="normal-case tracking-normal font-bold">© {new Date().getFullYear()} Sawia</span>
           </nav>
         </div>
       </footer>

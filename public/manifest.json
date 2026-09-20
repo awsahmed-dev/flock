@@ -1,6 +1,6 @@
 {
-  "name": "Paxawa — Plan trips together",
-  "short_name": "Paxawa",
+  "name": "Sawia — plan the trip, together",
+  "short_name": "Sawia",
   "description": "Plan group trips, vote on options, split expenses — all in one place.",
   "start_url": "/dashboard",
   "display": "standalone",

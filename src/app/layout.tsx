@@ -48,14 +48,14 @@ export const metadata: Metadata = {
   // crawlers won't follow.
   metadataBase: new URL(SITE_URL),
   // Title template: every sub-page can set its own title and it'll
-  // automatically suffix " · Paxawa". Pages can opt out with title.absolute.
+  // automatically suffix " · Sawia". Pages can opt out with title.absolute.
   title: {
-    default: "Paxawa — Plan group trips, vote together, split expenses",
-    template: "%s · Paxawa",
+    default: "Sawia — plan the trip, together",
+    template: "%s · Sawia",
   },
   description:
-    "Paxawa is where group travel decisions get made and remembered. Plan a shared itinerary, vote on options, split multi-currency expenses, and pack as a crew — without the WhatsApp chaos.",
-  applicationName: "Paxawa",
+    "Sawia is where group travel decisions get made and remembered. Plan a shared itinerary, vote on options, split multi-currency expenses, and pack as a crew — without the WhatsApp chaos.",
+  applicationName: "Sawia",
   keywords: [
     "group travel planning",
     "split expenses with friends",
@@ -67,14 +67,14 @@ export const metadata: Metadata = {
     "group packing list",
     "AI trip planner",
   ],
-  authors: [{ name: "Paxawa" }],
-  creator: "Paxawa",
-  publisher: "Paxawa",
+  authors: [{ name: "Sawia" }],
+  creator: "Sawia",
+  publisher: "Sawia",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Paxawa",
+    title: "Sawia",
   },
   formatDetection: { telephone: false },
   alternates: {
@@ -93,10 +93,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/",
-    title: "Paxawa — Plan group trips, vote together, split expenses",
+    title: "Sawia — plan the trip, together",
     description:
       "Group travel planning that doesn't end in three split conversations and a spreadsheet. Itinerary, votes, multi-currency expenses, packing — all in one place.",
-    siteName: "Paxawa",
+    siteName: "Sawia",
     locale: "en_US",
     // og:image is injected automatically by src/app/opengraph-image.tsx
     // — Next discovers the file convention and renders the meta tag at
@@ -106,7 +106,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Paxawa — Plan group trips, vote together, split expenses",
+    title: "Sawia — plan the trip, together",
     description:
       "Itinerary, votes, multi-currency expenses, packing — all in one place. Free to start.",
   },
@@ -160,7 +160,7 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Paxawa" />
+        <meta name="apple-mobile-web-app-title" content="Sawia" />
         {/* B7c-fix: Mapbox CSS served from their CDN, server-rendered into
             the head so it's already applied when MapboxPlanMap's first
             paint runs. Async runtime injection ran too late — Mapbox's

@@ -17,9 +17,12 @@ const resendClient = (() => {
   return new Resend(key);
 })();
 
+// The NAME changes, the address does not. hello@paxawa.com is the
+// verified Resend sender; swapping the domain would stop mail going out
+// until sawia.paxawa.com is verified there too.
 const FROM =
   process.env.RESEND_FROM_EMAIL ??
-  "Paxawa <hello@paxawa.com>";
+  "Sawia <hello@paxawa.com>";
 const REPLY_TO = process.env.RESEND_REPLY_TO ?? undefined;
 
 export type EmailKind =

@@ -92,7 +92,7 @@ function EmailShell({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`${APP_URL}/email/wordmark-email-brand.png`}
-                      alt="Paxawa"
+                      alt="Sawia"
                       width="96"
                       height="29"
                       style={{ display: "block", height: "29px", width: "auto" }}
@@ -109,7 +109,7 @@ function EmailShell({
             <Hr className="border-[#ECEBF3] my-0 rule" />
             <Section className="px-8 py-5 text-center">
               <Text className="text-xs text-[#8A8794] m-0 leading-relaxed fine">
-                You're receiving this because you're on a trip in Paxawa.{" "}
+                You're receiving this because you're on a trip in Sawia.{" "}
                 <Link
                   href={`${APP_URL}/dashboard`}
                   className="text-[#6D5DF0] underline"

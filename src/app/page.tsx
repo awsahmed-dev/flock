@@ -3,6 +3,10 @@ import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { VisionXClient } from "@/components/landing/vision/vision-x-client";
 import { createClient } from "@/lib/supabase/server";
 
+// Same source as layout/sitemap/robots: the canonical host is one env
+// var, so structured data cannot drift from what the crawler was served.
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
+
 // Marketing content, but we still run per-request to honor the auth
 // cookie — a signed-in user who re-opens paxawa.com expects their
 // dashboard, not the pitch.
@@ -61,7 +65,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       {/* B26: structured data for rich results in Google. Organization
           tells search engines who runs the site; WebSite enables the
-          sitelinks search box; SoftwareApplication marks Paxawa up as
+          sitelinks search box; SoftwareApplication marks Sawia up as
           a free app so it can surface in 'best group travel apps'
           style queries with stars / pricing / description prefilled. */}
       <script
@@ -72,33 +76,33 @@ export default async function HomePage({ searchParams }: PageProps) {
             "@graph": [
               {
                 "@type": "Organization",
-                "@id": "https://paxawa.com/#org",
-                name: "Paxawa",
-                url: "https://paxawa.com",
-                logo: "https://paxawa.com/icons/icon-512x512.png",
+                "@id": `${SITE}/#org`,
+                name: "Sawia",
+                url: SITE,
+                logo: `${SITE}/icons/icon-512x512.png`,
                 sameAs: [],
               },
               {
                 "@type": "WebSite",
-                "@id": "https://paxawa.com/#site",
-                url: "https://paxawa.com",
-                name: "Paxawa",
+                "@id": `${SITE}/#site`,
+                url: SITE,
+                name: "Sawia",
                 description:
                   "Group travel planning that doesn't end in three split conversations and a spreadsheet.",
-                publisher: { "@id": "https://paxawa.com/#org" },
+                publisher: { "@id": `${SITE}/#org` },
                 potentialAction: {
                   "@type": "SearchAction",
                   target: {
                     "@type": "EntryPoint",
                     urlTemplate:
-                      "https://paxawa.com/blog?q={search_term_string}",
+                      `${SITE}/blog?q={search_term_string}`,
                   },
                   "query-input": "required name=search_term_string",
                 },
               },
               {
                 "@type": "SoftwareApplication",
-                name: "Paxawa",
+                name: "Sawia",
                 applicationCategory: "TravelApplication",
                 operatingSystem: "Web, iOS, Android",
                 description:

@@ -712,18 +712,18 @@ export function VisionX() {
   useEffect(() => {
     const loc = station >= 0 && station < 4 ? (arMode ? ATMOS_AR : ATMOS)[station as 0 | 1 | 2 | 3] : null;
     document.title = loc
-      ? `${loc.clock} · ${loc.label} — Paxawa`
+      ? `${loc.clock} · ${loc.label} — Sawia`
       : station === 5
         ? arMode
-          ? "إلى أين بعد؟ — Paxawa"
-          : "Where next? — Paxawa"
+          ? "إلى أين بعد؟ — Sawia"
+          : "Where next? — Sawia"
         : station === 4
           ? arMode
-            ? "العدّة كاملة — Paxawa"
-            : "The full kit — Paxawa"
+            ? "العدّة كاملة — Sawia"
+            : "The full kit — Sawia"
           : arMode
-            ? "نروح سوا — Paxawa"
-            : "Pack Sawa — Paxawa";
+            ? "نروح سوا — Sawia"
+            : "Pack Sawa — Sawia";
   }, [station, arMode]);
 
   // keyboard flight: arrows/space hop between stations, s/س barrel-rolls
@@ -855,7 +855,7 @@ export function VisionX() {
           className="pointer-events-auto flex items-center gap-5 rounded-full px-5 py-2.5 backdrop-blur-md shadow-lg"
           style={{ background: "rgba(255,255,255,0.85)", color: "#141414" }}
         >
-          <Link href="/" aria-label="Paxawa home" className="flex items-center">
+          <Link href="/" aria-label="Sawia home" className="flex items-center">
             <Logo variant="full" size="xs" />
           </Link>
           <Link
