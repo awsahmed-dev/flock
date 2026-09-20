@@ -29,10 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const trip = await db.query.trips.findFirst({ where: eq(trips.shareToken, token) });
   if (!trip) return { title: "Trip not found" };
   return {
-    title: `${trip.name} · Paxawa`,
-    description: `Check out this ${trip.destination} trip planned with Paxawa`,
+    title: `${trip.name} · Sawia`,
+    description: `Check out this ${trip.destination} trip planned with Sawia`,
     openGraph: {
-      title: `${trip.name} · Paxawa`,
+      title: `${trip.name} · Sawia`,
       description: `${differenceInDays(parseDateOnly(trip.endDate), parseDateOnly(trip.startDate)) + 1} days in ${trip.destination}`,
     },
   };
@@ -207,7 +207,7 @@ export default async function SharePage({ params }: Props) {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-3xl mx-auto px-6 pt-16 pb-12">
-          {/* Paxawa badge */}
+          {/* Sawia badge */}
           <div className="flex items-center gap-2.5 mb-8 text-white/80">
             <Logo variant="full" size="sm" />
             <span className="text-white/30">·</span>
@@ -498,7 +498,7 @@ export default async function SharePage({ params }: Props) {
             <Logo variant="mark" size="xl" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">Plan your group trip with Paxawa</h2>
+            <h2 className="text-xl font-bold">Plan your group trip with Sawia</h2>
             <p className="text-sm text-white/50 mt-1.5 max-w-md mx-auto">
               Itinerary planning, group voting, expense splitting — all in one place. Free to get started.
             </p>
@@ -512,7 +512,7 @@ export default async function SharePage({ params }: Props) {
           <p className="text-xs text-white/30">
             This trip was shared via{" "}
             <Link href={appUrl} className="underline hover:text-white/50 transition-colors">
-              Paxawa
+              Sawia
             </Link>
           </p>
         </div>

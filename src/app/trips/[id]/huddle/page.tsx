@@ -108,7 +108,7 @@ export default async function HuddlePage({ params, searchParams }: Props) {
       pulse={pulse.map((a) => ({
         id: a.id,
         eventType: a.eventType,
-        actorName: a.actor?.displayName ?? "Paxawa",
+        actorName: a.actor?.displayName ?? "Sawia",
         actorAvatar: a.actor?.avatarUrl ?? null,
         placeName: a.placeName,
         placePhotoUrl: a.placePhotoUrl,

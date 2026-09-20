@@ -8,12 +8,12 @@ import { SkyShell, GateChip, Barcode } from "@/components/landing/sky-shell";
 export const metadata: Metadata = {
   title: "Blog · Group travel planning, expenses, AI itineraries",
   description:
-    "Long-form guides on planning group trips, splitting expenses, offline travel, and Arabic-first trip planning — written by the Paxawa team.",
+    "Long-form guides on planning group trips, splitting expenses, offline travel, and Arabic-first trip planning — written by the Sawia team.",
   alternates: { canonical: "/blog" },
   openGraph: {
     type: "website",
     url: "/blog",
-    title: "Paxawa Blog — Group travel guides, money tips, AI planning",
+    title: "Sawia Blog — Group travel guides, money tips, AI planning",
     description:
       "Long-form guides on planning group trips, splitting expenses, and using AI to draft itineraries.",
   },

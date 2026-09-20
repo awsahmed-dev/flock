@@ -296,7 +296,7 @@ export function AccountSheet({
         </div>
 
         {/* §6-B: app version (passive). */}
-        <p className="px-6 pb-2 text-center text-xs text-tertiary">Paxawa · v{APP_VERSION}</p>
+        <p className="px-6 pb-2 text-center text-xs text-tertiary">Sawia · v{APP_VERSION}</p>
       </div>
       </SheetContent>
     </Sheet>

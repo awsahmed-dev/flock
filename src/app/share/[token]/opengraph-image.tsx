@@ -20,7 +20,7 @@ import { eq } from "drizzle-orm";
  *   throws (a busted OG image shouldn't 500 a social bot).
  */
 
-export const alt = "Trip planned with Paxawa";
+export const alt = "Trip planned with Sawia";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -39,7 +39,7 @@ function fmtDate(iso: string): string {
 }
 
 export default async function OgImage({ params }: Props) {
-  let title = "Trip with Paxawa";
+  let title = "Trip with Sawia";
   let destination = "Somewhere amazing";
   let dateRange = "";
 
@@ -72,7 +72,7 @@ export default async function OgImage({ params }: Props) {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        {/* Top — Paxawa lockup. Mark + wordmark inlined as SVG so the
+        {/* Top — Sawia lockup. Mark + wordmark inlined as SVG so the
             OG renderer can rasterize them at any size (no external fetch). */}
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <svg
@@ -93,7 +93,7 @@ export default async function OgImage({ params }: Props) {
               letterSpacing: "-0.02em",
             }}
           >
-            Paxawa
+            Sawia
           </span>
         </div>
 

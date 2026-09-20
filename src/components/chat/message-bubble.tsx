@@ -586,7 +586,7 @@ export function MessageBubble({
 
   return (
     <div className={`flex gap-2 group ${isMine ? "flex-row-reverse" : "flex-row"}`}>
-      {/* Avatar — Paxawa bot avatar for automated nudges (§10). */}
+      {/* Avatar — Sawia bot avatar for automated nudges (§10). */}
       {isBot ? (
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-sm">
           <Sparkles className="w-4 h-4 text-white" />
@@ -601,7 +601,7 @@ export function MessageBubble({
         {/* Author + time */}
         <div className={`flex items-center gap-2 text-xs text-muted-foreground ${isMine ? "flex-row-reverse" : ""}`}>
           <span className="font-medium text-foreground">
-            {isBot ? "Paxawa" : isMine ? "You" : message.author?.displayName ?? "Unknown"}
+            {isBot ? "Sawia" : isMine ? "You" : message.author?.displayName ?? "Unknown"}
           </span>
           <span>{formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}</span>
           {message.pinned && (

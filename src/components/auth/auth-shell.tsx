@@ -15,7 +15,7 @@ export function AuthShell({
   tagline,
   children,
 }: {
-  /** brand tagline under the logo — ar "نروح سوا", en "Pack Together" (auth.tagline) */
+  /** brand tagline under the logo — ar «نروح سوا», en "Plan the trip, together" (auth.tagline) */
   tagline: string;
   /** line under the logo, e.g. "Welcome back · أهلًا بعودتك" */
   subtitle: string;
@@ -45,7 +45,7 @@ export function AuthShell({
       {/* pill header */}
       <header className="fixed top-5 inset-x-0 z-40 flex justify-center pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-3 rounded-full px-5 py-2.5 backdrop-blur-md shadow-lg bg-white/85 text-[#141414]">
-          <Link href="/" aria-label="Paxawa home" className="flex items-center">
+          <Link href="/" aria-label="Sawia home" className="flex items-center">
             <Logo variant="full" size="xs" />
           </Link>
           <span className="w-px h-4 bg-[#141414]/15" aria-hidden />
@@ -67,7 +67,7 @@ export function AuthShell({
         </div>
 
         <div className="flex flex-col items-center gap-2 mb-7">
-          <Link href="/" className="flex items-center text-[#141414]" aria-label="Paxawa home">
+          <Link href="/" className="flex items-center text-[#141414]" aria-label="Sawia home">
             <Logo variant="full" size="md" />
           </Link>
           <p className="text-sm font-medium text-[#141414]/55">{subtitle}</p>
@@ -98,7 +98,7 @@ export function AuthShell({
         <Link href="/privacy" className="hover:text-[#141414] transition-colors">
           Privacy
         </Link>
-        <span>© {new Date().getFullYear()} Paxawa</span>
+        <span>© {new Date().getFullYear()} Sawia</span>
       </footer>
     </div>
   );
