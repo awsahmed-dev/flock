@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CaretLeft as ChevronLeft, ChatCircle as MessageCircle } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft as ChevronLeft, ChatCircle as MessageCircle, GearSix } from "@phosphor-icons/react/dist/ssr";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { parseDateOnly } from "@/lib/date-only";
@@ -237,6 +237,22 @@ export function TripShell({ trip, isOwner, crew = [], todayIso, inboundAddress =
                 ))}
               </AvatarGroup>
             </div>
+          )}
+
+          {/* Trip settings — dates, name, budget, sharing. It used to live
+              ONLY as a row inside the account sheet, which is where people
+              look for THEIR settings, not the trip's: "there is no trip
+              setting to fix the duration of the trip when I'm inside the trip
+              page". Owners get it as a gear on every tab root; deeper routes
+              (settings itself included) keep their header clean. */}
+          {isOwner && !isDeepRoute && (
+            <Link
+              href={`${base}/settings`}
+              aria-label={t("trip.settingsTitle")}
+              className="shrink-0 w-11 h-11 flex items-center justify-center text-foreground active:opacity-70"
+            >
+              <GearSix className="w-[22px] h-[22px]" />
+            </Link>
           )}
 
           {/* Sprint 7 FIX-1: Huddle is an inbox — it lives up here, left of
