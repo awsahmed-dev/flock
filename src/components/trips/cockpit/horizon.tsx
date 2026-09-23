@@ -94,9 +94,16 @@ export function Horizon({
   }, []);
 
   const p = Math.max(0, Math.min(100, progress));
-  // A node within ~6% of the dot overlaps it at every rail width we render
-  // (the rail runs ~340–460px). That node wears the ring; the dot is dropped.
-  const nowOn = marks.findIndex((m) => Math.abs(m.at - p) < 6);
+  // A node close enough to the dot that the two would collide wears the ring
+  // instead, and the free dot is not drawn. The test is in PIXELS, not a fixed
+  // percentage: at 6% of a 460px rail two things sit 28px apart and are fine,
+  // at 6% of a 340px rail they are 20px apart and overlap. Before the rail is
+  // measured, fall back to the percentage that is safe at the narrow end.
+  const nowOn = marks.findIndex((m) =>
+    railW
+      ? (Math.abs(m.at - p) / 100) * railW < GAP_DOT + GAP_ICON
+      : Math.abs(m.at - p) < 11,
+  );
   // Segment boundaries: the start, every node, then the plane at 100. Each
   // carries the gap ITS node needs, so a ringed node pushes the rail further
   // back than a bare one.

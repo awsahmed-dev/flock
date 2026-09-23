@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sawia Stays — local design</title>
+<title>Sawia Stays — where it lives</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <style>
@@ -20,17 +20,16 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
-  -webkit-font-smoothing:antialiased;line-height:1.55;padding:28px 20px 80px}
+  -webkit-font-smoothing:antialiased;line-height:1.55;padding:28px 20px 90px}
 body[dir=rtl]{font-family:var(--ar)}
-.wrap{max-width:1240px;margin:0 auto}
-h1{font:900 clamp(26px,4.5vw,36px)/1.1 var(--sans);letter-spacing:-.03em;margin:0}
+.wrap{max-width:1300px;margin:0 auto}
+h1{font:900 clamp(26px,4.6vw,38px)/1.08 var(--sans);letter-spacing:-.03em;margin:0}
 body[dir=rtl] h1{font-family:var(--ar)}
-.lede{color:var(--mut);font-size:15.5px;margin:12px 0 0;max-width:66ch}
-h2{font:800 11px/1.4 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px}
+.lede{color:var(--mut);font-size:15.5px;margin:12px 0 0;max-width:68ch}
 
 /* control bar */
-.bar{position:sticky;top:0;z-index:20;background:rgba(13,13,13,.86);backdrop-filter:blur(12px);
-  border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:26px 0 30px;
+.bar{position:sticky;top:0;z-index:30;background:rgba(13,13,13,.88);backdrop-filter:blur(12px);
+  border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:24px 0 32px;
   display:flex;gap:18px;flex-wrap:wrap;align-items:center}
 .ctl{display:flex;align-items:center;gap:8px}
 .ctl>span{font:800 10px var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
@@ -38,24 +37,69 @@ h2{font:800 11px/1.4 var(--sans);letter-spacing:.16em;text-transform:uppercase;c
 .seg button{border:0;background:transparent;color:var(--mut);font:700 12px var(--sans);
   padding:6px 12px;border-radius:999px;cursor:pointer;font-family:inherit}
 .seg button[aria-pressed=true]{background:var(--brand);color:#0D0D0D}
-.step{display:flex;align-items:center;gap:0;background:var(--raise);border-radius:999px;padding:3px}
-.step button{width:28px;height:28px;border:0;border-radius:999px;background:transparent;color:var(--fg);
+.stp{display:flex;align-items:center;background:var(--raise);border-radius:999px;padding:3px}
+.stp button{width:28px;height:28px;border:0;border-radius:999px;background:transparent;color:var(--fg);
   font:800 15px var(--sans);cursor:pointer;line-height:1}
-.step b{min-width:26px;text-align:center;font:800 13px var(--sans);font-variant-numeric:tabular-nums}
+.stp b{min-width:26px;text-align:center;font:800 13px var(--sans);font-variant-numeric:tabular-nums}
 
-/* layout */
-.cols{display:grid;gap:30px;align-items:start}
-@media(min-width:980px){.cols{grid-template-columns:398px minmax(0,1fr)}}
-.phone{width:100%;max-width:398px;border:1px solid var(--line);border-radius:30px;overflow:hidden;
+/* screen strip */
+.screens{display:flex;gap:26px;overflow-x:auto;padding-bottom:10px;align-items:flex-start;
+  scroll-snap-type:x proximity}
+.scr{flex:none;width:392px;scroll-snap-align:start}
+.scr h2{font:800 11px var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin:0 0 4px}
+.scr .sub{font:600 12.5px var(--sans);color:var(--mut);margin:0 0 12px}
+.arrow{flex:none;align-self:center;color:var(--dim);font-size:26px;padding-top:120px}
+
+.phone{width:392px;border:1px solid var(--line);border-radius:30px;overflow:hidden;
   background:var(--bg);box-shadow:0 30px 70px -32px #000}
-.ph-head{display:flex;align-items:center;gap:8px;padding:12px 10px;border-bottom:1px solid var(--line);background:#141414}
+.ph-head{display:flex;align-items:center;gap:7px;padding:11px 9px;border-bottom:1px solid var(--line);background:#141414}
 .ph-head .t{flex:1;text-align:center;font:700 14px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body[dir=rtl] .ph-head .t{font-family:var(--ar)}
-.ico{width:20px;height:20px;flex:none;display:block}
-.ph-body{padding:14px 12px 20px;display:flex;flex-direction:column;gap:12px}
-.cap{font:700 11px var(--sans);color:var(--dim);margin:10px 2px 0}
+.ico{flex:none;display:block}
+.crewav{display:flex;flex:none}
+.crewav i{width:24px;height:24px;border-radius:99px;display:block;box-shadow:0 0 0 2px #141414;margin-inline-end:-7px}
+.ph-body{padding:13px 12px 20px;display:flex;flex-direction:column;gap:11px}
 
-/* stays card */
+/* ── NOW screen atoms ── */
+.hello{font:800 17px var(--sans);letter-spacing:-.02em}
+body[dir=rtl] .hello{font-family:var(--ar)}
+.kicker{font:800 9.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.ticket{position:relative;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;
+  background:var(--wayfind-dim);border:1px solid rgba(62,197,183,.32)}
+.ticket .tic{width:38px;height:38px;border-radius:12px;background:var(--wayfind);display:flex;
+  align-items:center;justify-content:center;flex:none}
+.ticket .tt{flex:1;min-width:0;display:block}
+.ticket .k{display:block;font:800 9px var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--wayfind)}
+.ticket .l{display:block;font:800 15.5px/1.25 var(--sans);letter-spacing:-.015em;margin-top:1px}
+body[dir=rtl] .ticket .l{font-family:var(--ar)}
+.ticket .s{display:block;font:600 12px var(--sans);color:var(--mut);margin-top:2px}
+.ticket .go{font:800 11px var(--sans);color:var(--wayfind);flex:none;display:flex;align-items:center;gap:3px}
+
+/* ── Horizon (the real 93px geometry) ── */
+.hz{border-radius:24px;border:1px solid var(--line);background:var(--card);padding:10px 16px}
+.hzh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hzh p{margin:0;font:900 10px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+body[dir=rtl] .hzh p{font-family:var(--ar)}
+.hzn{font:700 10px var(--sans);color:var(--horizon);display:inline-flex;align-items:center;gap:4px}
+.hzn i{width:6px;height:6px;border-radius:99px;background:var(--horizon)}
+.strip{position:relative;height:48px;padding-left:12px;padding-right:32px}
+.rail{position:absolute;top:0;bottom:0;left:12px;right:32px}
+.seg2{position:absolute;top:11px;height:6px;border-radius:99px;background:rgba(245,245,247,.10);overflow:hidden;display:block}
+.seg2 i{display:block;height:100%;border-radius:99px}
+.pdot{position:absolute;top:8px;width:12px;height:12px;margin-left:-6px;border-radius:99px;background:var(--horizon);
+  box-shadow:0 0 0 5px rgba(255,138,92,.22),0 0 16px rgba(255,138,92,.65);z-index:3}
+.nd{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;
+  z-index:2;padding:4px 8px}
+.nd .lb{margin-top:6px;font:600 10px/14px var(--sans);white-space:nowrap}
+.ring{position:absolute;top:0;left:50%;width:28px;height:28px;margin-left:-14px;border-radius:99px;
+  border:1.5px solid var(--horizon);box-shadow:0 0 12px rgba(255,138,92,.45);z-index:-1}
+
+/* muted deck cards for context */
+.deck{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:12px;
+  display:flex;align-items:center;gap:10px;opacity:.55}
+.deck .n{flex:1;font:700 13px var(--sans)}
+
+/* ── stays cards ── */
 .stay{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:11px}
 .stay.done{border-color:rgba(155,201,126,.35)}
 .stay.look{border-color:rgba(224,178,82,.35)}
@@ -82,13 +126,10 @@ body[dir=rtl] .rooms .l{font-family:var(--ar)}
 body[dir=rtl] .disc{font-family:var(--ar)}
 .looking{display:flex;align-items:center;gap:8px;font:600 12.5px var(--sans);color:var(--dune)}
 body[dir=rtl] .looking{font-family:var(--ar)}
-.av{width:22px;height:22px;border-radius:99px;background:var(--brand);color:#0D0D0D;
-  font:800 10px/22px var(--sans);text-align:center;flex:none}
+.av{width:22px;height:22px;border-radius:99px;background:var(--brand);color:#0D0D0D;font:800 10px/22px var(--sans);text-align:center;flex:none}
 .hotel{display:flex;align-items:center;gap:9px;background:var(--raise);border-radius:12px;padding:10px 12px}
 .hotel .n{flex:1;font:700 13.5px var(--sans)}
 body[dir=rtl] .hotel .n{font-family:var(--ar)}
-
-/* return banner */
 .banner{background:var(--dune-dim);border:1px solid rgba(224,178,82,.35);border-radius:16px;padding:13px 14px;display:flex;flex-direction:column;gap:10px}
 .banner .q{font:700 13.5px var(--sans)}
 body[dir=rtl] .banner .q{font-family:var(--ar)}
@@ -96,9 +137,12 @@ body[dir=rtl] .banner .q{font-family:var(--ar)}
 .banner button{flex:1;height:40px;border-radius:999px;border:1px solid var(--line);background:transparent;
   color:var(--fg);font:700 13px var(--sans);cursor:pointer;font-family:inherit}
 .banner button.y{background:var(--dune);color:#0D0D0D;border-color:var(--dune)}
+.off{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:20px;text-align:center;color:var(--dim);font:600 13px var(--sans)}
 
-/* notes column */
-.note{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+/* notes */
+.notes{display:grid;gap:14px;margin-top:44px}
+@media(min-width:900px){.notes{grid-template-columns:1fr 1fr}}
+.note{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
 .note h3{font:800 15px var(--sans);margin:0 0 8px;letter-spacing:-.01em}
 body[dir=rtl] .note h3{font-family:var(--ar)}
 .note p{margin:0 0 10px;color:var(--mut);font-size:13.5px}
@@ -107,6 +151,7 @@ body[dir=rtl] .note h3{font-family:var(--ar)}
 .note.brand{border-inline-start:3px solid var(--brand)}
 .note.warn{border-inline-start:3px solid var(--horizon)}
 .note.good{border-inline-start:3px solid var(--moss)}
+.note.way{border-inline-start:3px solid var(--wayfind)}
 code{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--raise);
   border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 .url{display:block;background:#101010;border:1px solid var(--line);border-radius:12px;padding:12px 13px;
@@ -115,22 +160,20 @@ code{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--
 .url .k{color:var(--dim)} .url .v{color:var(--fg)}
 ul.l{margin:0;padding-inline-start:19px;color:var(--mut);font-size:13.5px}
 ul.l li{margin:7px 0} ul.l b{color:var(--fg)}
-.off{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:22px;text-align:center;color:var(--dim);font:600 13px var(--sans)}
-.hidden{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<h1 data-en="Sawia Stays" data-ar="إقامات سويّا">Sawia Stays</h1>
-<p class="lede" data-en="Booking.com only. One card per city you sleep in, with that city's own dates, its own room count, and a state the whole crew can see. Everything here is a mock — no request leaves this page." data-ar="Booking.com فقط. بطاقة واحدة لكل مدينة تبيت فيها، بتواريخها الخاصة وعدد غرفها، وحالة يراها كل أفراد الرحلة. كل ما هنا نموذج — لا يخرج أي طلب من هذه الصفحة.">Booking.com only.</p>
+<h1 data-en="Where Stays lives" data-ar="أين تعيش «الإقامات»">Where Stays lives</h1>
+<p class="lede" data-en="An unbooked bed is a planning gap, not a wallet item — so it belongs on NOW with everything else that is still ahead of you, and opens its own screen. Not a tab. Not buried in Wallet. Scroll sideways to follow the path." data-ar="المبيت غير المحجوز ثغرة في التخطيط، لا بندًا في المحفظة — لذا مكانه في «الآن» مع كل ما تبقّى أمامك، ويفتح شاشته الخاصة. ليس تبويبًا، ولا مدفونًا في المحفظة. مرّر جانبيًا لتتبع المسار.">An unbooked bed is a planning gap.</p>
 
 <div class="bar">
   <div class="ctl"><span data-en="Language" data-ar="اللغة">Language</span>
-    <div class="seg" id="lang"><button data-v="en" aria-pressed="true">EN</button><button data-v="ar" aria-pressed="false">AR</button></div>
+    <div class="seg" id="lang"><button data-v="en" aria-pressed="true">EN</button><button data-v="ar">AR</button></div>
   </div>
   <div class="ctl"><span data-en="Crew" data-ar="الرفقة">Crew</span>
-    <div class="step"><button id="cd">−</button><b id="cn">4</b><button id="cu">+</button></div>
+    <div class="stp"><button id="cd">−</button><b id="cn">4</b><button id="cu">+</button></div>
   </div>
   <div class="ctl"><span>AFFILIATE_MODE</span>
     <div class="seg" id="mode"><button data-v="off">off</button><button data-v="preview" aria-pressed="true">preview</button><button data-v="live">live</button></div>
@@ -140,206 +183,266 @@ ul.l li{margin:7px 0} ul.l b{color:var(--fg)}
   </div>
 </div>
 
-<div class="cols">
-
-  <!-- ── the phone ── -->
-  <div>
-    <div class="phone">
-      <div class="ph-head">
-        <svg class="ico" viewBox="0 0 256 256" fill="var(--fg)"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
-        <span class="t" data-en="Saudi run · Book" data-ar="جولة السعودية · الحجز">Saudi run · Book</span>
-        <span style="width:20px"></span>
-      </div>
-      <div class="ph-body" id="stack"></div>
-    </div>
-    <p class="cap" data-en="Tap a card's button to walk the flow. State is per card." data-ar="اضغط زر أي بطاقة لتجربة المسار. الحالة مستقلة لكل بطاقة.">Tap a card's button to walk the flow.</p>
+<div class="screens">
+  <div class="scr">
+    <h2>1 · NOW</h2>
+    <p class="sub" data-en="Trip home, PLAN phase. Two new things, no new surface." data-ar="واجهة الرحلة في طور التخطيط. شيئان جديدان، بلا شاشة جديدة.">Trip home, PLAN phase.</p>
+    <div class="phone"><div class="ph-head" id="nowhead"></div><div class="ph-body" id="nowbody"></div></div>
   </div>
 
-  <!-- ── notes ── -->
-  <div>
-    <h2 data-en="What the card is doing" data-ar="ما الذي تفعله البطاقة">What the card is doing</h2>
+  <div class="arrow">→</div>
 
-    <div class="note brand">
-      <h3 data-en="One card per base, not per trip" data-ar="بطاقة لكل قاعدة، لا لكل رحلة">One card per base, not per trip</h3>
-      <p data-en="The trip shape already knows you sleep in Jeddah for 5 nights, Riyadh for 5, then Jeddah again for 2. The old code sent one link for the whole trip with <code>no_rooms=1</code> hard-coded — wrong dates, wrong city, wrong room count for a group." data-ar="شكل الرحلة يعرف مسبقًا أنك تبيت ٥ ليالٍ في جدة، ثم ٥ في الرياض، ثم ليلتين في جدة مجددًا. الكود القديم كان يرسل رابطًا واحدًا للرحلة كلها مع <code>no_rooms=1</code> ثابتًا — تواريخ خاطئة ومدينة خاطئة وعدد غرف خاطئ للمجموعة.">One card per base.</p>
-      <p data-en="The second Jeddah stay is a separate card with its own two nights. It is the same city and it is not the same stay." data-ar="إقامة جدة الثانية بطاقة منفصلة بليلتيها. نفس المدينة، وليست نفس الإقامة.">Second Jeddah is separate.</p>
-    </div>
+  <div class="scr">
+    <h2>2 · /trips/&lt;id&gt;/stays</h2>
+    <p class="sub" data-en="One tap from either. One card per city you sleep in." data-ar="نقرة واحدة من أيٍّ منهما. بطاقة لكل مدينة تبيت فيها.">One tap from either.</p>
+    <div class="phone"><div class="ph-head" id="sthead"></div><div class="ph-body" id="stbody"></div></div>
+  </div>
 
-    <div class="note">
-      <h3 data-en="Rooms default to ⌈crew ÷ 2⌉" data-ar="الغرف افتراضيًا ⌈الرفقة ÷ ٢⌉">Rooms default to ⌈crew ÷ 2⌉</h3>
-      <p data-en="Four people is two rooms, five is three. Adjustable 1–10 on the card, and the adult count is always the crew size. Change the crew in the bar above and watch every card follow." data-ar="أربعة أشخاص = غرفتان، خمسة = ثلاث. قابل للتعديل من ١ إلى ١٠ على البطاقة، وعدد البالغين دائمًا هو عدد الرفقة. غيّر الرفقة في الشريط أعلاه وسترى كل البطاقات تتبع.">Four people is two rooms.</p>
-    </div>
+  <div class="arrow">→</div>
 
-    <div class="note good">
-      <h3 data-en="The state is shared, not on your phone" data-ar="الحالة مشتركة، لا على جهازك">The state is shared, not on your phone</h3>
-      <p data-en="Today “someone is looking” lives in <code>localStorage</code> — so in a group app, nobody else ever sees it. It moves to a <code>stay_bookings</code> row with the trip's RLS, and the crew sees “Aws is checking stays” live." data-ar="حاليًا حالة «أحدهم يبحث» مخزّنة في <code>localStorage</code> — أي أن أحدًا في المجموعة لا يراها. تنتقل إلى جدول <code>stay_bookings</code> بصلاحيات الرحلة، فيرى الجميع «عوض يبحث عن إقامة» مباشرة.">Shared state.</p>
-      <p data-en="“Yes, booked” writes the hotel name and creates the accommodation item on those nights, so Plan and Wallet agree without anyone typing it twice." data-ar="«نعم، حجزت» تكتب اسم الفندق وتنشئ عنصر الإقامة في تلك الليالي، فيتطابق المخطط والمحفظة دون إدخال مزدوج.">Booked writes through.</p>
-    </div>
+  <div class="scr">
+    <h2 data-en="3 · AFTER BOOKING" data-ar="٣ · بعد الحجز">3 · AFTER BOOKING</h2>
+    <p class="sub" data-en="The mark turns done and the ticket steps aside." data-ar="تتحول العلامة إلى «منجزة» ويتنحّى التذكرة.">The mark turns done.</p>
+    <div class="phone"><div class="ph-head" id="afhead"></div><div class="ph-body" id="afbody"></div></div>
+  </div>
+</div>
 
-    <div class="note">
-      <h3 data-en="The outgoing link" data-ar="الرابط الصادر">The outgoing link</h3>
-      <p data-en="The button does not point at Booking. It points at our own route, which writes an <code>affiliate_clicks</code> row and then 302s — so the AID is never in the DOM to be scraped, and the clicks reconcile against Booking's report." data-ar="الزر لا يشير إلى Booking مباشرة، بل إلى مسارنا الذي يسجّل صفًا في <code>affiliate_clicks</code> ثم يحوّل — فلا يظهر معرّف الشريك في الصفحة، وتتطابق النقرات مع تقارير Booking.">Server-logged redirect.</p>
-      <div class="url" id="url"></div>
-    </div>
+<div class="notes">
+  <div class="note way">
+    <h3 data-en="Why NOW and not Wallet" data-ar="لماذا «الآن» لا «المحفظة»">Why NOW and not Wallet</h3>
+    <p data-en="Wallet holds what you already have — a confirmation, a barcode, a receipt. A bed nobody has booked is the opposite of that: it is an open question. It only becomes a wallet item the moment it stops being one." data-ar="المحفظة تحوي ما تملكه فعلًا — تأكيد، باركود، إيصال. أما مبيت لم يحجزه أحد فهو نقيض ذلك: سؤال مفتوح. ولا يصبح بندًا في المحفظة إلا لحظة أن يتوقف عن كونه سؤالًا.">Wallet holds what you already have.</p>
+    <p data-en="In PLAN phase the tabs are NOW, Discover and Money. There has been no Bookings tab since B24 — <code>/trips/&lt;id&gt;/bookings</code> 308s to Wallet — which is exactly how the old Book mode ended up unreachable." data-ar="في طور التخطيط التبويبات هي: الآن، اكتشف، المال. لا يوجد تبويب حجوزات منذ B24 — <code>/trips/&lt;id&gt;/bookings</code> يحوّل إلى المحفظة — وهكذا صار وضع الحجز القديم غير قابل للوصول.">No Bookings tab since B24.</p>
+  </div>
 
-    <div class="note warn">
-      <h3 data-en="Off / preview / live" data-ar="إيقاف / معاينة / مباشر">Off / preview / live</h3>
-      <p data-en="<b>off</b> hides every CTA and the cards become plain “you need a bed here” reminders — which is what ships if Booking has not approved the account yet. <b>preview</b> uses the placeholder AID: real links, no commission. <b>live</b> uses the real one. Flip the switch in the bar to see all three." data-ar="<b>إيقاف</b> يخفي كل الأزرار وتتحول البطاقات إلى تذكير بأنك تحتاج مبيتًا هنا — وهذا ما يُطلق إن لم يوافق Booking بعد. <b>معاينة</b> يستخدم معرّفًا مؤقتًا: روابط حقيقية بلا عمولة. <b>مباشر</b> يستخدم المعرّف الحقيقي.">Three modes.</p>
-    </div>
+  <div class="note brand">
+    <h3 data-en="Two entries, one screen" data-ar="مدخلان، شاشة واحدة">Two entries, one screen</h3>
+    <ul class="l">
+      <li data-en="<b>A Horizon mark.</b> A bed is a due item on the runway, exactly like budget, docs and pack. It joins the chain you just made room for — no new surface at all." data-ar="<b>علامة على الأفق.</b> المبيت بند مستحق على المدرج، تمامًا كالميزانية والمستندات والحقيبة. ينضم للسلسلة التي وسّعتها للتو — بلا شاشة جديدة."></li>
+      <li data-en="<b>A Ticket</b> in the cockpit's priority chain, when the nearest base has no accommodation. It outranks budget, because a bed in 14 days is more urgent than a spending cap." data-ar="<b>تذكرة</b> في سلسلة أولويات القمرة، حين لا تكون لأقرب قاعدة إقامة. تتقدّم على الميزانية، لأن مبيتًا بعد ١٤ يومًا أكثر إلحاحًا من سقف إنفاق."></li>
+      <li data-en="Both open <code>/stays</code>. Neither is a tab, so nothing in the nav changes." data-ar="كلاهما يفتح <code>/stays</code>. ولا أحد منهما تبويب، فلا يتغير شيء في شريط التنقل."></li>
+    </ul>
+  </div>
 
-    <div class="note">
-      <h3 data-en="Rules this design holds to" data-ar="قواعد يلتزم بها التصميم">Rules this design holds to</h3>
-      <ul class="l">
-        <li data-en="<b>Disclosure on every card</b>, in both languages, in the card — not in the terms." data-ar="<b>إفصاح على كل بطاقة</b>، بكلتا اللغتين، داخل البطاقة — لا في الشروط."></li>
-        <li data-en="<b>No sponsored placement.</b> Booking never changes what Sawia ranks or recommends. The card is a hand-off, not an ad." data-ar="<b>لا ترتيب مدفوع.</b> Booking لا يغيّر ما ترشّحه سويّا أبدًا. البطاقة تحويل، لا إعلان."></li>
-        <li data-en="<b>No prices in Sawia.</b> Showing live rates needs Booking's Demand API and separate approval. Out of scope." data-ar="<b>لا أسعار داخل سويّا.</b> عرض الأسعار الحية يتطلب واجهة Demand وموافقة منفصلة. خارج النطاق."></li>
-        <li data-en="<b>Nights already covered show no CTA.</b> If an accommodation item exists, the card is a receipt, not a pitch." data-ar="<b>الليالي المغطاة لا تعرض زرًا.</b> إن وُجد عنصر إقامة، فالبطاقة إيصال لا عرض."></li>
-        <li data-en="<b>No flights, no eSIM, no activities.</b> Airalo and GetYourGuide go behind the flag; the hard-coded GetYourGuide preview link is deleted." data-ar="<b>لا طيران ولا شرائح eSIM ولا أنشطة.</b> Airalo وGetYourGuide خلف الراية، والرابط الثابت لـ GetYourGuide يُحذف."></li>
-        <li data-en="<b>Labels are <code>sawia-</code>.</b> Partner reports key on them; nothing may still say <code>paxawa-</code> when the real AID goes in." data-ar="<b>الوسوم تبدأ بـ <code>sawia-</code>.</b> تقارير الشريك تعتمد عليها؛ لا يجوز بقاء <code>paxawa-</code> عند تفعيل المعرّف الحقيقي."></li>
-      </ul>
-    </div>
+  <div class="note">
+    <h3 data-en="Hue says kind, Horizon says state" data-ar="اللون يقول النوع، والأفق يقول الحالة">Hue says kind, Horizon says state</h3>
+    <p data-en="The Ticket is <b style='color:var(--wayfind)'>wayfind</b> — teal — because finding a bed is navigation, not money. The same item on the Horizon is <b style='color:var(--horizon)'>orange</b>, because Horizon marks are coloured by state (later / due / done), never by kind. That is not an inconsistency; they are answering different questions." data-ar="التذكرة بلون <b style='color:var(--wayfind)'>الاتجاه</b> — الفيروزي — لأن إيجاد مبيت تنقّل لا مال. ونفس البند على الأفق <b style='color:var(--horizon)'>برتقالي</b>، لأن علامات الأفق تُلوَّن بالحالة (لاحقًا / مستحق / منجز) لا بالنوع. ليس تناقضًا؛ كلٌّ يجيب سؤالًا مختلفًا.">Hue says kind, Horizon says state.</p>
+  </div>
+
+  <div class="note good">
+    <h3 data-en="The state is shared" data-ar="الحالة مشتركة">The state is shared</h3>
+    <p data-en="Today “someone is looking” lives in <code>localStorage</code>, so in a group app nobody else ever sees it. It moves to <code>stay_bookings</code> under the trip's RLS — the crew sees “Aws is checking stays” live, and “Yes, booked” writes the accommodation item so Plan and Wallet agree without anyone typing it twice." data-ar="حاليًا «أحدهم يبحث» مخزّنة في <code>localStorage</code>، فلا يراها أحد في تطبيق جماعي. تنتقل إلى <code>stay_bookings</code> بصلاحيات الرحلة — فترى المجموعة «عوض يبحث عن إقامة» مباشرة، و«نعم، حجزت» تكتب عنصر الإقامة فيتطابق المخطط والمحفظة دون إدخال مزدوج.">Shared state.</p>
+  </div>
+
+  <div class="note">
+    <h3 data-en="The outgoing link" data-ar="الرابط الصادر">The outgoing link</h3>
+    <p data-en="The button points at our own route, which writes an <code>affiliate_clicks</code> row then 302s — the AID is never in the DOM, and clicks reconcile against Booking's report." data-ar="الزر يشير إلى مسارنا الذي يسجّل صفًا في <code>affiliate_clicks</code> ثم يحوّل — فلا يظهر معرّف الشريك في الصفحة، وتتطابق النقرات مع تقارير Booking.">Server-logged redirect.</p>
+    <div class="url" id="url"></div>
+  </div>
+
+  <div class="note warn">
+    <h3 data-en="Still to decide" data-ar="ما زال بحاجة لقرار">Still to decide</h3>
+    <ul class="l">
+      <li data-en="<b>Three orphans.</b> <code>book-mode.tsx</code> is imported and never rendered; <code>affiliate/bookings-rail.tsx</code> and <code>wallet/stays-rail.tsx</code> are imported nowhere at all." data-ar="<b>ثلاثة ملفات يتيمة.</b> <code>book-mode.tsx</code> مستورد ولا يُعرض أبدًا؛ و<code>affiliate/bookings-rail.tsx</code> و<code>wallet/stays-rail.tsx</code> غير مستوردين إطلاقًا."></li>
+      <li data-en="<b><code>stays-rail.tsx</code> is a different, arguably better feature</b> — real Google hotels with ratings, no affiliate, no commission. Keep it above the Booking CTA on this screen, or delete it?" data-ar="<b><code>stays-rail.tsx</code> ميزة مختلفة وربما أفضل</b> — فنادق حقيقية من Google بتقييماتها، بلا عمولة. نبقيها فوق زر Booking في هذه الشاشة، أم نحذفها؟"></li>
+      <li data-en="<b>Departure night.</b> Handled here by check-out landing on the fly-home date — worth confirming that is always right." data-ar="<b>ليلة المغادرة.</b> عولجت هنا بجعل تاريخ المغادرة هو يوم السفر — يستحسن التأكد أن ذلك صحيح دائمًا."></li>
+    </ul>
   </div>
 </div>
 </div>
 
 <script>
 const BASES = [
-  { id:"jeddah",    en:"Jeddah",  ar:"جدة",     inD:"2026-10-03", outD:"2026-10-08", n:5, state:"need", hotel:null },
-  { id:"riyadh",    en:"Riyadh",  ar:"الرياض",  inD:"2026-10-08", outD:"2026-10-13", n:5, state:"look", hotel:null },
-  { id:"jeddah~2",  en:"Jeddah",  ar:"جدة",     inD:"2026-10-13", outD:"2026-10-15", n:2, state:"done", hotel:"Rosewood Jeddah" },
+  { id:"jeddah",   en:"Jeddah", ar:"جدة",    inD:"2026-10-03", outD:"2026-10-08", n:5, state:"need", hotel:null },
+  { id:"riyadh",   en:"Riyadh", ar:"الرياض", inD:"2026-10-08", outD:"2026-10-13", n:5, state:"look", hotel:null },
+  { id:"jeddah~2", en:"Jeddah", ar:"جدة",    inD:"2026-10-13", outD:"2026-10-15", n:2, state:"done", hotel:"Rosewood Jeddah" },
 ];
 const T = {
-  need:   {en:"Needs a stay", ar:"بحاجة إلى إقامة"},
-  look:   {en:"Someone's looking", ar:"أحدهم يبحث"},
-  done:   {en:"Covered", ar:"محجوزة"},
-  cta:    {en:"Find stays on Booking.com", ar:"ابحث عن إقامة على Booking.com"},
-  cta2:   {en:"Look as well", ar:"ابحث أنت أيضًا"},
-  disc:   {en:"Sawia may earn a commission", ar:"قد تحصل سويّا على عمولة"},
-  rooms:  {en:"Rooms", ar:"الغرف"},
-  adults: {en:"adults", ar:"بالغين"},
-  nights: {en:"nights", ar:"ليالٍ"},
-  looking:{en:"Aws is checking stays", ar:"عوض يبحث عن إقامة"},
-  q:      {en:"Did you book somewhere in Jeddah?", ar:"هل حجزت مكانًا في جدة؟"},
-  yes:    {en:"Yes, booked", ar:"نعم، حجزت"},
-  no:     {en:"Not yet", ar:"ليس بعد"},
-  offmsg: {en:"You need a bed here — 5 nights, nobody has claimed it.", ar:"تحتاج مبيتًا هنا — ٥ ليالٍ، ولم يتكفّل بها أحد."},
+  need:{en:"Needs a stay",ar:"بحاجة إلى إقامة"}, look:{en:"Someone's looking",ar:"أحدهم يبحث"},
+  done:{en:"Covered",ar:"محجوزة"},
+  cta:{en:"Find stays on Booking.com",ar:"ابحث عن إقامة على Booking.com"},
+  cta2:{en:"Look as well",ar:"ابحث أنت أيضًا"},
+  disc:{en:"Sawia may earn a commission",ar:"قد تحصل سويّا على عمولة"},
+  rooms:{en:"Rooms",ar:"الغرف"}, adults:{en:"adults",ar:"بالغين"}, nights:{en:"nights",ar:"ليالٍ"},
+  looking:{en:"Aws is checking stays",ar:"عوض يبحث عن إقامة"},
+  q:{en:"Did you book somewhere in Jeddah?",ar:"هل حجزت مكانًا في جدة؟"},
+  yes:{en:"Yes, booked",ar:"نعم، حجزت"}, no:{en:"Not yet",ar:"ليس بعد"},
+  offmsg:{en:"You need a bed here. Nobody has claimed it.",ar:"تحتاج مبيتًا هنا. لم يتكفّل به أحد."},
+  // NOW screen
+  hello:{en:"Good morning, Aws ☀️",ar:"صباح الخير يا عوض ☀️"},
+  dueNow:{en:"Due now",ar:"مستحق الآن"},
+  tkTitle:{en:"Nobody's booked Jeddah",ar:"لم يحجز أحد في جدة"},
+  tkSub:{en:"5 nights · 3–8 Oct · 4 people",ar:"5 ليالٍ · 3–8 أكتوبر · 4 أشخاص"},
+  tkTitle2:{en:"Set the trip budget",ar:"حدّد ميزانية الرحلة"},
+  tkSub2:{en:"Split across 4 people",ar:"تُقسم على 4 أشخاص"},
+  go:{en:"Open",ar:"افتح"},
+  hz:{en:"Horizon · 14 days to Jeddah",ar:"الأفق · 14 يومًا حتى جدة"},
+  stay:{en:"stay",ar:"مبيت"}, budget:{en:"budget",ar:"ميزانية"},
+  docs:{en:"docs",ar:"مستندات"}, pack:{en:"pack",ar:"حقيبة"},
+  deck1:{en:"3 places your crew liked",ar:"3 أماكن أعجبت رفقتك"},
+  deck2:{en:"Riyadh · 5 days, nothing planned",ar:"الرياض · 5 أيام بلا خطة"},
+  staysTitle:{en:"Stays",ar:"الإقامات"},
+  nowTitle:{en:"Saudi run",ar:"جولة السعودية"},
+  covered:{en:"All 3 stays covered",ar:"الإقامات الثلاث محجوزة"},
 };
 let lang="en", crew=4, mode="preview", banner=false;
-const rooms = {}; BASES.forEach(b=>rooms[b.id]=null);
-const states = {}; BASES.forEach(b=>states[b.id]=b.state);
+const rooms={}, states={};
+BASES.forEach(b=>{rooms[b.id]=null; states[b.id]=b.state;});
+const defRooms=()=>Math.max(1,Math.ceil(crew/2));
+const nOf=id=>rooms[id]??defRooms();
+const t=k=>T[k][lang];
+const fmt=iso=>{const d=new Date(iso+"T00:00:00");
+  const m=lang==="ar"?["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"][d.getMonth()]
+    :["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+  return `${d.getDate()} ${m}`;};
 
-const defRooms = () => Math.max(1, Math.ceil(crew/2));
-const nOf = id => rooms[id] ?? defRooms();
-const t = k => T[k][lang];
-const fmt = iso => {
-  const d = new Date(iso+"T00:00:00");
-  const m = lang==="ar"
-    ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"][d.getMonth()]
-    : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
-  return `${d.getDate()} ${m}`;
-};
-const ICON = {
-  bed:'<path d="M232,104H24V64a8,8,0,0,1,8-8H224a8,8,0,0,1,8,8Z" opacity=".25"/><path d="M248,120a24,24,0,0,0-24-24h-8V64a24,24,0,0,0-24-24H64A24,24,0,0,0,40,64V96H32A24,24,0,0,0,8,120v72a8,8,0,0,0,16,0V176H232v16a8,8,0,0,0,16,0ZM56,64a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8V96H184V88a16,16,0,0,0-16-16H144a16,16,0,0,0-16,16v8H120V88a16,16,0,0,0-16-16H80A16,16,0,0,0,64,88v8H56ZM168,88v8H144V88Zm-64,0v8H80V88ZM24,160V120a8,8,0,0,1,8-8H224a8,8,0,0,1,8,8v40Z"/>',
-  check:'<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/>',
-  eye:'<path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/>',
-  out:'<path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z"/>',
-};
-const svg = (p,c,s) => `<svg viewBox="0 0 256 256" width="${s||18}" height="${s||18}" fill="${c}">${ICON[p]}</svg>`;
+const P={
+ bed:'<path d="M248,120a24,24,0,0,0-24-24h-8V64a24,24,0,0,0-24-24H64A24,24,0,0,0,40,64V96H32A24,24,0,0,0,8,120v72a8,8,0,0,0,16,0V176H232v16a8,8,0,0,0,16,0ZM56,64a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8V96H184V88a16,16,0,0,0-16-16H144a16,16,0,0,0-16,16v8H120V88a16,16,0,0,0-16-16H80A16,16,0,0,0,64,88v8H56ZM168,88v8H144V88Zm-64,0v8H80V88ZM24,160V120a8,8,0,0,1,8-8H224a8,8,0,0,1,8,8v40Z"/>',
+ wallet:'<path d="M216,64H56a8,8,0,0,1,0-16H192a8,8,0,0,0,0-16H56A24,24,0,0,0,32,56V184a24,24,0,0,0,24,24H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm-36,80a12,12,0,1,1,12-12A12,12,0,0,1,180,144Z"/>',
+ docs:'<path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"/>',
+ pack:'<path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44Z"/>',
+ plane:'<path d="M240,136v32a8,8,0,0,1-8,8,7.61,7.61,0,0,1-1.57-.16L156,161v23.73l17.66,17.65A8,8,0,0,1,176,208v24a8,8,0,0,1-11,7.43l-37-14.81L91,239.43A8,8,0,0,1,80,232V208a8,8,0,0,1,2.34-5.66L100,184.69V161L25.57,175.84A7.61,7.61,0,0,1,24,176a8,8,0,0,1-8-8V136a8,8,0,0,1,4.42-7.16L100,89.06V44a28,28,0,0,1,56,0V89.06l79.58,39.78A8,8,0,0,1,240,136Z"/>',
+ back:'<path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>',
+ gear:'<path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,126.16q-.06,2.16,0,4.32L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Z"/>',
+ chat:'<path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z"/>',
+ check:'<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/>',
+ eye:'<path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-64.43,0-95.84-50.54-103.05-64C32.16,114.54,63.57,64,128,64s95.84,50.54,103.05,64C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/>',
+ out:'<path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z"/>',
+ right:'<path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/>',
+ heart:'<path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/>',
+ map:'<path d="M228.92,49.69a8,8,0,0,0-6.86-1.45L160.93,63.52,99.58,32.84a8,8,0,0,0-5.32-.57l-56,14A8,8,0,0,0,32,54v152a8,8,0,0,0,9.94,7.76l53.32-13.33,61.35,30.68A8.15,8.15,0,0,0,160,232a8,8,0,0,0,1.94-.24l56-14A8,8,0,0,0,224,210V56A8,8,0,0,0,228.92,49.69ZM104,52.94l48,24V203.06l-48-24Z"/>'};
+const sv=(k,c,s)=>`<svg viewBox="0 0 256 256" width="${s||18}" height="${s||18}" fill="${c}" style="display:block">${P[k]}</svg>`;
 
-function linkFor(b){
-  const aid = mode==="live" ? "1234567" : "preview";
-  return {
-    aid, label:`sawia-stays_card-${"bc506179"}`, ss:b[lang==="ar"?"ar":"en"],
-    checkin:b.inD, checkout:b.outD, group_adults:crew, no_rooms:nOf(b.id),
-    selected_currency:"SAR", lang: lang==="ar" ? "ar" : "en-gb",
-  };
+/* ── Horizon, real geometry: segments, 20px bare icons, 18/22px gaps ── */
+function horizon(marks, p, title){
+  const GI=18, GR=22, MIN=10, RAILW=292; // 392 - 24 - 32 - 12 - 32
+  const onIdx = marks.findIndex(m=>(Math.abs(m.at-p)/100)*RAILW < 18+18);
+  const stops=[{at:0,gap:0},...marks.map((m,i)=>({at:m.at,gap:i===onIdx?GR:GI})),
+    ...(onIdx===-1?[{at:p,gap:18}]:[]),{at:100,gap:GI}].sort((a,b)=>a.at-b.at);
+  let segs="";
+  for(let i=0;i<stops.length-1;i++){
+    const a=stops[i], b=stops[i+1], span=b.at-a.at;
+    if((span/100)*RAILW - a.gap - b.gap < MIN) continue;
+    const done=Math.max(0,Math.min(1,(p-a.at)/span));
+    const mid=Math.round((a.at+b.at)/2);
+    const col=`color-mix(in srgb, var(--dune) ${mid}%, var(--moss))`;
+    segs+=`<span class="seg2" style="left:calc(${a.at}% + ${a.gap}px);width:calc(${span}% - ${a.gap+b.gap}px)">`+
+      (done>0?`<i style="width:${done*100}%;background:${col};box-shadow:0 0 10px color-mix(in srgb, ${col} 45%, transparent)"></i>`:"")+`</span>`;
+  }
+  const dot = onIdx===-1 ? `<span class="pdot" style="left:${p}%"></span>` : "";
+  const nodes = marks.map((m,i)=>{
+    const col = m.st==="done"?"var(--moss)":m.st==="due"?"var(--horizon)":"color-mix(in srgb, var(--fg) 35%, transparent)";
+    const here = i===onIdx;
+    return `<span class="nd" style="left:${m.at}%">${here?'<span class="ring"></span>':""}${sv(m.k,col,20)}
+      <span class="lb" style="color:${here?"var(--horizon)":col}">${t(m.key)}</span></span>`;
+  }).join("");
+  const plane=`<span class="nd" style="left:100%">${sv("plane","color-mix(in srgb, var(--fg) 55%, transparent)",20)}</span>`;
+  return `<div class="hz"><div class="hzh"><p>${title}</p><span class="hzn"><i></i>T−14</span></div>
+    <div class="strip"><div class="rail">${segs}${dot}${nodes}${plane}</div></div></div>`;
 }
-function renderUrl(){
-  const b = BASES[0], p = linkFor(b);
-  const q = Object.entries(p).map(([k,v])=>`<span class="k">${k}</span>=<span class="v">${encodeURIComponent(v)}</span>`).join("&amp;");
-  document.getElementById("url").innerHTML =
-    `<span class="k">GET</span> /api/affiliate/stays?trip=…&amp;base=${b.id}\n<span class="k">302 →</span> https://www.booking.com/searchresults.html?` + q;
+
+function head(title, gear){
+  return `${sv("back","var(--fg)",20)}<span class="t">${title}</span>
+    ${gear?`<span class="crewav"><i style="background:#6d5df0"></i><i style="background:#c08457"></i><i style="background:#4f8a6d;margin-inline-end:0"></i></span>
+    ${sv("gear","var(--fg)",21)}${sv("chat","var(--fg)",21)}
+    <span style="width:30px;height:30px;border-radius:99px;background:#3a3350;border:2px solid var(--brand);flex:none"></span>`
+    :`<span style="width:20px"></span>`}`;
+}
+
+function nowScreen(after){
+  const uncovered = BASES.filter(b=>states[b.id]!=="done").length;
+  const marks = after || uncovered===0
+    ? [{at:38,k:"wallet",key:"budget",st:"done"},{at:58,k:"bed",key:"stay",st:"done"},
+       {at:74,k:"docs",key:"docs",st:"later"},{at:88,k:"pack",key:"pack",st:"later"}]
+    : [{at:38,k:"wallet",key:"budget",st:"done"},{at:58,k:"bed",key:"stay",st:"due"},
+       {at:74,k:"docs",key:"docs",st:"later"},{at:88,k:"pack",key:"pack",st:"later"}];
+  const ticket = (after || uncovered===0)
+    ? `<div class="ticket" style="background:var(--dune-dim);border-color:rgba(224,178,82,.32)">
+        <span class="tic" style="background:var(--dune)">${sv("wallet","#0D0D0D",19)}</span>
+        <span class="tt"><span class="k" style="color:var(--dune)">${t("dueNow")}</span>
+        <span class="l">${t("tkTitle2")}</span><span class="s">${t("tkSub2")}</span></span>
+        <span class="go" style="color:var(--dune)">${t("go")} ${sv("right","var(--dune)",12)}</span></div>`
+    : `<div class="ticket" id="tk">
+        <span class="tic">${sv("bed","#0D0D0D",19)}</span>
+        <span class="tt"><span class="k">${t("dueNow")}</span>
+        <span class="l">${t("tkTitle")}</span><span class="s">${t("tkSub")}</span></span>
+        <span class="go">${t("go")} ${sv("right","var(--wayfind)",12)}</span></div>`;
+  return `<div class="kicker">TUESDAY, 22 SEPTEMBER</div><div class="hello">${t("hello")}</div>
+    ${ticket}${horizon(marks,52,t("hz"))}
+    <div class="deck">${sv("heart","var(--mut)",17)}<span class="n">${t("deck1")}</span>${sv("right","var(--dim)",13)}</div>
+    <div class="deck">${sv("map","var(--mut)",17)}<span class="n">${t("deck2")}</span>${sv("right","var(--dim)",13)}</div>`;
 }
 
 function card(b){
-  const st = states[b.id], city = lang==="ar"? b.ar : b.en;
-  const tagCls = st==="done"?"done":st==="look"?"look":"need";
-  const icoCol = st==="done"?"var(--moss)":st==="look"?"var(--dune)":"var(--wayfind)";
-  const head = `
-    <div class="sh">
-      <span class="ic">${svg(st==="done"?"check":st==="look"?"eye":"bed", icoCol, 19)}</span>
-      <span class="tx">
-        <span class="city">${city}</span>
-        <div class="when"><span dir="ltr">${fmt(b.inD)} → ${fmt(b.outD)}</span> · ${b.n} ${t("nights")} · ${crew} ${t("adults")}</div>
-      </span>
-      <span class="tag ${tagCls}">${t(st==="done"?"done":st==="look"?"look":"need")}</span>
-    </div>`;
-
-  if (st==="done") return `<div class="stay done">${head}
-    <div class="hotel">${svg("bed","var(--moss)",17)}<span class="n">${b.hotel}</span></div></div>`;
-
-  if (mode==="off") return `<div class="stay">${head}
-    <div class="off">${t("offmsg")}</div></div>`;
-
-  const roomRow = `<div class="rooms"><span class="l">${t("rooms")}</span>
-    <span class="step"><button data-r="-" data-id="${b.id}">−</button><b>${nOf(b.id)}</b><button data-r="+" data-id="${b.id}">+</button></span></div>`;
-
-  if (st==="look") return `<div class="stay look">${head}
-    <div class="looking"><span class="av">ع</span>${t("looking")}</div>
-    ${roomRow}
-    <button class="cta sec" data-go="${b.id}">${t("cta2")} ${svg("out","var(--fg)",15)}</button>
-    <div class="disc">${t("disc")}</div></div>`;
-
-  return `<div class="stay">${head}
-    ${roomRow}
-    <button class="cta" data-go="${b.id}">${t("cta")} ${svg("out","#0D0D0D",15)}</button>
+  const st=states[b.id], city=lang==="ar"?b.ar:b.en;
+  const cls=st==="done"?"done":st==="look"?"look":"";
+  const col=st==="done"?"var(--moss)":st==="look"?"var(--dune)":"var(--wayfind)";
+  const h=`<div class="sh"><span class="ic">${sv(st==="done"?"check":st==="look"?"eye":"bed",col,19)}</span>
+    <span class="tx"><span class="city">${city}</span>
+    <div class="when"><span dir="ltr">${fmt(b.inD)} → ${fmt(b.outD)}</span> · ${b.n} ${t("nights")} · ${crew} ${t("adults")}</div></span>
+    <span class="tag ${st==="done"?"done":st==="look"?"look":"need"}">${t(st==="done"?"done":st==="look"?"look":"need")}</span></div>`;
+  if(st==="done") return `<div class="stay done">${h}<div class="hotel">${sv("bed","var(--moss)",17)}<span class="n">${b.hotel}</span></div></div>`;
+  if(mode==="off") return `<div class="stay">${h}<div class="off">${t("offmsg")}</div></div>`;
+  const rr=`<div class="rooms"><span class="l">${t("rooms")}</span>
+    <span class="stp"><button data-r="-" data-id="${b.id}">−</button><b>${nOf(b.id)}</b><button data-r="+" data-id="${b.id}">+</button></span></div>`;
+  if(st==="look") return `<div class="stay look">${h}<div class="looking"><span class="av">ع</span>${t("looking")}</div>
+    ${rr}<button class="cta sec" data-go="${b.id}">${t("cta2")} ${sv("out","var(--fg)",15)}</button><div class="disc">${t("disc")}</div></div>`;
+  return `<div class="stay">${h}${rr}<button class="cta" data-go="${b.id}">${t("cta")} ${sv("out","#0D0D0D",15)}</button>
     <div class="disc">${t("disc")}</div></div>`;
 }
 
+function linkFor(b){return {aid:mode==="live"?"1234567":"preview",label:"sawia-stays_card-bc506179",
+  ss:b[lang==="ar"?"ar":"en"],checkin:b.inD,checkout:b.outD,group_adults:crew,no_rooms:nOf(b.id),
+  selected_currency:"SAR",lang:lang==="ar"?"ar":"en-gb"};}
+
 function render(){
-  const stack = document.getElementById("stack");
-  let html = BASES.map(card).join("");
-  if (banner) html += `<div class="banner"><div class="q">${t("q")}</div>
-    <div class="btns"><button class="y" data-book="jeddah">${t("yes")}</button><button data-nb="1">${t("no")}</button></div></div>`;
-  stack.innerHTML = html;
-  renderUrl();
+  document.getElementById("nowhead").innerHTML = head(t("nowTitle"), true);
+  document.getElementById("nowbody").innerHTML = nowScreen(false);
+  document.getElementById("sthead").innerHTML = head(t("staysTitle"), false);
+  let s = BASES.map(card).join("");
+  if(banner) s += `<div class="banner"><div class="q">${t("q")}</div><div class="btns">
+    <button class="y" data-book="jeddah">${t("yes")}</button><button data-nb="1">${t("no")}</button></div></div>`;
+  document.getElementById("stbody").innerHTML = s;
+  document.getElementById("afhead").innerHTML = head(t("nowTitle"), true);
+  document.getElementById("afbody").innerHTML = nowScreen(true);
+
+  const p = linkFor(BASES[0]);
+  document.getElementById("url").innerHTML =
+    `<span class="k">GET</span> /api/affiliate/stays?trip=…&amp;base=jeddah\n<span class="k">302 →</span> booking.com/searchresults.html?` +
+    Object.entries(p).map(([k,v])=>`<span class="k">${k}</span>=<span class="v">${encodeURIComponent(v)}</span>`).join("&amp;");
+
   document.querySelectorAll("[data-en]").forEach(el=>{
-    const v = el.getAttribute("data-"+lang); if (v!==null && v!=="") el.innerHTML = v;
+    const v=el.getAttribute("data-"+lang); if(v) el.innerHTML=v;
   });
 }
 
 document.addEventListener("click", e=>{
-  const seg = e.target.closest("#lang button, #mode button, #ban button");
-  if (seg){
-    const group = seg.parentElement;
-    [...group.children].forEach(b=>b.setAttribute("aria-pressed", String(b===seg)));
-    const v = seg.dataset.v;
-    if (group.id==="lang"){ lang=v; document.body.dir = v==="ar"?"rtl":"ltr"; document.documentElement.lang=v; }
-    if (group.id==="mode") mode=v;
-    if (group.id==="ban") banner = v==="1";
-    return render();
-  }
-  const r = e.target.closest("[data-r]");
-  if (r){ const id=r.dataset.id; const cur=nOf(id);
-    rooms[id] = Math.min(10, Math.max(1, cur + (r.dataset.r==="+"?1:-1))); return render(); }
-  const go = e.target.closest("[data-go]");
-  if (go){ states[go.dataset.go]="look"; banner=true;
-    [...document.querySelectorAll("#ban button")].forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.v==="1")));
+  const sg=e.target.closest("#lang button, #mode button, #ban button");
+  if(sg){ const g=sg.parentElement;
+    [...g.children].forEach(b=>b.setAttribute("aria-pressed",String(b===sg)));
+    const v=sg.dataset.v;
+    if(g.id==="lang"){lang=v;document.body.dir=v==="ar"?"rtl":"ltr";document.documentElement.lang=v;}
+    if(g.id==="mode") mode=v;
+    if(g.id==="ban") banner=v==="1";
     return render(); }
-  const bk = e.target.closest("[data-book]");
-  if (bk){ const b=BASES.find(x=>x.id==="jeddah"); b.hotel = lang==="ar"?"فندق قصر جدة":"Jeddah Palace Hotel";
+  const r=e.target.closest("[data-r]");
+  if(r){ const id=r.dataset.id; rooms[id]=Math.min(10,Math.max(1,nOf(id)+(r.dataset.r==="+"?1:-1))); return render(); }
+  const go=e.target.closest("[data-go]");
+  if(go){ states[go.dataset.go]="look"; banner=true;
+    [...document.querySelectorAll("#ban button")].forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v==="1")));
+    return render(); }
+  const bk=e.target.closest("[data-book]");
+  if(bk){ BASES.find(x=>x.id==="jeddah").hotel = lang==="ar"?"فندق قصر جدة":"Jeddah Palace Hotel";
     states["jeddah"]="done"; banner=false;
-    [...document.querySelectorAll("#ban button")].forEach(x=>x.setAttribute("aria-pressed", String(x.dataset.v==="0")));
+    [...document.querySelectorAll("#ban button")].forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v==="0")));
     return render(); }
-  if (e.target.closest("[data-nb]")){ banner=false;
-    [...document.querySelectorAll("#ban button")].forEach(x=>x.setAttribute("aria-pressed", String(x.dataset.v==="0")));
+  if(e.target.closest("[data-nb]")){ banner=false;
+    [...document.querySelectorAll("#ban button")].forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v==="0")));
     return render(); }
 });
-document.getElementById("cu").onclick = ()=>{ crew=Math.min(10,crew+1); document.getElementById("cn").textContent=crew;
-  BASES.forEach(b=>rooms[b.id]=null); render(); };
-document.getElementById("cd").onclick = ()=>{ crew=Math.max(1,crew-1); document.getElementById("cn").textContent=crew;
-  BASES.forEach(b=>rooms[b.id]=null); render(); };
-
+document.getElementById("cu").onclick=()=>{crew=Math.min(10,crew+1);document.getElementById("cn").textContent=crew;
+  BASES.forEach(b=>rooms[b.id]=null);render();};
+document.getElementById("cd").onclick=()=>{crew=Math.max(1,crew-1);document.getElementById("cn").textContent=crew;
+  BASES.forEach(b=>rooms[b.id]=null);render();};
 render();
 </script>
 </body>
