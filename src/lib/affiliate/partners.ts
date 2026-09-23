@@ -9,6 +9,33 @@
  * breadcrumb — it's how we'll learn which placement drove which booking
  * when partner reports come back.
  */
+/**
+ * Which partners are live. Sawia ships with Booking.com only — Airalo and
+ * GetYourGuide were half-wired preview stubs that rendered rows nobody could
+ * earn from, so they are OFF rather than deleted: the builders still work the
+ * day one of them is actually approved.
+ *
+ * `AFFILIATE_PARTNERS` is a comma list, e.g. "booking" or "booking,airalo".
+ */
+const ENABLED = new Set(
+  (process.env.NEXT_PUBLIC_AFFILIATE_PARTNERS ?? "booking")
+    .split(",").map((s) => s.trim()).filter(Boolean),
+);
+export function partnerEnabled(p: "booking" | "airalo" | "gyg"): boolean {
+  return ENABLED.has(p);
+}
+
+/**
+ * off      — no CTA anywhere. What ships until Booking approves the account.
+ * preview  — real links, placeholder AID, no commission.
+ * live     — the real AID.
+ */
+export type AffiliateMode = "off" | "preview" | "live";
+export function affiliateMode(): AffiliateMode {
+  const m = process.env.NEXT_PUBLIC_AFFILIATE_MODE;
+  return m === "off" || m === "live" ? m : "preview";
+}
+
 export const PARTNERS = {
   booking: {
     // Real Booking.com AID once approved. Placeholder works for link

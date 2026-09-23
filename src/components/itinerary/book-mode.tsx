@@ -5,7 +5,8 @@ import { Buildings as Hotel, Airplane as Plane, WifiHigh as Wifi, Ticket, ArrowU
 import Link from "next/link";
 import { toast } from "sonner";
 import { useT } from "@/components/i18n/locale-provider";
-import { buildBookingLink, buildAiraloLink } from "@/lib/affiliate/build-link";
+import { buildBookingLink, buildAiraloLink, buildGygLink } from "@/lib/affiliate/build-link";
+import { partnerEnabled } from "@/lib/affiliate/partners";
 import { format } from "@/lib/i18n/date-fns";
 import { parseISO } from "date-fns";
 
@@ -363,7 +364,8 @@ export function BookMode({
         })()}
       </Section>
 
-      {/* eSIM section */}
+      {/* eSIM — Airalo. Off by default; see partners.ts. */}
+      {partnerEnabled("airalo") && (
       <Section
         title={t("plan.sectionConnectivity")}
         meta={t("plan.connectivityMeta")}
@@ -400,9 +402,11 @@ export function BookMode({
           );
         })()}
       </Section>
+      )}
 
-      {/* ACTIVITIES section (derived from itinerary items) */}
-      {activityItems.length > 0 && (
+      {/* Activities — GetYourGuide. Off by default; see partners.ts. The
+          hard-coded partner_id=preview link that used to live here is gone. */}
+      {partnerEnabled("gyg") && activityItems.length > 0 && (
         <Section
           title={t("plan.sectionActivities")}
           meta={t("plan.activitiesMeta", { count: activityItems.length })}
@@ -412,7 +416,7 @@ export function BookMode({
           {activityItems.slice(0, 3).map((item) => {
             const intentId = `gyg-${item.id}`;
             const isBooked = confirmed.has(intentId);
-            const href = `https://www.getyourguide.com/s/?q=${encodeURIComponent(item.locationName ?? item.title)}&partner_id=preview&cmp=paxawa-ai_plan_result-${tripId}`;
+            const href = buildGygLink({ query: item.locationName ?? item.title, surface: "ai_plan_result", tripId });
             return (
               <NeedRow
                 key={item.id}

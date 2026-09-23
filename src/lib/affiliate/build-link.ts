@@ -18,7 +18,7 @@ export function buildBookingLink(args: {
 }) {
   const params = new URLSearchParams({
     aid: PARTNERS.booking.aid,
-    label: `paxawa-${args.surface}-${args.tripId}`,
+    label: `sawia-${args.surface}-${args.tripId}`,
     ss: args.destination,
     checkin: args.startDate,
     checkout: args.endDate,
@@ -73,10 +73,25 @@ export function buildAiraloLink(args: {
   const slug = detectCountryForAiralo(args.destination);
   // impact.com appends our handle + a `subid` param we use for attribution.
   // No slug → fall back to global store with the same subid.
-  const subid = `paxawa-${args.surface}-${args.tripId}`;
+  const subid = `sawia-${args.surface}-${args.tripId}`;
   const path = slug ? `/${slug}` : "";
   return (
     `https://airalo.pxf.io/c/${PARTNERS.airalo.handle}${path}` +
     `?subId1=${encodeURIComponent(subid)}`
   );
+}
+
+/**
+ * GetYourGuide. Not enabled (see `partnerEnabled`), but the view used to
+ * hand-assemble this URL inline with `partner_id=preview` hard-coded and a
+ * `paxawa-` label — so it could never have been switched on by config, and
+ * would have reported under the old brand if it had been. It lives here now
+ * like the others: one place to put the real partner id.
+ */
+export function buildGygLink(args: { query: string; surface: AffiliateSurface; tripId: string }): string {
+  const u = new URL("/s/", PARTNERS.gyg.base);
+  u.searchParams.set("q", args.query);
+  u.searchParams.set("partner_id", PARTNERS.gyg.partnerId);
+  u.searchParams.set("cmp", `sawia-${args.surface}-${args.tripId}`);
+  return u.toString();
 }
