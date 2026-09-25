@@ -2,7 +2,7 @@ import { LegalShell } from "@/components/legal/legal-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · Sawia",
+  title: "Terms of Service", // the layout template adds " · Sawia"
   description: "The terms that govern your use of Sawia.",
 };
 
