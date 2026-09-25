@@ -30,6 +30,7 @@ import { PlanningCockpit } from "@/components/trips/cockpit/planning-cockpit";
 import { DepartureCockpit } from "@/components/trips/cockpit/departure-cockpit";
 import { RecapCockpit } from "@/components/trips/cockpit/recap-cockpit";
 import { PocketDay } from "@/components/pwa/pocket-day";
+import { visibleExpenses } from "@/lib/expense-visibility";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -93,7 +94,7 @@ export default async function TripPage({ params }: Props) {
   const expRows = await db
     .select({ amount: expenses.amount, currency: expenses.currency, expenseDate: expenses.expenseDate, paidBy: expenses.paidBy })
     .from(expenses)
-    .where(eq(expenses.tripId, id));
+    .where(visibleExpenses(id, user.id)); // others' personal spend is theirs alone
   const rates = expRows.length ? await getRates(tripCurrency).catch(() => null) : null;
   // A missing rate no longer becomes a number. `?? amt` used to count a
   // 50,000 JPY expense as 50,000 USD — 156x the real figure — and the /money

@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { expenses, settlements } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getRates } from "@/lib/fx";
+import { visibleExpenses } from "@/lib/expense-visibility";
 
 export async function loadMoneyPageData(tripId: string) {
   const user = await getCurrentUser();
@@ -21,7 +22,8 @@ export async function loadMoneyPageData(tripId: string) {
 
   const [expenseList, fxRates, settlementRows] = await Promise.all([
     db.query.expenses.findMany({
-      where: eq(expenses.tripId, tripId),
+      // Others' personal spend is theirs alone.
+      where: visibleExpenses(tripId, user.id),
       with: {
         payer: true,
         splits: { with: { user: true } },

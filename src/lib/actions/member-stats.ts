@@ -11,6 +11,7 @@ import {
 import { eq, and, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { getTripWithMembership } from "@/lib/actions/trips";
+import { sharedExpenses } from "@/lib/expense-visibility";
 
 /**
  * B22: cheap roll-up of one trip-member's footprint inside a trip.
@@ -74,7 +75,11 @@ export async function getMemberStats(
       })
       .from(expenses)
       .where(
-        and(eq(expenses.tripId, tripId), eq(expenses.paidBy, memberUserId)),
+        // Someone else's stats count only what they paid for the crew.
+        and(
+          memberUserId === user.id ? eq(expenses.tripId, tripId) : sharedExpenses(tripId),
+          eq(expenses.paidBy, memberUserId),
+        ),
       ),
     db
       .select({ count: sql<number>`count(*)::int` })

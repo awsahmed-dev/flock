@@ -19,6 +19,7 @@ import { Logo } from "@/components/ui/logo";
 import { signStoredUrl } from "@/lib/storage-sign";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { sharedExpenses } from "@/lib/expense-visibility";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -149,10 +150,12 @@ export default async function SharePage({ params }: Props) {
 
   // ── Real spend — group expenses by currency for an honest "trip cost"
   //    figure on the recap. Won't FX-convert until we wire daily rates.
+  // Public page: shared spend only. Anyone holding the link used to see
+  // every member's personal spend folded into "trip cost".
   const tripExpenses = await db
     .select({ amount: expenses.amount, currency: expenses.currency })
     .from(expenses)
-    .where(eq(expenses.tripId, trip.id));
+    .where(sharedExpenses(trip.id));
   const spendByCurrency = tripExpenses.reduce<Record<string, number>>(
     (acc, e) => {
       acc[e.currency] = (acc[e.currency] ?? 0) + e.amount;

@@ -25,6 +25,7 @@ import { getToday } from "@/lib/today-server";
 import { diffDaysIso, toIsoDay } from "@/lib/today";
 import type { InferSelectModel } from "drizzle-orm";
 import type { trips as tripsTable } from "@/lib/db/schema";
+import { visibleExpenses } from "@/lib/expense-visibility";
 
 type Trip = InferSelectModel<typeof tripsTable>;
 
@@ -148,7 +149,7 @@ export default async function DashboardPage() {
     const tripCurrency = activeTrip.currency ?? "USD";
     const [memberRows, expRows] = await Promise.all([
       db.select({ userId: tripMembers.userId }).from(tripMembers).where(eq(tripMembers.tripId, activeTrip.id)),
-      db.select({ amount: expenses.amount, currency: expenses.currency }).from(expenses).where(eq(expenses.tripId, activeTrip.id)),
+      db.select({ amount: expenses.amount, currency: expenses.currency }).from(expenses).where(visibleExpenses(activeTrip.id, user.id)),
     ]);
     let spent = 0;
     let spentMissing: string[] = [];

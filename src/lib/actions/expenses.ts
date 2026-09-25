@@ -200,6 +200,18 @@ export async function createExpense(formData: FormData) {
     }
   }
   // Personal expenses: no splits, no balance shifts — just the payer.
+  //
+  // And no announcement either. "Just me" used to still post a card to the
+  // trip chat and an inbox row to every member, so the crew saw exactly the
+  // spend the payer had marked as their own. A personal expense now tells
+  // nobody; the budget watcher still runs (it's the payer's own money, and
+  // with a crew it only ever counts shared spend).
+  if (scope === "personal") {
+    await maybePostBudgetAlert(tripId, trip.budgetTotal, trip.currency, user.id);
+    revalidatePath(`/trips/${tripId}/money`);
+    revalidatePath(`/trips/${tripId}`);
+    return;
+  }
 
   // Auto-post the expense to chat (mirrors mobile app)
   await db.insert(chatMessages).values({

@@ -1,6 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
-import { expenses, chatMessages } from "@/lib/db/schema";
+import { expenses, chatMessages, tripMembers } from "@/lib/db/schema";
+import { getRates } from "@/lib/fx";
+import { totalInCurrency } from "@/lib/money-total";
+import { sharedExpenses } from "@/lib/expense-visibility";
 import { eq, and, sql } from "drizzle-orm";
 
 /**
@@ -45,13 +48,25 @@ export async function maybePostBudgetAlert(
   try {
     if (!budgetTotal || budgetTotal <= 0) return;
 
-    // Sum spend for this trip
-    const [row] = await db
-      .select({ total: sql<number>`coalesce(sum(${expenses.amount}), 0)::float` })
+    // This alert posts to the trip CHAT, so with a crew it measures the
+    // crew's budget: shared spend only — members' personal spend is private.
+    // Travelling alone, every expense is the trip's.
+    //
+    // It also used to add raw amounts across currencies: a TRY 2,400 dinner
+    // counted as 2,400 of a USD budget and posted a false "over budget". The
+    // alert is idempotent per threshold, so a false one can't be taken back.
+    const crew = await db.select({ id: tripMembers.userId }).from(tripMembers).where(eq(tripMembers.tripId, tripId));
+    const rows = await db
+      .select({ amount: expenses.amount, currency: expenses.currency })
       .from(expenses)
-      .where(eq(expenses.tripId, tripId));
+      .where(crew.length > 1 ? sharedExpenses(tripId) : eq(expenses.tripId, tripId));
+    const needsFx = rows.some((r) => r.currency !== currency);
+    const rates = needsFx ? await getRates(currency).catch(() => null) : null;
+    const { total, complete } = totalInCurrency(rows, currency, rates);
+    // Better no alert than a wrong one: skip when a rate is missing.
+    if (!complete) return;
 
-    const spent = Number(row?.total ?? 0);
+    const spent = Number(total ?? 0);
     if (!Number.isFinite(spent) || spent <= 0) return;
 
     const pct = spent / budgetTotal;
