@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { List, GridFour } from "@phosphor-icons/react/dist/ssr";
 import { AddDocumentDialog } from "./add-document-dialog";
+import { FlightsSection } from "@/components/flights/flights-section";
 import { DocumentCard, type DocumentCardData } from "./document-card";
 import { DocumentViewer } from "./document-viewer";
 import { DocThumb } from "./doc-thumb";
@@ -48,6 +49,11 @@ export function DocsPanel({ tripId, docs }: { tripId: string; docs: DocumentCard
 
   return (
     <section>
+      {/* Flights first: it's where people come looking for their ticket, and
+          a ticket here used to be only a picture the app couldn't read. */}
+      <div className="mb-6">
+        <FlightsSection tripId={tripId} />
+      </div>
       <div className="flex items-center justify-between mb-3">
         <p className="text-[12px] font-bold uppercase text-tertiary" style={{ letterSpacing: 1.5 }}>
           {t("docs.header", { count: docs.length })}
