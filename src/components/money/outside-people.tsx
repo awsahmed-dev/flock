@@ -36,10 +36,18 @@ export function useOutsideNets(
 ) {
   return useMemo(() => {
     const { toBase } = createBaseConverter(currency, fxRates);
-    const nets = netByContact(
-      splits.map((s) => ({ ...s, amount: toBase(s.amount, s.currency) })),
-    );
-    return people.map((p) => ({ ...p, net: Math.round((nets.get(p.id) ?? 0) * 100) / 100 }));
+    return people.map((p) => {
+      const open = splits.filter((s) => s.contactId === p.id && !s.settled);
+      // Nobody asks Khalid for "USD 0.92" — they ask for the TRY 45 the
+      // dinner cost. When everything open with someone is in one currency,
+      // show it in that currency; convert only when currencies are mixed.
+      const curs = new Set(open.map((s) => s.currency));
+      const own = curs.size === 1 ? [...curs][0] : null;
+      const net = netByContact(
+        open.map((s) => ({ ...s, amount: own ? s.amount : toBase(s.amount, s.currency) })),
+      ).get(p.id) ?? 0;
+      return { ...p, net: Math.round(net * 100) / 100, cur: own ?? currency };
+    });
   }, [people, splits, currency, fxRates]);
 }
 
@@ -85,8 +93,8 @@ export function OutsidePeopleStrip({
             </span>
             <span className="flex-1 min-w-0 text-[14px] font-bold">
               {owesMe
-                ? t("outside.owesYou", { name: p.name, amount: `${currency} ${fmt(p.net)}` })
-                : t("outside.youOwe", { name: p.name, amount: `${currency} ${fmt(p.net)}` })}
+                ? t("outside.owesYou", { name: p.name, amount: `${p.cur} ${fmt(p.net)}` })
+                : t("outside.youOwe", { name: p.name, amount: `${p.cur} ${fmt(p.net)}` })}
             </span>
             <CaretRight className="w-4 h-4 shrink-0 rtl:rotate-180" style={{ color: tone }} />
           </button>
@@ -129,7 +137,7 @@ function OutsidePeopleSheet({
   open: boolean;
   onClose: () => void;
   tripId: string;
-  people: (OutsidePerson & { net: number })[];
+  people: (OutsidePerson & { net: number; cur: string })[];
   currency: string;
 }) {
   const t = useT();
@@ -167,9 +175,9 @@ function OutsidePeopleSheet({
                     style={{ color: owesMe ? "var(--clr-moss)" : iOwe ? "var(--clr-horizon)" : undefined }}
                   >
                     {owesMe
-                      ? t("outside.owesYouShort", { amount: `${currency} ${fmt(p.net)}` })
+                      ? t("outside.owesYouShort", { amount: `${p.cur} ${fmt(p.net)}` })
                       : iOwe
-                        ? t("outside.youOweShort", { amount: `${currency} ${fmt(p.net)}` })
+                        ? t("outside.youOweShort", { amount: `${p.cur} ${fmt(p.net)}` })
                         : t("outside.square")}
                   </span>
                 </span>

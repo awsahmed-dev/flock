@@ -526,7 +526,7 @@
     "perDayFromHere": "Per day from here",
     "avgPerDay": "Average per day",
     "beforeTrip": "Before the trip",
-    "beforeTripHint": "Flights and bookings — taken off the daily plan.",
+    "beforeTripHint": "Spent before day 1 — taken off the daily plan.",
     "daysLeft": "{count, plural, =0 {Trip's over} one {1 day left} other {# days left}}",
     "budgetGoneBeforeTrip": "The budget was spent before the trip started."
   },
@@ -2041,7 +2041,7 @@
     "splitWith": "Split with people outside the trip",
     "splitWithCount": "{count, plural, one {Split with 1 person outside the trip} other {Split with # people outside the trip}}",
     "whoPaid": "Who paid?",
-    "previewOwed": "{each} each is owed to you · your share {mine}",
+    "previewOwed": "Each owes you {each} · your share {mine}",
     "previewIOwe": "You'll owe {name} {mine}",
     "shareNote": "Your spending counts your share only.",
     "yourShareOf": "Your share of {bill}",

@@ -526,7 +526,7 @@
     "perDayFromHere": "لكل يوم من الآن",
     "avgPerDay": "المعدل اليومي",
     "beforeTrip": "قبل الرحلة",
-    "beforeTripHint": "الطيران والحجوزات — تُخصم من الخطة اليومية.",
+    "beforeTripHint": "صُرف قبل اليوم الأول — خُصم من الخطة اليومية.",
     "daysLeft": "{count, plural, =0 {انتهت الرحلة} one {بقي يوم واحد} two {بقي يومان} few {بقيت # أيام} many {بقي # يومًا} other {بقي # يوم}}",
     "budgetGoneBeforeTrip": "صُرفت الميزانية قبل بدء الرحلة."
   },
@@ -2041,7 +2041,7 @@
     "splitWith": "قسّمه مع أشخاص خارج الرحلة",
     "splitWithCount": "{count, plural, one {قسّمه مع شخص واحد خارج الرحلة} two {قسّمه مع شخصين خارج الرحلة} few {قسّمه مع # أشخاص خارج الرحلة} many {قسّمه مع # شخصًا خارج الرحلة} other {قسّمه مع # شخص خارج الرحلة}}",
     "whoPaid": "من دفع؟",
-    "previewOwed": "لك {each} على كل شخص · حصتك {mine}",
+    "previewOwed": "كل واحد مدين لك بـ {each} · حصتك {mine}",
     "previewIOwe": "ستكون مدينًا لـ{name} بـ {mine}",
     "shareNote": "إنفاقك يحسب حصتك فقط.",
     "yourShareOf": "حصتك من {bill}",
