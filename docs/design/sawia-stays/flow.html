@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How a Stays booking works</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0D0D0D;--card:#1A1A1A;--raise:#242424;--line:#313131;
+  --fg:#f5f5f7;--mut:#a9a5b2;--dim:#716E79;
+  --brand:#8B7CFF;--brand-dim:rgba(139,124,255,.16);
+  --horizon:#FF8A5C;--horizon-dim:rgba(255,138,92,.16);
+  --moss:#9BC97E;--moss-dim:rgba(155,201,126,.18);
+  --dune:#E0B252;--dune-dim:rgba(224,178,82,.16);
+  --wayfind:#3EC5B7;--wayfind-dim:rgba(62,197,183,.16);
+  --cj:#F2A93B;--cj-dim:rgba(242,169,59,.16);
+  --bk:#6CA8FF;--bk-dim:rgba(108,168,255,.16);
+  --sans:Inter,system-ui,-apple-system,sans-serif;--ar:"IBM Plex Sans Arabic",Inter,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.55}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:44px 90px}
+a{color:var(--brand)}
+.back{font:700 12px var(--sans);color:var(--dim);text-decoration:none}
+h1{font:900 clamp(28px,5vw,42px)/1.08 var(--sans);letter-spacing:-.035em;margin:14px 0 0;text-wrap:balance}
+.lede{color:var(--mut);font-size:16px;margin:14px 0 0;max-width:66ch}
+h2{font:800 11.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:0 0 14px}
+.sec{padding-block:44px;border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:0}
+h3{font:800 22px/1.2 var(--sans);letter-spacing:-.02em;margin:0 0 10px}
+p{margin:0 0 12px}
+.body{color:var(--mut);font-size:14.5px;max-width:68ch}
+.body b{color:var(--fg)}
+code{font:600 12.5px var(--mono);background:var(--raise);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--fg)}
+.ar{font-family:var(--ar);direction:rtl;unicode-bidi:isolate}
+
+/* who's who */
+.actors{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 0}
+.actor{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 13px;font:800 12.5px var(--sans);border:1px solid}
+.actor i{width:9px;height:9px;border-radius:99px;display:block}
+.a-you{color:var(--fg);border-color:var(--line)} .a-you i{background:var(--fg)}
+.a-sawia{color:var(--brand);border-color:rgba(139,124,255,.45);background:var(--brand-dim)} .a-sawia i{background:var(--brand)}
+.a-cj{color:var(--cj);border-color:rgba(242,169,59,.45);background:var(--cj-dim)} .a-cj i{background:var(--cj)}
+.a-bk{color:var(--bk);border-color:rgba(108,168,255,.45);background:var(--bk-dim)} .a-bk i{background:var(--bk)}
+
+/* the path */
+.path{display:grid;gap:0;position:relative;margin-top:8px}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;position:relative;padding-bottom:22px}
+.step:last-child{padding-bottom:0}
+.step::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;background:var(--line)}
+.step:last-child::before{display:none}
+.dot{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:900 15px var(--sans);flex:none}
+.d-sawia{background:var(--brand-dim);color:var(--brand);border:1px solid rgba(139,124,255,.45)}
+.d-cj{background:var(--cj-dim);color:var(--cj);border:1px solid rgba(242,169,59,.45)}
+.d-bk{background:var(--bk-dim);color:var(--bk);border:1px solid rgba(108,168,255,.45)}
+.d-you{background:var(--raise);color:var(--fg);border:1px solid var(--line)}
+.stepcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px 17px}
+.who{font:800 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.stepcard h4{font:800 16px/1.3 var(--sans);margin:0 0 6px;letter-spacing:-.01em}
+.stepcard p{color:var(--mut);font-size:13.5px;margin:0 0 8px}
+.stepcard p:last-child{margin:0}
+.stepcard b{color:var(--fg)}
+.writes{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font:700 11px var(--mono);border-radius:7px;padding:3px 7px;background:var(--raise);border:1px solid var(--line);color:var(--mut)}
+.tag.new{border-color:rgba(139,124,255,.45);color:var(--brand)}
+.quote{margin-top:8px;border-radius:12px;background:var(--raise);padding:10px 12px;font:600 13px var(--sans)}
+.quote .ar{display:block;margin-top:4px;color:var(--mut);font-size:13px}
+.split2{display:grid;gap:8px;margin-top:8px}
+@media(min-width:620px){.split2{grid-template-columns:1fr 1fr}}
+.opt{border-radius:12px;padding:10px 12px;font-size:13px;color:var(--mut);border:1px solid var(--line)}
+.opt b{display:block;margin-bottom:2px}
+.opt.yes{border-color:rgba(155,201,126,.4);background:var(--moss-dim)} .opt.yes b{color:var(--moss)}
+.opt.no b{color:var(--fg)}
+
+/* link anatomy */
+.hop{background:#101010;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.hop .top{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.hop .n{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:900 12px var(--sans)}
+.hop .l{font:800 13px var(--sans)}
+.url{font:500 12.5px/1.8 var(--mono);color:var(--fg);word-break:break-all}
+.url .k{color:var(--dim)} .url .v{color:var(--moss)} .url .ph{color:var(--cj);font-weight:700}
+.hop .note{font-size:12.5px;color:var(--dim);margin-top:8px}
+
+/* table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+th,td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:start;vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:800 10.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:var(--raise)}
+td:first-child{font-weight:600}
+.y{color:var(--moss);font-weight:700} .n{color:var(--dim)} .m{color:var(--dune);font-weight:600}
+
+/* modes */
+.modes{display:grid;gap:12px}
+@media(min-width:760px){.modes{grid-template-columns:repeat(3,1fr)}}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.mode.now{border-color:rgba(139,124,255,.5)}
+.mode .k{font:800 13px var(--mono);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.mode .k span{font:800 9.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);background:var(--brand-dim);border-radius:999px;padding:4px 8px}
+.mode p{color:var(--mut);font-size:13px;margin:0}
+
+/* checklist */
+.check{display:grid;gap:8px}
+.ci{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.ci .b{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--dim);display:flex;align-items:center;justify-content:center;font:900 12px var(--sans);margin-top:1px}
+.ci.done .b{background:var(--moss);border-color:var(--moss);color:#0D0D0D}
+.ci.wait .b{border-color:var(--dune);color:var(--dune)}
+.ci .t{font:700 14px var(--sans)}
+.ci .t small{display:block;font:500 12.5px var(--sans);color:var(--mut);margin-top:2px}
+.owner{font:800 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:4px 8px;white-space:nowrap}
+.o-you{background:var(--raise);color:var(--fg)} .o-me{background:var(--brand-dim);color:var(--brand)} .o-them{background:var(--cj-dim);color:var(--cj)}
+.warn{border:1px solid var(--line);border-inline-start:3px solid var(--horizon);border-radius:12px;padding:13px 15px;background:var(--card);color:var(--mut);font-size:13.5px;margin-top:16px}
+.warn b{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="./">← Where Stays lives</a>
+<h1>How a Stays booking works</h1>
+<p class="lede">From “nobody's booked Jeddah” to a commission in your CJ account: every hop, what each party learns, and the two values CJ will send you. Your real trip is used throughout — Jeddah, 6–11 October, one of you.</p>
+<div class="actors">
+  <span class="actor a-you"><i></i>You</span>
+  <span class="actor a-sawia"><i></i>Sawia</span>
+  <span class="actor a-cj"><i></i>CJ Affiliate</span>
+  <span class="actor a-bk"><i></i>Booking.com</span>
+</div>
+
+<!-- ─────────── THE PATH ─────────── -->
+<section class="sec">
+  <h2>The path, start to finish</h2>
+  <div class="path">
+
+    <div class="step"><div class="dot d-sawia">1</div><div class="stepcard">
+      <div class="who" style="color:var(--brand)">Sawia</div>
+      <h4>Notices a night with nowhere to sleep</h4>
+      <p>Your route says Jeddah for 5 nights. No hotel stop covers those nights, so NOW shows a ticket and the Horizon gets a <b>stay</b> mark.</p>
+      <div class="quote">Nobody's booked Jeddah · 5 nights · 6–11 Oct<span class="ar">لم يحجز أحد في جدة · 5 ليالٍ</span></div>
+    </div></div>
+
+    <div class="step"><div class="dot d-you">2</div><div class="stepcard">
+      <div class="who" style="color:var(--fg)">You</div>
+      <h4>Open Stays</h4>
+      <p>One card per city you sleep in, already filled from the route: <b>Jeddah · 6 → 11 Oct · 1 adult · 1 room</b>. Rooms default to half the crew, rounded up — you can change it on the card.</p>
+    </div></div>
+
+    <div class="step"><div class="dot d-sawia">3</div><div class="stepcard">
+      <div class="who" style="color:var(--brand)">Sawia · the moment you tap “Find stays on Booking.com”</div>
+      <h4>Writes down the tap, tells the crew, and hands you on</h4>
+      <p>The button doesn't point at Booking. It points at Sawia's own server route, which does three things in a few milliseconds:</p>
+      <p>① logs the click — which trip, which city, which button, when — so it can later be matched against CJ's report;<br>
+      ② marks the stay <b>“looking”</b>, so anyone else in the trip sees <i>“Aws is checking stays”</i> instead of booking a second hotel;<br>
+      ③ redirects you to CJ.</p>
+      <div class="writes"><span class="tag new">affiliate_clicks</span><span class="tag new">stay_bookings · looking</span><span class="tag">302 → CJ</span></div>
+    </div></div>
+
+    <div class="step"><div class="dot d-cj">4</div><div class="stepcard">
+      <div class="who" style="color:var(--cj)">CJ Affiliate · invisible, under a second</div>
+      <h4>Records the click and sets its cookie</h4>
+      <p>You never see this page. CJ notes the click under Sawia's reference code — <code>sawia-stays-bc506179</code> — sets a cookie so the booking can be credited to Sawia, and redirects you on.</p>
+      <div class="writes"><span class="tag">CJ cookie</span><span class="tag">302 → Booking.com</span></div>
+    </div></div>
+
+    <div class="step"><div class="dot d-bk">5</div><div class="stepcard">
+      <div class="who" style="color:var(--bk)">Booking.com</div>
+      <h4>A search that's already filled in</h4>
+      <p>Jeddah, 6–11 October, 1 adult, 1 room, prices in SAR, in Arabic. You browse, compare and book exactly as you normally would — your name, card and email go to Booking, never through Sawia.</p>
+    </div></div>
+
+    <div class="step"><div class="dot d-sawia">6</div><div class="stepcard">
+      <div class="who" style="color:var(--brand)">Sawia · when you come back</div>
+      <h4>Asks, because it can't see the booking</h4>
+      <p>Booking.com never tells Sawia what you booked. So the app asks, once:</p>
+      <div class="quote">Did you book somewhere in Jeddah?<span class="ar">هل حجزت مكانًا في جدة؟</span></div>
+      <div class="split2">
+        <div class="opt yes"><b>Yes, booked</b>You type the hotel name. The card turns <b>Covered ✓</b> for the whole crew, the Horizon's stay mark turns green, and a hotel stop appears on 6–11 Oct — so Plan and Money agree without typing it twice.</div>
+        <div class="opt no"><b>Not yet</b>Nothing changes. The card stays “looking”, and you're not asked again for that city until you tap again.</div>
+      </div>
+      <div class="writes"><span class="tag new">stay_bookings · booked</span><span class="tag">itinerary · hotel stop</span></div>
+    </div></div>
+
+    <div class="step"><div class="dot d-cj">7</div><div class="stepcard">
+      <div class="who" style="color:var(--cj)">CJ Affiliate · days to weeks later</div>
+      <h4>The commission shows up</h4>
+      <p>Booking.com reports the booking to CJ. It appears in your CJ dashboard as <b>4% of the booking, in USD</b>, under the reference <code>sawia-stays-bc506179</code> — which is how you know it came from the Stays card on that trip. Booking pays on completed stays, so a cancelled booking earns nothing. CJ then pays out on its own schedule.</p>
+    </div></div>
+
+  </div>
+</section>
+
+<!-- ─────────── WHO LEARNS WHAT ─────────── -->
+<section class="sec">
+  <h2>Who learns what</h2>
+  <p class="body" style="margin-bottom:16px">This is what the privacy policy you just published promises. The key line is the last one: <b>Sawia never sees your booking</b> — step 6 exists because it has no other way to know.</p>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Sawia</th><th>CJ</th><th>Booking.com</th></tr></thead>
+    <tbody>
+      <tr><td>That you tapped the button</td><td class="y">Yes — its own log</td><td class="y">Yes</td><td class="n">—</td></tr>
+      <tr><td>City, dates, people, rooms</td><td class="y">Yes — from your route</td><td class="y">In the link</td><td class="y">In the link</td></tr>
+      <tr><td>Your name or email</td><td class="y">Your account</td><td class="n">Never sent</td><td class="m">Only if you book — you type it there</td></tr>
+      <tr><td>Whether you booked</td><td class="m">Only if you say so</td><td class="y">Yes, from Booking</td><td class="y">Yes</td></tr>
+      <tr><td>Which hotel, what price</td><td class="m">Only the name, if you type it</td><td class="m">The commission</td><td class="y">Yes</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ─────────── THE LINK ─────────── -->
+<section class="sec">
+  <h2>The link, hop by hop</h2>
+  <p class="body" style="margin-bottom:18px">Values in <span style="color:var(--cj);font-weight:700">orange</span> are the ones CJ gives you on approval. Everything else Sawia fills in per tap.</p>
+
+  <div class="hop">
+    <div class="top"><span class="n d-sawia">①</span><span class="l">What the button points at — Sawia's own route</span></div>
+    <div class="url"><span class="k">GET</span> /api/affiliate/stays?<span class="k">trip</span>=<span class="v">bc506179-…</span>&amp;<span class="k">base</span>=<span class="v">jeddah</span></div>
+    <p class="note">Nothing about CJ is in the page, so the IDs can't be copied out of it — and every tap is logged before it leaves.</p>
+  </div>
+
+  <div class="hop">
+    <div class="top"><span class="n d-cj">②</span><span class="l">Where the server sends you — CJ's tracking link</span></div>
+    <div class="url">https://www.<span class="ph">{cj-domain}</span>/click-<span class="ph">{PID}</span>-<span class="ph">{AD_ID}</span>?<span class="k">sid</span>=<span class="v">sawia-stays-bc506179</span>&amp;<span class="k">url</span>=<span class="v">{③, encoded}</span></div>
+    <p class="note">The shape of a CJ deep link. The exact domain and IDs arrive with approval — this is the <code>BOOKING_LINK_TEMPLATE</code> setting, so switching it on is a config change, not a rewrite. <b style="color:var(--fg)">sid</b> is Sawia's reference code: the only thread tying a CJ report back to a trip, so it carries no name or email — just which button and the first 8 characters of the trip's ID.</p>
+  </div>
+
+  <div class="hop">
+    <div class="top"><span class="n d-bk">③</span><span class="l">Where CJ sends you — the Booking.com search</span></div>
+    <div class="url">https://www.booking.com/searchresults.html?<span class="k">ss</span>=<span class="v">Jeddah</span>&amp;<span class="k">checkin</span>=<span class="v">2026-10-06</span>&amp;<span class="k">checkout</span>=<span class="v">2026-10-11</span>&amp;<span class="k">group_adults</span>=<span class="v">1</span>&amp;<span class="k">no_rooms</span>=<span class="v">1</span>&amp;<span class="k">selected_currency</span>=<span class="v">SAR</span>&amp;<span class="k">lang</span>=<span class="v">ar</span></div>
+    <p class="note">One change from the original plan, which assumed a direct Booking.com account: through CJ, attribution is CJ's job, so Sawia doesn't set Booking's own <code>aid</code> or <code>label</code>. The reference moves to CJ's <code>sid</code> in ②.</p>
+  </div>
+</section>
+
+<!-- ─────────── SWITCHES ─────────── -->
+<section class="sec">
+  <h2>One switch, three positions</h2>
+  <div class="modes">
+    <div class="mode now"><div class="k">off <span>today</span></div><p>Stays cards show as plain reminders — “you need a bed in Jeddah, nobody's claimed it” — with no button. Still useful; nothing depends on approval.</p></div>
+    <div class="mode"><div class="k">preview</div><p>The button works and goes straight to the filled-in Booking.com search, skipping CJ. No tracking, no commission. For testing the whole flow before approval.</p></div>
+    <div class="mode"><div class="k">live</div><p>Through CJ, earning. Needs the two values CJ sends on approval. Flipping it is a settings change, not a new release.</p></div>
+  </div>
+</section>
+
+<!-- ─────────── NEXT ─────────── -->
+<section class="sec">
+  <h2>What happens next</h2>
+  <div class="check">
+    <div class="ci done"><div class="b">✓</div><div class="t">CJ account active; Booking.com APAC applied<small>ID 7854081, pending review — 4% per booking, USD.</small></div><span class="owner o-you">you</span></div>
+    <div class="ci done"><div class="b">✓</div><div class="t">CJ disclosed in the privacy policy and terms<small>Deployed today, before their reviewer looks at the site.</small></div><span class="owner o-me">done</span></div>
+    <div class="ci wait"><div class="b">…</div><div class="t">Approval<small>Usually a few days, up to two weeks. Arrives by email, or Booking moves to “My Advertisers (Active)”.</small></div><span class="owner o-them">CJ</span></div>
+    <div class="ci"><div class="b"></div><div class="t">Build Stays, switched off<small>The NOW ticket and Horizon mark, the Stays screen, the shared “looking / booked” state, the click log and the redirect route. Ships dark — it doesn't have to wait for approval.</small></div><span class="owner o-me">me</span></div>
+    <div class="ci"><div class="b"></div><div class="t">Send the PID and the deep-link format<small>The two values CJ gives on approval.</small></div><span class="owner o-you">you</span></div>
+    <div class="ci"><div class="b"></div><div class="t">Set the template, flip to live, test one click<small>Then check that the click appears in CJ under its sawia-stays reference.</small></div><span class="owner o-me">me</span></div>
+  </div>
+  <div class="warn"><b>About the “$175 per 100 clicks”.</b> That's CJ's average across every site promoting Booking.com — large travel sites included. It isn't a forecast for Sawia, which has no clicks yet. Sawia's own number will come from its click log set against CJ's reports — that's what the log in step 3 is for.</div>
+</section>
+</div>
+</body>
+</html>
