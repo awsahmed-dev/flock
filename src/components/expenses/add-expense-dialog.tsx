@@ -9,13 +9,16 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createExpense } from "@/lib/actions/expenses";
+import { addOutsidePerson, type OutsidePerson } from "@/lib/actions/outside-people";
+import { refused } from "@/lib/actions/refusal";
+import { splitWithOutside, ME } from "@/lib/outside-people";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics/events";
 import { normalizeDigits, fmtAmount } from "@/lib/numerals";
 import { inferCategory, type ExpenseCategory } from "@/lib/expense-category";
 import { inferLocalCurrency } from "@/lib/country-currency";
 import { convert, type RateBundle } from "@/lib/fx";
-import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal, Users, User, Receipt, X, CircleNotch as Loader2 } from "@phosphor-icons/react/dist/ssr";
+import { Plus, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal, Users, User, Receipt, X, CircleNotch as Loader2, UserPlus } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import type { IconType } from "@/components/ui/icon-type";
@@ -71,7 +74,14 @@ interface Props {
   /** Sprint 9 FIX-2A: trip destination — the picker defaults to the
    *  on-the-ground currency (SAR in Riyadh), not the trip's base. */
   destination?: string;
+  /** People outside the trip the current member has split with before. */
+  outsidePeople?: OutsidePerson[];
 }
+
+// A stable empty list. A `= []` default is a NEW array on every render, and
+// the effect that mirrors this prop into state then re-fires forever —
+// "Maximum update depth exceeded" on any page that doesn't pass it.
+const NO_PEOPLE: OutsidePerson[] = [];
 
 export function AddExpenseDialog({
   tripId,
@@ -85,6 +95,7 @@ export function AddExpenseDialog({
   members = [],
   currentUserId = "",
   destination = "",
+  outsidePeople = NO_PEOPLE,
 }: Props) {
   const localCurrency = inferLocalCurrency(destination);
   const currencyOptions = Array.from(
@@ -121,6 +132,18 @@ export function AddExpenseDialog({
   // Sprint 3 FIX-4: equal | custom (custom = per-member amounts).
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal");
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
+  // People outside the trip. Picking any of them makes the expense this
+  // member's own (personal) — the crew's split controls step aside, and the
+  // server stores MY share as the amount with what the others owe beside it.
+  const solo = members.length <= 1;
+  const [outsideOpen, setOutsideOpen] = useState(false);
+  const [people, setPeople] = useState<OutsidePerson[]>(outsidePeople);
+  const [outsideSel, setOutsideSel] = useState<string[]>([]);
+  const [outsidePayer, setOutsidePayer] = useState<string>(ME);
+  const [newPerson, setNewPerson] = useState("");
+  const [addingPerson, setAddingPerson] = useState(false);
+  useEffect(() => setPeople(outsidePeople), [outsidePeople]);
+  const outsideOn = outsideSel.length > 0;
   // Local mirror of the amount input so the live-projection pill can
   // recompute on every keystroke without dragging in a controlled form.
   const [amountInput, setAmountInput] = useState("");
@@ -177,6 +200,10 @@ export function AddExpenseDialog({
 
   const payer = members.find((m) => m.userId === (paidBy || currentUserId));
   const parsedAmount = parseFloat(normalizeDigits(amountInput).replace(/,/g, "")) || 0;
+  const outsidePreviewShare =
+    outsideOn && parsedAmount > 0
+      ? splitWithOutside({ bill: parsedAmount, currency: currencyInput, contactIds: outsideSel, payer: outsidePayer }).myShare
+      : null;
   const equalShare = memberCount > 0 ? parsedAmount / memberCount : 0;
   // Sprint 3 FIX-4: allocation math for the custom editor.
   const allocated = members.reduce(
@@ -204,7 +231,11 @@ export function AddExpenseDialog({
     // Sprint 3 FIX-3/4: payer + split payload.
     formData.set("paidBy", paidBy || currentUserId);
     formData.set("splitType", scope === "shared" ? splitMode : "equal");
-    if (scope === "shared" && splitMode === "custom") {
+    if (outsideOn) {
+      formData.set("scope", "personal");
+      formData.set("splitType", "equal");
+      formData.set("outsidePeople", JSON.stringify({ contactIds: outsideSel, payer: outsidePayer }));
+    } else if (scope === "shared" && splitMode === "custom") {
       formData.set(
         "customSplits",
         JSON.stringify(
@@ -239,6 +270,9 @@ export function AddExpenseDialog({
         setCustomAmounts({});
         setAmountInput("");
         setDescription("");
+        setOutsideSel([]);
+        setOutsidePayer(ME);
+        setOutsideOpen(false);
       } catch (err) {
         toast.error((err as Error).message || t("settings.failedToPostExpense"));
       }
@@ -366,21 +400,27 @@ export function AddExpenseDialog({
           </div>
 
           {/* B2 Budget v2 — live projection. */}
+          {/* What this expense does to the budget. Split with people outside
+              the trip, only MY share lands on it. Solo, the trip budget is
+              the only budget: the separate personal cap is a crew idea (your
+              cap inside a shared pot), hidden on the Money page for the same
+              reason — here it read "682%" on a trip whose owner had once set
+              a small cap. */}
           <BudgetProjection
-            amountInput={amountInput}
+            amountInput={outsideOn && outsidePreviewShare != null ? String(outsidePreviewShare) : amountInput}
             currencyInput={currencyInput}
             baseCurrency={baseCurrency}
             fxRates={fxRates}
-            scope={scope}
+            scope={solo ? "shared" : outsideOn ? "personal" : scope}
             memberCount={memberCount}
             tripBudget={tripBudget}
             sharedSpent={sharedSpent}
-            personalBudget={personalBudget}
+            personalBudget={solo ? null : personalBudget}
             personalSpent={personalSpent}
           />
 
           {/* Sprint 3 FIX-3: PAID BY — someone else can be the payer. */}
-          {members.length > 1 && (
+          {members.length > 1 && !outsideOn && (
             <div className="rounded-2xl border border-border bg-background">
               <button
                 type="button"
@@ -421,7 +461,11 @@ export function AddExpenseDialog({
             </div>
           )}
 
-          {/* Sprint 3 FIX-4: three-way split — Equal / Custom / Just me. */}
+          {/* Sprint 3 FIX-4: three-way split — Equal / Custom / Just me.
+              Hidden when you're travelling alone: "split equally" between
+              one person is noise, and it was the only split control that
+              still showed on a solo trip. */}
+          {!solo && !outsideOn && (
           <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
@@ -461,6 +505,45 @@ export function AddExpenseDialog({
               <User className="w-4 h-4" /> {t("expenses.justMe")}
             </button>
           </div>
+          )}
+
+          <OutsideSplitPicker
+            open={outsideOpen}
+            onToggle={() => setOutsideOpen((v) => !v)}
+            people={people}
+            selected={outsideSel}
+            onSelect={(id) => {
+              setOutsideSel((sel) => {
+                const next = sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id];
+                if (outsidePayer !== ME && !next.includes(outsidePayer)) setOutsidePayer(ME);
+                return next;
+              });
+            }}
+            payer={outsidePayer}
+            onPayer={setOutsidePayer}
+            newName={newPerson}
+            onNewName={setNewPerson}
+            adding={addingPerson}
+            onAdd={async () => {
+              const name = newPerson.trim();
+              if (!name) return;
+              setAddingPerson(true);
+              try {
+                const r = await addOutsidePerson(tripId, name);
+                if (refused(r)) {
+                  toast.error(t(r.error));
+                  return;
+                }
+                setPeople((ps) => (ps.some((p) => p.id === r.person.id) ? ps : [...ps, r.person]));
+                setOutsideSel((sel) => (sel.includes(r.person.id) ? sel : [...sel, r.person.id]));
+                setNewPerson("");
+              } finally {
+                setAddingPerson(false);
+              }
+            }}
+            amount={parsedAmount}
+            currency={currencyInput}
+          />
 
           {/* Sprint 3 FIX-4: per-member amount editor with a running total. */}
           {scope === "shared" && splitMode === "custom" && (
@@ -880,5 +963,147 @@ function SlidersIcon() {
       <line x1="4" y1="8" x2="20" y2="8" /><circle cx="9" cy="8" r="2" fill="currentColor" stroke="none" />
       <line x1="4" y1="16" x2="20" y2="16" /><circle cx="15" cy="16" r="2" fill="currentColor" stroke="none" />
     </svg>
+  );
+}
+
+/**
+ * Split with people outside the trip — names, not accounts. Closed, it's a
+ * single row. Open, it lists the people you've split with before, a field to
+ * add someone new, and who paid. The preview is the exact split the server
+ * will store (same function, same halala rounding), so what you see is what
+ * gets saved.
+ */
+function OutsideSplitPicker({
+  open,
+  onToggle,
+  people,
+  selected,
+  onSelect,
+  payer,
+  onPayer,
+  newName,
+  onNewName,
+  adding,
+  onAdd,
+  amount,
+  currency,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  people: OutsidePerson[];
+  selected: string[];
+  onSelect: (id: string) => void;
+  payer: string;
+  onPayer: (id: string) => void;
+  newName: string;
+  onNewName: (v: string) => void;
+  adding: boolean;
+  onAdd: () => void;
+  amount: number;
+  currency: string;
+}) {
+  const t = useT();
+  const nameOf = (id: string) => people.find((p) => p.id === id)?.name ?? "";
+  const preview =
+    selected.length > 0 && amount > 0
+      ? splitWithOutside({ bill: amount, currency, contactIds: selected, payer })
+      : null;
+  const chip = (on: boolean) =>
+    `inline-flex items-center gap-1.5 rounded-full px-3 h-9 text-[13px] font-bold transition-all ${
+      on
+        ? "bg-primary/10 border border-primary/30 text-primary"
+        : "border border-border bg-card text-muted-foreground hover:text-foreground"
+    }`;
+
+  return (
+    <div className="rounded-2xl border border-border bg-background">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-start"
+      >
+        <UserPlus className="w-4 h-4 text-muted-foreground" />
+        <span className="flex-1 text-[13px] font-bold">
+          {selected.length > 0
+            ? t("outside.splitWithCount", { count: selected.length })
+            : t("outside.splitWith")}
+        </span>
+        <span aria-hidden className="text-muted-foreground">{open ? "▴" : "▾"}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border p-3 space-y-3">
+          {people.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {people.map((p) => (
+                <button key={p.id} type="button" onClick={() => onSelect(p.id)} aria-pressed={selected.includes(p.id)} className={chip(selected.includes(p.id))}>
+                  <span dir="auto">{p.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <input
+              value={newName}
+              onChange={(e) => onNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onAdd();
+                }
+              }}
+              placeholder={t("outside.namePlaceholder")}
+              maxLength={60}
+              dir="auto"
+              className="flex-1 min-w-0 rounded-xl border border-border bg-card px-3 h-10 text-[14px] outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <button
+              type="button"
+              onClick={onAdd}
+              disabled={adding || !newName.trim()}
+              className="h-10 px-3 rounded-full border border-primary/40 text-primary text-[13px] font-bold inline-flex items-center gap-1 disabled:opacity-50"
+            >
+              {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {t("outside.add")}
+            </button>
+          </div>
+
+          {selected.length > 0 && (
+            <>
+              <div>
+                <p className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mb-1.5">{t("outside.whoPaid")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button type="button" onClick={() => onPayer(ME)} aria-pressed={payer === ME} className={chip(payer === ME)}>
+                    {t("expenses.you")}
+                  </button>
+                  {selected.map((id) => (
+                    <button key={id} type="button" onClick={() => onPayer(id)} aria-pressed={payer === id} className={chip(payer === id)}>
+                      <span dir="auto">{nameOf(id)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {preview && (
+                <p className="text-[12.5px] text-muted-foreground tabular-nums">
+                  {payer === ME
+                    ? t("outside.previewOwed", {
+                        each: `${currency} ${fmtAmount(preview.rows[0]?.amount ?? 0)}`,
+                        mine: `${currency} ${fmtAmount(preview.myShare)}`,
+                      })
+                    : t("outside.previewIOwe", {
+                        name: nameOf(payer),
+                        mine: `${currency} ${fmtAmount(preview.myShare)}`,
+                      })}
+                </p>
+              )}
+              <p className="text-[11.5px] text-muted-foreground">{t("outside.shareNote")}</p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

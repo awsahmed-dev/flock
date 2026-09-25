@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createBaseConverter } from "@/lib/money-total";
+import { dailyPace } from "@/lib/daily-pace";
 import { FxIncompleteNote } from "@/components/expenses/fx-incomplete-note";
 import { useT } from "@/components/i18n/locale-provider";
 import { Receipt, CaretRight as ChevronRight, ArrowsLeftRight as ArrowRightLeft, MagnifyingGlass as Search, Bed, Airplane as Plane, ForkKnife as Utensils, Ticket, ShoppingBag, DotsThree as MoreHorizontal } from "@phosphor-icons/react/dist/ssr";
@@ -64,6 +65,8 @@ interface Props {
   endDate: string;
   /** Sprint 9 FIX-2A: destination seeds the expense currency default. */
   destination?: string;
+  /** Today in the traveller's zone (server-resolved). */
+  todayIso: string;
 }
 
 /**
@@ -84,6 +87,7 @@ export function TransactionsPage({
   startDate,
   destination = "",
   endDate,
+  todayIso,
 }: Props) {
   const t = useT();
   const isOwner = members.some((m) => m.userId === userId);
@@ -112,34 +116,35 @@ export function TransactionsPage({
       return s + (sp ? toBase(sp.amountOwed, e.currency) : 0);
     }, 0);
 
-    // Daily breakdown for the tracker
-    const sharedByDay = new Map<string, number>();
-    for (const e of sharedExpenses) {
-      sharedByDay.set(e.expenseDate, (sharedByDay.get(e.expenseDate) ?? 0) + toBase(e.amount, e.currency));
-    }
-    const days = eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) });
-    const dailyBreakdown = days.map((d, idx) => {
-      const key = format(d, "yyyy-MM-dd");
-      return {
-        date: d,
-        dateKey: key,
-        dayNumber: idx + 1,
-        spent: sharedByDay.get(key) ?? 0,
-      };
+    // Daily tracker. Solo, EVERY expense is the trip's spend — this used to
+    // count only shared ones, so a solo traveller logging personal spend saw
+    // 0 on every day and was never told they'd overspent. With a crew it
+    // stays the shared budget. Spend dated before the trip (flights, hotels
+    // booked ahead) comes off the plan instead of being silently ignored.
+    const pace = dailyPace({
+      expenses: (members.length <= 1 ? expenseList : sharedExpenses).map((e) => ({
+        date: e.expenseDate,
+        amount: toBase(e.amount, e.currency),
+      })),
+      startDate,
+      endDate,
+      budget: tripBudget,
+      today: todayIso,
     });
+    const dailyBreakdown = pace.byDay.map((d) => ({ ...d, date: parseISO(d.dateKey) }));
 
     return {
       fxMissing: [...missing],
       totalSharedBase,
       personalSpentBase: myPersonalBase + mySharedShareBase,
       dailyBreakdown,
+      pace,
     };
-  }, [expenseList, currency, fxRates, userId, startDate, endDate]);
+  }, [expenseList, currency, fxRates, userId, startDate, endDate, members.length, tripBudget, todayIso]);
 
-  const dailyTarget =
-    tripBudget && derived.dailyBreakdown.length > 0
-      ? tripBudget / derived.dailyBreakdown.length
-      : null;
+  // The plan per day is (budget − spent before the trip) ÷ trip days — fixed,
+  // so a past day's colour never changes after the fact.
+  const dailyTarget = derived.pace.planPerDay;
 
   // Filter + sort transactions for the list
   const filtered = expenseList
@@ -197,6 +202,27 @@ export function TransactionsPage({
         }
       />
       <FxIncompleteNote currencies={derived.fxMissing} className="-mt-2" />
+
+      {tripBudget && tripBudget > 0 && (derived.pace.preTrip > 0 || derived.pace.allowanceFromToday != null) && (
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="rounded-2xl border border-border bg-card px-3.5 py-3">
+            <p className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground">{t("expenses.beforeTrip")}</p>
+            <p className="text-[15px] font-extrabold tabular-nums mt-0.5">{currency} {fmt(derived.pace.preTrip)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{t("expenses.beforeTripHint")}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card px-3.5 py-3">
+            <p className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground">{t("expenses.perDayFromHere")}</p>
+            <p className="text-[15px] font-extrabold tabular-nums mt-0.5">
+              {derived.pace.allowanceFromToday != null ? `${currency} ${fmt(derived.pace.allowanceFromToday)}` : "—"}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {derived.pace.budgetGoneBeforeTrip
+                ? t("expenses.budgetGoneBeforeTrip")
+                : t("expenses.daysLeft", { count: derived.pace.daysLeft })}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Search + add ───────────────────────────────────────────── */}
       <div className="flex items-center gap-2">

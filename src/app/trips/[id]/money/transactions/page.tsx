@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { TransactionsPage } from "@/components/expenses/transactions-page";
 import { loadMoneyPageData } from "@/lib/actions/money-page-data";
 import { effectiveTripBudget } from "@/lib/budget";
+import { getToday } from "@/lib/today-server";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,7 +12,10 @@ interface Props {
 /** Phase 6 §8-C: transactions live under /money now. */
 export default async function MoneyTransactionsRoute({ params }: Props) {
   const { id } = await params;
-  const { user, trip, expenseList, fxRates, members, personalBudget } = await loadMoneyPageData(id);
+  const [{ user, trip, expenseList, fxRates, members, personalBudget }, todayIso] = await Promise.all([
+    loadMoneyPageData(id),
+    getToday(),
+  ]);
 
   return (
     <div className="px-4 pt-4 max-w-3xl mx-auto">
@@ -27,6 +31,7 @@ export default async function MoneyTransactionsRoute({ params }: Props) {
         fxRates={fxRates}
         startDate={trip.startDate}
         endDate={trip.endDate}
+        todayIso={todayIso}
       />
     </div>
   );

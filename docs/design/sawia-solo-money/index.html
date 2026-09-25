@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sawia Money — solo, and people outside the trip</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0D0D0D;--card:#1A1A1A;--raise:#242424;--line:#313131;
+  --fg:#f5f5f7;--mut:#a9a5b2;--dim:#716E79;
+  --brand:#8B7CFF;--brand-dim:rgba(139,124,255,.16);
+  --horizon:#FF8A5C;--horizon-dim:rgba(255,138,92,.16);
+  --moss:#9BC97E;--moss-dim:rgba(155,201,126,.18);
+  --dune:#E0B252;--dune-dim:rgba(224,178,82,.16);
+  --wayfind:#3EC5B7;--wayfind-dim:rgba(62,197,183,.16);
+  --sans:Inter,system-ui,-apple-system,sans-serif;
+  --ar:"IBM Plex Sans Arabic",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5;padding:28px 20px 90px}
+body[dir=rtl]{font-family:var(--ar)}
+body[dir=rtl] *{font-family:inherit}
+.wrap{max-width:1320px;margin:0 auto}
+h1{font:900 clamp(26px,4.4vw,37px)/1.08 var(--sans);letter-spacing:-.03em;margin:0}
+body[dir=rtl] h1{font-family:var(--ar)}
+.lede{color:var(--mut);font-size:15.5px;margin:12px 0 0;max-width:70ch}
+.bar{background:rgba(13,13,13,.9);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:24px 0 30px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl>span{font:800 10px var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+.seg{display:flex;background:var(--raise);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--mut);font:700 12px var(--sans);padding:6px 12px;border-radius:999px;cursor:pointer}
+body[dir=rtl] .seg button{font-family:var(--ar)}
+.seg button[aria-pressed=true]{background:var(--brand);color:#0D0D0D}
+
+.screens{display:flex;gap:26px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.scr{flex:none;width:392px}
+.scr h2{font:800 11px var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin:0 0 4px}
+.scr .sub{font:600 12.5px var(--sans);color:var(--mut);margin:0 0 12px;min-height:38px}
+.phone{width:392px;border:1px solid var(--line);border-radius:30px;overflow:hidden;background:var(--bg);box-shadow:0 30px 70px -32px #000}
+.ph-head{display:flex;align-items:center;gap:8px;padding:12px 10px;border-bottom:1px solid var(--line);background:#141414}
+.ph-head .t{flex:1;text-align:center;font:700 14px var(--sans)}
+.ph-body{padding:14px 12px 18px;display:flex;flex-direction:column;gap:11px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.k{font:800 9.5px var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+body[dir=rtl] .k{letter-spacing:0}
+.big{font:900 30px/1.1 var(--sans);letter-spacing:-.03em;margin-top:4px;font-variant-numeric:tabular-nums}
+.of{font:600 13px var(--sans);color:var(--mut)}
+.track{height:7px;border-radius:99px;background:rgba(245,245,247,.1);overflow:hidden;margin-top:12px}
+.track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--moss),var(--dune))}
+.meta{display:flex;justify-content:space-between;margin-top:8px;font:600 11.5px var(--sans);color:var(--mut);font-variant-numeric:tabular-nums}
+
+.days{display:flex;align-items:flex-end;gap:5px;height:64px;margin-top:10px}
+.days i{flex:1;border-radius:5px 5px 2px 2px;background:var(--raise)}
+.days i.on{background:var(--brand)}
+.dl{display:flex;gap:5px;margin-top:5px}
+.dl span{flex:1;text-align:center;font:700 9.5px var(--sans);color:var(--dim)}
+
+.cat{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.k+.cat{border-top:0}
+.cat .ic{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;font-size:15px}
+.cat .n{flex:1;font:600 13.5px var(--sans)}
+.cat .v{font:800 13px var(--sans);font-variant-numeric:tabular-nums}
+.cat .p{font:600 11px var(--sans);color:var(--dim);width:34px;text-align:end;font-variant-numeric:tabular-nums}
+
+.iou{display:flex;align-items:center;gap:10px;background:var(--moss-dim);border:1px solid rgba(155,201,126,.3);border-radius:16px;padding:12px 13px}
+.iou.owe{background:var(--horizon-dim);border-color:rgba(255,138,92,.3)}
+.iou .tx{flex:1;font:700 13.5px var(--sans)}
+.iou .tx small{display:block;font:600 11.5px var(--sans);color:var(--mut);margin-top:1px}
+.iou .go{font:800 11.5px var(--sans);color:var(--moss)}
+.iou.owe .go{color:var(--horizon)}
+
+.av{width:30px;height:30px;border-radius:99px;display:flex;align-items:center;justify-content:center;font:800 12px var(--sans);color:#0D0D0D;flex:none}
+.av.out{background:transparent;border:1.5px dashed var(--mut);color:var(--mut)}
+
+/* add sheet */
+.amt{text-align:center;padding:8px 0 4px}
+.amt .cur{font:800 15px var(--sans);color:var(--dim)}
+.amt .num{font:900 44px/1 var(--sans);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.field{background:var(--raise);border-radius:12px;padding:12px 13px;font:600 14px var(--sans)}
+.field.ph{color:var(--dim)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:999px;padding:7px 11px;font:700 12px var(--sans);color:var(--mut);display:inline-flex;align-items:center;gap:6px;background:transparent}
+.chip.on{background:var(--brand-dim);border-color:var(--brand);color:var(--fg)}
+.chip.new{border-style:dashed}
+.lbl{font:800 10px var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--dim);margin:4px 2px -3px}
+body[dir=rtl] .lbl{letter-spacing:0}
+.seg2{display:flex;background:var(--raise);border-radius:12px;padding:3px}
+.seg2 span{flex:1;text-align:center;font:700 12.5px var(--sans);color:var(--mut);padding:9px 0;border-radius:10px}
+.seg2 span.on{background:var(--card);color:var(--fg)}
+.splitrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.splitrow .n{flex:1;font:600 13.5px var(--sans)}
+.splitrow .v{font:800 13px var(--sans);font-variant-numeric:tabular-nums}
+.cta{height:48px;border-radius:999px;background:var(--brand);color:#0D0D0D;font:800 14.5px var(--sans);display:flex;align-items:center;justify-content:center}
+.fine{font:500 11.5px var(--sans);color:var(--dim);text-align:center}
+
+.person{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.person:first-child{border-top:0}
+.person .n{flex:1;font:700 14px var(--sans)}
+.person .n small{display:block;font:600 11.5px var(--sans);color:var(--dim)}
+.person .v{font:800 13.5px var(--sans);text-align:end;font-variant-numeric:tabular-nums}
+.person .v small{display:block;font:700 10.5px var(--sans)}
+.settle{border:1px solid var(--line);border-radius:999px;padding:6px 11px;font:800 11.5px var(--sans);color:var(--fg);flex:none}
+.priv{display:flex;gap:9px;align-items:flex-start;background:var(--raise);border-radius:13px;padding:11px 12px;font:600 12px/1.5 var(--sans);color:var(--mut)}
+
+/* group variant pieces */
+.bal{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.k+.bal{border-top:0}
+.bal .n{flex:1;font:600 13.5px var(--sans)}
+.bal .v{font:800 13px var(--sans);font-variant-numeric:tabular-nums}
+
+.notes{display:grid;gap:14px;margin-top:40px}
+@media(min-width:900px){.notes{grid-template-columns:1fr 1fr}}
+.note{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.note h3{font:800 15px var(--sans);margin:0 0 8px}
+.note p{margin:0 0 10px;color:var(--mut);font-size:13.5px}
+.note p:last-child{margin:0}
+.note b{color:var(--fg)}
+.note ul{margin:0;padding-inline-start:19px;color:var(--mut);font-size:13.5px}
+.note li{margin:6px 0}
+.note.brand{border-inline-start:3px solid var(--brand)}
+.note.warn{border-inline-start:3px solid var(--horizon)}
+.note.good{border-inline-start:3px solid var(--moss)}
+code{font:600 12px ui-monospace,Menlo,monospace;background:var(--raise);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1 data-t="title"></h1>
+<p class="lede" data-t="lede"></p>
+
+<div class="bar">
+  <div class="ctl"><span data-t="c_lang"></span><div class="seg" id="lang"><button data-v="en" aria-pressed="true">EN</button><button data-v="ar">AR</button></div></div>
+  <div class="ctl"><span data-t="c_crew"></span><div class="seg" id="crew"><button data-v="1" aria-pressed="true" data-t="solo"></button><button data-v="3" data-t="three"></button></div></div>
+</div>
+
+<div class="screens">
+  <div class="scr"><h2 data-t="s1h"></h2><p class="sub" id="s1sub"></p><div class="phone"><div class="ph-head"><span class="t" data-t="money"></span></div><div class="ph-body" id="s1"></div></div></div>
+  <div class="scr"><h2 data-t="s2h"></h2><p class="sub" data-t="s2sub"></p><div class="phone"><div class="ph-head"><span class="t" data-t="addTitle"></span></div><div class="ph-body" id="s2"></div></div></div>
+  <div class="scr"><h2 data-t="s3h"></h2><p class="sub" data-t="s3sub"></p><div class="phone"><div class="ph-head"><span class="t" data-t="outside"></span></div><div class="ph-body" id="s3"></div></div></div>
+</div>
+
+<div class="notes">
+  <div class="note brand"><h3 data-t="n1h"></h3><p data-t="n1a"></p><p data-t="n1b"></p></div>
+  <div class="note good"><h3 data-t="n2h"></h3><p data-t="n2a"></p><p data-t="n2b"></p></div>
+  <div class="note warn"><h3 data-t="n3h"></h3><p data-t="n3a"></p><p data-t="n3b"></p></div>
+  <div class="note"><h3 data-t="n4h"></h3><ul><li data-t="n4a"></li><li data-t="n4b"></li><li data-t="n4c"></li><li data-t="n4d"></li></ul></div>
+</div>
+</div>
+
+<script>
+const T = {
+ title:{en:"Money when you're on your own",ar:"المال حين تسافر وحدك"},
+ lede:{en:"Solo, Money is a spending tracker — what you've spent, where, and against what budget. No splitting, no “shared vs personal”. And when you split a dinner with people you met on the way, they don't need to join your trip: they're just names, private to you.",
+       ar:"حين تكون وحدك، يصبح «المال» متتبّعًا لإنفاقك — كم صرفت، وأين، ومقابل أي ميزانية. بلا تقسيم، وبلا «مشترك أو شخصي». وحين تتقاسم عشاءً مع أشخاص قابلتهم في الطريق، لا يحتاجون للانضمام إلى رحلتك: هم مجرد أسماء، خاصة بك."},
+ c_lang:{en:"Language",ar:"اللغة"}, c_crew:{en:"Trip crew",ar:"أفراد الرحلة"},
+ solo:{en:"just me",ar:"أنا فقط"}, three:{en:"3 people",ar:"3 أشخاص"},
+ money:{en:"Money",ar:"المال"}, addTitle:{en:"Add expense",ar:"إضافة مصروف"}, outside:{en:"People outside the trip",ar:"أشخاص خارج الرحلة"},
+ s1h:{en:"1 · Money",ar:"1 · المال"},
+ s1solo:{en:"Solo: a tracker. No balances, no split language.",ar:"وحدك: متتبّع إنفاق. بلا أرصدة ولا لغة تقسيم."},
+ s1group:{en:"With a crew: the same page gains balances. Nothing to switch.",ar:"مع رفقة: الصفحة نفسها تكتسب الأرصدة. لا شيء تبدّله."},
+ s2h:{en:"2 · Add expense",ar:"2 · إضافة مصروف"},
+ s2sub:{en:"“Just me” is the default. Splitting is one tap away, with anyone — in the trip or not.",ar:"«أنا فقط» هو الافتراضي. التقسيم على بُعد نقرة، مع أي أحد — من الرحلة أو خارجها."},
+ s3h:{en:"3 · People outside the trip",ar:"3 · أشخاص خارج الرحلة"},
+ s3sub:{en:"Names only. No account, no invite, nobody else sees them.",ar:"أسماء فقط. بلا حساب ولا دعوة، ولا يراهم أحد غيرك."},
+ spent:{en:"Spent so far",ar:"أنفقت حتى الآن"}, ofBudget:{en:"of SAR 6,000 budget",ar:"من ميزانية 6,000 ر.س"},
+ perDay:{en:"SAR 177 / day",ar:"177 ر.س / يوم"}, left:{en:"SAR 4,760 left · 24 days",ar:"متبقٍ 4,760 ر.س · 24 يومًا"},
+ byDay:{en:"Last 7 days",ar:"آخر 7 أيام"}, byKind:{en:"Where it went",ar:"أين ذهب"},
+ food:{en:"Food",ar:"طعام"}, stay:{en:"Stays",ar:"إقامة"}, move:{en:"Getting around",ar:"تنقّل"}, fun:{en:"Things to do",ar:"أنشطة"},
+ owesYou:{en:"Khalid owes you SAR 60",ar:"خالد يدين لك بـ 60 ر.س"}, owesSub:{en:"Dinner at Al Baik · Tue",ar:"عشاء في البيك · الثلاثاء"},
+ youOwe:{en:"You owe Omar SAR 35",ar:"أنت مدين لعمر بـ 35 ر.س"}, youOweSub:{en:"Taxi to Diriyah · Wed",ar:"تاكسي إلى الدرعية · الأربعاء"},
+ view:{en:"View",ar:"عرض"},
+ crewBal:{en:"Between the crew",ar:"بين أفراد الرحلة"}, sara:{en:"Sara",ar:"سارة"}, faisal:{en:"Faisal",ar:"فيصل"},
+ getsBack:{en:"gets back",ar:"يسترد"}, owes:{en:"owes",ar:"مدين"},
+ whatFor:{en:"Dinner at Al Baik",ar:"عشاء في البيك"},
+ kind:{en:"Kind",ar:"النوع"}, who:{en:"Who was in it?",ar:"من شارك فيه؟"},
+ justMe:{en:"Just me",ar:"أنا فقط"}, split:{en:"Split it",ar:"قسّمه"},
+ me:{en:"Me",ar:"أنا"}, khalid:{en:"Khalid",ar:"خالد"}, omar:{en:"Omar",ar:"عمر"}, someone:{en:"Someone new",ar:"شخص جديد"},
+ inTrip:{en:"In the trip",ar:"في الرحلة"}, notInTrip:{en:"Not in the trip",ar:"خارج الرحلة"},
+ each:{en:"SAR 66.67 each · you paid SAR 200",ar:"66.67 ر.س لكل شخص · دفعت 200 ر.س"},
+ save:{en:"Save",ar:"حفظ"},
+ fineSolo:{en:"Your spend counts your share only — SAR 66.67.",ar:"إنفاقك يحسب حصتك فقط — 66.67 ر.س."},
+ net:{en:"Net: you're owed SAR 25",ar:"الصافي: لك 25 ر.س"},
+ metKhalid:{en:"met in Jeddah · 2 expenses",ar:"التقيته في جدة · مصروفان"},
+ metOmar:{en:"met in Riyadh · 1 expense",ar:"التقيته في الرياض · مصروف واحد"},
+ owesYouS:{en:"owes you",ar:"يدين لك"}, youOweS:{en:"you owe",ar:"أنت مدين"},
+ settle:{en:"Settle",ar:"تسوية"},
+ privacy:{en:"Only you see these people. They don't get an account, an invite or a notification, and they never appear to your crew.",ar:"لا يرى هؤلاء الأشخاص سواك. لا يحصلون على حساب ولا دعوة ولا إشعار، ولا يظهرون لرفقتك أبدًا."},
+ addPerson:{en:"+ Add a person",ar:"+ أضف شخصًا"},
+ n1h:{en:"No mode switch — the crew decides",ar:"لا مفتاح أوضاع — عدد الرفقة يقرّر"},
+ n1a:{en:"Money already hides balances when you're alone. What leaks through is the <b>language</b>: “shared”, “personal”, “your share”. Solo, those words mean nothing, so they go. Toggle the crew in the bar and watch the same page gain a “Between the crew” block — you never flip a setting.",
+      ar:"«المال» يخفي الأرصدة أصلًا حين تكون وحدك. ما يتسرّب هو <b>اللغة</b>: «مشترك»، «شخصي»، «حصتك». وحدك، هذه الكلمات بلا معنى، فتُحذف. بدّل عدد الرفقة في الشريط وسترى الصفحة نفسها تكتسب قسم «بين أفراد الرحلة» — دون أن تغيّر أي إعداد."},
+ n1b:{en:"A toggle would be one more thing to remember on a trip. Crew size is already the truth.",ar:"المفتاح سيكون شيئًا إضافيًا تتذكّره أثناء السفر. عدد الرفقة هو الحقيقة أصلًا."},
+ n2h:{en:"People outside the trip",ar:"أشخاص خارج الرحلة"},
+ n2a:{en:"Today a split can only be with a registered trip member — <code>expense_splits.user_id</code> and both sides of <code>settlements</code> point at <code>profiles</code>. That is the actual reason “the guys I met at dinner” can't be recorded: there is nowhere to put them.",
+      ar:"حاليًا لا يمكن التقسيم إلا مع عضو مسجّل في الرحلة — <code>expense_splits.user_id</code> وطرفا <code>settlements</code> يشيران إلى <code>profiles</code>. وهذا هو السبب الفعلي لتعذّر تسجيل «من قابلتهم على العشاء»: لا مكان لهم."},
+ n2b:{en:"The fix is a small table of names owned by one person in one trip, plus a split row that can point at a name instead of an account. Your spend counts only your share; what they owe you is tracked beside it.",
+      ar:"الحل جدول صغير لأسماء يملكها شخص واحد في رحلة واحدة، وسطر تقسيم يمكنه أن يشير إلى اسم بدل حساب. إنفاقك يحسب حصتك فقط، وما يدينون لك يُتتبّع بجانبه."},
+ n3h:{en:"Private by design",ar:"خاص بطبيعته"},
+ n3a:{en:"Your dinner with strangers in Jeddah isn't your crew's business, and it must not move the crew's balances. Outside people and their debts belong to <b>you</b> — the trip's group math never sees them.",
+      ar:"عشاؤك مع غرباء في جدة ليس شأن رفقتك، ويجب ألا يحرّك أرصدة المجموعة. الأشخاص الخارجيون وديونهم ملك <b>لك</b> — حسابات المجموعة لا تراهم أبدًا."},
+ n3b:{en:"That also keeps it safe to ship: it adds beside the existing balance code, it does not change it.",ar:"وهذا يجعل إطلاقه آمنًا أيضًا: يُضاف بجانب كود الأرصدة الحالي، ولا يغيّره."},
+ n4h:{en:"What would change in code",ar:"ما الذي سيتغيّر في الكود"},
+ n4a:{en:"<code>trip_contacts</code> — id, trip, owner, name. RLS: owner only.",ar:"<code>trip_contacts</code> — المعرّف، الرحلة، المالك، الاسم. الصلاحية: للمالك فقط."},
+ n4b:{en:"<code>contact_splits</code> — expense, contact, amount owed, settled.",ar:"<code>contact_splits</code> — المصروف، الشخص، المبلغ المستحق، مسوّى."},
+ n4c:{en:"Add-expense: “Just me” default; split picker lists crew + your outside people + “Someone new”.",ar:"إضافة مصروف: «أنا فقط» افتراضيًا؛ وقائمة التقسيم تعرض الرفقة + أشخاصك الخارجيين + «شخص جديد»."},
+ n4d:{en:"Solo Money drops the shared/personal words and shows the tracker; IOU strips appear only when someone owes or is owed.",ar:"«المال» في وضع الفرد يحذف كلمتي مشترك/شخصي ويعرض المتتبّع؛ وأشرطة الديون تظهر فقط عند وجود دين."},
+};
+let lang="en", crew=1;
+const t=k=>(T[k]&&T[k][lang])||k;
+
+function s1(){
+  const group = crew>1;
+  return `
+  <div class="card"><div class="k">${t("spent")}</div>
+    <div class="big">SAR 1,240</div><div class="of">${t("ofBudget")}</div>
+    <div class="track"><i style="width:21%"></i></div>
+    <div class="meta"><span>${t("perDay")}</span><span>${t("left")}</span></div></div>
+
+  <div class="iou"><span class="av" style="background:var(--moss)">${lang==="ar"?"خ":"K"}</span>
+    <span class="tx">${t("owesYou")}<small>${t("owesSub")}</small></span><span class="go">${t("view")}</span></div>
+  <div class="iou owe"><span class="av" style="background:var(--horizon)">${lang==="ar"?"ع":"O"}</span>
+    <span class="tx">${t("youOwe")}<small>${t("youOweSub")}</small></span><span class="go">${t("view")}</span></div>
+
+  ${group?`<div class="card"><div class="k" style="margin-bottom:6px">${t("crewBal")}</div>
+    <div class="bal"><span class="av" style="background:#6d5df0">${lang==="ar"?"س":"S"}</span><span class="n">${t("sara")}</span><span class="v" style="color:var(--moss)">${t("getsBack")} SAR 140</span></div>
+    <div class="bal"><span class="av" style="background:#c08457">${lang==="ar"?"ف":"F"}</span><span class="n">${t("faisal")}</span><span class="v" style="color:var(--horizon)">${t("owes")} SAR 140</span></div></div>`:""}
+
+  <div class="card"><div class="k">${t("byDay")}</div>
+    <div class="days"><i style="height:40%"></i><i style="height:72%"></i><i style="height:30%"></i><i style="height:88%"></i><i style="height:55%"></i><i style="height:64%"></i><i class="on" style="height:46%"></i></div>
+    <div class="dl"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div></div>
+
+  <div class="card"><div class="k" style="margin-bottom:4px">${t("byKind")}</div>
+    <div class="cat"><span class="ic" style="background:var(--horizon-dim)">🍽</span><span class="n">${t("food")}</span><span class="v">SAR 520</span><span class="p">42%</span></div>
+    <div class="cat"><span class="ic" style="background:var(--wayfind-dim)">🛏</span><span class="n">${t("stay")}</span><span class="v">SAR 410</span><span class="p">33%</span></div>
+    <div class="cat"><span class="ic" style="background:var(--dune-dim)">🚕</span><span class="n">${t("move")}</span><span class="v">SAR 190</span><span class="p">15%</span></div>
+    <div class="cat"><span class="ic" style="background:var(--brand-dim)">🎟</span><span class="n">${t("fun")}</span><span class="v">SAR 120</span><span class="p">10%</span></div></div>`;
+}
+function s2(){
+  return `
+  <div class="amt"><span class="cur">SAR</span> <span class="num">200</span></div>
+  <div class="field">${t("whatFor")}</div>
+  <div class="lbl">${t("kind")}</div>
+  <div class="chips"><span class="chip on">🍽 ${t("food")}</span><span class="chip">🛏 ${t("stay")}</span><span class="chip">🚕 ${t("move")}</span><span class="chip">🎟 ${t("fun")}</span></div>
+  <div class="lbl">${t("who")}</div>
+  <div class="seg2"><span>${t("justMe")}</span><span class="on">${t("split")}</span></div>
+  <div class="card" style="padding:10px 13px">
+    ${crew>1?`<div class="k" style="margin:2px 0 4px">${t("inTrip")}</div>
+      <div class="chips" style="margin-bottom:8px"><span class="chip on">${t("me")}</span><span class="chip">${t("sara")}</span><span class="chip">${t("faisal")}</span></div>`:
+      `<div class="chips" style="margin-bottom:8px"><span class="chip on">${t("me")}</span></div>`}
+    <div class="k" style="margin:2px 0 4px">${t("notInTrip")}</div>
+    <div class="chips"><span class="chip on">${t("khalid")}</span><span class="chip on">${t("omar")}</span><span class="chip new">+ ${t("someone")}</span></div>
+    <div class="fine" style="margin-top:10px;text-align:start">${t("each")}</div>
+  </div>
+  <div class="cta">${t("save")}</div>
+  <div class="fine">${t("fineSolo")}</div>`;
+}
+function s3(){
+  return `
+  <div class="card" style="padding:4px 14px">
+    <div class="person"><span class="av out">${lang==="ar"?"خ":"K"}</span><span class="n">${t("khalid")}<small>${t("metKhalid")}</small></span>
+      <span class="v" style="color:var(--moss)">SAR 60<small>${t("owesYouS")}</small></span><span class="settle">${t("settle")}</span></div>
+    <div class="person"><span class="av out">${lang==="ar"?"ع":"O"}</span><span class="n">${t("omar")}<small>${t("metOmar")}</small></span>
+      <span class="v" style="color:var(--horizon)">SAR 35<small>${t("youOweS")}</small></span><span class="settle">${t("settle")}</span></div>
+  </div>
+  <div class="card" style="text-align:center;font:800 14px var(--sans)">${t("net")}</div>
+  <div class="priv"><span>🔒</span><span>${t("privacy")}</span></div>
+  <div class="fine" style="color:var(--brand);font-weight:800">${t("addPerson")}</div>`;
+}
+function render(){
+  document.querySelectorAll("[data-t]").forEach(el=>{el.innerHTML=t(el.dataset.t)});
+  document.getElementById("s1sub").textContent = crew>1 ? t("s1group") : t("s1solo");
+  document.getElementById("s1").innerHTML=s1();
+  document.getElementById("s2").innerHTML=s2();
+  document.getElementById("s3").innerHTML=s3();
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("#lang button,#crew button"); if(!b) return;
+  [...b.parentElement.children].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  if(b.parentElement.id==="lang"){lang=b.dataset.v;document.body.dir=lang==="ar"?"rtl":"ltr";document.documentElement.lang=lang;}
+  else crew=+b.dataset.v;
+  render();
+});
+render();
+</script>
+</body>
+</html>

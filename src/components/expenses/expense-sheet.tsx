@@ -28,6 +28,8 @@ interface Expense {
   category: string;
   scope: "shared" | "personal";
   receiptUrl?: string | null;
+  /** Set when split with people outside the trip; `amount` is then my share. */
+  billTotal?: number | null;
   expenseDate: string;
   notes: string | null;
   payer?: { displayName: string } | null;
@@ -140,6 +142,11 @@ export function ExpenseSheet({
         <p className="text-2xl font-bold tabular-nums tracking-tight">
           {expense.currency} {fmt(expense.amount)}
         </p>
+        {expense.billTotal != null && expense.billTotal > expense.amount && (
+          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+            {t("outside.yourShareOf", { bill: `${expense.currency} ${fmt(expense.billTotal)}` })}
+          </p>
+        )}
         {baseAmount !== null && expense.currency !== baseCurrency && (
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <ArrowRightLeft className="w-4 h-4" />

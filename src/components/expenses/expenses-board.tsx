@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createBaseConverter } from "@/lib/money-total";
+import { dailyPace } from "@/lib/daily-pace";
+import { OutsidePeopleStrip } from "@/components/money/outside-people";
+import type { OutsidePerson, OutsideSplit } from "@/lib/actions/outside-people";
 import { FxIncompleteNote } from "@/components/expenses/fx-incomplete-note";
 import Link from "next/link";
 import { AddExpenseDialog } from "./add-expense-dialog";
@@ -72,6 +75,8 @@ interface Expense {
   category: string;
   scope: "shared" | "personal";
   receiptUrl?: string | null;
+  /** Whole bill when split with people outside the trip; amount is my share. */
+  billTotal?: number | null;
   expenseDate: string;
   notes: string | null;
   createdAt: Date;
@@ -94,6 +99,10 @@ interface Props {
   destination?: string;
   /** Phase 6 §8-A: recorded settlements (reduce live balances). */
   settlements?: { creditorId: string | null; debtorId: string | null; amount: number }[];
+  /** Today in the traveller's zone (server-resolved, like the cockpit). */
+  todayIso: string;
+  /** This member's people outside the trip — private to them. */
+  outside?: { people: OutsidePerson[]; splits: OutsideSplit[] };
 }
 
 /**
@@ -107,6 +116,9 @@ interface Props {
  *   - /trips/[id]/expenses/breakdown
  *   - /trips/[id]/expenses/balances
  */
+// Stable default — see NO_PEOPLE in add-expense-dialog.
+const NO_OUTSIDE: { people: OutsidePerson[]; splits: OutsideSplit[] } = { people: [], splits: [] };
+
 export function ExpensesBoard({
   tripId,
   userId,
@@ -120,8 +132,14 @@ export function ExpensesBoard({
   destination = "",
   endDate,
   settlements = [],
+  todayIso,
+  outside = NO_OUTSIDE,
 }: Props) {
   const t = useT();
+  // Travelling alone: Money is a spending tracker. "Shared", "personal",
+  // "you owe" and the separate personal cap all describe a crew that isn't
+  // there, so they step aside — nothing to toggle, the crew size decides.
+  const solo = members.length <= 1;
   const [capOpen, setCapOpen] = useState(false);
   const isOwner = members.some((m) => m.userId === userId);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -211,6 +229,21 @@ export function ExpensesBoard({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3);
 
+    // Solo, every expense is the trip's spend; with a crew the trip budget
+    // covers what's shared. Spend dated before the trip comes off the plan.
+    const pace = dailyPace({
+      expenses: (members.length <= 1 ? expenseList : sharedExpenses).map((e) => ({
+        date: e.expenseDate,
+        amount: toBase(e.amount, e.currency),
+      })),
+      startDate,
+      endDate,
+      budget: tripBudget,
+      today: todayIso,
+    });
+    const inTripDays = pace.byDay.filter((d) => d.dateKey <= todayIso).length;
+    const inTripSpent = pace.byDay.reduce((sum, d) => sum + d.spent, 0);
+
     const expenseCurrencies = new Set(expenseList.map((e) => e.currency));
     const isMultiCurrency =
       expenseCurrencies.size > 1 ||
@@ -227,9 +260,15 @@ export function ExpensesBoard({
       personalSpentBase: myPersonalBase + mySharedShareBase,
       balances,
       topCategories,
+      // The category bars used to divide by SHARED spend while the categories
+      // themselves include personal spend — so a solo trip read 0% (or over
+      // 100%) on every bar. Divide by what the bars actually sum.
+      categoryTotal: Object.values(categoryTotals).reduce((a, b) => a + b, 0),
       isMultiCurrency,
+      pace,
+      avgPerDay: inTripDays > 0 ? inTripSpent / inTripDays : null,
     };
-  }, [expenseList, members, currency, fxRates, userId]);
+  }, [expenseList, members, currency, fxRates, userId, startDate, endDate, tripBudget, todayIso]);
 
   // Phase 6 §8-A: minimal settle-up pairs = nets − recorded settlements.
   const settlePairs = useMemo(() => {
@@ -285,6 +324,30 @@ export function ExpensesBoard({
             </p>
           )}
 
+          {solo ? (
+            <div className="grid grid-cols-2 gap-2.5 mt-4">
+              <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
+                <div className="text-[12px] font-bold tracking-wider uppercase text-white/80">
+                  {derived.pace.allowanceFromToday != null ? t("expenses.perDayFromHere") : t("expenses.avgPerDay")}
+                </div>
+                <p className="text-sm font-bold tabular-nums mt-0.5">
+                  {derived.pace.allowanceFromToday != null
+                    ? `${currency} ${showAmounts ? fmt(derived.pace.allowanceFromToday) : "•••"}`
+                    : derived.avgPerDay != null
+                      ? `${currency} ${showAmounts ? fmt(derived.avgPerDay) : "•••"}`
+                      : "—"}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
+                <div className="text-[12px] font-bold tracking-wider uppercase text-white/80">
+                  {t("expenses.beforeTrip")}
+                </div>
+                <p className="text-sm font-bold tabular-nums mt-0.5">
+                  {currency} {showAmounts ? fmt(derived.pace.preTrip) : "•••••"}
+                </p>
+              </div>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-2.5 mt-4">
             <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[12px] font-bold tracking-wider uppercase text-white/80">
@@ -303,6 +366,7 @@ export function ExpensesBoard({
               </p>
             </div>
           </div>
+          )}
 
           {/* B9: trip-budget progress strip absorbed into the hero. Used
               to live as its own BudgetHealth card just below — that was
@@ -363,11 +427,21 @@ export function ExpensesBoard({
           members={members}
           currentUserId={userId}
           fxRates={fxRates}
+          outsidePeople={outside.people}
         />
       </div>
 
+      <OutsidePeopleStrip
+        tripId={tripId}
+        people={outside.people}
+        splits={outside.splits}
+        currency={currency}
+        fxRates={fxRates}
+      />
+
       {/* Phase 6 §8-C personal cap row. QA round: opens its own sheet —
           linking to trip settings read as a non-sequitur. */}
+      {!solo && (
       <button
         type="button"
         onClick={() => setCapOpen(true)}
@@ -382,6 +456,7 @@ export function ExpensesBoard({
         </span>
         <ChevronRight size={16} className="text-tertiary shrink-0 rtl:rotate-180" />
       </button>
+      )}
       <PersonalCapSheet
         tripId={tripId}
         currency={currency}
@@ -419,7 +494,7 @@ export function ExpensesBoard({
         emptyLabel={t("expenses.activity")}
       >
         {/* §6-B: 32px pill chips, clearly tappable. */}
-        <div className="flex gap-2 mb-2">
+        <div className={`flex gap-2 mb-2 ${solo ? "hidden" : ""}`}>
           {(["all", "yours"] as const).map((f) => {
             const active = activityFilter === f;
             return (
@@ -469,8 +544,8 @@ export function ExpensesBoard({
             {derived.topCategories.map(([cat, amount]) => {
               const cfg = CATEGORY_CONFIG[cat] ?? CATEGORY_CONFIG.other;
               const pct =
-                derived.totalSharedBase > 0
-                  ? (amount / derived.totalSharedBase) * 100
+                derived.categoryTotal > 0
+                  ? (amount / derived.categoryTotal) * 100
                   : 0;
               const CatIcon = cfg.icon;
               return (

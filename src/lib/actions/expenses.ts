@@ -5,7 +5,8 @@ import { zMoney, zMoneyOrZero, zDateOnly, zText, parseOr } from "./validate";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { splitEqually } from "@/lib/split";
 import { db } from "@/lib/db";
-import { expenses, expenseSplits, profiles, tripMembers, chatMessages } from "@/lib/db/schema";
+import { expenses, expenseSplits, profiles, tripMembers, chatMessages, tripContacts, contactSplits } from "@/lib/db/schema";
+import { splitWithOutside, ME, type OutsideSplitRow } from "@/lib/outside-people";
 import { eq, and, inArray } from "drizzle-orm";
 import { PermissionError } from "@/lib/permissions";
 import { redirect } from "next/navigation";
@@ -108,21 +109,64 @@ export async function createExpense(formData: FormData) {
     }
   }
 
+  // People outside the trip. When present, the expense is this member's
+  // alone: `amount` becomes MY share (so every total counts what I consumed,
+  // not what I fronted), the whole bill is kept for display, and what each
+  // person owes — or what I owe whoever paid — goes in contact_splits. The
+  // crew's split tables are never touched.
+  let outside: { myShare: number; rows: OutsideSplitRow[] } | null = null;
+  const outsideRaw = formData.get("outsidePeople") as string | null;
+  if (outsideRaw) {
+    let parsed: { contactIds?: unknown; payer?: unknown };
+    try {
+      parsed = JSON.parse(outsideRaw);
+    } catch {
+      throw new Error("Invalid outside split");
+    }
+    const asked = [...new Set(Array.isArray(parsed.contactIds) ? parsed.contactIds.map(String) : [])];
+    if (asked.length > 0) {
+      const owned = await db
+        .select({ id: tripContacts.id })
+        .from(tripContacts)
+        .where(and(eq(tripContacts.tripId, tripId), eq(tripContacts.ownerId, user.id), inArray(tripContacts.id, asked)));
+      if (owned.length !== asked.length) throw new Error("Unknown person in split");
+      const payer = typeof parsed.payer === "string" && parsed.payer !== ME ? parsed.payer : ME;
+      outside = splitWithOutside({ bill: amount, currency, contactIds: asked, payer });
+    }
+  }
+
   const [expense] = await db
     .insert(expenses)
     .values({
       tripId,
       title,
-      amount,
+      amount: outside ? outside.myShare : amount,
       currency,
-      paidBy: payerId,
+      paidBy: outside ? user.id : payerId,
       category: category as any,
-      scope,
+      scope: outside ? "personal" : scope,
+      billTotal: outside ? amount : null,
       expenseDate,
       notes,
       receiptUrl,
     })
     .returning();
+
+  if (outside) {
+    if (outside.rows.length > 0) {
+      await db.insert(contactSplits).values(
+        outside.rows.map((r) => ({ expenseId: expense.id, contactId: r.contactId, direction: r.direction, amount: r.amount })),
+      );
+    }
+    // Private by design: no chat card, no inbox row, no email, no push. A
+    // dinner with people met on the way is nobody else's business, and the
+    // crew's balances don't move. The budget watcher still runs — it's
+    // this member's own money.
+    await maybePostBudgetAlert(tripId, trip.budgetTotal, trip.currency, user.id);
+    revalidatePath(`/trips/${tripId}/money`);
+    revalidatePath(`/trips/${tripId}`);
+    return;
+  }
 
   const members = allMembers;
 

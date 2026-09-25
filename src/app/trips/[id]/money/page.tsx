@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { ExpensesBoard } from "@/components/expenses/expenses-board";
 import { loadMoneyPageData } from "@/lib/actions/money-page-data";
 import { effectiveTripBudget } from "@/lib/budget";
+import { getToday } from "@/lib/today-server";
+import { listOutsidePeople } from "@/lib/actions/outside-people";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -14,7 +16,12 @@ interface Props {
  */
 export default async function MoneyPage({ params }: Props) {
   const { id } = await params;
-  const { user, trip, expenseList, fxRates, members, personalBudget, settlements } = await loadMoneyPageData(id);
+  const [{ user, trip, expenseList, fxRates, members, personalBudget, settlements }, todayIso, outside] = await Promise.all([
+    loadMoneyPageData(id),
+    getToday(),
+    // Private to the viewer: only their own people outside the trip.
+    listOutsidePeople(id),
+  ]);
 
   // Phase 7 §6-C: the Expenses/Bookings/Pack sub-tab bar is gone — Money is
   // one page; Pack lives in Huddle (§7). §6-A: 16px side padding everywhere.
@@ -34,6 +41,8 @@ export default async function MoneyPage({ params }: Props) {
         startDate={trip.startDate}
         endDate={trip.endDate}
         settlements={settlements}
+        todayIso={todayIso}
+        outside={outside}
       />
     </div>
   );

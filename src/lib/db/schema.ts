@@ -280,6 +280,8 @@ export const expenses = pgTable("expenses", {
   // toward trip cap; personal expenses are pocket-money — no splits,
   // counts only toward the payer's personal budget.
   scope: expenseScopeEnum("scope").default("shared").notNull(),
+  /** Whole bill when split with people outside the trip (amount = my share). */
+  billTotal: real("bill_total"),
   expenseDate: date("expense_date").notNull(),
   notes: text("notes"),
   // B12: optional receipt image stored in Supabase Storage under the
@@ -300,6 +302,31 @@ export const expenseSplits = pgTable("expense_splits", {
   amountOwed: real("amount_owed").notNull(),
   settled: boolean("settled").default(false).notNull(),
   settledAt: timestamp("settled_at"),
+});
+
+/**
+ * People outside the trip — names owned by one member of one trip, with no
+ * account and no invite. Private to their owner; never part of the crew's
+ * balances. See migrations/2026-09-25_flights_and_outside_people.sql.
+ */
+export const tripContacts = pgTable("trip_contacts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  ownerId: uuid("owner_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** owes_me: I paid, they owe me. i_owe: they paid, I owe them. */
+export const contactSplits = pgTable("contact_splits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  expenseId: uuid("expense_id").notNull().references(() => expenses.id, { onDelete: "cascade" }),
+  contactId: uuid("contact_id").notNull().references(() => tripContacts.id, { onDelete: "cascade" }),
+  direction: text("direction").$type<"owes_me" | "i_owe">().notNull(),
+  amount: real("amount").notNull(),
+  settled: boolean("settled").default(false).notNull(),
+  settledAt: timestamp("settled_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ─── Documents ────────────────────────────────────────────────────────────────
@@ -715,6 +742,14 @@ export const bookings = pgTable("bookings", {
   checkoutTime: timestamp("checkout_time", { withTimezone: true }),
   nights: integer("nights"),
   pdfUrl: text("pdf_url"),
+  /** Flights: "SV 826". Used to be glued into the stop title. */
+  flightNumber: text("flight_number"),
+  /** Flights: IATA code or city, as read off the ticket or typed. */
+  origin: text("origin"),
+  destination: text("destination"),
+  /** Flights: landing date/time (local). Departure lives on the anchor stop. */
+  arriveDate: date("arrive_date", { mode: "string" }),
+  arriveTime: text("arrive_time"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   createdBy: uuid("created_by").references(() => profiles.id),
 });
