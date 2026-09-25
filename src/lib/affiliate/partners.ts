@@ -26,14 +26,20 @@ export function partnerEnabled(p: "booking" | "airalo" | "gyg"): boolean {
 }
 
 /**
- * off      — no CTA anywhere. What ships until Booking approves the account.
- * preview  — real links, placeholder AID, no commission.
- * live     — the real AID.
+ * off      — no button anywhere; Stays cards are plain reminders. THE DEFAULT:
+ *            nothing earns, or pretends to, until the partner has approved.
+ * preview  — the button goes straight to the filled-in search. No tracking,
+ *            no commission. For testing the flow before approval.
+ * live     — through the network (CJ for Booking.com), which needs
+ *            BOOKING_LINK_TEMPLATE on the server. See lib/stays.outboundUrl.
+ *
+ * NEXT_PUBLIC_ because the client decides whether to draw the button; the
+ * link itself is only ever built on the server.
  */
 export type AffiliateMode = "off" | "preview" | "live";
 export function affiliateMode(): AffiliateMode {
   const m = process.env.NEXT_PUBLIC_AFFILIATE_MODE;
-  return m === "off" || m === "live" ? m : "preview";
+  return m === "preview" || m === "live" ? m : "off";
 }
 
 export const PARTNERS = {

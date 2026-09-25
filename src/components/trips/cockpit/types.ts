@@ -69,4 +69,10 @@ export interface CockpitShared {
   /** Step 4 deck facts (soft, may be null). */
   weather: { tempMax: number; tempMin: number | null; key: string; sunset: string | null; isTripDay: boolean } | null;
   fx: { local: string; symbol: string; perUnit: number; base: string } | null;
+  /**
+   * Stays that still need a bed, in route order — drives the stay ticket and
+   * the Horizon's stay mark. `total` is every stay with a night in it, so the
+   * mark can tell "nothing to book yet" (no route) from "all covered".
+   */
+  stays: { open: { key: string; name: string; nameAr: string; nights: number; checkIn: string }[]; total: number };
 }

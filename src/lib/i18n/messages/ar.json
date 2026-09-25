@@ -1426,7 +1426,9 @@
       "firstStopSub": "أضف مكانًا واحدًا · ونكمل الباقي",
       "crewKicker": "أحلى مع الجماعة",
       "crewSub": "رابط واحد · بلا حساب",
-      "budgetSub": "{count, plural, one {أنت وحدك حاليًا} two {أنتما الاثنان — حددوا الرقم مرة} other {# منكم — حددوا الرقم مرة}}"
+      "budgetSub": "{count, plural, one {أنت وحدك حاليًا} two {أنتما الاثنان — حددوا الرقم مرة} other {# منكم — حددوا الرقم مرة}}",
+      "stayTitle": "لا مبيت بعد في {city}",
+      "staySub": "{count, plural, one {ليلة واحدة} two {ليلتان} few {# ليالٍ} many {# ليلة} other {# ليلة}} من {date}"
     },
     "hz": {
       "day1": "اليوم ١",
@@ -1437,7 +1439,8 @@
       "now": "باقي {count}",
       "budget": "الميزانية",
       "docs": "المستندات",
-      "pack": "التجهيز"
+      "pack": "التجهيز",
+      "stay": "مبيت"
     },
     "deck": {
       "inspirePurpose": "منشوراتك المحفوظة، على الخريطة",
@@ -2049,5 +2052,38 @@
     "errNameLong": "الاسم طويل جدًا.",
     "errNotFound": "هذا الشخص لم يعد موجودًا — حدّث الصفحة.",
     "errSettleFirst": "سوِّ الحساب أولًا — إزالته تمحو ما عليه."
+  },
+  "stays": {
+    "title": "الإقامات",
+    "subtitle": "بطاقة لكل مدينة تبيت فيها.",
+    "openCount": "{count, plural, one {إقامة واحدة بلا مبيت بعد} two {إقامتان بلا مبيت بعد} few {# إقامات بلا مبيت بعد} many {# إقامة بلا مبيت بعد} other {# إقامة بلا مبيت بعد}}",
+    "allCovered": "كل ليلة لها مبيت.",
+    "need": "بحاجة إلى إقامة",
+    "looking": "أحدهم يبحث",
+    "covered": "محجوزة",
+    "nights": "{count, plural, one {ليلة واحدة} two {ليلتان} few {# ليالٍ} many {# ليلة} other {# ليلة}}",
+    "adults": "{count, plural, one {بالغ واحد} two {بالغان} few {# بالغين} many {# بالغًا} other {# بالغ}}",
+    "rooms": "الغرف",
+    "fewerRooms": "غرف أقل",
+    "moreRooms": "غرف أكثر",
+    "cta": "ابحث عن إقامة على Booking.com",
+    "ctaAgain": "ابحث مجددًا على Booking.com",
+    "ctaAlso": "ابحث أنت أيضًا",
+    "disclosure": "قد تحصل سويّا على عمولة",
+    "youLooking": "أنت تبحث عن إقامة",
+    "otherLooking": "{name} يبحث عن إقامة",
+    "partial": "{covered} من {nights} لها فندق بالفعل",
+    "offReminder": "تحتاج مبيتًا هنا — لم يتكفّل به أحد بعد.",
+    "askTitle": "هل حجزت مكانًا في {city}؟",
+    "askYes": "نعم، حجزت",
+    "askNo": "ليس بعد",
+    "askHotelPh": "اسم الفندق",
+    "bookedToast": "أصبح لـ{city} مبيت",
+    "errHotelName": "أضف اسم الفندق.",
+    "errStayGone": "تغيّرت هذه الإقامة — حدّث الصفحة.",
+    "noRoute": "لا مسار بعد",
+    "noRouteCta": "أضف المدن التي ستبيت فيها، وستظهر لكل منها بطاقة هنا.",
+    "noticeBusy": "نقرات كثيرة متتالية — حاول بعد لحظات.",
+    "noticeNotLive": "روابط الحجز غير مفعّلة بعد."
   }
 }

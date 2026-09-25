@@ -8,9 +8,9 @@ import { Ticket, QuietAction, type TicketHue } from "./ticket";
 import { Horizon, runwayPos, type HorizonMarkState } from "./horizon";
 import { buildDeck } from "@/lib/deck";
 import { HeroCard, NoteRow, DeckFooter } from "./deck";
-import { FileText, Package } from "@phosphor-icons/react/dist/ssr";
+import { Bed, FileText, Package } from "@phosphor-icons/react/dist/ssr";
 import { CheckSquareOffset as Vote, MapPin, Users, Wallet, Compass } from "@phosphor-icons/react/dist/ssr";
-import { useT } from "@/components/i18n/locale-provider";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import type { CockpitShared } from "./types";
 
 /**
@@ -34,12 +34,19 @@ import type { CockpitShared } from "./types";
  * moment it mattered most. It is suppressed when the primary action is
  * already the invite, so the two can never say the same thing.
  */
+/**
+ * How far out a stay counts as due. A month: bed availability and price are
+ * what go first, and it's the window in which a person actually books.
+ */
+const STAY_DAYS = 30;
+
 export function PlanningCockpit(props: CockpitShared) {
   const t = useT();
+  const { locale } = useLocale();
   const {
     tripId, name, destination, startDate, endDate, heroImageUrl,
     currency, budgetTotal, items, crew, packing,
-    ticker, teaser, huddleOpen, documents, todayIso,
+    ticker, teaser, huddleOpen, documents, todayIso, stays,
   } = props;
   const base = `/trips/${tripId}`;
   // fix/tz: "15 days to go" was computed from `new Date()` inside a client
@@ -58,6 +65,8 @@ export function PlanningCockpit(props: CockpitShared) {
   //   otherwise  a FLOOR: say nothing is due and point at Discover, instead
   //              of inventing a task.
   const moment = tripMoment({ startDate, endDate }, todayIso);
+  // The soonest stay with no bed, once the trip is inside the booking window.
+  const stayDue = moment.daysToStart <= STAY_DAYS ? stays.open[0] ?? null : null;
   // Step 3: the action is a TICKET — boarding stub, hue = what it is.
   const primary = (() => {
     if (huddleOpen > 0)
@@ -70,6 +79,19 @@ export function PlanningCockpit(props: CockpitShared) {
       };
     if (items.length === 0)
       return { key: "stops", hue: "brand" as TicketHue, icon: MapPin, kicker: t("cockpit.tk.firstStopKicker"), label: t("cockpit.tk.firstStopTitle"), sub: t("cockpit.tk.firstStopSub"), href: `${base}/itinerary` };
+    // Above the crew rung on purpose: on a solo trip `crew.length < 2` is
+    // always true, so a stay placed below it could never be the action. The
+    // invite still shows as the second action underneath.
+    if (stayDue) {
+      const city = locale === "ar" ? stayDue.nameAr : stayDue.name;
+      return {
+        key: "stay", hue: "wayfind" as TicketHue, icon: Bed,
+        kicker: t("cockpit.tk.dueNow"),
+        label: t("cockpit.tk.stayTitle", { city }),
+        sub: t("cockpit.tk.staySub", { count: stayDue.nights, date: dfFormat(parseDateOnly(stayDue.checkIn), "d MMM") }),
+        href: `${base}/stays`,
+      };
+    }
     if (crew.length < 2)
       return { key: "crew", hue: "brand" as TicketHue, icon: Users, kicker: t("cockpit.tk.crewKicker"), label: t("cockpit.inviteCrew"), sub: t("cockpit.tk.crewSub"), href: `${base}/members` };
     if (moment.due.budget && (budgetTotal == null || budgetTotal <= 0))
@@ -83,6 +105,11 @@ export function PlanningCockpit(props: CockpitShared) {
   const packedHalf = packing.total > 0 && packing.packed / packing.total >= 0.5;
   const markState = (satisfied: boolean, due: boolean): HorizonMarkState => (satisfied ? "done" : due ? "due" : "later");
   const horizonMarks = [
+    // A bed is a due item on the runway like budget, docs and pack. Only
+    // when there's a route to have stays at all.
+    ...(stays.total > 0
+      ? [{ at: runwayPos(STAY_DAYS), label: t("cockpit.hz.stay"), icon: Bed, state: markState(stays.open.length === 0, moment.daysToStart <= STAY_DAYS), href: `${base}/stays` }]
+      : []),
     { at: runwayPos(NEAR_DAYS), label: t("cockpit.hz.budget"), icon: Wallet, state: markState(hasBudget, moment.due.budget), href: `${base}/settings` },
     { at: runwayPos(7), label: t("cockpit.hz.docs"), icon: FileText, state: markState(hasDocs, moment.due.docs), href: `${base}/huddle?tab=docs` },
     { at: runwayPos(PACK_DAYS), label: t("cockpit.hz.pack"), icon: Package, state: markState(packedHalf, moment.due.packing), href: `${base}/pack` },

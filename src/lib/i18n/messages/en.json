@@ -1426,7 +1426,9 @@
       "firstStopSub": "Add one place · we'll draft the rest",
       "crewKicker": "Better together",
       "crewSub": "One link · no account needed",
-      "budgetSub": "{count, plural, one {Just you for now} other {# of you — set the number once}}"
+      "budgetSub": "{count, plural, one {Just you for now} other {# of you — set the number once}}",
+      "stayTitle": "No bed yet in {city}",
+      "staySub": "{count, plural, one {1 night} other {# nights}} from {date}"
     },
     "hz": {
       "day1": "day 1",
@@ -1437,7 +1439,8 @@
       "now": "T−{count}",
       "budget": "budget",
       "docs": "docs",
-      "pack": "pack"
+      "pack": "pack",
+      "stay": "stay"
     },
     "deck": {
       "inspirePurpose": "Your saved posts, on the map",
@@ -2049,5 +2052,38 @@
     "errNameLong": "That name is too long.",
     "errNotFound": "That person is gone — refresh the page.",
     "errSettleFirst": "Settle up first — removing them would erase what's owed."
+  },
+  "stays": {
+    "title": "Stays",
+    "subtitle": "One card per city you sleep in.",
+    "openCount": "{count, plural, one {1 stay still needs a bed} other {# stays still need a bed}}",
+    "allCovered": "Every night has a bed.",
+    "need": "Needs a stay",
+    "looking": "Someone's looking",
+    "covered": "Covered",
+    "nights": "{count, plural, one {1 night} other {# nights}}",
+    "adults": "{count, plural, one {1 adult} other {# adults}}",
+    "rooms": "Rooms",
+    "fewerRooms": "Fewer rooms",
+    "moreRooms": "More rooms",
+    "cta": "Find stays on Booking.com",
+    "ctaAgain": "Search again on Booking.com",
+    "ctaAlso": "Look as well",
+    "disclosure": "Sawia may earn a commission",
+    "youLooking": "You're checking stays",
+    "otherLooking": "{name} is checking stays",
+    "partial": "{covered} of {nights} already have a hotel",
+    "offReminder": "You need a bed here — nobody's claimed it yet.",
+    "askTitle": "Did you book somewhere in {city}?",
+    "askYes": "Yes, booked",
+    "askNo": "Not yet",
+    "askHotelPh": "Hotel name",
+    "bookedToast": "{city} is covered",
+    "errHotelName": "Add the hotel's name.",
+    "errStayGone": "That stay has changed — refresh the page.",
+    "noRoute": "No route yet",
+    "noRouteCta": "Add the cities you'll sleep in, and each one gets a card here.",
+    "noticeBusy": "Lots of taps in a row — try again in a moment.",
+    "noticeNotLive": "Booking links aren't switched on yet."
   }
 }

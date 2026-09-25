@@ -329,6 +329,38 @@ export const contactSplits = pgTable("contact_splits", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/**
+ * Stays: who is sorting out which stay. Named by stay key AND check-in —
+ * keys are positional, so a row whose check-in no longer matches is stale.
+ * Coverage is NOT stored; it's derived from the plan's hotel stops.
+ * See migrations/2026-09-26_stays.sql.
+ */
+export const stayBookings = pgTable("stay_bookings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  stayKey: text("stay_key").notNull(),
+  checkIn: date("check_in", { mode: "string" }).notNull(),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  status: text("status").$type<"looking" | "booked">().notNull(),
+  hotelName: text("hotel_name"),
+  promptDismissedAt: timestamp("prompt_dismissed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Every tap on an affiliate link, logged before the redirect. */
+export const affiliateClicks = pgTable("affiliate_clicks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  stayKey: text("stay_key"),
+  userId: uuid("user_id").references(() => profiles.id, { onDelete: "set null" }),
+  partner: text("partner").default("booking").notNull(),
+  surface: text("surface").notNull(),
+  mode: text("mode").$type<"preview" | "live">().notNull(),
+  sid: text("sid").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Documents ────────────────────────────────────────────────────────────────
 
 export const documents = pgTable("documents", {

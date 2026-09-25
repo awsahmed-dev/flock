@@ -31,6 +31,7 @@ import { DepartureCockpit } from "@/components/trips/cockpit/departure-cockpit";
 import { RecapCockpit } from "@/components/trips/cockpit/recap-cockpit";
 import { PocketDay } from "@/components/pwa/pocket-day";
 import { visibleExpenses } from "@/lib/expense-visibility";
+import { loadTripStays } from "@/lib/stays-server";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -238,6 +239,15 @@ export default async function TripPage({ params }: Props) {
     if (one != null) fx = { local: localCcy, symbol: currencySymbol(localCcy), perUnit: one >= 10 ? Math.round(one) : Math.round(one * 100) / 100, base: tripCurrency };
   }
 
+  // Which nights still need a bed (the stay ticket + the Horizon's stay mark).
+  const tripStays = await loadTripStays(id, user.id).catch(() => ({ stays: [], crew: crew.length }));
+  const stays = {
+    open: tripStays.stays
+      .filter((s) => !s.coveredBy)
+      .map((s) => ({ key: s.key, name: s.name, nameAr: s.nameAr, nights: s.nights, checkIn: s.checkIn })),
+    total: tripStays.stays.length,
+  };
+
   const shared = {
     todayIso,
     tripId: id,
@@ -264,6 +274,7 @@ export default async function TripPage({ params }: Props) {
     huddleOpen,
     weather,
     fx,
+    stays,
   };
 
 
