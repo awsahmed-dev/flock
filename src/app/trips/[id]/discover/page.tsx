@@ -15,10 +15,13 @@ import type { PlaceCategoryKey } from "@/components/discover/primitives";
 import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 import { tripPhase } from "@/lib/trip-phase";
 import { getToday } from "@/lib/today-server";
+import { loadTripStays } from "@/lib/stays-server";
+import { affiliateMode } from "@/lib/affiliate/partners";
+import { StaysBoard } from "@/components/stays/stays-board";
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ category?: string; filter?: string }>;
+  searchParams: Promise<{ category?: string; filter?: string; tab?: string; e?: string }>;
 }
 
 /** Server-safe validation list — kept local so this server page never pulls a
@@ -36,7 +39,7 @@ const VALID_CATEGORIES = [
  */
 export default async function DiscoverPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { category, filter } = await searchParams;
+  const { category, filter, tab, e } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
@@ -96,6 +99,10 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
     end: parseDateOnly(trip.endDate),
   }).map((d) => format(d, "yyyy-MM-dd"));
 
+  // The Bookings tab: Stays, one card per city you sleep in.
+  const { stays, crew, likes: stayLikes } = await loadTripStays(id, user.id);
+  const openStays = stays.filter((s) => !s.coveredBy).length;
+
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const t = (k: string, p?: Record<string, string | number>) => tFromDict(dict, k, p, locale);
@@ -130,6 +137,20 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         isOwner={isOwner(trip, user.id)}
         initialCategory={initialCategory}
         initialSpecialFilter={filter === "saved" || filter === "crew" ? filter : null}
+        initialMode={tab === "bookings" ? "bookings" : tab === "shortlist" ? "shortlist" : null}
+        openStays={openStays}
+        bookings={
+          <StaysBoard
+            tripId={trip.id}
+            stays={stays}
+            crew={crew}
+            mode={affiliateMode()}
+            notice={e === "busy" || e === "notlive" ? e : null}
+            embedded
+            likes={stayLikes}
+            viewerId={user.id}
+          />
+        }
         savedPlaces={savedPlaces}
         likedPlaceIds={likedPlaceIds}
         likeCounts={likeCounts}

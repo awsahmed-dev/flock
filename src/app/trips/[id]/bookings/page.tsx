@@ -1,15 +1,15 @@
 import { permanentRedirect } from "next/navigation";
+import { staysHref } from "@/lib/stays";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 /**
- * 0-D: the Bookings surface lives at /wallet, but the MANAGE tab is labelled
- * "Bookings", so a direct hit or deep link to /bookings used to 404. Permanent
- * (308) redirect to the real route.
+ * /bookings used to point at /wallet, which is retired (it redirects to
+ * /money). Bookings now means Discover's Bookings tab — where Stays lives.
  */
 export default async function BookingsRedirect({ params }: Props) {
   const { id } = await params;
-  permanentRedirect(`/trips/${id}/wallet`);
+  permanentRedirect(staysHref(id));
 }

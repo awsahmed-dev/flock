@@ -89,7 +89,7 @@ export function PlanningCockpit(props: CockpitShared) {
         kicker: t("cockpit.tk.dueNow"),
         label: t("cockpit.tk.stayTitle", { city }),
         sub: t("cockpit.tk.staySub", { count: stayDue.nights, date: dfFormat(parseDateOnly(stayDue.checkIn), "d MMM") }),
-        href: `${base}/stays`,
+        href: `${base}/discover?tab=bookings`,
       };
     }
     if (crew.length < 2)
@@ -108,7 +108,7 @@ export function PlanningCockpit(props: CockpitShared) {
     // A bed is a due item on the runway like budget, docs and pack. Only
     // when there's a route to have stays at all.
     ...(stays.total > 0
-      ? [{ at: runwayPos(STAY_DAYS), label: t("cockpit.hz.stay"), icon: Bed, state: markState(stays.open.length === 0, moment.daysToStart <= STAY_DAYS), href: `${base}/stays` }]
+      ? [{ at: runwayPos(STAY_DAYS), label: t("cockpit.hz.stay"), icon: Bed, state: markState(stays.open.length === 0, moment.daysToStart <= STAY_DAYS), href: `${base}/discover?tab=bookings` }]
       : []),
     { at: runwayPos(NEAR_DAYS), label: t("cockpit.hz.budget"), icon: Wallet, state: markState(hasBudget, moment.due.budget), href: `${base}/settings` },
     { at: runwayPos(7), label: t("cockpit.hz.docs"), icon: FileText, state: markState(hasDocs, moment.due.docs), href: `${base}/huddle?tab=docs` },

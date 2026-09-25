@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hotels inside Sawia</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0D0D0D;--card:#1A1A1A;--raise:#242424;--line:#313131;
+  --fg:#f5f5f7;--mut:#a9a5b2;--dim:#716E79;
+  --brand:#8B7CFF;--brand-dim:rgba(139,124,255,.16);
+  --horizon:#FF8A5C;--horizon-dim:rgba(255,138,92,.16);
+  --moss:#9BC97E;--moss-dim:rgba(155,201,126,.18);
+  --dune:#E0B252;--dune-dim:rgba(224,178,82,.16);
+  --wayfind:#3EC5B7;--wayfind-dim:rgba(62,197,183,.16);
+  --bk:#003B95;
+  --sans:Inter,system-ui,-apple-system,sans-serif;
+  --ar:"IBM Plex Sans Arabic",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55;padding:28px 20px 90px}
+.wrap{max-width:1320px;margin:0 auto}
+h1{font:900 clamp(26px,4.6vw,40px)/1.08 var(--sans);letter-spacing:-.03em;margin:0;text-wrap:balance}
+.lede{color:var(--mut);font-size:15.5px;margin:12px 0 0;max-width:70ch}
+.example{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font:800 10px var(--sans);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dune);background:var(--dune-dim);border-radius:999px;padding:5px 10px}
+
+/* tiers */
+.tiers{display:grid;gap:12px;margin:28px 0 34px}
+@media(min-width:900px){.tiers{grid-template-columns:repeat(3,1fr)}}
+.tier{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.tier .st{align-self:flex-start;font:800 9.5px var(--sans);letter-spacing:.13em;text-transform:uppercase;border-radius:999px;padding:4px 9px}
+.tier h3{margin:0;font:800 16px var(--sans);letter-spacing:-.01em}
+.tier p{margin:0;color:var(--mut);font-size:13.5px}
+.tier ul{margin:2px 0 0;padding-inline-start:18px;color:var(--mut);font-size:13px}
+.tier li{margin:4px 0}
+.tier li b{color:var(--fg)}
+.tier.t0 .st{background:var(--moss-dim);color:var(--moss)}
+.tier.t1{border-color:rgba(139,124,255,.45)}
+.tier.t1 .st{background:var(--brand-dim);color:var(--brand)}
+.tier.t2 .st{background:var(--horizon-dim);color:var(--horizon)}
+
+/* screens */
+.screens{display:flex;gap:24px;overflow-x:auto;padding-bottom:12px;align-items:flex-start;scroll-snap-type:x proximity}
+.scr{flex:none;width:380px;scroll-snap-align:start}
+.scr h2{font:800 11px var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin:0 0 4px}
+.scr .sub{font:600 12.5px var(--sans);color:var(--mut);margin:0 0 12px;min-height:38px}
+.phone{width:380px;border:1px solid var(--line);border-radius:30px;overflow:hidden;background:var(--bg);box-shadow:0 30px 70px -32px #000}
+.ph-head{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--line);background:#141414}
+.ph-head .t{flex:1;font:700 14px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-body{padding:12px;display:flex;flex-direction:column;gap:11px}
+svg{display:block;flex:none}
+
+.modes{display:flex;justify-content:center;gap:6px}
+.modes span{height:34px;padding:0 13px;border-radius:999px;display:flex;align-items:center;gap:6px;font:600 13px var(--sans);color:var(--mut)}
+.modes span.on{font-weight:800;color:var(--fg);background:var(--card);border:1px solid var(--line)}
+.modes i{width:7px;height:7px;border-radius:99px;background:var(--wayfind)}
+.status{font:500 12.5px var(--sans);color:var(--mut)}
+
+.stay{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;display:flex;flex-direction:column;gap:11px}
+.sh{display:flex;align-items:flex-start;gap:10px}
+.sh .ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--wayfind-dim)}
+.sh .tx{flex:1;min-width:0}
+.city{font:800 15.5px var(--sans);letter-spacing:-.01em}
+.when{font:600 12px var(--sans);color:var(--mut);font-variant-numeric:tabular-nums}
+.tag{font:800 9px var(--sans);letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:4px 8px;flex:none}
+.tag.need{background:var(--wayfind-dim);color:var(--wayfind)}
+.tag.done{background:var(--moss-dim);color:var(--moss)}
+.tag.vote{background:var(--brand-dim);color:var(--brand)}
+
+.chips{display:flex;gap:6px;overflow:hidden}
+.chip{flex:none;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;gap:5px;
+  font:700 11.5px var(--sans);color:var(--mut)}
+.chip.on{background:var(--fg);color:#0D0D0D;border-color:var(--fg)}
+
+/* hotel rows */
+.h{display:flex;gap:10px;background:var(--raise);border-radius:14px;padding:8px}
+.ph{width:88px;height:96px;border-radius:10px;flex:none;position:relative;overflow:hidden}
+.ph .heart{position:absolute;top:6px;inset-inline-end:6px;width:24px;height:24px;border-radius:99px;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+.hb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.hn{font:800 13.5px/1.25 var(--sans);letter-spacing:-.01em}
+.hm{display:flex;align-items:center;gap:6px;font:600 11px var(--sans);color:var(--mut)}
+.score{background:var(--bk);color:#fff;font:800 11px var(--sans);border-radius:6px 6px 6px 0;padding:2px 5px;font-variant-numeric:tabular-nums}
+.near{font:700 11px var(--sans);color:var(--wayfind);display:flex;align-items:center;gap:4px}
+.pr{margin-top:auto;display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.pr b{font:800 14px var(--sans);font-variant-numeric:tabular-nums}
+.pr small{font:600 11px var(--sans);color:var(--mut);font-variant-numeric:tabular-nums}
+.perk{font:700 10.5px var(--sans);color:var(--moss)}
+.crew{display:flex;align-items:center;gap:4px;font:700 10.5px var(--sans);color:var(--brand)}
+.crew i{width:16px;height:16px;border-radius:99px;display:block;box-shadow:0 0 0 1.5px var(--raise);margin-inline-end:-6px}
+.more{font:700 12.5px var(--sans);color:var(--brand);text-align:center;padding:4px 0}
+.disc{font:500 11px var(--sans);color:var(--dim);text-align:center}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:999px;background:var(--brand);color:#0D0D0D;font:800 14px var(--sans);border:0;width:100%}
+.cta.sec{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.row2{display:flex;gap:8px}.row2>*{flex:1}
+
+/* detail sheet */
+.gal{height:170px;border-radius:14px;position:relative;overflow:hidden}
+.gal .n{position:absolute;bottom:8px;inset-inline-end:8px;font:700 10.5px var(--sans);background:rgba(0,0,0,.55);border-radius:999px;padding:3px 8px}
+.dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:4px}
+.dots i{width:5px;height:5px;border-radius:99px;background:rgba(255,255,255,.45)}.dots i:first-child{background:#fff}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.bar{font:600 11px var(--sans);color:var(--mut)}
+.bar div{display:flex;justify-content:space-between}
+.bar div b{color:var(--fg);font-variant-numeric:tabular-nums}
+.bar span{display:block;height:4px;border-radius:99px;background:var(--line);margin-top:3px;overflow:hidden}
+.bar span i{display:block;height:100%;background:var(--bk);filter:brightness(1.9)}
+.fac{display:flex;flex-wrap:wrap;gap:6px}
+.fac span{font:600 11px var(--sans);color:var(--mut);background:var(--raise);border-radius:999px;padding:5px 9px;display:flex;align-items:center;gap:5px}
+.lbl{font:800 9.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.room{border:1px solid var(--line);border-radius:14px;padding:11px 12px;display:flex;flex-direction:column;gap:4px}
+.room.pick{border-color:var(--brand);background:var(--brand-dim)}
+.room .top{display:flex;justify-content:space-between;gap:8px;font:800 13px var(--sans)}
+.room .top b{font-variant-numeric:tabular-nums}
+.room .m{font:600 11px var(--sans);color:var(--mut)}
+.room .m.g{color:var(--moss)}
+.split{display:flex;justify-content:space-between;font:700 12px var(--sans);color:var(--mut);background:var(--raise);border-radius:12px;padding:10px 12px}
+.split b{color:var(--fg);font-variant-numeric:tabular-nums}
+.map{height:118px;border-radius:14px;position:relative;overflow:hidden;background:
+  linear-gradient(135deg,#16222a 0%,#132028 55%,#0f2d3a 55.4%,#123648 100%)}
+.map .road{position:absolute;height:2px;background:#2b3a42;transform-origin:left}
+.pin{position:absolute;width:12px;height:12px;border-radius:99px;border:2px solid #0D0D0D;margin:-6px 0 0 -6px}
+.pin.me{width:22px;height:22px;margin:-11px 0 0 -11px;background:var(--brand);display:flex;align-items:center;justify-content:center}
+.map .cap{position:absolute;bottom:7px;inset-inline-start:8px;font:700 10.5px var(--sans);background:rgba(0,0,0,.6);border-radius:999px;padding:3px 8px}
+
+/* vote */
+.vote{display:flex;gap:10px;align-items:center;background:var(--raise);border-radius:14px;padding:9px}
+.vote .ph{width:52px;height:52px}
+.vote .vb{flex:1;min-width:0}
+.meter{height:6px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.vote.lead{outline:1px solid var(--brand)}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:10px 12px;font:500 12.5px var(--sans);color:var(--mut)}
+.msg b{color:var(--fg)}
+
+/* booked */
+.ok{background:var(--moss-dim);border:1px solid rgba(155,201,126,.35);border-radius:16px;padding:13px;display:flex;flex-direction:column;gap:6px}
+.ok .k{font:800 9.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--moss)}
+.ok .t{font:800 15px var(--sans)}
+.ok .s{font:600 12px var(--sans);color:var(--mut);font-variant-numeric:tabular-nums}
+.auto{display:flex;flex-direction:column;gap:6px}
+.auto div{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 11px;font:600 12.5px var(--sans)}
+.auto div small{display:block;font:500 11px var(--sans);color:var(--mut)}
+.auto .ck{width:22px;height:22px;border-radius:99px;background:var(--moss);display:flex;align-items:center;justify-content:center}
+.fallback{border:1px dashed var(--line);border-radius:14px;padding:11px 12px;font:500 12px var(--sans);color:var(--mut)}
+.fallback b{color:var(--fg)}
+
+/* photos (gradient stand-ins — no real property images) */
+.p1{background:linear-gradient(160deg,#5fb3c9 0%,#2d7896 45%,#e8c89a 46%,#c9a36e 100%)}
+.p2{background:linear-gradient(170deg,#c98b5a 0%,#8a5433 50%,#3b2a20 100%)}
+.p3{background:linear-gradient(150deg,#1b2a4a 0%,#35507f 50%,#e0b252 51%,#7a5a2a 100%)}
+.p4{background:linear-gradient(160deg,#d8d2c4 0%,#a8a08e 60%,#5d574a 100%)}
+
+/* arabic frame */
+.rtl{direction:rtl;font-family:var(--ar)}
+.rtl .hn,.rtl .city,.rtl .modes span,.rtl .status,.rtl .hm,.rtl .near,.rtl .perk,.rtl .crew,.rtl .more,.rtl .disc,.rtl .chip,.rtl .ph-head .t,.rtl .pr small,.rtl .when{font-family:var(--ar)}
+
+/* notes */
+.notes{display:grid;gap:14px;margin-top:40px}
+@media(min-width:900px){.notes{grid-template-columns:1fr 1fr}}
+.note{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.note h3{font:800 15px var(--sans);margin:0 0 8px;letter-spacing:-.01em}
+.note p{margin:0 0 10px;color:var(--mut);font-size:13.5px}
+.note p:last-child{margin:0}
+.note b{color:var(--fg)}
+ul.l{margin:0;padding-inline-start:19px;color:var(--mut);font-size:13.5px}
+ul.l li{margin:7px 0} ul.l b{color:var(--fg)}
+.src{margin-top:30px;font-size:12px;color:var(--dim)}
+.src a{color:var(--mut)}
+@media(max-width:440px){.scr,.phone{width:calc(100vw - 40px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Hotels inside Sawia, once Booking.com is connected</h1>
+<p class="lede">Today a Stays card sends you out to a Booking.com search. With Booking.com's Demand API, the hotels come into the card instead: photos, review scores and your real price for your dates and rooms, ranked by how close they are to your plan. The crew can heart them and vote before anyone leaves Sawia.</p>
+<span class="example">Example data · hotel names and prices are made up</span>
+
+<div class="tiers">
+  <div class="tier t0">
+    <span class="st">Built · waiting on CJ</span>
+    <h3>Links out (what ships now)</h3>
+    <p>One button per city opens a Booking.com search with your dates, adults and rooms already filled in.</p>
+    <ul>
+      <li>We never see prices or hotels.</li>
+      <li>Sawia can't tell whether you booked, so it asks <b>"Did you book it?"</b></li>
+      <li>Commission: 4% through CJ.</li>
+    </ul>
+  </div>
+  <div class="tier t1">
+    <span class="st">This page · Demand API search</span>
+    <h3>Hotels inside the card</h3>
+    <p>Search, availability, property details, photos and review scores come from Booking.com's API.</p>
+    <ul>
+      <li>Ranked by <b>distance to your plan's stops</b>, which only Sawia knows.</li>
+      <li>Crew hearts and a hotel vote.</li>
+      <li>Each hotel opens on Booking.com with its room already chosen.</li>
+      <li>Needs <b>Managed Affiliate Partner</b> status with Booking.com directly, not through CJ.</li>
+    </ul>
+  </div>
+  <div class="tier t2">
+    <span class="st">Later · separate approval</span>
+    <h3>Book without leaving</h3>
+    <p>Booking.com's order endpoints ("Search, Look &amp; Book") take the booking inside Sawia.</p>
+    <ul>
+      <li>The confirmation comes back, so the stay covers itself.</li>
+      <li>The hotel lands on the plan and the cost splits across the crew.</li>
+      <li>Needs its own approval and a business case, on top of search access.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screens">
+
+  <!-- 1 · Bookings tab with hotels -->
+  <div class="scr">
+    <h2>1 · Discover › Bookings</h2>
+    <p class="sub">Same card as today. The results are in it, priced for 5 people in 3 rooms.</p>
+    <div class="phone">
+      <div class="ph-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9a5b2" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><span class="t">Saudi · Oct</span></div>
+      <div class="ph-body">
+        <div class="modes"><span>Shortlist</span><span>For you</span><span class="on">Bookings <i></i></span></div>
+        <div class="status">2 stays still need a bed</div>
+        <div class="stay">
+          <div class="sh">
+            <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3EC5B7" stroke-width="2"><path d="M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/></svg></span>
+            <div class="tx"><div class="city">Jeddah</div><div class="when">6–11 Oct · 5 nights · 5 adults · 3 rooms</div></div>
+            <span class="tag need">Needs a stay</span>
+          </div>
+          <div class="chips">
+            <span class="chip on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.4"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>Near your plan</span>
+            <span class="chip">Score 8+</span>
+            <span class="chip">Free cancellation</span>
+            <span class="chip">Price</span>
+          </div>
+          <div class="h">
+            <div class="ph p1"><span class="heart"><svg width="13" height="13" viewBox="0 0 24 24" fill="#FF8A5C"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg></span></div>
+            <div class="hb">
+              <div class="hn">Corniche Bay Hotel</div>
+              <div class="hm"><span class="score">8.7</span>Excellent · 2,314 reviews</div>
+              <div class="near"><svg width="11" height="11" viewBox="0 0 24 24" fill="#3EC5B7"><circle cx="12" cy="12" r="6"/></svg>Near 4 of your 6 stops</div>
+              <div class="crew"><i style="background:#FF8A5C"></i><i style="background:#E0B252"></i>&nbsp;&nbsp;Omar, Layla</div>
+              <div class="pr"><b>SAR 3,720</b><small>SAR 744 / person</small></div>
+              <div class="perk">Free cancellation · Breakfast</div>
+            </div>
+          </div>
+          <div class="h">
+            <div class="ph p2"><span class="heart"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg></span></div>
+            <div class="hb">
+              <div class="hn">Al-Balad Courtyard Suites</div>
+              <div class="hm"><span class="score">9.1</span>Superb · 688 reviews</div>
+              <div class="near"><svg width="11" height="11" viewBox="0 0 24 24" fill="#3EC5B7"><circle cx="12" cy="12" r="6"/></svg>Walk to Al-Balad · 400 m</div>
+              <div class="pr"><b>SAR 2,950</b><small>SAR 590 / person</small></div>
+              <div class="perk">Pay at the property</div>
+            </div>
+          </div>
+          <div class="h">
+            <div class="ph p3"><span class="heart"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg></span></div>
+            <div class="hb">
+              <div class="hn">Red Sea Tower Apartments</div>
+              <div class="hm"><span class="score">8.2</span>Very good · 1,105 reviews</div>
+              <div class="near" style="color:var(--mut)">12 min drive from your plan</div>
+              <div class="pr"><b>SAR 2,480</b><small>SAR 496 / person</small></div>
+              <div class="perk">Kitchen · Family rooms</div>
+            </div>
+          </div>
+          <div class="more">See all 48 in Jeddah</div>
+          <div class="disc">Prices from Booking.com for 6–11 Oct · Sawia may earn a commission</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 · hotel sheet -->
+  <div class="scr">
+    <h2>2 · Hotel sheet</h2>
+    <p class="sub">Photos, what guests say, rooms that fit the crew, and where it sits against your plan.</p>
+    <div class="phone">
+      <div class="ph-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9a5b2" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="t">Corniche Bay Hotel</span><svg width="18" height="18" viewBox="0 0 24 24" fill="#FF8A5C"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg></div>
+      <div class="ph-body">
+        <div class="gal p1"><div class="dots"><i></i><i></i><i></i><i></i><i></i></div><span class="n">1 / 34</span></div>
+        <div>
+          <div class="hm" style="font-size:12px"><span class="score">8.7</span><b style="color:var(--fg)">Excellent</b>&nbsp;· 2,314 reviews · ★★★★</div>
+        </div>
+        <div class="bars">
+          <div class="bar"><div>Location<b>9.3</b></div><span><i style="width:93%"></i></span></div>
+          <div class="bar"><div>Cleanliness<b>8.9</b></div><span><i style="width:89%"></i></span></div>
+          <div class="bar"><div>Staff<b>9.0</b></div><span><i style="width:90%"></i></span></div>
+          <div class="bar"><div>Value<b>8.1</b></div><span><i style="width:81%"></i></span></div>
+        </div>
+        <div class="fac">
+          <span>Free Wi-Fi</span><span>Parking</span><span>Pool</span><span>Family rooms</span><span>Airport shuttle</span>
+        </div>
+        <div class="lbl">Where it sits against your plan</div>
+        <div class="map">
+          <span class="road" style="left:0;top:64px;width:380px;transform:rotate(-8deg)"></span>
+          <span class="road" style="left:120px;top:0;width:150px;transform:rotate(70deg)"></span>
+          <span class="pin" style="left:46%;top:38%;background:#E0B252"></span>
+          <span class="pin" style="left:58%;top:62%;background:#E0B252"></span>
+          <span class="pin" style="left:36%;top:70%;background:#E0B252"></span>
+          <span class="pin" style="left:70%;top:30%;background:#E0B252"></span>
+          <span class="pin me" style="left:52%;top:50%"><svg width="11" height="11" viewBox="0 0 24 24" fill="#0D0D0D"><path d="M3 18V8h8v5h10v5z"/></svg></span>
+          <span class="cap">4 of your 6 stops within 2 km</span>
+        </div>
+        <div class="lbl">Rooms for 5 people</div>
+        <div class="room pick">
+          <div class="top"><span>3 × Deluxe Twin</span><b>SAR 3,720</b></div>
+          <div class="m g">Free cancellation until 3 Oct · Breakfast included</div>
+          <div class="m">Sleeps 6 · 5 nights</div>
+        </div>
+        <div class="room">
+          <div class="top"><span>1 × Family Suite + 1 × Double</span><b>SAR 3,480</b></div>
+          <div class="m">Non-refundable · Room only</div>
+        </div>
+        <div class="split"><span>Split 5 ways</span><b>SAR 744 each</b></div>
+        <div class="row2">
+          <span class="cta sec">Put to a vote</span>
+          <span class="cta">Book on Booking.com</span>
+        </div>
+        <div class="disc">Sawia may earn a commission</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · vote -->
+  <div class="scr">
+    <h2>3 · Crew picks</h2>
+    <p class="sub">A hotel vote is an ordinary Sawia vote, and the card shows it. Nobody books until the crew agrees.</p>
+    <div class="phone">
+      <div class="ph-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9a5b2" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><span class="t">Which hotel in Jeddah?</span></div>
+      <div class="ph-body">
+        <div class="msg"><b>Aws</b> started a vote · closes Thu 9pm · 4 of 5 voted</div>
+        <div class="vote lead">
+          <div class="ph p1"></div>
+          <div class="vb"><div class="hn">Corniche Bay Hotel</div><div class="hm"><span class="score">8.7</span>SAR 744 / person</div><div class="meter"><i style="width:75%"></i></div></div>
+          <b style="font:800 13px var(--sans)">3</b>
+        </div>
+        <div class="vote">
+          <div class="ph p2"></div>
+          <div class="vb"><div class="hn">Al-Balad Courtyard Suites</div><div class="hm"><span class="score">9.1</span>SAR 590 / person</div><div class="meter"><i style="width:25%"></i></div></div>
+          <b style="font:800 13px var(--sans)">1</b>
+        </div>
+        <div class="vote">
+          <div class="ph p3"></div>
+          <div class="vb"><div class="hn">Red Sea Tower Apartments</div><div class="hm"><span class="score">8.2</span>SAR 496 / person</div><div class="meter"><i style="width:0"></i></div></div>
+          <b style="font:800 13px var(--sans);color:var(--dim)">0</b>
+        </div>
+        <div class="stay" style="gap:8px">
+          <div class="sh">
+            <div class="tx"><div class="city">Jeddah</div><div class="when">6–11 Oct · 5 nights</div></div>
+            <span class="tag vote">Crew voting</span>
+          </div>
+          <div class="hm">The winner goes to whoever books. Prices are re-checked when you open it.</div>
+        </div>
+        <span class="cta">Book the winner</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 · after booking -->
+  <div class="scr">
+    <h2>4 · After booking</h2>
+    <p class="sub">With Look &amp; Book, the confirmation comes back and three things happen on their own. With links only, it's one tap.</p>
+    <div class="phone">
+      <div class="ph-head"><span class="t" style="text-align:center">Bookings</span></div>
+      <div class="ph-body">
+        <div class="ok">
+          <span class="k">Booked · Look &amp; Book</span>
+          <span class="t">Corniche Bay Hotel</span>
+          <span class="s">6–11 Oct · 3 × Deluxe Twin · confirmation 4821 •••• </span>
+          <span class="s">Free cancellation until 3 Oct</span>
+        </div>
+        <div class="auto">
+          <div><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></span><span>Jeddah is covered<small>The NOW ticket moves on to Riyadh</small></span></div>
+          <div><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></span><span>Check-in on day 1 of the plan<small>Hotel stop at 3:00 pm, with the address and map pin</small></span></div>
+          <div><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></span><span>SAR 3,720 in Money, split 5 ways<small>Paid by Aws · everyone owes SAR 744</small></span></div>
+        </div>
+        <div class="fallback"><b>Links only (tier 1)?</b> Booking.com doesn't tell Sawia. When you come back, the card asks "Did you book Corniche Bay Hotel?" with the name already filled in. One tap covers the stay and adds it to the plan. The cost is still yours to log.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 · Arabic -->
+  <div class="scr">
+    <h2>5 · Arabic</h2>
+    <p class="sub">The same card in Arabic. Scores and prices keep Latin digits, like the rest of the app.</p>
+    <div class="phone rtl">
+      <div class="ph-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9a5b2" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span class="t">السعودية · أكتوبر</span></div>
+      <div class="ph-body">
+        <div class="modes"><span>القائمة</span><span>لك</span><span class="on">الحجوزات <i></i></span></div>
+        <div class="status">إقامتان بلا مبيت بعد</div>
+        <div class="stay">
+          <div class="sh">
+            <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3EC5B7" stroke-width="2"><path d="M21 18V6M21 14H3v4M3 14v-2a3 3 0 0 1 3-3h7v5"/><circle cx="17" cy="11" r="1.6"/></svg></span>
+            <div class="tx"><div class="city">جدة</div><div class="when"><bdi>6–11 أكتوبر</bdi> · 5 ليالٍ · 5 بالغين · 3 غرف</div></div>
+            <span class="tag need" style="font-family:var(--ar);letter-spacing:0">بحاجة إلى إقامة</span>
+          </div>
+          <div class="chips">
+            <span class="chip on">قريب من خطتك</span>
+            <span class="chip">تقييم 8+</span>
+            <span class="chip">إلغاء مجاني</span>
+          </div>
+          <div class="h">
+            <div class="ph p1"><span class="heart"><svg width="13" height="13" viewBox="0 0 24 24" fill="#FF8A5C"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg></span></div>
+            <div class="hb">
+              <div class="hn">فندق خليج الكورنيش</div>
+              <div class="hm"><span class="score">8.7</span>ممتاز · 2,314 تقييمًا</div>
+              <div class="near">قريب من 4 محطات في خطتك</div>
+              <div class="crew"><i style="background:#FF8A5C"></i><i style="background:#E0B252"></i>&nbsp;&nbsp;عمر، ليلى</div>
+              <div class="pr"><b><bdi>3,720 ر.س</bdi></b><small><bdi>744 ر.س</bdi> للشخص</small></div>
+              <div class="perk">إلغاء مجاني · إفطار</div>
+            </div>
+          </div>
+          <div class="h">
+            <div class="ph p2"><span class="heart"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg></span></div>
+            <div class="hb">
+              <div class="hn">أجنحة فناء البلد</div>
+              <div class="hm"><span class="score">9.1</span>استثنائي · 688 تقييمًا</div>
+              <div class="near">مشيًا إلى البلد · 400 م</div>
+              <div class="pr"><b><bdi>2,950 ر.س</bdi></b><small><bdi>590 ر.س</bdi> للشخص</small></div>
+              <div class="perk">الدفع في مكان الإقامة</div>
+            </div>
+          </div>
+          <div class="more">عرض 48 فندقًا في جدة</div>
+          <div class="disc">الأسعار من Booking.com لتواريخ رحلتك · قد تحصل سويّا على عمولة</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="notes">
+  <div class="note">
+    <h3>Beyond hotels: what else the Demand API offers</h3>
+    <ul class="l">
+      <li><b>Attractions</b>: tickets and tours for Discover's "things to do". This would replace the GetYourGuide idea with one partner.</li>
+      <li><b>Car rentals</b>: a "Getting around" card on days between cities. This fits Jeddah → Riyadh.</li>
+      <li><b>Flights</b>: search only. Sawia already reads tickets you upload, so this is the least urgent.</li>
+      <li><b>Reviews</b>: score breakdowns and review text in the hotel sheet.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>What it takes to get here</h3>
+    <ul class="l">
+      <li><b>CJ approval</b> (pending) turns on tier 1 links. That's the switch that's built and off today.</li>
+      <li><b>Managed Affiliate Partner</b>: apply to Booking.com directly. An account manager enables API keys. There's no self-serve signup, and it usually takes real traffic first.</li>
+      <li><b>Search, Look &amp; Book</b>: a second approval with a business case, for tier 2.</li>
+      <li><b>AI sign-off</b>: Booking.com's partner terms need written approval before an AI system uses their data. The AI planner couldn't pick hotels from these results until that's granted. Ranking by distance to your stops is plain maths, not AI.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>What makes it Sawia, not a Booking.com clone</h3>
+    <p><b>Ranking by your plan.</b> Booking.com knows the city. Sawia knows the six places you're going, so "near 4 of your stops" beats any star filter.</p>
+    <p><b>Priced for the crew.</b> Rooms come from the crew size, and every price shows per person. A group compares the per-person number, not the total.</p>
+    <p><b>Decided together.</b> Crew hearts show on each hotel, and a vote goes through the existing votes feature. The card says "Crew voting" so nobody double-books.</p>
+  </div>
+  <div class="note">
+    <h3>Honesty rules</h3>
+    <p>Prices change, so the card says whose prices they are and for which dates. The price is re-checked when a hotel is opened. We never show a price as booked until a confirmation says so.</p>
+    <p>Sort order is ours, and commission never changes it. "Sawia may earn a commission" sits under every list that links out, same as today.</p>
+  </div>
+</div>
+
+<p class="src">Sources: <a href="https://developers.booking.com/demand">Booking.com Demand API</a> · <a href="https://developers.booking.com/demand/docs/development-guide/authentication">Demand API authentication (Managed Affiliate Partner, API key + affiliate id)</a> · <a href="https://vorplabs.com/agent-tools/booking-demand-api">Access and AI-approval summary</a></p>
+</div>
+</body>
+</html>

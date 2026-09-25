@@ -13,7 +13,8 @@ import { stayParam } from "@/lib/packages/stay-key";
 import { defaultRooms } from "@/lib/stays";
 import { dismissStayPrompt, markStayBooked } from "@/lib/actions/stays";
 import { refused } from "@/lib/actions/refusal";
-import type { StayView } from "@/lib/stays-server";
+import type { CrewLikes, StayView } from "@/lib/stays-server";
+import { StayHotels } from "./stay-hotels";
 import type { AffiliateMode } from "@/lib/affiliate/partners";
 
 /**
@@ -30,12 +31,21 @@ export function StaysBoard({
   crew,
   mode,
   notice,
+  embedded = false,
+  likes = {},
+  viewerId = "",
 }: {
   tripId: string;
   stays: StayView[];
   crew: number;
   mode: AffiliateMode;
   notice: "busy" | "notlive" | null;
+  /** Inside Discover's Bookings tab: the tab is the header, so no page
+   *  header or back link — just the one-line status. */
+  embedded?: boolean;
+  /** Crew hearts on places — the hotel rows show who liked which. */
+  likes?: CrewLikes;
+  viewerId?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -52,20 +62,20 @@ export function StaysBoard({
 
   const asks = stays.filter((s) => s.askMe);
   const open = stays.filter((s) => !s.coveredBy).length;
+  const status =
+    stays.length === 0
+      ? t("stays.subtitle")
+      : open === 0
+        ? t("stays.allCovered")
+        : t("stays.openCount", { count: open });
 
   return (
     <div className="space-y-4 pb-[calc(96px+env(safe-area-inset-bottom))]">
-      <PageHeader
-        backHref={`/trips/${tripId}`}
-        title={t("stays.title")}
-        subtitle={
-          stays.length === 0
-            ? t("stays.subtitle")
-            : open === 0
-              ? t("stays.allCovered")
-              : t("stays.openCount", { count: open })
-        }
-      />
+      {embedded ? (
+        <p className="text-[13px] text-muted-foreground">{status}</p>
+      ) : (
+        <PageHeader backHref={`/trips/${tripId}`} title={t("stays.title")} subtitle={status} />
+      )}
 
       {notice && (
         <p className="rounded-2xl border border-border bg-card p-3.5 text-[13px] text-muted-foreground">
@@ -86,7 +96,17 @@ export function StaysBoard({
           <span className="block text-[13px] text-muted-foreground mt-0.5">{t("stays.noRouteCta")}</span>
         </Link>
       ) : (
-        stays.map((s) => <StayCard key={`${s.key}-${s.checkIn}`} tripId={tripId} stay={s} crew={crew} mode={mode} />)
+        stays.map((s) => (
+          <StayCard
+            key={`${s.key}-${s.checkIn}`}
+            tripId={tripId}
+            stay={s}
+            crew={crew}
+            mode={mode}
+            likes={likes}
+            viewerId={viewerId}
+          />
+        ))
       )}
     </div>
   );
@@ -106,7 +126,21 @@ function useCity(s: StayView) {
   return locale === "ar" ? s.nameAr : s.name;
 }
 
-function StayCard({ tripId, stay, crew, mode }: { tripId: string; stay: StayView; crew: number; mode: AffiliateMode }) {
+function StayCard({
+  tripId,
+  stay,
+  crew,
+  mode,
+  likes,
+  viewerId,
+}: {
+  tripId: string;
+  stay: StayView;
+  crew: number;
+  mode: AffiliateMode;
+  likes: CrewLikes;
+  viewerId: string;
+}) {
   const t = useT();
   const { locale } = useLocale();
   const router = useRouter();
@@ -172,13 +206,16 @@ function StayCard({ tripId, stay, crew, mode }: { tripId: string; stay: StayView
           )}
 
           {mode === "off" ? (
-            // "Nobody's claimed it" would contradict the line above when
-            // someone is already looking — say it only when it's true.
-            !stay.looking && (
-              <p className="rounded-xl border border-dashed border-border px-3 py-3 text-[13px] text-muted-foreground">
-                {t("stays.offReminder")}
-              </p>
-            )
+            <>
+              <StayHotels tripId={tripId} stay={stay} rooms={rooms} crew={crew} mode={mode} likes={likes} viewerId={viewerId} />
+              {/* "Nobody's claimed it" would contradict the line above when
+                  someone is already looking — say it only when it's true. */}
+              {!stay.looking && (
+                <p className="rounded-xl border border-dashed border-border px-3 py-3 text-[13px] text-muted-foreground">
+                  {t("stays.offReminder")}
+                </p>
+              )}
+            </>
           ) : (
             <>
               <div className="flex items-center justify-between rounded-xl bg-muted/50 ps-3 pe-1.5 py-1.5">
@@ -203,6 +240,7 @@ function StayCard({ tripId, stay, crew, mode }: { tripId: string; stay: StayView
                   </button>
                 </span>
               </div>
+              <StayHotels tripId={tripId} stay={stay} rooms={rooms} crew={crew} mode={mode} likes={likes} viewerId={viewerId} />
               <a
                 href={href}
                 target="_blank"
@@ -215,7 +253,9 @@ function StayCard({ tripId, stay, crew, mode }: { tripId: string; stay: StayView
                   stay.looking ? "border border-border text-foreground" : "bg-primary text-primary-foreground"
                 }`}
               >
-                {t(stay.looking ? (stay.looking.mine ? "stays.ctaAgain" : "stays.ctaAlso") : "stays.cta")}
+                {stay.looking
+                  ? t(stay.looking.mine ? "stays.ctaAgain" : "stays.ctaAlso")
+                  : t("stays.ctaAll", { city })}
                 <ArrowSquareOut className="w-4 h-4" />
               </a>
               <p className="text-center text-[11.5px] text-muted-foreground">{t("stays.disclosure")}</p>
@@ -234,10 +274,13 @@ function AskBooked({ tripId, stay }: { tripId: string; stay: StayView }) {
   const [naming, setNaming] = useState(false);
   const [hotel, setHotel] = useState("");
   const [pending, start] = useTransition();
+  // The last hotel opened from its row — ask about THAT one, so "yes" is
+  // one tap instead of typing a name we already know.
+  const known = !naming ? stay.myHotel : null;
 
-  const yes = () =>
+  const yes = (name: string) =>
     start(async () => {
-      const r = await markStayBooked({ tripId, stayKey: stay.key, checkIn: stay.checkIn, hotelName: hotel });
+      const r = await markStayBooked({ tripId, stayKey: stay.key, checkIn: stay.checkIn, hotelName: name });
       if (refused(r)) {
         toast.error(t(r.error));
         return;
@@ -257,7 +300,9 @@ function AskBooked({ tripId, stay }: { tripId: string; stay: StayView }) {
       style={{ background: "var(--clr-dune-dim)", borderColor: "color-mix(in srgb, var(--clr-dune) 35%, transparent)" }}
     >
       <div>
-        <p className="text-[15px] font-bold">{t("stays.askTitle", { city })}</p>
+        <p className="text-[15px] font-bold">
+          {known ? t("stays.askHotelTitle", { hotel: known }) : t("stays.askTitle", { city })}
+        </p>
         {/* The dates, always: a route can visit the same city twice, and two
             identical "…in Jeddah?" questions can't be told apart. */}
         <p className="text-[12.5px] text-muted-foreground tabular-nums">
@@ -269,7 +314,7 @@ function AskBooked({ tripId, stay }: { tripId: string; stay: StayView }) {
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            yes();
+            yes(hotel);
           }}
         >
           <input
@@ -295,7 +340,7 @@ function AskBooked({ tripId, stay }: { tripId: string; stay: StayView }) {
           <button
             type="button"
             disabled={pending}
-            onClick={() => setNaming(true)}
+            onClick={() => (known ? yes(known) : setNaming(true))}
             className="flex-1 h-11 rounded-full font-bold disabled:opacity-50"
             style={{ background: "var(--clr-dune)", color: "var(--background)" }}
           >
@@ -310,6 +355,16 @@ function AskBooked({ tripId, stay }: { tripId: string; stay: StayView }) {
             {t("stays.askNo")}
           </button>
         </div>
+      )}
+      {known && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setNaming(true)}
+          className="h-11 -my-1 text-[13px] font-semibold text-muted-foreground underline underline-offset-4"
+        >
+          {t("stays.askOther")}
+        </button>
       )}
     </section>
   );

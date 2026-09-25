@@ -601,6 +601,8 @@
   "discover": {
     "forYou": "لك",
     "shortlist": "القائمة",
+    "bookings": "الحجوزات",
+    "bookingsOpen": "{count, plural, one {إقامة واحدة بلا مبيت بعد} two {إقامتان بلا مبيت بعد} few {# إقامات بلا مبيت بعد} many {# إقامة بلا مبيت بعد} other {# إقامة بلا مبيت بعد}}",
     "eyebrow": "اكتشف",
     "title": "اكتشف {destination} على طريقتك",
     "subtitle": "أماكن حقيقية مرتبة لمجموعتك. كلما تصفحت أكثر، صارت الاقتراحات أذكى.",
@@ -2084,6 +2086,26 @@
     "noRoute": "لا مسار بعد",
     "noRouteCta": "أضف المدن التي ستبيت فيها، وستظهر لكل منها بطاقة هنا.",
     "noticeBusy": "نقرات كثيرة متتالية — حاول بعد لحظات.",
-    "noticeNotLive": "روابط الحجز غير مفعّلة بعد."
+    "noticeNotLive": "روابط الحجز غير مفعّلة بعد.",
+    "you": "أنت",
+    "hotelsNearPlan": "فنادق قريبة من خطتك",
+    "hotelsTop": "الأعلى تقييمًا في {city}",
+    "nearStops": "{total, plural, one {قريب من محطتك الوحيدة} two {قريب من {near} من محطتَيك} few {قريب من {near} من {total} محطات في خطتك} many {قريب من {near} من {total} محطة في خطتك} other {قريب من {near} من {total} محطة في خطتك}}",
+    "kmFromPlan": "على بعد {km} كم من خطتك",
+    "ratings": "{count, plural, one {تقييم واحد} two {تقييمان} few {{n} تقييمات} many {{n} تقييمًا} other {{n} تقييم}}",
+    "heart": "أضف {hotel} إلى المفضّلة",
+    "unheart": "أزل {hotel} من المفضّلة",
+    "heartFailed": "تعذّر حفظ المفضّلة. حاول مجددًا.",
+    "prices": "الأسعار",
+    "pricesFor": "اعرض أسعار {hotel} على Booking.com",
+    "showMore": "{count, plural, one {اعرض فندقًا آخر} two {اعرض فندقين آخرين} few {اعرض # فنادق أخرى} many {اعرض # فندقًا آخر} other {اعرض # فندق آخر}}",
+    "voteHearted": "{count, plural, two {اطرح الفندقين المفضّلين للتصويت} other {اطرح # فنادق مفضّلة للتصويت}}",
+    "voteQuestion": "أي فندق في {city}؟",
+    "voteFailed": "تعذّر بدء التصويت. حاول مجددًا.",
+    "fromGoogle": "الفنادق والتقييمات من Google",
+    "ctaAll": "ابحث في كل {city} على Booking.com",
+    "askHotelTitle": "هل حجزت {hotel}؟",
+    "askOther": "حجزت فندقًا آخر",
+    "hotelsClosest": "الأقرب إلى خطتك"
   }
 }

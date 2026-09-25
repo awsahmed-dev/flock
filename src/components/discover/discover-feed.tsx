@@ -91,6 +91,7 @@ export interface SavedPlace {
 export function DiscoverFeed({
   tripId, tripName = "", destination, center: destinationCenter, days, crewSize = 1, isOwner = false, initialCategory = null,
   savedPlaces = [], likedPlaceIds = [], likeCounts = {}, defaultMapView = false, live = false, initialSpecialFilter = null,
+  initialMode = null, bookings = null, openStays = 0,
 }: {
   tripId: string;
   /** §2: shown in the floating back-to-dashboard header on the mobile feed. */
@@ -117,6 +118,12 @@ export function DiscoverFeed({
   live?: boolean;
   /** Deep link (?filter=saved|crew) — the import sheet's "See the shortlist". */
   initialSpecialFilter?: "crew" | "saved" | null;
+  /** Deep link (?tab=bookings|shortlist) — the NOW stay ticket lands on Bookings. */
+  initialMode?: Mode | null;
+  /** The Bookings tab's content (Stays), rendered on the server. */
+  bookings?: React.ReactNode;
+  /** Stays that still need a bed — a dot on the Bookings tab. */
+  openStays?: number;
 }) {
   const t = useT();
   // Sprint 9 FIX-2B: the search hint names YOUR city, not a KL food ref.
@@ -164,7 +171,23 @@ export function DiscoverFeed({
   // A+B (chosen 2026-08-22): Discover has two modes — For you | Shortlist.
   // The Shortlist is the permanent home of every save; ?filter=saved lands on
   // it (the import journey's "Open the shortlist").
-  const [mode, setMode] = useState<"forYou" | "shortlist">(initialSpecialFilter === "saved" ? "shortlist" : "forYou");
+  //
+  // Bookings (2026-09-26) is the third: Stays, one card per city you sleep
+  // in. It used to be reachable only from the NOW ticket; the tab makes it a
+  // place you can come back to.
+  const [mode, setModeState] = useState<Mode>(initialMode ?? (initialSpecialFilter === "saved" ? "shortlist" : "forYou"));
+  // Keep the tab in the URL, so coming back from the Booking.com tab (or a
+  // reload) lands on the tab you left, not on For you.
+  const setMode = useCallback((m: Mode) => {
+    setModeState(m);
+    try {
+      const u = new URL(window.location.href);
+      if (m === "forYou") u.searchParams.delete("tab");
+      else u.searchParams.set("tab", m);
+      u.searchParams.delete("e");
+      window.history.replaceState(window.history.state, "", u.toString());
+    } catch { /* ignore */ }
+  }, []);
   const [freshIds, setFreshIds] = useState<string[]>([]);
   useEffect(() => {
     try {
@@ -598,11 +621,21 @@ export function DiscoverFeed({
   // immersive stream below is the mobile design; only one mounts at a time so
   // there's a single Mapbox instance and no doubled DOM.
   if (isDesktop) {
+    if (mode === "bookings") {
+      return (
+        <div className="max-w-2xl">
+          <div className="mb-4 max-w-sm">
+            <ModeSwitch mode={mode} count={saved.size} openStays={openStays} onMode={setMode} tone="solid" />
+          </div>
+          {bookings}
+        </div>
+      );
+    }
     if (mode === "shortlist") {
       return (
         <div className="max-w-2xl">
           <div className="mb-4 max-w-sm">
-            <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="solid" />
+            <ModeSwitch mode={mode} count={saved.size} openStays={openStays} onMode={setMode} tone="solid" />
           </div>
           <ShortlistView tripId={tripId} days={days} savedItems={savedItems} freshIds={freshIds} onRemove={removeSaved} />
         </div>
@@ -611,7 +644,7 @@ export function DiscoverFeed({
     return (
       <>
         <div className="mb-4 max-w-sm">
-          <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="solid" />
+          <ModeSwitch mode={mode} count={saved.size} openStays={openStays} onMode={setMode} tone="solid" />
         </div>
         <div className="grid grid-cols-[1fr_minmax(0,480px)] xl:grid-cols-[1fr_minmax(0,540px)] gap-5 items-start">
           {/* Left — filter chips + search + card grid */}
@@ -747,11 +780,22 @@ export function DiscoverFeed({
     );
   }
 
-    if (mode === "shortlist") {
+  if (mode === "bookings") {
+    return (
+      <div className="px-4 pt-4">
+        <div className="mb-4">
+          <ModeSwitch mode={mode} count={saved.size} openStays={openStays} onMode={setMode} tone="solid" />
+        </div>
+        {bookings}
+      </div>
+    );
+  }
+
+  if (mode === "shortlist") {
     return (
       <div className="px-4 pt-4 pb-32">
         <div className="mb-4">
-          <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="solid" />
+          <ModeSwitch mode={mode} count={saved.size} openStays={openStays} onMode={setMode} tone="solid" />
         </div>
         <ShortlistView tripId={tripId} days={days} savedItems={savedItems} freshIds={freshIds} onRemove={removeSaved} />
       </div>
@@ -774,7 +818,7 @@ export function DiscoverFeed({
           back link. */}
       <div className="absolute inset-x-0 top-0 z-20 p-3 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
         <div className="mb-2.5">
-          <ModeSwitch mode={mode} count={saved.size} onMode={setMode} tone="glass" />
+          <ModeSwitch mode={mode} count={saved.size} openStays={openStays} onMode={setMode} tone="glass" />
         </div>
         {searchOpen ? (
           /* Round 15: search owns the filters — the bar plus the compact
@@ -1120,9 +1164,12 @@ function ShortlistView({
   );
 }
 
-/** A — the two Discover modes. Same pill language as the app's segmented
- *  controls; count = the shortlist size. */
-function ModeSwitch({ mode, count, onMode, tone }: { mode: "forYou" | "shortlist"; count: number; onMode: (m: "forYou" | "shortlist") => void; tone: "glass" | "solid" }) {
+type Mode = "forYou" | "shortlist" | "bookings";
+
+/** A — the Discover modes. Same pill language as the app's segmented
+ *  controls; count = the shortlist size; a dot on Bookings while a stay
+ *  still needs a bed. */
+function ModeSwitch({ mode, count, openStays, onMode, tone }: { mode: Mode; count: number; openStays: number; onMode: (m: Mode) => void; tone: "glass" | "solid" }) {
   const t = useT();
   const base = "h-9 px-3.5 rounded-full flex items-center gap-1.5 text-[14px] transition-all";
   const on = tone === "glass" ? "font-extrabold text-white bg-white/18 backdrop-blur border border-white/25" : "font-extrabold bg-card border border-border";
@@ -1134,6 +1181,15 @@ function ModeSwitch({ mode, count, onMode, tone }: { mode: "forYou" | "shortlist
       </button>
       <button type="button" onClick={() => onMode("forYou")} aria-pressed={mode === "forYou"} className={`${base} ${mode === "forYou" ? on : off}`}>
         {t("discover.forYou")}
+      </button>
+      <button type="button" onClick={() => onMode("bookings")} aria-pressed={mode === "bookings"} className={`${base} ${mode === "bookings" ? on : off}`}>
+        {t("discover.bookings")}
+        {openStays > 0 && (
+          <>
+            <span aria-hidden className="w-2 h-2 rounded-full" style={{ background: "var(--clr-wayfind)" }} />
+            <span className="sr-only">{t("discover.bookingsOpen", { count: openStays })}</span>
+          </>
+        )}
       </button>
     </div>
   );

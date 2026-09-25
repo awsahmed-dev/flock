@@ -82,6 +82,15 @@ export function staysOf(segments: StaySegment[], lodgings: Lodging[]): Stay[] {
     .filter((s) => s.nights > 0);
 }
 
+/**
+ * Where Stays lives: the Bookings tab of Discover. One place to reach it
+ * later, not only from the NOW ticket. `extra` is appended as more query
+ * (e.g. "e=busy").
+ */
+export function staysHref(tripId: string, extra = ""): string {
+  return `/trips/${tripId}/discover?tab=bookings${extra ? `&${extra}` : ""}`;
+}
+
 /** Half the crew, rounded up — two to a room. At least one. */
 export function defaultRooms(crew: number): number {
   return Math.max(1, Math.ceil(Math.max(1, crew) / 2));
@@ -146,4 +155,74 @@ export function outboundUrl(args: {
   const t = args.template?.trim();
   if (!t || !t.includes("{url}")) return null;
   return t.replace("{url}", encodeURIComponent(args.searchUrl)).replace("{sid}", encodeURIComponent(args.sid));
+}
+
+/* ── Hotels in a stay's card ─────────────────────────────────────────────
+ * Until Booking.com's own API is open to us, the hotels come from Google
+ * Places (the same search Discover's Stay chip uses). What only Sawia can
+ * add is where they sit against YOUR plan — so that's the ranking.
+ */
+
+/** [lng, lat] — Mapbox order, as Place.coords. */
+export type LngLat = [number, number];
+
+export interface HotelLite {
+  placeId: string;
+  name: string;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  coords: LngLat;
+  placeTypes: string[];
+}
+
+export interface RankedHotel<H extends HotelLite = HotelLite> {
+  hotel: H;
+  /** Plan stops within NEAR_KM of it. */
+  near: number;
+  /** Distance to the closest plan stop, km; null when the stay has no stops. */
+  nearestKm: number | null;
+}
+
+/** "Close to your plan" — about a 25-minute walk, or a short ride. */
+export const NEAR_KM = 2;
+
+const LODGING = /lodging|hotel|resort|inn|motel|hostel|guest_house|bed_and_breakfast|apartment|campground/;
+
+/** A search for "hotels" still returns the odd restaurant or mall. */
+export function isLodging(h: Pick<HotelLite, "placeTypes">): boolean {
+  return h.placeTypes.some((t) => LODGING.test(t));
+}
+
+export function distanceKm(a: LngLat, b: LngLat): number {
+  const rad = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * rad;
+  const dLng = (b[0] - a[0]) * rad;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * rad) * Math.cos(b[1] * rad) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+/** Rating weighed by how many people gave it: a 4.9 from 12 isn't a 4.6 from 3,000. */
+function quality(h: HotelLite): number {
+  return (h.rating ?? 0) * Math.log10((h.userRatingsTotal ?? 0) + 10);
+}
+
+/**
+ * Lodging only; with plan stops, the ones near the most stops first, then
+ * the closest (to the kilometre), then the best-rated. With no stops yet, best-rated first.
+ * Places with fewer than 20 ratings are dropped — too few to trust.
+ */
+export function rankHotels<H extends HotelLite>(hotels: H[], stops: LngLat[]): RankedHotel<H>[] {
+  const pool = hotels.filter((h) => isLodging(h) && (h.userRatingsTotal ?? 0) >= 20);
+  const ranked = pool.map((hotel) => {
+    const ds = stops.map((s) => distanceKm(hotel.coords, s));
+    return {
+      hotel,
+      near: ds.filter((d) => d <= NEAR_KM).length,
+      nearestKm: ds.length ? Math.min(...ds) : null,
+    };
+  });
+  // Distance counts in whole kilometres: 300 m either way shouldn't beat a
+  // much better-rated hotel.
+  const km = (r: RankedHotel<H>) => (r.nearestKm == null ? 0 : Math.round(r.nearestKm));
+  return ranked.sort((a, b) => b.near - a.near || km(a) - km(b) || quality(b.hotel) - quality(a.hotel));
 }

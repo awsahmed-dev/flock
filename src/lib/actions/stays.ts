@@ -106,7 +106,7 @@ export async function dismissStayPrompt(input: {
 }
 
 function revalidate(tripId: string) {
-  revalidatePath(`/trips/${tripId}/stays`);
+  revalidatePath(`/trips/${tripId}/discover`);
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}`);
 }

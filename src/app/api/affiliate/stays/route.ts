@@ -7,12 +7,13 @@ import { affiliateClicks, stayBookings } from "@/lib/db/schema";
 import { affiliateMode } from "@/lib/affiliate/partners";
 import { stayFromParam } from "@/lib/packages/stay-key";
 import { loadTripStays } from "@/lib/stays-server";
-import { bookingSearchUrl, defaultRooms, outboundUrl, stayRef } from "@/lib/stays";
+import { bookingSearchUrl, defaultRooms, outboundUrl, stayRef, staysHref } from "@/lib/stays";
 
 /**
  * The Stays button points HERE, never at the partner.
  *
  *   /api/affiliate/stays?trip=<id>&stay=<stayParam>&rooms=<n>&lang=ar
+ *   …&hotel=<name>   from a hotel row: Booking.com searches that hotel
  *
  * 1. checks the person belongs to the trip and the stay is real and still
  *    needs a bed;
@@ -29,7 +30,7 @@ import { bookingSearchUrl, defaultRooms, outboundUrl, stayRef } from "@/lib/stay
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const tripId = searchParams.get("trip") ?? "";
-  const back = (q = "") => NextResponse.redirect(`${origin}/trips/${tripId}/stays${q}`);
+  const back = (e = "") => NextResponse.redirect(`${origin}${staysHref(tripId, e ? `e=${e}` : "")}`);
 
   const user = await getCurrentUser(request);
   if (!user) return NextResponse.redirect(`${origin}/auth/login`);
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
   if (mode === "off") return back();
 
   const limit = checkLimit(`aff:stays:${user.id}`, { capacity: 20, refillPerSec: 0.2 });
-  if (!limit.ok) return back("?e=busy");
+  if (!limit.ok) return back("busy");
 
   const trip = await getTripWithMembership(tripId, user.id);
   if (!trip) return NextResponse.redirect(`${origin}/dashboard`);
@@ -51,12 +52,17 @@ export async function GET(request: Request) {
   const roomsAsked = Number(searchParams.get("rooms"));
   const rooms = Number.isInteger(roomsAsked) && roomsAsked >= 1 && roomsAsked <= 10 ? roomsAsked : defaultRooms(crew);
   const lang = searchParams.get("lang") === "ar" ? "ar" : "en";
+  // A hotel row's "See prices" names the hotel; the card's own button doesn't.
+  const hotel = (searchParams.get("hotel") ?? "").trim().slice(0, 140) || null;
+  const surface = hotel ? "stays-hotel" : "stays";
 
-  const sid = stayRef("stays", tripId);
+  const sid = stayRef(hotel ? "hotel" : "stays", tripId);
   const searchUrl = bookingSearchUrl({
     // Booking's search matches English city names most reliably; a city we
     // only know in Arabic is searched in Arabic, which Booking also handles.
-    city: stay.name,
+    // A hotel is searched by name within its city, which Booking.com lands
+    // on that property (or a short list with it on top).
+    city: hotel ? `${hotel}, ${stay.name}` : stay.name,
     checkIn: stay.checkIn,
     checkOut: stay.checkOut,
     adults: crew,
@@ -69,7 +75,7 @@ export async function GET(request: Request) {
   // isn't. Refuse loudly instead.
   if (!target) {
     console.error("[affiliate/stays] AFFILIATE_MODE=live but BOOKING_LINK_TEMPLATE is missing or has no {url}");
-    return back("?e=notlive");
+    return back("notlive");
   }
 
   await db.insert(affiliateClicks).values({
@@ -77,17 +83,19 @@ export async function GET(request: Request) {
     stayKey: stay.key,
     userId: user.id,
     partner: "booking",
-    surface: "stays",
+    surface,
     mode,
     sid,
   });
   await db
     .insert(stayBookings)
-    .values({ tripId, stayKey: stay.key, checkIn: stay.checkIn, userId: user.id, status: "looking" })
+    .values({ tripId, stayKey: stay.key, checkIn: stay.checkIn, userId: user.id, status: "looking", hotelName: hotel })
     .onConflictDoUpdate({
       target: [stayBookings.tripId, stayBookings.stayKey, stayBookings.checkIn, stayBookings.userId],
       // Tapping again means "still looking" — so ask again on return.
-      set: { status: "looking", promptDismissedAt: null, updatedAt: new Date() },
+      // The hotel is whichever was opened last, so the question on return
+      // names the right one (or none, after a plain city search).
+      set: { status: "looking", hotelName: hotel, promptDismissedAt: null, updatedAt: new Date() },
     });
 
   return NextResponse.redirect(target, 302);

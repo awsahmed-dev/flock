@@ -601,6 +601,8 @@
   "discover": {
     "forYou": "For you",
     "shortlist": "Shortlist",
+    "bookings": "Bookings",
+    "bookingsOpen": "{count, plural, one {1 stay still needs a bed} other {# stays still need a bed}}",
     "eyebrow": "Discover",
     "title": "Find your {destination}",
     "subtitle": "Real places, ranked for your crew. The more you browse, the smarter it gets.",
@@ -2084,6 +2086,26 @@
     "noRoute": "No route yet",
     "noRouteCta": "Add the cities you'll sleep in, and each one gets a card here.",
     "noticeBusy": "Lots of taps in a row — try again in a moment.",
-    "noticeNotLive": "Booking links aren't switched on yet."
+    "noticeNotLive": "Booking links aren't switched on yet.",
+    "you": "You",
+    "hotelsNearPlan": "Hotels near your plan",
+    "hotelsTop": "Well rated in {city}",
+    "nearStops": "{total, plural, one {Near your 1 stop} other {Near {near} of your # stops}}",
+    "kmFromPlan": "{km} km from your plan",
+    "ratings": "{count, plural, one {1 rating} other {{n} ratings}}",
+    "heart": "Heart {hotel}",
+    "unheart": "Remove your heart from {hotel}",
+    "heartFailed": "Couldn't save that heart. Try again.",
+    "prices": "See prices",
+    "pricesFor": "See prices for {hotel} on Booking.com",
+    "showMore": "{count, plural, one {Show 1 more} other {Show # more}}",
+    "voteHearted": "{count, plural, other {Put the # hearted hotels to a vote}}",
+    "voteQuestion": "Which hotel in {city}?",
+    "voteFailed": "Couldn't start the vote. Try again.",
+    "fromGoogle": "Hotels and ratings from Google",
+    "ctaAll": "Search all of {city} on Booking.com",
+    "askHotelTitle": "Did you book {hotel}?",
+    "askOther": "I booked a different hotel",
+    "hotelsClosest": "Closest to your plan"
   }
 }

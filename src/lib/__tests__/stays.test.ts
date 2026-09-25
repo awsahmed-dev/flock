@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { staysOf, defaultRooms, stayRef, bookingSearchUrl, outboundUrl } from "@/lib/stays";
+import { staysOf, defaultRooms, stayRef, bookingSearchUrl, outboundUrl, rankHotels, distanceKm } from "@/lib/stays";
 
 // The owner's real Saudi route: Jeddah → Riyadh → Jeddah, flying home 6 Nov.
 const SAUDI = [
@@ -93,5 +93,38 @@ describe("rooms, reference, link", () => {
   it("live without a template refuses rather than sending an untracked click", () => {
     expect(outboundUrl({ mode: "live", searchUrl: search, sid: "s", template: null })).toBeNull();
     expect(outboundUrl({ mode: "live", searchUrl: search, sid: "s", template: "https://x/no-placeholder" })).toBeNull();
+  });
+});
+
+describe("rankHotels", () => {
+  const h = (placeId: string, coords: [number, number], rating = 4.3, total = 500, types = ["lodging", "hotel"]) => ({
+    placeId, name: placeId, rating, userRatingsTotal: total, coords, placeTypes: types,
+  });
+  // Jeddah: Al-Balad and the Corniche, ~5 km apart.
+  const balad: [number, number] = [39.1869, 21.4858];
+  const corniche: [number, number] = [39.1080, 21.5433];
+
+  it("puts the hotel near most of the plan first", () => {
+    const stops: [number, number][] = [balad, [39.1875, 21.4865], [39.1860, 21.4850], corniche];
+    const r = rankHotels([h("by-corniche", [39.1085, 21.5430], 4.8, 3000), h("by-balad", [39.1880, 21.4860], 4.1, 400)], stops);
+    expect(r.map((x) => x.hotel.placeId)).toEqual(["by-balad", "by-corniche"]);
+    expect(r[0].near).toBe(3);
+    expect(r[1].near).toBe(1);
+  });
+
+  it("with no plan stops, ranks by rating weighed by how many rated it", () => {
+    const r = rankHotels([h("few", balad, 4.9, 25), h("many", balad, 4.5, 4000)], []);
+    expect(r.map((x) => x.hotel.placeId)).toEqual(["many", "few"]);
+    expect(r[0].nearestKm).toBeNull();
+  });
+
+  it("drops non-lodging results and places with too few ratings", () => {
+    const r = rankHotels([h("mall", balad, 4.6, 900, ["shopping_mall"]), h("new", balad, 5, 4), h("ok", balad)], [balad]);
+    expect(r.map((x) => x.hotel.placeId)).toEqual(["ok"]);
+  });
+
+  it("measures distance in km", () => {
+    expect(distanceKm(balad, corniche)).toBeGreaterThan(9);
+    expect(distanceKm(balad, corniche)).toBeLessThan(11);
   });
 });

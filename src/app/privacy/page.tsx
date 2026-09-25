@@ -152,8 +152,9 @@ export default function PrivacyPage() {
         credited to Sawia. Then you arrive at Booking.com.
       </p>
       <p>
-        The link carries only the city, dates, number of people and rooms,
-        your currency and language, and a reference code. It does not carry
+        The link carries only the city (or the name of the hotel you picked),
+        dates, number of people and rooms, your currency and language, and a
+        reference code. It does not carry
         your name, email, or anything you wrote in Sawia. From that point,{" "}
         <a href="https://www.cj.com/legal/privacy" target="_blank" rel="noopener noreferrer">
           CJ&rsquo;s privacy policy
