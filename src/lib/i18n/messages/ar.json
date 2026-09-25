@@ -2096,7 +2096,6 @@
     "heart": "أضف {hotel} إلى المفضّلة",
     "unheart": "أزل {hotel} من المفضّلة",
     "heartFailed": "تعذّر حفظ المفضّلة. حاول مجددًا.",
-    "prices": "الأسعار",
     "pricesFor": "اعرض أسعار {hotel} على Booking.com",
     "showMore": "{count, plural, one {اعرض فندقًا آخر} two {اعرض فندقين آخرين} few {اعرض # فنادق أخرى} many {اعرض # فندقًا آخر} other {اعرض # فندق آخر}}",
     "voteHearted": "{count, plural, two {اطرح الفندقين المفضّلين للتصويت} other {اطرح # فنادق مفضّلة للتصويت}}",
@@ -2106,6 +2105,9 @@
     "ctaAll": "ابحث في كل {city} على Booking.com",
     "askHotelTitle": "هل حجزت {hotel}؟",
     "askOther": "حجزت فندقًا آخر",
-    "hotelsClosest": "الأقرب إلى خطتك"
+    "hotelsClosest": "الأقرب إلى خطتك",
+    "hotelDetails": "تفاصيل {hotel}",
+    "pricesOnBooking": "الأسعار على Booking.com",
+    "openMaps": "افتح في خرائط Google"
   }
 }

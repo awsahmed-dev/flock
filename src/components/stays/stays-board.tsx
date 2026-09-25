@@ -96,8 +96,9 @@ export function StaysBoard({
           <span className="block text-[13px] text-muted-foreground mt-0.5">{t("stays.noRouteCta")}</span>
         </Link>
       ) : (
-        stays.map((s) => (
+        stays.map((s, i) => (
           <StayCard
+            eager={i === stays.findIndex((x) => !x.coveredBy)}
             key={`${s.key}-${s.checkIn}`}
             tripId={tripId}
             stay={s}
@@ -133,6 +134,7 @@ function StayCard({
   mode,
   likes,
   viewerId,
+  eager,
 }: {
   tripId: string;
   stay: StayView;
@@ -140,6 +142,7 @@ function StayCard({
   mode: AffiliateMode;
   likes: CrewLikes;
   viewerId: string;
+  eager: boolean;
 }) {
   const t = useT();
   const { locale } = useLocale();
@@ -207,7 +210,7 @@ function StayCard({
 
           {mode === "off" ? (
             <>
-              <StayHotels tripId={tripId} stay={stay} rooms={rooms} crew={crew} mode={mode} likes={likes} viewerId={viewerId} />
+              <StayHotels tripId={tripId} stay={stay} rooms={rooms} crew={crew} mode={mode} likes={likes} viewerId={viewerId} eager={eager} />
               {/* "Nobody's claimed it" would contradict the line above when
                   someone is already looking — say it only when it's true. */}
               {!stay.looking && (
@@ -240,7 +243,7 @@ function StayCard({
                   </button>
                 </span>
               </div>
-              <StayHotels tripId={tripId} stay={stay} rooms={rooms} crew={crew} mode={mode} likes={likes} viewerId={viewerId} />
+              <StayHotels tripId={tripId} stay={stay} rooms={rooms} crew={crew} mode={mode} likes={likes} viewerId={viewerId} eager={eager} />
               <a
                 href={href}
                 target="_blank"

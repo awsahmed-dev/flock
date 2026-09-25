@@ -26,10 +26,12 @@ export function partnerEnabled(p: "booking" | "airalo" | "gyg"): boolean {
 }
 
 /**
- * off      — no button anywhere; Stays cards are plain reminders. THE DEFAULT:
- *            nothing earns, or pretends to, until the partner has approved.
- * preview  — the button goes straight to the filled-in search. No tracking,
- *            no commission. For testing the flow before approval.
+ * off      — no button anywhere; Stays cards are plain reminders.
+ * preview  — THE DEFAULT. The buttons go straight to the filled-in Booking.com
+ *            search: no network, no commission, but the taps are logged and
+ *            the crew sees "checking stays". Off hid every way to Booking.com
+ *            — the owner, on their own Saudi trip, found hotels they couldn't open
+ *            or look up — and a link that works earns more trust than none.
  * live     — through the network (CJ for Booking.com), which needs
  *            BOOKING_LINK_TEMPLATE on the server. See lib/stays.outboundUrl.
  *
@@ -39,7 +41,7 @@ export function partnerEnabled(p: "booking" | "airalo" | "gyg"): boolean {
 export type AffiliateMode = "off" | "preview" | "live";
 export function affiliateMode(): AffiliateMode {
   const m = process.env.NEXT_PUBLIC_AFFILIATE_MODE;
-  return m === "preview" || m === "live" ? m : "off";
+  return m === "off" || m === "live" ? m : "preview";
 }
 
 export const PARTNERS = {

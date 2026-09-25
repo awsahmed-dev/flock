@@ -2096,7 +2096,6 @@
     "heart": "Heart {hotel}",
     "unheart": "Remove your heart from {hotel}",
     "heartFailed": "Couldn't save that heart. Try again.",
-    "prices": "See prices",
     "pricesFor": "See prices for {hotel} on Booking.com",
     "showMore": "{count, plural, one {Show 1 more} other {Show # more}}",
     "voteHearted": "{count, plural, other {Put the # hearted hotels to a vote}}",
@@ -2106,6 +2105,9 @@
     "ctaAll": "Search all of {city} on Booking.com",
     "askHotelTitle": "Did you book {hotel}?",
     "askOther": "I booked a different hotel",
-    "hotelsClosest": "Closest to your plan"
+    "hotelsClosest": "Closest to your plan",
+    "hotelDetails": "Details for {hotel}",
+    "pricesOnBooking": "Prices on Booking.com",
+    "openMaps": "Open in Google Maps"
   }
 }
