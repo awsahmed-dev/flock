@@ -125,6 +125,12 @@ export default function PrivacyPage() {
           <strong>PostHog</strong> — product analytics. Only after you accept
           the cookie banner.
         </li>
+        <li>
+          <strong>CJ Affiliate</strong> — tracks Booking.com affiliate links.
+          Only when you tap one: it receives the click, the usual details any
+          website gets from your browser, and a reference code, and it sets
+          its own cookies. See below.
+        </li>
       </ul>
 
       <h2>Links to Booking.com</h2>
@@ -136,20 +142,31 @@ export default function PrivacyPage() {
         things in.
       </p>
       <p>
-        When you tap one of these links, we record that it was used — which
-        trip, which part of the app, and when — so we can match it against
-        Booking.com&rsquo;s reports. The link itself carries only the city,
-        dates, number of people and rooms, your currency and language, and a
-        reference code. It does not carry your name, email, or anything you
-        wrote in Sawia. Once you are on Booking.com, their own{" "}
+        These links are run through{" "}
+        <strong>CJ Affiliate</strong> (Commission Junction), the network
+        Booking.com uses for its affiliate programme. When you tap one, we
+        record that it was used — which trip, which part of the app, and when
+        — so we can match it against the reports we receive. Your browser
+        then passes briefly through CJ, which records the click and may set
+        cookies on your device so that, if you book, the booking can be
+        credited to Sawia. Then you arrive at Booking.com.
+      </p>
+      <p>
+        The link carries only the city, dates, number of people and rooms,
+        your currency and language, and a reference code. It does not carry
+        your name, email, or anything you wrote in Sawia. From that point,{" "}
+        <a href="https://www.cj.com/legal/privacy" target="_blank" rel="noopener noreferrer">
+          CJ&rsquo;s privacy policy
+        </a>{" "}
+        and{" "}
         <a
           href="https://www.booking.com/content/privacy.html"
           target="_blank"
           rel="noopener noreferrer"
         >
-          privacy policy
+          Booking.com&rsquo;s privacy policy
         </a>{" "}
-        and cookies apply.
+        apply, along with their own cookies.
       </p>
 
       <h2>Cookies and local storage</h2>
@@ -173,8 +190,10 @@ export default function PrivacyPage() {
           choose in the cookie banner.
         </li>
         <li>
-          <strong>Booking.com</strong> sets its own cookies when you visit
-          it. Those are theirs, not ours.
+          <strong>CJ Affiliate and Booking.com</strong> set their own cookies
+          when you follow a Booking.com link from Sawia — CJ to credit the
+          booking, Booking.com for its own site. Those are theirs, not ours,
+          and Sawia can&rsquo;t read them.
         </li>
       </ul>
 

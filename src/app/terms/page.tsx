@@ -69,10 +69,10 @@ export default function TermsPage() {
         its own, and Sawia is not a party to the booking.
       </p>
       <p>
-        Some links to Booking.com are affiliate links: if you book through
-        one, Booking.com may pay Paxawa a commission. This costs you nothing
-        extra and never changes what Sawia recommends. We always label these
-        links in the app.
+        Some links to Booking.com are affiliate links, tracked through the CJ
+        Affiliate network: if you book through one, Booking.com may pay
+        Paxawa a commission. This costs you nothing extra and never changes
+        what Sawia recommends. We always label these links in the app.
       </p>
 
       <h2>AI features</h2>
