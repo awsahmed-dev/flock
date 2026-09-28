@@ -128,3 +128,25 @@ describe("rankHotels", () => {
     expect(distanceKm(balad, corniche)).toBeLessThan(11);
   });
 });
+
+describe("outboundUrl with the approved CJ template", () => {
+  // Booking.com APAC via CJ, property 101890695, link 17289049 (2026-09-28).
+  const CJ = "https://www.kqzyfj.com/click-101890695-17289049?sid={sid}&url={url}";
+
+  it("wraps the Booking.com search in CJ's link, encoded, with our sid and no aid", () => {
+    const searchUrl = bookingSearchUrl({
+      city: "Riyadh", checkIn: "2026-10-06", checkOut: "2026-11-06", adults: 1, rooms: 1, currency: "SAR", lang: "ar",
+    });
+    const out = outboundUrl({ mode: "live", searchUrl, sid: stayRef("hotel", "bc506179-352a-4bea-831b-6c50560f9d89"), template: CJ })!;
+    const u = new URL(out);
+    expect(u.origin + u.pathname).toBe("https://www.kqzyfj.com/click-101890695-17289049");
+    expect(u.searchParams.get("sid")).toBe("sawia-hotel-bc506179");
+    const dest = new URL(u.searchParams.get("url")!);
+    expect(dest.hostname).toBe("www.booking.com");
+    expect(dest.searchParams.get("ss")).toBe("Riyadh");
+    expect(dest.searchParams.get("no_rooms")).toBe("1");
+    expect(dest.searchParams.has("aid")).toBe(false);
+    // Encoded: the destination's own & and = can't leak into CJ's query.
+    expect(out).not.toContain("&checkin=");
+  });
+});
