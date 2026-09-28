@@ -48,7 +48,6 @@ export function RoutesScreen({
     setWorking("city");
     try {
       await startBlankShape(tripId, null, { name });
-      toast.success(t("routes.adopted"));
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {
@@ -61,7 +60,6 @@ export function RoutesScreen({
     setWorking(baseId);
     try {
       await startBlankShape(tripId, baseId);
-      toast.success(t("routes.adopted"));
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {
@@ -80,8 +78,8 @@ export function RoutesScreen({
       // right answer, but it must not arrive without a word — the whole
       // point of the route card is that you get what you tapped.
       if (r.reversed) toast.info(t("shape.gatewayReversed"));
-      toast.success(t("routes.adopted"));
-      router.push(r.bases > 1 ? `/trips/${tripId}/shape` : `/trips/${tripId}/itinerary`);
+      // Always the shape screen: the route is a draft until it is confirmed there.
+      router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {
       toast.error(errorText(t, e, "routes.failed"));
@@ -94,7 +92,6 @@ export function RoutesScreen({
     try {
       // No curated base is fine — the destination itself becomes one.
       await startBlankShape(tripId, fallbackBaseId, fallbackBaseId ? undefined : { name: destination });
-      toast.success(t("routes.adopted"));
       router.push(`/trips/${tripId}/shape`);
       router.refresh();
     } catch (e) {

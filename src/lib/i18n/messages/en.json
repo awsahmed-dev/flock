@@ -594,7 +594,7 @@
     "planEmptyTitle": "Your plan is empty",
     "planEmptyBody": "Start from a ready plan, or build it yourself.",
     "planEmptySmart": "Pick your trip's shape",
-    "planEmptySmartSub": "Curated routes — one tap and it's your plan",
+    "planEmptySmartSub": "Curated routes — adjust, then confirm",
     "planEmptyManual": "I'll add places myself",
     "planEmptyImport": "From a reel or TikTok link"
   },
@@ -1184,7 +1184,7 @@
     "scopeOneDay": "Plan one day",
     "scopeOneDayDesc": "A ready-made day of real places.",
     "scopeWholeTrip": "Shape the whole trip",
-    "scopeWholeTripDesc": "Hand-picked routes — choose one and it becomes your plan.",
+    "scopeWholeTripDesc": "Hand-picked routes — adjust one, then confirm it as your plan.",
     "scopeHeading": "What should AI plan?"
   },
   "decisions": {
@@ -1800,7 +1800,7 @@
   },
   "routes": {
     "title": "Pick your trip's shape",
-    "lede": "Hand-picked routes, not generated. Tap one and it becomes your plan.",
+    "lede": "Hand-picked routes, not generated. Tap one to look it over and adjust — nothing's added until you confirm.",
     "forWho": "Who it's for",
     "capacity": "{count, plural, one {covers # night} other {covers # nights}}",
     "overflow": "{count, plural, one {# night left over — you can add a base} other {# nights left over — you can add bases}}",
@@ -1811,7 +1811,6 @@
     "noneBody": "Save places from Discover and we'll arrange them — without pretending we know the place better than you do.",
     "toSaves": "Go to Discover",
     "adopting": "Setting up your plan…",
-    "adopted": "Done — your plan is in",
     "failed": "Couldn't set that up — try again",
     "freeDays": "{count, plural, one {including one free day} other {including # free days}}",
     "startHere": "Start your plan in {place}",
@@ -1905,7 +1904,20 @@
     "gatewayPick": "Which city?",
     "errandRoundtrip": "Return flights to {city}",
     "errandFlightIn": "Flight to {city}",
-    "errandFlightOut": "Flight home from {city}"
+    "errandFlightOut": "Flight home from {city}",
+    "noCity": "{count, plural, one {# night with no city} other {# nights with no city}}",
+    "draftTitle": "Not saved yet",
+    "draftBody": "Nothing's in your plan yet. Confirm to add {count, plural, one {# day} other {# days}} of places.",
+    "draftBodyEmpty": "Nothing's in your plan yet. Confirm to set up {count, plural, one {# day} other {# days}} for you to fill.",
+    "draftChangesTitle": "Unsaved changes",
+    "draftChangesBody": "Your plan keeps the old version until you save.",
+    "discard": "Choose another",
+    "discardChanges": "Discard",
+    "confirm": "Confirm plan",
+    "confirmChanges": "Save changes",
+    "confirming": "Building your plan…",
+    "confirmed": "Your plan is ready",
+    "confirmedChanges": "Plan updated"
   },
   "city": {
     "all": "All",
@@ -1973,7 +1985,8 @@
     "tripTooShort": "Trip is too short to plan",
     "unknownPlace": "Unknown place",
     "unknownRoute": "Unknown route",
-    "whereAreYouGoing": "Where are you going?"
+    "whereAreYouGoing": "Where are you going?",
+    "nothingToConfirm": "There's nothing new to confirm — it's already in your plan."
   },
   "vote": {
     "askAddOne": "Should we add \"{title}\" to our itinerary?",

@@ -1064,6 +1064,29 @@ export const tripSegments = pgTable("trip_segments", {
 });
 
 /**
+ * A shape that hasn't been confirmed yet.
+ *
+ * Picking a route used to write the whole plan on the tap — the cities AND
+ * every day's stops — so opening a route to look at it, then going back,
+ * left the trip already planned. Now everything on the shape screen edits
+ * this draft, and only "Confirm" copies it into trip_segments and builds
+ * the days. Nothing else in the app reads it: Stays, NOW and the plan keep
+ * showing the confirmed trip until the owner says so.
+ */
+export const tripShapeDrafts = pgTable("trip_shape_drafts", {
+  tripId: uuid("trip_id")
+    .primaryKey()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  /** Segment[] — the same shape trip_segments rows map to */
+  segments: jsonb("segments").notNull(),
+  /** the draft's own flight ends; confirmed ones live on trips */
+  arriveBaseId: text("arrive_base_id"),
+  departBaseId: text("depart_base_id"),
+  createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
  * Curated stops the crew removed by hand.
  *
  * The shape re-projects the whole day grid on every structural edit, which

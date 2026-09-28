@@ -594,7 +594,7 @@
     "planEmptyTitle": "خطة رحلتكم فاضية",
     "planEmptyBody": "ابدأ بخطة جاهزة، أو رتّبها بنفسك.",
     "planEmptySmart": "اختر شكل رحلتكم",
-    "planEmptySmartSub": "مسارات مختارة — اضغط وتصير خطتكم",
+    "planEmptySmartSub": "مسارات مختارة — عدّلها ثم اعتمدها",
     "planEmptyManual": "أضيفها بنفسي",
     "planEmptyImport": "من ريل أو رابط تيك توك"
   },
@@ -1184,7 +1184,7 @@
     "scopeOneDay": "خطّط ليوم واحد",
     "scopeOneDayDesc": "يوم جاهز من أماكن حقيقية.",
     "scopeWholeTrip": "اختر شكل الرحلة",
-    "scopeWholeTripDesc": "مسارات مختارة بأيدينا — تختار واحد ويصير خطتكم.",
+    "scopeWholeTripDesc": "مسارات مختارة بأيدينا — عدّل واحد واعتمده كخطة لكم.",
     "scopeHeading": "ماذا يخطط الذكاء الاصطناعي؟"
   },
   "decisions": {
@@ -1800,7 +1800,7 @@
   },
   "routes": {
     "title": "اختر شكل رحلتكم",
-    "lede": "مسارات مختارة بأيدينا — مو مولّدة. اضغط واحد وتصير خطتكم على طول.",
+    "lede": "مسارات مختارة بأيدينا — مو مولّدة. اضغط واحد تشوفه وتعدّله، وما ينضاف شي لين تعتمده.",
     "forWho": "لمين؟",
     "capacity": "{count, plural, one {يغطي ليلة} two {يغطي ليلتين} few {يغطي # ليالٍ} many {يغطي # ليلة} other {يغطي # ليلة}}",
     "overflow": "{count, plural, one {تبقى ليلة بدون مقرّ — تقدرون تضيفون} two {تبقى ليلتان بدون مقرّ — تقدرون تضيفون} few {تبقى # ليالٍ بدون مقرّ — تقدرون تضيفون مقرات} many {تبقى # ليلة بدون مقرّ — تقدرون تضيفون مقرات} other {تبقى # ليلة بدون مقرّ}}",
@@ -1811,7 +1811,6 @@
     "noneBody": "احفظ أماكن من الاكتشاف وبنرتّبها لك — بدون ما ندّعي إننا نعرف المكان أكثر منك.",
     "toSaves": "روح للاكتشاف",
     "adopting": "نجهّز خطتكم…",
-    "adopted": "جاهزة — خطتكم محطوطة",
     "failed": "ما قدرنا نجهّزها — جرّب مرة ثانية",
     "freeDays": "{count, plural, one {فيها يوم حر واحد} two {فيها يومان حران} few {فيها # أيام حرة} many {فيها # يومًا حرًا} other {فيها # يوم حر}}",
     "startHere": "ابدأ خطتك في {place}",
@@ -1905,7 +1904,20 @@
     "gatewayPick": "أي مدينة؟",
     "errandRoundtrip": "تذاكر ذهاب وعودة إلى {city}",
     "errandFlightIn": "رحلة الوصول إلى {city}",
-    "errandFlightOut": "رحلة العودة من {city}"
+    "errandFlightOut": "رحلة العودة من {city}",
+    "noCity": "{count, plural, one {ليلة بلا مدينة} two {ليلتان بلا مدينة} few {# ليالٍ بلا مدينة} many {# ليلة بلا مدينة} other {# ليلة بلا مدينة}}",
+    "draftTitle": "ما انحفظت بعد",
+    "draftBody": "ما انضاف شي لخطتكم بعد. اعتمدوها وتنضاف {count, plural, one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}} بأماكنها.",
+    "draftBodyEmpty": "ما انضاف شي لخطتكم بعد. اعتمدوها وتجهز {count, plural, one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}} تعبّونها بنفسكم.",
+    "draftChangesTitle": "تغييرات ما انحفظت",
+    "draftChangesBody": "خطتكم تبقى على النسخة القديمة لين تحفظون.",
+    "discard": "اختر مسار ثاني",
+    "discardChanges": "تجاهل",
+    "confirm": "اعتمد الخطة",
+    "confirmChanges": "احفظ التغييرات",
+    "confirming": "نجهّز خطتكم…",
+    "confirmed": "خطتكم جاهزة",
+    "confirmedChanges": "حدّثنا خطتكم"
   },
   "city": {
     "all": "الكل",
@@ -1973,7 +1985,8 @@
     "tripTooShort": "الرحلة قصيرة ما تكفي للتخطيط",
     "unknownPlace": "مكان غير معروف",
     "unknownRoute": "مسار غير معروف",
-    "whereAreYouGoing": "وين رايحين؟"
+    "whereAreYouGoing": "وين رايحين؟",
+    "nothingToConfirm": "ما في شي جديد تعتمده — الخطة محطوطة."
   },
   "vote": {
     "askAddOne": "نضيف «{title}» للخطة؟",

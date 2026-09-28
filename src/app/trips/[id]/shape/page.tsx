@@ -6,6 +6,7 @@ import { getTripWithMembership } from "@/lib/actions/trips";
 import { getShape } from "@/lib/actions/shape";
 import { ShapeScreen } from "@/components/shape/shape-screen";
 import { PageHeader } from "@/components/ui/page-header";
+import { getDictionary, getLocale, tFromDict } from "@/lib/i18n";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,8 +16,8 @@ interface Props {
  * «شكل الرحلة» — the trip's structure.
  *
  * No shape yet means the crew hasn't chosen a route, so send them there
- * rather than rendering an empty editor: this screen edits a live plan, it
- * never creates one.
+ * rather than rendering an empty editor. A picked route arrives here as a
+ * draft; nothing reaches the trip until "Confirm plan".
  */
 export default async function ShapePage({ params }: Props) {
   const { id } = await params;
@@ -28,10 +29,14 @@ export default async function ShapePage({ params }: Props) {
 
   const shape = await getShape(id).catch(() => null);
   if (!shape) redirect(`/trips/${id}/routes`);
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const t = (k: string) => tFromDict(dict, k, undefined, locale);
 
   return (
     <div className="min-h-dvh bg-background">
-      <PageHeader title={trip.name} backHref={`/trips/${id}/itinerary`} />
+      {/* The trip bar above already names the trip; say which screen this is. */}
+      <PageHeader title={t("shape.title")} backHref={`/trips/${id}/itinerary`} />
       <ShapeScreen tripId={id} initial={shape} />
     </div>
   );

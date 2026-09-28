@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import {
   tripSegments,
+  tripShapeDrafts,
   segmentReactions,
   tripRemovedStops,
   tripMembers,
@@ -180,6 +181,118 @@ export interface ShapeView {
   };
   isOwner: boolean;
   memberCount: number;
+  /** unconfirmed: nothing on this screen is on the trip until commitShape */
+  draft: boolean;
+  /** the trip already has a confirmed shape (so a draft is "changes") */
+  committed: boolean;
+}
+
+/* ── the draft ────────────────────────────────────────────────────────────
+ *
+ * A shape is a draft until the owner confirms it. Picking a route used to
+ * write the cities and every day's stops on the tap, so opening a route to
+ * look at it and going back left the trip already planned — "it should not
+ * be built until I click confirm". Everything on the shape screen now reads
+ * and writes this state; commitShape is the only way into trip_segments and
+ * the day grid.
+ */
+interface ShapeState {
+  segments: Segment[];
+  arrive: BaseId | null;
+  depart: BaseId | null;
+  /** an unconfirmed draft is being edited */
+  draft: boolean;
+  /** the trip already has a confirmed shape */
+  committed: boolean;
+}
+
+async function readState(
+  tripId: string,
+  trip: { arriveBaseId: string | null; departBaseId: string | null },
+): Promise<ShapeState> {
+  const [drafts, rows] = await Promise.all([
+    db.select().from(tripShapeDrafts).where(eq(tripShapeDrafts.tripId, tripId)).limit(1),
+    db.select().from(tripSegments).where(eq(tripSegments.tripId, tripId)).orderBy(tripSegments.sortOrder),
+  ]);
+  const d = drafts[0];
+  if (d && Array.isArray(d.segments) && d.segments.length) {
+    return {
+      // A copy: edits mutate these in place.
+      segments: (d.segments as Segment[]).map((sg) => ({ ...sg, dayTrips: [...(sg.dayTrips ?? [])] })),
+      arrive: d.arriveBaseId,
+      depart: d.departBaseId,
+      draft: true,
+      committed: rows.length > 0,
+    };
+  }
+  return {
+    segments: rows.map(toSegment),
+    arrive: trip.arriveBaseId,
+    depart: trip.departBaseId,
+    draft: false,
+    committed: rows.length > 0,
+  };
+}
+
+/** Write the draft — never the trip. Same re-dating and re-linking as a real save. */
+async function saveDraft(
+  tripId: string,
+  segments: Segment[],
+  tripStart: string,
+  userId: string,
+  ends: { arrive: BaseId | null; depart: BaseId | null },
+) {
+  const fresh = relink(redate(segments, tripStart), basesFor(segments));
+  // Same guarantee persist() keeps: an end must be a city the trip visits.
+  const here = new Set(fresh.map((sg) => sg.baseId));
+  const row = {
+    segments: fresh,
+    arriveBaseId: ends.arrive && here.has(ends.arrive) ? ends.arrive : null,
+    departBaseId: ends.depart && here.has(ends.depart) ? ends.depart : null,
+    createdBy: userId,
+    updatedAt: new Date(),
+  };
+  await db
+    .insert(tripShapeDrafts)
+    .values({ tripId, ...row })
+    .onConflictDoUpdate({ target: tripShapeDrafts.tripId, set: row });
+  revalidatePath(`/trips/${tripId}/shape`);
+  return fresh;
+}
+
+/**
+ * «اعتمد الخطة» — the one door from a draft into the trip: the cities go
+ * into trip_segments, the flight ends onto the trip, and the days are
+ * built. A refusal comes back as a value (see editShape).
+ */
+export async function commitShape(tripId: string) {
+  try {
+    const user = await requireOwner(tripId);
+    const trip = await getTrip(tripId);
+    const [d] = await db.select().from(tripShapeDrafts).where(eq(tripShapeDrafts.tripId, tripId)).limit(1);
+    if (!d || !Array.isArray(d.segments) || !d.segments.length) throw new Error("err.nothingToConfirm");
+    const saved = await persist(tripId, d.segments as Segment[], trip.startDate, user.id, {
+      arrive: d.arriveBaseId,
+      depart: d.departBaseId,
+    });
+    await db.delete(tripShapeDrafts).where(eq(tripShapeDrafts.tripId, tripId));
+    revalidatePath(`/trips/${tripId}`);
+    revalidatePath(`/trips/${tripId}/itinerary`);
+    revalidatePath(`/trips/${tripId}/discover`);
+    return { ok: true as const, cities: saved.length };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.startsWith("err.")) return { ok: false as const, error: msg };
+    throw err;
+  }
+}
+
+/** Throw the draft away; the trip is exactly as it was before it. */
+export async function discardShapeDraft(tripId: string) {
+  await requireOwner(tripId);
+  await db.delete(tripShapeDrafts).where(eq(tripShapeDrafts.tripId, tripId));
+  revalidatePath(`/trips/${tripId}/shape`);
+  return { ok: true as const };
 }
 
 /**
@@ -190,7 +303,16 @@ export interface ShapeView {
  * and behaves like any other — it simply has no curated days, so its nights
  * arrive as free days you can fill.
  */
-function resolveBase(r: typeof tripSegments.$inferSelect): Base {
+/** What resolveBase needs — a trip_segments row and a Segment both fit. */
+type BaseSource = {
+  baseId: string;
+  customName?: string | null;
+  customNameAr?: string | null;
+  customLat?: number | null;
+  customLng?: number | null;
+};
+
+function resolveBase(r: BaseSource): Base {
   const known = BASES[r.baseId];
   if (known) return known;
   const name = r.customName ?? r.baseId.replace(/^custom:/, "");
@@ -217,7 +339,7 @@ function resolveBase(r: typeof tripSegments.$inferSelect): Base {
 }
 
 /** Curated bases plus whatever custom ones this trip invented. */
-function basesFor(rows: (typeof tripSegments.$inferSelect)[]): Record<BaseId, Base> {
+function basesFor(rows: BaseSource[]): Record<BaseId, Base> {
   const out: Record<BaseId, Base> = { ...BASES };
   for (const r of rows) if (!out[r.baseId]) out[r.baseId] = resolveBase(r);
   return out;
@@ -296,15 +418,11 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
   const { user, role } = await requireMember(tripId);
   const trip = await getTrip(tripId);
 
-  const rows = await db
-    .select()
-    .from(tripSegments)
-    .where(eq(tripSegments.tripId, tripId))
-    .orderBy(tripSegments.sortOrder);
-  if (!rows.length) return null;
+  const state = await readState(tripId, trip);
+  if (!state.segments.length) return null;
 
-  const LIB = basesFor(rows);
-  const segments = relink(redate(rows.map(toSegment), trip.startDate), LIB);
+  const LIB = basesFor(state.segments);
+  const segments = relink(redate(state.segments, trip.startDate), LIB);
   const [saves, reacts, members] = await Promise.all([
     db
       .select({ lat: savedPlaces.lat, lng: savedPlaces.lng })
@@ -371,7 +489,7 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     };
   });
 
-  const g = gatewayState(segments, trip.arriveBaseId, trip.departBaseId);
+  const g = gatewayState(segments, state.arrive, state.depart);
   const nameOf = (id: BaseId | null) =>
     id ? (LIB[id]?.name ?? id.replace(/^custom:/, "")) : "";
   const nameArOf = (id: BaseId | null) =>
@@ -387,10 +505,19 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
   }));
 
   const stopCounts = await db
-    .select({ dayDate: itineraryItems.dayDate })
+    .select({ dayDate: itineraryItems.dayDate, provider: itineraryItems.provider })
     .from(itineraryItems)
     .where(eq(itineraryItems.tripId, tripId));
-  const filled = new Set(stopCounts.map((r) => r.dayDate));
+  // A draft hasn't built anything yet: count what it WOULD build — its own
+  // projected stops, plus whatever the crew added by hand, which stays.
+  const filled = new Set(
+    state.draft
+      ? [
+          ...stopCounts.filter((r) => r.provider !== "package").map((r) => r.dayDate),
+          ...days.filter((d) => d.places.length > 0).map((d) => d.date),
+        ]
+      : stopCounts.map((r) => r.dayDate),
+  );
 
   return {
     tripNights: tripNightsBetween(trip.startDate, trip.endDate),
@@ -414,7 +541,7 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
       // A button that throws when pressed is worse than no button.
       canAlign:
         (g.arriveMismatch || g.departMismatch) &&
-        orderForGateways(segments, (s) => s.baseId, trip.arriveBaseId, trip.departBaseId).reversed,
+        orderForGateways(segments, (s) => s.baseId, state.arrive, state.depart).reversed,
       // Offered only when the city is genuinely elsewhere in the trip and
       // the shape has room for one more stay.
       canReturnArrive:
@@ -424,6 +551,8 @@ export async function getShape(tripId: string): Promise<ShapeView | null> {
     },
     isOwner: role === "owner",
     memberCount: members.length,
+    draft: state.draft,
+    committed: state.committed,
   };
 }
 
@@ -695,19 +824,15 @@ async function reproject(
   return rows.length;
 }
 
-async function persist(tripId: string, segments: Segment[], tripStart: string, userId: string) {
-  const lib: Record<BaseId, Base> = { ...BASES };
-  for (const sg of segments) {
-    if (lib[sg.baseId]) continue;
-    const name = sg.customName ?? sg.baseId.replace(/^custom:/, "");
-    lib[sg.baseId] = {
-      id: sg.baseId, name, nameAr: sg.customNameAr || name, country: "",
-      lat: sg.customLat ?? 0, lng: sg.customLng ?? 0, photoQuery: name,
-      coordsUnknown: sg.customLat == null || sg.customLng == null,
-      match: [name.toLowerCase()], typicalNights: 1, maxNights: 60,
-      reachable: [], pairsWith: [], days: [],
-    };
-  }
+async function persist(
+  tripId: string,
+  segments: Segment[],
+  tripStart: string,
+  userId: string,
+  /** from a confirmed draft: the flight ends it chose */
+  ends?: { arrive: BaseId | null; depart: BaseId | null },
+) {
+  const lib = basesFor(segments);
   const fresh = relink(redate(segments, tripStart), lib);
 
   // A gateway must never point at a city the trip no longer visits.
@@ -718,13 +843,18 @@ async function persist(tripId: string, segments: Segment[], tripStart: string, u
   // call site is how the grid and the shape drifted apart the last time.
   // Clearing hands that end back to the shape, which is always true.
   const here = new Set(fresh.map((s) => s.baseId));
-  const ends = await db
+  const current = await db
     .select({ arrive: trips.arriveBaseId, depart: trips.departBaseId })
     .from(trips)
     .where(eq(trips.id, tripId));
-  const clear: { arriveBaseId?: null; departBaseId?: null } = {};
-  if (ends[0]?.arrive && !here.has(ends[0].arrive)) clear.arriveBaseId = null;
-  if (ends[0]?.depart && !here.has(ends[0].depart)) clear.departBaseId = null;
+  const clear: { arriveBaseId?: string | null; departBaseId?: string | null } = {};
+  if (ends) {
+    clear.arriveBaseId = ends.arrive && here.has(ends.arrive) ? ends.arrive : null;
+    clear.departBaseId = ends.depart && here.has(ends.depart) ? ends.depart : null;
+  } else {
+    if (current[0]?.arrive && !here.has(current[0].arrive)) clear.arriveBaseId = null;
+    if (current[0]?.depart && !here.has(current[0].depart)) clear.departBaseId = null;
+  }
 
   await db.transaction(async (tx) => {
     await lockTrip(tx, tripId);
@@ -755,10 +885,14 @@ async function persist(tripId: string, segments: Segment[], tripStart: string, u
   return fresh;
 }
 
-/** The tap that adopts. No draft, no confirmation step. */
+/**
+ * The tap that picks a route. It makes a DRAFT: nothing reaches the trip
+ * until the owner confirms on the shape screen (commitShape).
+ */
 export async function adoptRoute(tripId: string, routeId: string) {
   const user = await requireOwner(tripId);
   const trip = await getTrip(tripId);
+  const state = await readState(tripId, trip);
   const route = ROUTES.find((r) => r.id === routeId);
   if (!route) throw new Error("err.unknownRoute");
 
@@ -771,12 +905,7 @@ export async function adoptRoute(tripId: string, routeId: string) {
   // a previous shape, then re-adopted — walk the route in whichever
   // direction honours that. Lisbon → Porto and Porto → Lisbon are the same
   // curated content; only one of them matches your tickets.
-  const ordered = orderForGateways(
-    alloc.legs,
-    (l) => l.baseId,
-    trip.arriveBaseId,
-    trip.departBaseId,
-  );
+  const ordered = orderForGateways(alloc.legs, (l) => l.baseId, state.arrive, state.depart);
   // Reversing invalidates every curated transport leg — the train that
   // brought you INTO Porto is not the train out of it. `relink` re-derives
   // them from real distance, and the first leg must carry none at all.
@@ -789,7 +918,7 @@ export async function adoptRoute(tripId: string, routeId: string) {
     : ordered.items;
 
   const segments = segmentsFromLegs(legs, trip.startDate);
-  await persist(tripId, segments, trip.startDate, user.id);
+  await saveDraft(tripId, segments, trip.startDate, user.id, state);
   return {
     bases: alloc.legs.length,
     dropped: alloc.dropped.map((d) => BASES[d]?.name ?? d),
@@ -814,6 +943,7 @@ export async function startBlankShape(
 ) {
   const user = await requireOwner(tripId);
   const trip = await getTrip(tripId);
+  const state = await readState(tripId, trip);
   // A same-day trip really does have zero nights, and forcing one made the
   // only segment end a day after the trip did — the exact drift every other
   // rule here exists to prevent.
@@ -825,7 +955,7 @@ export async function startBlankShape(
       [{ baseId: base.id, nights: Math.min(nights, Math.max(1, base.maxNights)), transportInMode: null, transportInMinutes: null }],
       trip.startDate,
     );
-    await persist(tripId, segments, trip.startDate, user.id);
+    await saveDraft(tripId, segments, trip.startDate, user.id, state);
     return { bases: 1 };
   }
 
@@ -837,7 +967,7 @@ export async function startBlankShape(
   const where = custom?.lat != null && custom?.lng != null
     ? { lat: custom.lat, lng: custom.lng }
     : await placeOf(name, trip.destination);
-  await persist(
+  await saveDraft(
     tripId,
     [
       {
@@ -857,6 +987,7 @@ export async function startBlankShape(
     ],
     trip.startDate,
     user.id,
+    state,
   );
   return { bases: 1 };
 }
@@ -935,13 +1066,13 @@ async function runEdit(tripId: string, edit: ShapeEdit) {
   const e = parseOr(zEdit, edit, "Invalid edit");
   const trip = await getTrip(tripId);
 
-  const rows = await db
-    .select()
-    .from(tripSegments)
-    .where(eq(tripSegments.tripId, tripId))
-    .orderBy(tripSegments.sortOrder);
-  let segments = rows.map(toSegment);
+  // Edits land on the draft. The first edit to a confirmed shape starts one
+  // from it, so the trip itself only changes on "Confirm".
+  const state = await readState(tripId, trip);
+  let segments = state.segments;
   if (!segments.length) throw new Error("err.noShapeYet");
+  const ends = { arrive: state.arrive, depart: state.depart };
+  const rows = state.segments.map((sg) => ({ ...sg }));
 
   const tripNights = tripNightsBetween(trip.startDate, trip.endDate);
   // A trip may visit a city twice — out through Jeddah, back through
@@ -1160,10 +1291,8 @@ async function runEdit(tripId: string, edit: ShapeEdit) {
       // free-floating airport would put a city on the booking checklist
       // that appears nowhere in the plan.
       if (e.baseId && !find(e.baseId)) throw new Error("err.addCityFirst");
-      await db
-        .update(trips)
-        .set(e.end === "arrive" ? { arriveBaseId: e.baseId } : { departBaseId: e.baseId })
-        .where(eq(trips.id, tripId));
+      if (e.end === "arrive") ends.arrive = e.baseId;
+      else ends.depart = e.baseId;
       gatewayChanged = true;
       break;
     }
@@ -1172,17 +1301,12 @@ async function runEdit(tripId: string, edit: ShapeEdit) {
       // change the flights, or move the trip — and this is the second. It
       // reverses rather than rotates, because a chain that starts in the
       // middle is a plan that doubles back.
-      const ord = orderForGateways(
-        segments,
-        (s) => s.baseId,
-        trip.arriveBaseId,
-        trip.departBaseId,
-      );
+      const ord = orderForGateways(segments, (s) => s.baseId, ends.arrive, ends.depart);
       // Already pointing the right way is success, not failure. Two people
       // on the same shape screen both tapping the repair had the loser told
       // "Reordering can't reach those two ends" about a trip that was, by
       // then, correctly ordered.
-      const g0 = gatewayState(segments, trip.arriveBaseId, trip.departBaseId);
+      const g0 = gatewayState(segments, ends.arrive, ends.depart);
       if (!ord.reversed && (g0.arriveMismatch || g0.departMismatch)) {
         throw new Error("err.cannotReachEnds");
       }
@@ -1192,7 +1316,7 @@ async function runEdit(tripId: string, edit: ShapeEdit) {
       break;
     }
     case "returnLeg": {
-      const want = trip[e.end === "arrive" ? "arriveBaseId" : "departBaseId"];
+      const want = e.end === "arrive" ? ends.arrive : ends.depart;
       if (!want) throw new Error("err.noGatewaySet");
       // Only a city the trip already visits. Coming "back" to somewhere
       // you have never been is an add, and says so.
@@ -1269,7 +1393,7 @@ async function runEdit(tripId: string, edit: ShapeEdit) {
     segments.length === before.size &&
     segments.every((sg, i) => before.get(afterKeys[i]) === segmentNights(sg));
 
-  const saved = await persist(tripId, segments, trip.startDate, user.id);
+  const saved = await saveDraft(tripId, segments, trip.startDate, user.id, ends);
 
   // Report the OTHER side of the trade. Pressing "+" on Lisbon and being
   // told "the night went to Lisbon" says nothing you didn't just do; what
@@ -1567,6 +1691,9 @@ export async function refitShapeToTrip(tripId: string): Promise<{ dropped: strin
   if (!user) return { dropped: [] };
   const trip = await db.query.trips.findFirst({ where: eq(trips.id, tripId) });
   if (!trip) return { dropped: [] };
+  // A draft was drawn for the old dates. Fitting it silently could keep a
+  // shape nobody ever confirmed; dropping it just means picking again.
+  await db.delete(tripShapeDrafts).where(eq(tripShapeDrafts.tripId, tripId));
 
   const rows = await db
     .select()

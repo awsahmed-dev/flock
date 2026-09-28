@@ -34,7 +34,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { errorText } from "@/components/i18n/error-text";
-import { editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
+import { commitShape, discardShapeDraft, editShape, reactToBase, type ShapeView, type BaseCard } from "@/lib/actions/shape";
 import { refused } from "@/lib/actions/refusal";
 import { stayParam } from "@/lib/packages/stay-key";
 
@@ -177,15 +177,12 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
                   : t("shape.overAssigned", { count: -unassigned })}
             </span>
           </div>
-          <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full transition-[width] duration-200"
-              style={{
-                width: `${Math.min(100, (assigned / Math.max(1, view.tripNights)) * 100)}%`,
-                background: unassigned < 0 ? "var(--clr-dune)" : "var(--primary)",
-              }}
-            />
-          </div>
+          {/* Where the nights go, city by city. This used to be a single
+              fill bar — nights assigned over trip nights — with nothing to
+              say what it measured; people read it as a loading bar. Each
+              city is its own labelled piece now, so the bar says the same
+              thing the words under it do. */}
+          <NightsStrip bases={bases} unassigned={unassigned} ar={ar} t={t} />
         </div>
       </div>
 
@@ -419,6 +416,9 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
       </div>
 
       {/* ── the days this shape projects ────────────────────────────── */}
+      {view.draft && canEdit ? (
+        <ConfirmBar tripId={tripId} view={view} t={t} />
+      ) : (
       <div className="px-4 mt-5">
         <Link
           href={`/trips/${tripId}/itinerary`}
@@ -440,6 +440,134 @@ export function ShapeScreen({ tripId, initial }: { tripId: string; initial: Shap
         {!canEdit && (
           <p className="mt-2.5 text-center text-[12px] text-muted-foreground">{t("shape.onlyOwner")}</p>
         )}
+      </div>
+      )}
+    </div>
+  );
+}
+
+/* Colours for the cities in the strip. The same city keeps its colour when
+   the trip comes back to it (Jeddah → Riyadh → Jeddah). */
+const CITY_HUES = ["var(--primary)", "var(--clr-wayfind)", "var(--clr-horizon)", "var(--clr-dune)", "var(--clr-moss)"];
+
+function NightsStrip({
+  bases,
+  unassigned,
+  ar,
+  t,
+}: {
+  bases: BaseCard[];
+  unassigned: number;
+  ar: boolean;
+  t: ReturnType<typeof useT>;
+}) {
+  const hueOf = new Map<string, string>();
+  for (const b of bases) if (!hueOf.has(b.id)) hueOf.set(b.id, CITY_HUES[hueOf.size % CITY_HUES.length]);
+  // One legend entry per city, nights added up across its visits.
+  const legend: { id: string; name: string; nights: number }[] = [];
+  for (const b of bases) {
+    const hit = legend.find((l) => l.id === b.id);
+    if (hit) hit.nights += b.nights;
+    else legend.push({ id: b.id, name: ar ? b.nameAr : b.name, nights: b.nights });
+  }
+  return (
+    <div className="mt-3">
+      <div className="flex h-2.5 gap-[3px]" aria-hidden>
+        {bases.map((b) => (
+          <span
+            key={b.key}
+            className="h-full rounded-full"
+            style={{ flexGrow: b.nights, flexBasis: 0, background: hueOf.get(b.id) }}
+          />
+        ))}
+        {unassigned > 0 && (
+          <span
+            className="h-full rounded-full border border-dashed border-muted-foreground/50"
+            style={{ flexGrow: unassigned, flexBasis: 0 }}
+          />
+        )}
+      </div>
+      <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+        {legend.map((l) => (
+          <li key={l.id} className="flex items-center gap-1.5 text-[12px] font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: hueOf.get(l.id) }} />
+            <span dir="auto">{l.name}</span>
+            <span className="text-muted-foreground font-medium">{t("shape.nights", { count: l.nights })}</span>
+          </li>
+        ))}
+        {unassigned > 0 && (
+          <li className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0 border border-dashed border-muted-foreground" />
+            {t("shape.noCity", { count: unassigned })}
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * Nothing on this screen is on the trip until this is pressed. Picking a
+ * route used to write the whole plan on the tap, so looking at a route and
+ * going back left it already built.
+ */
+function ConfirmBar({ tripId, view, t }: { tripId: string; view: ShapeView; t: ReturnType<typeof useT> }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const planned = view.days.length - view.emptyDays;
+
+  const confirm = () =>
+    start(async () => {
+      const r = await commitShape(tripId);
+      if (refused(r)) {
+        toast.error(errorText(t, r));
+        return;
+      }
+      toast.success(t(view.committed ? "shape.confirmedChanges" : "shape.confirmed"));
+      router.push(`/trips/${tripId}/itinerary`);
+    });
+  const discard = () =>
+    start(async () => {
+      await discardShapeDraft(tripId);
+      // A first pick goes back to the routes; changes to a confirmed shape
+      // fall back to it.
+      if (view.committed) router.refresh();
+      else router.push(`/trips/${tripId}/routes`);
+    });
+
+  return (
+    <div className="sticky bottom-[calc(96px+env(safe-area-inset-bottom))] z-20 px-4 mt-5">
+      <div className="rounded-2xl border border-border bg-card/95 backdrop-blur p-4 shadow-lg shadow-black/30 space-y-3">
+        <div>
+          <p className="text-[15px] font-bold">
+            {t(view.committed ? "shape.draftChangesTitle" : "shape.draftTitle")}
+          </p>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
+            {view.committed
+              ? t("shape.draftChangesBody")
+              : planned > 0
+                ? t("shape.draftBody", { count: view.days.length, planned })
+                : t("shape.draftBodyEmpty", { count: view.days.length })}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={discard}
+            className="h-12 px-5 rounded-full border border-border text-[14px] font-semibold disabled:opacity-50"
+          >
+            {t(view.committed ? "shape.discardChanges" : "shape.discard")}
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={confirm}
+            className="flex-1 h-12 rounded-full bg-primary text-primary-foreground text-[15px] font-bold disabled:opacity-60"
+          >
+            {pending ? t("shape.confirming") : t(view.committed ? "shape.confirmChanges" : "shape.confirm")}
+          </button>
+        </div>
       </div>
     </div>
   );
