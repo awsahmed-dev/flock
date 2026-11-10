@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 // Same source as layout/sitemap/robots: the canonical host is one env
 // var, so structured data cannot drift from what the crawler was served.
 const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "https://sawia.paxawa.com";
+/* Paxawa is the studio behind Sawia; its own site is the organization’s home. */
+const STUDIO = "https://studio.paxawa.com";
 
 // Marketing content, but we still run per-request to honor the auth
 // cookie — a signed-in user who re-opens paxawa.com expects their
@@ -64,7 +66,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       <VisionXClient />
 
       {/* B26: structured data for rich results in Google. Organization
-          tells search engines who runs the site; WebSite enables the
+          tells search engines who runs the site (Paxawa, the studio); WebSite enables the
           sitelinks search box; SoftwareApplication marks Sawia up as
           a free app so it can surface in 'best group travel apps'
           style queries with stars / pricing / description prefilled. */}
@@ -76,11 +78,13 @@ export default async function HomePage({ searchParams }: PageProps) {
             "@graph": [
               {
                 "@type": "Organization",
-                "@id": `${SITE}/#org`,
-                name: "Sawia",
-                url: SITE,
+                "@id": `${STUDIO}/#org`,
+                name: "Paxawa",
+                alternateName: "باكساوا",
+                description: "An independent, Arabic-first app studio. Sawia is its first app.",
+                url: STUDIO,
                 logo: `${SITE}/icons/icon-512x512.png`,
-                sameAs: [],
+                sameAs: [STUDIO],
               },
               {
                 "@type": "WebSite",
@@ -89,7 +93,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                 name: "Sawia",
                 description:
                   "Group travel planning that doesn't end in three split conversations and a spreadsheet.",
-                publisher: { "@id": `${SITE}/#org` },
+                publisher: { "@id": `${STUDIO}/#org` },
                 potentialAction: {
                   "@type": "SearchAction",
                   target: {
@@ -103,6 +107,9 @@ export default async function HomePage({ searchParams }: PageProps) {
               {
                 "@type": "SoftwareApplication",
                 name: "Sawia",
+                url: SITE,
+                author: { "@id": `${STUDIO}/#org` },
+                publisher: { "@id": `${STUDIO}/#org` },
                 applicationCategory: "TravelApplication",
                 operatingSystem: "Web, iOS, Android",
                 description:

@@ -124,6 +124,9 @@ export function SkyShell({
             <Link href="/privacy" className="hover:text-[#141414] transition-colors">
               Privacy
             </Link>
+            <a href="https://studio.paxawa.com" className="normal-case tracking-normal font-bold hover:text-[#141414] transition-colors">
+              A Paxawa studio app
+            </a>
             <span className="normal-case tracking-normal font-bold">© {new Date().getFullYear()} Sawia</span>
           </nav>
         </div>
